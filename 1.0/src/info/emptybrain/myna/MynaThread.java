@@ -184,7 +184,6 @@ public class MynaThread {
 	
 		public void warning(String message, String sourceURI, int line,	String lineText, int lineOffset)
 		{
-      
 			if (message.indexOf("Referenced to undefined property \"") == 0) return;
 			if (message.indexOf("Reference to undefined property \"") == 0) return;
 			if (message.indexOf("Code has no side effects") == 0) return;

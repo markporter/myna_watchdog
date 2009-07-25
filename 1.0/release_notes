@@ -1,3 +1,70 @@
+Release Name: 1.0_alpha_14
+Notes:
+
+New Features:
+    * More Support for XML:
+          o Added getContentXml() to Myna.HttpConnection. This returns an E4X XML object
+          o Modified ObjectLib.getKeys() and Object.getKeys() to ignore non-numeric properties on XML objects. This makes it possible to call forEach() on XML objects like so:
+
+              
+              rss..item.forEach(function(item){ 
+                Myna.print("Title: " + item.title)
+              })
+
+          o Added String.toXml() to create an E4X XML object from a string
+
+    * Added Ext.Direct remoting support to WebService
+      Ext.Direct is Ext's RPC protocol. The basic idea is to create local functions in your client-side JavaScript that know how to call your server-side code and return a response. Another powerful feature is the ability to batch several of these function calls into one request behind the scenes which can dramatically improve performance in AJAX heavy applications:
+      Intro:
+      http://extjs.com/blog/2009/05/13/introducing-ext-direct/
+
+      Demos:
+      http://extjs.com/deploy/dev/examples/samples.html#sample-13
+
+      Server-side spec:
+      http://extjs.com/products/extjs/direct.php
+
+      Myna implements this as another protocol for Myna.WebService. This means that the same WebService instance can answer requests via SOAP, XML-RPC, JSON-RPC, JSON-MYNA and now Ext.Direct.
+
+      Here is an example from the Myna documentation (http://www.mynajs.org/shared/docs/js/libOO/files/WebService-sjs.html#Myna.WebService.printExtApi)
+
+          
+      /* creates a global MyServiceAPI variable containing
+      	the Ext.Direct API via script include */
+      <script src="http://myhost.com/myservice.sjs?ext-api&scriptvar=MyServiceAPI"></script>
+
+      <script>
+      	Ext.Direct.addProvider(MyServiceAPI);
+
+      	MyService.someFunction(arg1,arg1,function(response){
+      		alert(response);
+      	})
+
+      </script> 
+
+    * Redesigned Strict validation mode.
+      "Strict Error Checking" in the Myna Administrator has been renamed to "Strict Syntax Warnings", and the behavior is now to log warnings rather than throw errors. This dramatically improves compatibility with third-party libraries
+    * Object functions are now hidden.
+      Added ObjectLib.hideProperty and Object.hideProperty(). Also hid all the Object prototype functions. This means than for (var in obj) should now work as expected. Thanks to Raphael Speyer and Martin Blom for explaining how Rhino property attributes work
+
+
+
+Other Changes:
+
+    * When setting query parameters, empty strings are now considered NULL
+    * Calling Myna.log() from inside a running thread, now runs log() inside that  thread instead of spawning another thread
+    * Made file path in H2 datasources relative to the context root, if not an  existing path on the filesystem. This means that an installation of Myna can be copied to another folder and file-based datasources should still work
+    * Modified onApplicationStart to be more reliably called
+    * Added code to create /WEB-INF/classes/cron.properties if missing
+    * Made ServerJS support available through Myna.enableServerJS() This allows conditional loading via application.sjs
+    * upgraded Narwhal to latest in GIT and added Windows support for filesystem operations
+    * added File.appendString() and File.appendBinary()
+    * added File.getLineIterator() for reading a file one line at a time
+    * Added new properties to File: directoryPath, fileName, type, size, and  lastModified
+    * Modified File.listFiles() to return a Myna.DataSet of the files.
+    
+-----------------------------------
+
 Release Name: 1.0_alpha_13
 Notes:
 
