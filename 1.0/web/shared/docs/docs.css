@@ -1,0 +1,60 @@
+.application_title{
+	font-size:10pt;
+	font-weight:bold;
+	font-style:italic;
+}
+
+body,td{
+	font-size:10pt;
+	font-family:sans-serif;
+}
+body{
+	width:800	
+}
+body#main_nav{
+	font-size:10pt;
+	font-family:sans-serif;
+}
+button{
+	border:1px solid #324f85;	
+}
+pre.code{
+	/* white-space:pre; */
+	font-family:monospace;
+	background-color:linen;
+	border: 1px solid brown;
+	border-left:5px solid brown;
+	/* width:100%; */
+	display:block;
+	margin:15px;
+	margin-right:30px;
+	padding:10px;
+}
+.feature_label{
+	vertical-align:top;	
+	background-color:#8f9eb9;
+}
+#main_nav{
+	background-color:#8f9eb9	
+}
+.nav_head{
+	font-weight:bold;	
+}
+.nav_body{
+	font-weight:normal;
+	
+}
+.quote{
+	background-color:efefef;
+	border: 1px solid black;
+	border-left:5px solid black;
+	border-right:5px solid black;
+	display:block;
+	margin:15px;
+	margin-right:30px;
+	padding:10px;	
+}
+.section_title{
+	font-size:14pt;
+	margin-top:15px;
+}

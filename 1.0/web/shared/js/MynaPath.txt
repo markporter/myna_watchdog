@@ -1,0 +1,23 @@
+Topic: MynaPath
+A MynaPath is a file URI String with certain automatic translations.
+
+File URI strings generally look like this:
+> file:/opt/tomcat/webapps/myna
+> file:/c:/Program%20Files/Apache/tomcat/webapps
+
+Notice that the file separator is the same for both Windows and non-Windows Operating 
+systems 
+
+Any MynaPath that begins with "file:" is considered absolute and is not 
+translated
+
+Any MynaPath that starts with "/" is considered to be relative to the <$server.rootDir>.
+
+Any MynaPath that does *NOT* start with "file:" or "/" is considered to be relative to 
+<$server.currentDir>  
+
+See <Myna.File.getNormalizedPath> for information on creating an absolute URI from a MynaPath
+
+See <Myna.File.getNormalizedFile> for information on creating a java.io.File object from a MynaPath 
+
+

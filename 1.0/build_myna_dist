@@ -1,0 +1,26 @@
+#!/bin/bash
+if [ ! -d ext_latest ]; then
+	echo "Please download the latest 2.x version of the EXT JavaScript library (http://extjs.com/products/extjs/download.php) and install it in a folder called ext_latest"
+	exit 1
+fi
+echo "shutting down dev myna"
+./dev_server stop
+echo "building JS docs..."
+sh update_docs
+if [ ! -e  build.dev ]; then
+	echo "Moving dev build directory..."
+	mv build build.dev
+fi
+ant clean
+ant compile
+echo "copying ext files..."
+
+rsync -a ext_latest/ build/shared/js/ext_latest/
+cp xtheme-slate.css build/shared/js/ext_latest/resources/css/
+ant dist
+if [ -e  build.dev ]; then
+	echo "restoring dev build directory..."
+	rm -rf build.dist && mv build build.dist && mv build.dev build
+fi
+echo "Done with Build, restarting dev server"
+./dev_server restart

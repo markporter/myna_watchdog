@@ -1,0 +1,78 @@
+/* bluegrey:  8f9eb9*/
+/* dark bluegrey: #324f85 */
+
+.app_title{
+	font-size:14pt;
+	font-weight:bold;
+	font-style:italic;
+	padding-left:5px;
+}
+
+
+body,td{
+	font-size:10pt;
+	font-family:sans-serif;
+	
+}
+
+#help h2, #help h3{
+	margin-top:15px;
+	margin-bottom:5px;
+}
+
+#help h1{
+	font-size:18pt	
+}
+
+#help h2{
+	font-size:15pt	
+}
+
+#help h3{
+	font-size:10pt	
+}
+#help p{
+	margin-top:15px;
+}
+
+.icon_search { background: url(../images/magnifier.png) 0 3px no-repeat !important;} 
+.icon_add { background: url(../images/add.png) 0 3px no-repeat !important;}
+.icon_save { background: url(../images/disk.png) 0 3px no-repeat !important;}
+.icon_cancel { background: url(../images/cancel.png) 0 3px no-repeat !important;}
+.icon_delete { background: url(../images/delete.png) 0 3px no-repeat !important;}
+.icon_help { background: url(../images/help.png) 0 3px no-repeat !important;}
+.icon_edit_form { background: url(../images/application_form_edit.png) 0 3px no-repeat !important;}
+
+.key_field, .readonly_field, textarea.readonly_field{
+	border:0px;
+	background:#EEF4F8
+}
+.link{
+	color:blue;
+	text-decoration:underline;
+	cursor:pointer;	
+}
+
+.msg .x-box-mc {
+    font-size:14px;
+}
+
+#msg-div {
+    position:absolute;
+    left:35%;
+    top:10px;
+    width:250px;
+    z-index:20000;
+}
+.search-header td{
+	font-weight:bold;
+	border-bottom:2px solid black;
+}
+.search-header td, .search-item td{
+	padding-left:5px;
+	padding-right:5px;
+}
+
+.x-grid3-row-alt{
+	 background-color:#f1f2f4; 
+}

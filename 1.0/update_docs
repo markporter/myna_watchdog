@@ -1,0 +1,6 @@
+cd natural_docs
+perl NaturalDocs -s Default myna -i ../web/shared/js/libOO/ -o html ../web/shared/docs/js/libOO -p myna_docs/ -xi -ro --exclude-input ../web/shared/js/ext-2.0/
+cd ../natural_docs_custom
+perl NaturalDocs -s Default myna -i ../web/shared/js/libOO/ -o html ../web/shared/docs/js/libOO_raw -p myna_docs/ -xi -ro --exclude-input ../web/shared/js/ext-2.0/
+cd ..
+ant compile

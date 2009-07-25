@@ -1,0 +1,18 @@
+Crash Message:
+
+   Could not open /data/home_mark/Examples at /data/home_mark/myna/web/WEB-INF/myna/natural_docs/Modules/NaturalDocs/Languages.pm line 1404, <CONFIG_FILEHANDLE> line 404.
+
+Natural Docs version Development Release 02-10-2007 (1.35 base)
+Perl version 5.8.8 on linux
+
+Command Line:
+
+   -i ../../../../../ -o html ../../../shared/docs/js -p myna_docs/ -xi ../../../WEB-INF/ -r
+
+Stack Trace:
+
+   NaturalDocs::Error::CatchDeath, called from
+   NaturalDocs::Languages::LanguageOf, line 1404, called from
+   NaturalDocs::Project::GetAllSupportedFiles, line 1246, called from
+   NaturalDocs::Project::LoadSourceFileInfo, line 319, called from
+   (eval), line 327 of NaturalDocs

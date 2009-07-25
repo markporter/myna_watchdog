@@ -1,0 +1,169 @@
+<link rel="stylesheet" type="text/css" href="../js/ext_latest/resources/css/ext-all.css" />
+<link rel="stylesheet" type="text/css" href="../js/ext_latest/resources/css/xtheme-slate.css" />
+<link rel="stylesheet" type="text/css" href="docs_ext.css" />
+
+
+<script type="text/javascript" src="../js/ext_latest/adapter/ext/ext-base.js"></script>
+<script type="text/javascript" src="../js/ext_latest/ext-all.js"></script>
+<script type="text/javascript" src="../../shared/js/libOO/Array.js"></script>
+<script type="text/javascript" src="../../shared/js/libOO/ObjectLib.js"></script>
+<script type="text/javascript" src="../../shared/js/libOO/String.js"></script>
+<script type="text/javascript" src="../../shared/js/libOO/Function.js"></script>
+<script type="text/javascript" src="../../shared/js/libOO/Date.js"></script>
+<script type="text/javascript" src="../../shared/js/libOO/ValidationResult.js"></script>
+<script type="text/javascript" src="../../shared/js/libOO/Profiler.js"></script>
+<script type="text/javascript" src="../../shared/js/libOO/debug_window.js"></script>
+
+
+<script>
+	Ext.onReady(function(){
+		Ext.BLANK_IMAGE_URL = '../js/ext_latest/resources/images/default/s.gif';
+		new Ext.Viewport({
+			layout:"fit",
+			items:[{
+				title:"Myna Application Server",
+				layout:"border",
+				items:[{
+					region:"west",
+					width:200,
+					xtype:"treepanel",
+					rootVisible:false,
+					root:(function(){
+						var parseNode = function(nodeDesc){
+							ObjectLib.setDefaultProperties(nodeDesc,{
+								expanded:true
+							})
+							var newNode = new Ext.tree.TreeNode(nodeDesc)
+							
+							if (nodeDesc.children){
+								newNode.leaf=false;
+								nodeDesc.children.forEach(function(childDesc){
+									newNode.appendChild(parseNode(childDesc))
+								})
+							} else{
+								//newNode.leaf=true;
+							}
+							return newNode;
+						}
+						
+						var desc={
+							text:"Navigation",
+							children:[{
+								text:"Documentation",
+								children:[{
+									text:"Overview",
+									children:[{
+										text:"About Myna",
+										id:"default",
+										url:"summary.html",
+										iconCls:"icon_page"
+									},{
+										text:"Licenses",
+										url:"license_ext.html?cb="+new Date().getTime()
+									},{
+										text:"Features",
+										url:"features_ext.html?cb="+new Date().getTime()
+									},{
+										text:"Deployment",
+										url:"deploy.html?cb="+new Date().getTime()
+										
+									}]
+								
+								},{
+									text:"API Docs",
+									children:[{
+										text:"JavaScript API",
+										url:"js/libOO/index.html?cb="+new Date().getTime()/* ,
+										hrefTarget:"js_api" */
+									},{
+										text:"Myna Java API",
+										url:"myna_api/index.html?cb="+new Date().getTime()/* ,
+										hrefTarget:"myna_api" */
+									},{
+										text:"Rhino Java API",
+										url:"rhino_api/index.html?cb="+new Date().getTime()/* ,
+										hrefTarget:"rhino_api" */
+										
+									}]
+								},{
+									text:"Tutorial",
+									children:[{
+										text:"JS Overview",
+										url:"http://developer.mozilla.org/en/docs/A_re-introduction_to_JavaScript"/* ,
+										hrefTarget:"tutorial" */
+									},{
+										text:"Hello World",
+										url:"tutorial/hello_world.html?cb="+new Date().getTime()
+									},{
+										text:"Standard Objects",
+										url:"tutorial/standard_objects.html?cb="+new Date().getTime()
+									}]
+								}]
+							},{
+								text:"Project",
+								children:[{
+									text:"Home Page",
+									href:"http://www.mynajs.org"
+								},{
+									text:"Myna on Google Groups",
+									href:"http://groups.google.com/group/mynajs-general?lnk=srg&hl=en&ie=UTF-8&oe=utf-8&pli=1"
+								},{
+									text:"Sourceforge",
+									href:"http://sourceforge.net/projects/myna",
+									hrefTarget:"project_page"
+								},{
+									text:"Download",
+									href:"https://sourceforge.net/project/platformdownload.php?group_id=202389",
+									hrefTarget:"download_page"
+								}]
+							}]
+						}
+						return parseNode(desc);
+					})(),
+					listeners:{
+						beforerender:function(tree){
+							
+							window.setTimeout(function(){
+								var defaultNode = tree.getNodeById("default");
+								tree.getSelectionModel().select(defaultNode)
+							 	var center_frame=document.getElementById("center_frame")
+									center_frame.src=defaultNode.attributes.url;
+							},100)
+						},
+						click:function(node,e){
+							if (node.attributes.url){
+								var center_frame=document.getElementById("center_frame")
+								center_frame.src=node.attributes.url;
+							}
+						}
+					}
+				},{
+					region:"center",
+					id:"center",
+					hidden:false,
+					autoDestroy:true,
+					/* autoScroll:true, */
+					layout:"fit",
+					html:[
+						'<iframe id="center_frame" \n',
+						'frameborder="no" style="width:100%;height:100%" \n',
+						'src="' + Ext.BLANK_IMAGE_URL+ '"></iframe>\n'
+					].join("\n")
+				}]
+			}]
+		})
+	});
+</script>
+<html>
+	<head>
+		<title>Myna Server-Side JavaScript Application Server - Main Page</title>
+		<meta name="description" content="Myna is a Server-Side JavaScript web development platform based on Java. It allows developers to access the full power of Java and the development speed of JavaScript." />
+		<meta name="keywords" content="SSJS, JavaScript, Java, AJAX, JSON" />
+	</head>
+	<body>
+		<noscript>
+			Please enable JavaScript for navigation.
+			or click <a href="noscript.ejs">here</a> for index-able page
+		</noscript>
+	</body>
+</html>

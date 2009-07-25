@@ -1,0 +1,23 @@
+<link rel="stylesheet" type="text/css" href="{extUrl}resources/css/ext-all.css" />
+<link rel="stylesheet" type="text/css" href="{extUrl}resources/css/xtheme-slate.css" />
+<LINK REL="StyleSheet" HREF="views/default.css" TYPE="text/css"/>
+
+<script type="text/javascript" src="{extUrl}adapter/ext/ext-base.js"></script>
+<script type="text/javascript" src="{extUrl}ext-all-debug.js"></script>
+<script type="text/javascript" src="{rootUrl}shared/js/libOO/client.sjs"></script>
+
+<script>
+	Ext.onReady(function(){
+		Ext.BLANK_IMAGE_URL = '{extUrl}resources/images/default/s.gif';
+	});
+</script>
+<script src="controller.js"></script>
+
+<script>
+	var version = '{version}';
+	var rootUrl = '{rootUrl}';
+	var dbProperties = {dbProperties}
+	Ext.onReady(function(){
+		C.init()
+	});
+</script>

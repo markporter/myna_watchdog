@@ -1,0 +1,34 @@
+<style>
+	#log_summary td{
+		font-family:sans-serif;
+		border-bottom:1px solid gray;
+	}
+	#log_summary .label{
+		font-weight:bold;
+		text-align:right;
+		background-color:silver;
+	}
+</style>
+
+<table id="log_summary"  height="1" cellpadding="5" cellspacing="0" border="0" >
+	<tr>
+		<td class="label">Log ID</td><td>{log_id}</td>
+	</tr><tr>
+		<td class="label">Request ID</td><td>{request_id}</td>
+	</tr><tr>
+		<td class="label">App Name</td><td>{app_name}</td>
+	</tr><tr>
+		<td class="label">Purpose</td><td>{purpose}</td>
+	</tr><tr>
+		<td class="label">Type</td><td>{type}</td>
+	</tr><tr>
+		<td class="label">Event Timestamp</td><td>{event_ts}</td>
+	</tr><tr>
+		<td class="label">Request Elapsed</td><td>{request_elapsed}</td>
+	</tr><tr>
+		<td class="label">Event Elapsed</td><td>{log_elapsed}</td>
+	</tr>
+</table>
+<hr>
+<h2>{label}</h2>
+{detail}

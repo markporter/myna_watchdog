@@ -1,0 +1,11 @@
+#
+#Fri Jul 17 15:53:22 MDT 2009
+name=myna_log
+url=jdbc\:h2\:file\:/WEB-INF/myna/local_databases/myna_log
+file=/WEB-INF/myna/local_databases/myna_log
+username=
+desc=Datsource for Myna Logging
+type=h2
+location=file
+password=
+driver=org.h2.Driver

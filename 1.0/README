@@ -1,0 +1,9 @@
+Building Myna requires the folowing:
+	* linux 
+	* Java 1.5+
+	* ant
+	* perl
+	* EXT javascript library installed in a folder called ext_latest
+
+To build Myna, execute this command from the main directory: ./build_myna_dist 
+	

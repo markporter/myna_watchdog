@@ -1,0 +1,55 @@
+#!/bin/bash
+#
+# Myna Main instance Control Script
+#
+
+#user=
+server=dev
+port=8180
+myna_home=./winstone
+
+# these are  relative to myna_home or absolute
+webroot=../build
+pidfile=$server.pid
+logfile=$server.log
+
+jvm_args="-server -Xmx128m -Dsun.io.useCanonCaches=false -XX:MaxPermSize=128m -XX:+UseParallelGC -Djava.awt.headless=true"
+
+args="--webroot=$webroot  --logfile=$logfile --httpPort=$port --prefix=/dev"
+
+#export JAVA_HOME=/usr/java/default/
+#export JRE_HOME=/usr/java/default/jre/
+
+
+case "$1" in
+start)
+	cd $myna_home
+    	java $jvm_args -jar winstone.jar $args &> $logfile  &
+	pid=$(pgrep -f ^java.*$server)
+	echo $pid > $pidfile
+	
+	echo "Myna instance '$server' pid ($pid) Starting. tail -f $myna_home/$logfile for details."
+	
+    ;;
+stop)
+	cd $myna_home
+	kill -9 $(pgrep -f ^java.*$server)
+	rm $pidfile
+	echo "Myna instance '$server' stopped."
+    ;;
+restart)
+    	$0 stop
+	sleep 1
+	$0 start
+    ;;
+status)
+	cd $myna_home
+	echo -n Myna instance \"$server\":
+        ps -p $(cat $pidfile 2> /dev/null) 
+       
+    ;;
+*)
+    echo "usage: $0 (start|stop|restart|status)"
+esac
+
+

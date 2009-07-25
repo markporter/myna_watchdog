@@ -1,0 +1,50 @@
+<form method="post">
+	First Name: <input name="first_name"><br>
+	Favorite colors:<br>
+	<input type="checkbox" name="favorite_colors" value="red">Red
+	<input type="checkbox" name="favorite_colors" value="orange">Orange
+	<input type="checkbox" name="favorite_colors" value="yellow">Yellow
+	<input type="checkbox" name="favorite_colors" value="green">Green
+	<input type="checkbox" name="favorite_colors" value="blue">Blue
+	<input type="checkbox" name="favorite_colors" value="indigo">Indigo
+	<input type="checkbox" name="favorite_colors" value="violet">Violet
+	<p>
+	
+	Some Json Code:<br>
+	<textarea cols="60" rows="10" name="json">
+	{
+		"array":[
+			"thing1",
+			"thing2"],
+		"number":12,
+		"string":"some string",
+		"sub_object":{
+			"number":12,
+			"string":"some string"
+		}
+	}
+	</textarea><p>
+	
+	More Json Code with the same name:<br>
+	<textarea cols="60" rows="3" name="json">
+	{
+		"phrase":"Dude, where's my car?"
+	}
+	</textarea><p>
+	
+	A Cross Site Scripting hack:<br>
+	<textarea name="xss">';alert(String.fromCharCode(88,83,83))//\';alert(String.fromCharCode(88,83,83))//";alert(String.fromCharCode(88,83,83))//\";alert(String.fromCharCode(88,83,83))//--></SCRIPT>">'><SCRIPT>alert(String.fromCharCode(88,83,83))</SCRIPT></textarea>
+	<p>
+	Display: <select name="dump_data">
+		<option value="filtered">$req.data</option>
+		<option value="raw">$req.rawData</option>
+	</select><p>
+	<button type="submit">submit</button>
+</form>
+
+
+<@if $req.data.dump_data == "filtered">
+	<%=Myna.dump($req.data,"$req.data")%>
+<@elseif $req.data.dump_data == "raw">
+	<%=Myna.dump($req.rawData,"$req.rawData")%>
+</@if>

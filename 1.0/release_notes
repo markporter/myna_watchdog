@@ -1,0 +1,904 @@
+Release Name: 1.0_alpha_13
+Notes:
+
+New Features:
+
+    * Added Array aggregate functions: min, max, sum, and avg
+    * Added support for Myna.DataSet, an extension of Array for managing arrays 
+    of objects, optionally with a loader function. DataSets bring the data 
+    handling of query result sets , without requiring a query. Here are some 
+    examples of DataSet in action:
+
+//Create Dataaet from a regular array:
+var DS = new Myna.DataSet([{dude:"bob"},{dude:"bob2"}])
+
+//Create DataSet from a loader:
+DS = new Myna.DataSet({
+    columns:"label,value",
+    loader:function(options){
+        return Array.dim(options.maxRows).map(function(d,index){
+            return {
+                value:index+options.startRow,
+                label:"Label #" +(index+options.startRow)
+            }
+        })
+    }
+})
+DS.load({startRow:1,maxRows:10}); //load the first 10 rows
+DS.load({startRow:11,maxRows:10}); //replace with the second 10 rows
+
+//Create DataSet from a Query:
+var DS = new Myna.Query({
+ ds:"myna_log",
+ sql:"Select * from myna_log_general",
+ maxRows:10
+}).data
+//Query.data is now a DataSet
+
+//DataSets have several functions that make them easier to work with:
+
+//returns an array of all values in the "request_elapsed" column
+DS.valueArray("request_elapsed"); 
+
+//returns the row that contains The highest request elpased time 
+DS.maxByCol("request_elapsed"); 
+
+//treat the DataSet as a hashtable via any column
+var bob = DS.findFirst("employee_id",/123658332/)
+
+    *
+    * Added PUT and DELETE methods to HttpConnection. This can be helpful for 
+      calling RESTful services
+    * Added Global server scope via $server.set(key,value) and $server.get(key). 
+      Values set in the server scope are persisted between requests until the 
+      server (JVM) is restarted
+    * Added findBeans to DataManager. This works like manager.find() except it 
+      returns a DataSet of bean objects instead of just the ids
+    * Modified Myna.DataManager.ManagerBase to have setters and getters for each 
+      column that call the the appropriate set_<column> and get_<column> 
+      functions. This means you can use the aggregate functions:
+
+      var avgOrder = orderManager
+                    .findBeans({customer_id:"1234567"})
+                    .avgByCol("order_total")
+
+    * Added Myna.DataManager.BeanBase.getParent(). this function attempts to 
+      retrieve the parent bean for this bean via a foreign key.
+
+       
+      var orderBean = new Myna.DataManager("myapp")
+                      .getManager("orders")
+                      .getById(curOrderId);
+      var customerBean = orderBean.getParent("customer_id");
+      Myna.print(customerBean.last_name);
+
+    * Added getChildren to DataManager.BeanBase.prototype. This returns a 
+      DataSet of matching beans in the supplied child table
+
+       
+      var customerBean = new Myna.DataManager("myapp")
+                         .getManager("customers")
+                         .getById(curCustomerId);
+      var orders = orderBean.getChildren();
+      Myna.print("Orders Total: " +orders.sumByCol("order_total")); 
+
+Other Changes:
+    * Altered "Append Profiler Output" setting to log to myna_log_general 
+      instead of  appending to page output. Altered setting name and help text 
+      to "Log Profiler Output"
+    * Updated docs for HttpConnection
+    * Removed error when a Thread calls itself.    
+    * Updated Thread docs
+    * Improved error logging in threads
+    * Fixed bug in Myna.JavaUtils.beanToObject
+    * Modified Myna.Dump to handle DataSet objects
+
+
+
+	
+-------------------------------------------------------------------------------
+Release Name: 1.0_alpha_12
+Notes:
+
+New Features:
+	* Upgraded to Rhino 1.7R2
+		See https://developer.mozilla.org/en/New_in_Rhino_1.7R1
+		and https://developer.mozilla.org/en/New_in_Rhino_1.7R2
+		
+	* Many improvements to DB Manager:
+		* added tab support. Pressing tab will indent in sql windows
+		* Right clicking a table and selecting "Query" will now generate formatted SQL
+			that aliases the table name and refers to the columns by the aliased table 
+			name. If the table is in a named schema, then schema name is prepended to 
+			the table name
+		* Support for editing tables:
+			Can create and modify tables, their columns and their primary and 
+			foreign keys. Try right-clicking an existing table and select 
+			"Edit Table". Both myna and SQL code is generated when you edit tables
+			
+	* REST support. 
+		This makes it possible to pass simple parameters 
+		to a script page that look like sub directories to the caller. Here is an 
+		example, assuming "context" is the servlet context myna is installed to: 
+		
+		Original URL: 
+		http://mynajs.org/context/my_blog/articles.sjs?category=12&section=215&id=16
+		
+		URL mapped version:
+		http://mynajs.org/context/URL-MAP/my_blog/articles.sjs/category/12/section/215/id/16
+		
+		If you don't provide a value for the last parameter, it will be "".
+		This is also useful for serving binary content with familiar URLs,
+		like so:
+		
+		<img src="/context/URL-MAP/images/image_loader.sjs/id/23345/img.jpg"/>
+		
+		Some browsers e.g Internet Explorer, ignore the mime type of
+		downloaded files in favor of windows extension mapping. For IE a URL
+		like this works much better:
+		
+		<a href="http://mynajs.org/context/URL-MAP/my_app/fusebox.sjs/
+		fuseaction/download_report/id/56343/report.xls">Download as Excel</a>
+		
+		This can also be used to secure sensitive downloads. Here is an
+		example of authenticated access to images, using the example above:
+		<img src="/context/URL-MAP/images/image_loader.sjs/id/23345/img.jpg"/>
+		
+		then image_loader.sjs might look like this:
+		
+		if ( ! ($req.authUser =="admin" && $req.authPassword=="secret")){
+						$res.requestBasicAuth("Enter the secret password")
+		}
+		
+		$res.printBinary(new Myna.File("file:/mnt/secret_stuff/images/image_"
+		+ $req.data.id + ".jpg").readBinary(),"image/jpeg");
+
+		Also added PUT and DELETE support. You can tell whether a request was called 
+		via GET, POST, PUT, or DELETE by checking $req.type
+		
+	* Experimental ServerJS support
+		Myna now comes bundled with the Narwhal Java implementation of ServerJS.
+		Learn more about ServerJS: https://wiki.mozilla.org/ServerJS
+		and Narwhal: http://narwhaljs.org/
+		
+	* Added Number.js which currently only contains the Ruby-like times() 
+		prototype function. This is used to replace 
+		
+		for (var x=0; x < 10; ++x){
+			doStuff(x)
+		}
+		
+		with 
+		
+		(10).times(function(x){
+			doStuff(x)
+		})
+		
+	* Added Array.dim(count). This function returns an array of size count with null
+		values. This is useful for initializing an array like so:
+		
+		var tenStrings = Array.dim(10).map(function(alwaysNull,index){
+			return "String " + index++;
+		}
+		
+Other Changes:
+	* Myna now requires at least a 1.5 JVM. 
+		The major reason for this is the deprecation of the 1.4 JVM by the Rhino
+		team. It is getting harder to find libraries compatible with the older
+		JVM's 
+	* added Rhino features: FEATURE_LOCATION_INFORMATION_IN_ERROR and 
+		FEATURE_ENHANCED_JAVA_ACCESS These should improve Myna's error handling, 
+		especially java exceptions
+	* Request timeouts and "stopping" running requests from the administrator are 
+		now handled via Context.ObserveInstructionCount(). This is makes thread 
+		termination far more reliable, and generates a catchable error that is 
+		logged. "killing" threads from the Administrator now calls 
+		Thread.interrupt() followed by Thread.stop()
+	
+-------------------------------------------------------------------------------
+	
+Release Name: 1.0_alpha_11
+Notes:
+
+Changes in this release:
+
+	* New Feature: Myna Permissions
+		The functions and classes in Myna.Permissions combined with the web 
+		application located at MynaRoot/myna/permissions/index.ejs form
+		Myna's permissions system. The purpose of the permissions system is to
+		provide a standardized and centralized system for managing users and 
+		their rights in your applications.
+		
+	* Major Change: Myna.Thread
+		Myna.Thread has been completely overhauled and implemented in Java. Threads 
+		now perform reliably and without memory leaks
+		
+	* Major Change: Scheduled tasks
+		Scheduled tasks are now handled by their own Java class: CronThread and
+		run a URL instead of a script. This change was made to reduce the resources 
+		used by cached db connections, etc, but it has several other advantages 
+		including the ability to schedule tasks on other servers, and full access to 
+		the standard objects. One	 negative side effect is that any existing 
+		scheduled tasks will need to be converted and re-entered 
+		
+	* Minor Features:
+		* added $application.directory	property 
+		* Myna now initializes at server start-up. This allows scheduled tasks to 
+			start up without the need for a request. This also reduces the "startup 
+			lag" of the first request after server start-up
+		* added Myna.WebService.generateQueryType. This is a static function that 
+			automates the construction of a query result for use in the	 "returns" 
+			section of a web service function definition
+		*		Added new WebService Instance functions: setAuthUserId and 
+			clearAuthUserId. These are front ends to $cookie.setAuthUserId and 
+			$cookie.clearAuthUserId. 
+		* Myna.HttpConnection improvements
+		* Added DataManager.find() function. This can be uses to find a row by 
+			primary key, or all rows that match a certain criteria
+		* Added $cookie.clear() function which immediately expires a cookie
+		* Myna.log now runs in a separate, low priority thread. This ca n have a 
+			dramatic affect on request time when there are a lot of logs.
+		* Added Myna.Query.result property, an object that contains just data result 
+			of the query, and a JS friendly column description. 
+		* Added Myna.Query.dateFormat property. When set, Queries will automatically 
+			format date and time values 
+	
+-------------------------------------------------------------------------------
+	
+Release Name: 1.0_alpha_10
+Notes:
+
+New Features in this release: (see below for details)
+	* Added publish support for 4 types of web services 
+		(SOAP,XML-RPC,JSON-RPC,JSON-MYNA)
+	* Added Myna.HttpConnection Class
+	* New $req Features
+	* Unit Test Framework
+	* Myna Administrator: Instance settings and Thread Inspection
+	* UI improvements
+	* New Myna.String functions
+	* Added Myna.JavaUtils
+
+Feature Details:
+	* Added publish support for 4 types of web services:
+			The Myna.WebService class provides a way to define a generic web service 
+			object. This object can then be accessed via any of the supported 
+			protocols (SOAP,XML-RPC,JSON-RPC, or JSON-MYNA). Here is a quick example:
+			
+			<File: emp_manager.sjs>
+			var ws = new Myna.WebService({
+					name:"emp_manager",
+					desc:"Employee utility functions",
+					functions:{
+							get_bob{
+									desc:"Always returns bob",
+									returns:{
+											name:"string",
+											age:"numeric",
+											children:[{
+													name:"string",
+													age:"numeric"
+											}],
+											favorite_colors:["string"]
+									},
+									params:[{
+											name:"employee_id",
+											type:"numeric"
+									}],
+									handler:function(employee_id){
+											return {
+													name:"Bob Dobb",
+													age:"44",
+													children:[{
+															name:"julie",
+															age:9
+													},{
+															name:"sam",
+															age:13
+													}],
+													favorite_colors:["yellow","green","blue"]
+											}
+									}
+							}
+					}
+			})
+			ws.handleRequest($req);
+			
+			handleRequest will examine $req and:
+			* If $req.data.wsdl is defined, a SOAP WSDL document is printed. 
+			* If $req.data.soap is defined, the XML content is interpreted as a SOAP	
+				request and a SOAP envelope is printed
+			* If $req.data.xml-rpc is defined, the XML content is interpreted as an 
+				XML-RPC request and an XML-RPC response is printed
+			* If $req.data.json-rpc is defined, the text content is interpreted a
+				JSON-RPC request and an JSON-RPC response is printed
+			* If $req.data.json-myna is defined, the text content is interpreted a
+				JSON-MYNA request and a plain JSON response is printed
+				
+			WebService calls can be restricted by HTTP BasicAuth or cookies
+	* Added Myna.HttpConnection Class
+			This class allows you to make and http call to a server and retrieve the
+			content. This class supports HTTP BasicAuth as well.
+			
+	* New $req Features:
+			* Added HTTP BasicAuth Support
+				$req.authUser and $req.authPassword will automatically be populated 
+				from the HTTP Basic Auth header, if provided. $res.requestBasicAuth() 
+				will present a login dialog to the user
+			* $req.headers:
+				a JavaScript Object where the properties are header names and the 
+				property values are an array of strings containing each of request 
+				header's values
+			* contentText
+				content of the request body as a string
+			* contentXml
+				content of the request body as an E4X XML() object
+			* contentByteArray
+				content of the request body as a Java byte[]
+			* contentType
+				content type of the request
+			
+	* Unit Test Framework
+			JsUnit 1.3 (http://jsunit.berlios.de/) is installed in /shared/js/jsunit,
+			with slight modifications to support the myna environment. Testcases are 
+			being developed in /myna/tests.
+	
+	* Myna Administrator: Instance settings and Thread Inspection
+			* The new general property "Instance Name" can help distinguish multiple 
+				instances running on the same server. 
+			* The new general property "Instance Purpose" can help identify instances 
+				on different servers that are serving the same content
+			* The new general property "Send email to administrator on uncaught 
+				exceptions?" does what is says, sends a formatted error to 
+				"Administrator Email" on uncaught exceptions
+			* Thread Inspection: the Running Requests Tab now has a link labeled 
+				"explore" for each running request. Clicking this allows you to execute 
+				arbitrary JavaScript code in the scope of the running request. 
+	
+	* UI improvements
+			* Upgraded to Ext 2.2
+			* Added "slate" theme (Thanks to J.C Bize 
+				http://extjs.com/forum/member.php?u=3697) 
+			* Added FAMFAMFAM "silk" open source icons to shared/images/famfamfam_silk.
+				(Thanks to Mark James http://www.famfamfam.com/lab/icons/silk/)
+			
+	* New Myna.String functions
+			* listMakeUnique
+				returns new list (string) with each item represented only once
+			* listMakeUniqueNoCase
+				returns new list (string) with each item represented only once, regardless of case. 
+			* listSort(compareFunction)
+				returns a copy of this list sorted by the supplied compare function
+				
+				String Compare functions(used for String.listSort and Array.sort)
+					* compareNaturalReverse
+					* compareAlpha
+					* compareAlphaReverse
+					* compareNumeric
+					* compareNumericReverse
+					
+			* listToArray
+				returns an array of the items in this list
+		
+	* Added Myna.JavaUtils
+		This library is for Java utility functions. The following functions were 
+		copied from Myna.sjs:
+		
+		* beanToObject
+		* createSyncFunction
+		* createByteArray
+		* createCharArray
+		* enumToArray
+		* mapToObject
+		
+		These NEW functions were added to the library:
+		
+		* readerToString
+			returns a JavaScript String containing the entire contents off the 
+			supplied Java Reader.
+		* streamToString
+			returns a JavaScript String containing the entire contents off the supplied Java 
+		* streamToByteArray
+			returns a Java byte[] containing the entire contents off the supplied Java InputStream.
+		* readerToByteArray
+			returns a Java byte[] containing the entire contents off the supplied Java Reader.
+		
+-------------------------------------------------------------------------------
+
+Release Name: 1.0_alpha_9
+Notes:
+
+**** New Feature: Database Management	 ****
+The major focus of this release is database management. 
+	*	 Datasources of type other than "other" now have network settings and or 
+		 file settings and will automatically populate the driver and url settings.
+	*	 From the Myna Administrator, you can click "Manage DB" to open Myna
+		 Database Administrator, where you can run queries, create and drop tables,
+	 and create modify and delete columns
+	*	 Underneath the Database Administrator are the new classes Myna.Database and
+		 Myna.Table. 
+	*	 Myna.Database contains metadata about the datasource and uses the files in
+		 /shared/js/libOO/db_properties to normalize DDL SQL between different 
+	 databases. Files for H2, Oracle, PostgreSQL, MS-SQL, and MySql are provided
+	 but others can easily be added
+	*	 Myna.Table uses these settings to provide the ability to create, modify and
+		 drop tables, including indexes and foreign keys. This makes it possible to
+	 write table creation code that can be applied to arbitrary databases
+
+	 
+**** New Feature: Database Logging	****
+Myna.log() will log to the myna_log_general table in the myna_log datasource.
+This datasource is created automatically if it does not exist. If the 
+myna_log_general table does not exist, it is created, so any database can be 
+used to store logs. See View General Log in Myna Administrator to view logs
+
+
+**** Improved Error Handling ****
+All uncaught exceptions, both run-time and compile-time are now logged to 
+myna_log_general. You can override $application.onError to intercept errors. 
+Returning false cancels error display. See Myna.formatError() for the new error 
+formatter.
+
+**** New Package: myna_server	 ****
+Starting with this release there is also server edition that comes with the 
+winstone servelet engine. Simply unzip this file and run either 
+start_myna.bat (windows systems) or sh start_myna.sh (unix like systems)
+
+Other Features:
+* Updated BLOB and CLOB read and write support
+* modified request workflow so that the initialization of scopes is handled 
+	before parsing application.sjs files. This means it is now possible to 
+	manipulate contents of scopes (such as $req.data) from an application.sjs 
+	file.
+* Added String.repeat(count,delimiter,qualifier) function
+* Created /shared/js/libOO/Function.js. This includes Function prototype 
+	extensions from Ext
+* Added property $req.id in standard_objects.sjs. This is a UUID to uniquely 
+	identify this request
+* Modified Myna.Thread to add priority parameter. This is relative (+/- 100%)
+	modification of the thread's priority.	
+* added jtds.jar for MS-SQL support
+* added "gt,gte,lt,lte" keywords to <@if>. Use these in place of ">,>=,<,<=" 
+	in <@if> and <@elseif> ejs statements
+* added new String functions:
+	* listContainsNoCase
+	* listFindNoCase
+	* listAppendNoCase
+	* listAppendUnique
+	* listAppendUniqueNoCase
+	* listBefore
+	* listAfter
+* added /shared/js/libOO/debug_window.js. This file defines the client-side 
+	debug_window() function. This file is also included in client.sjs
+* modified Myna.Query:
+	* added ds parameter as an alias for dataSource
+	* added rowHandler parameter
+	* added defaultRowHandler function. Overriding the default row handler 
+		allows the programmer to process the row before it is added to 
+		Myna.Query.data 
+* added instance_id property to general settings
+
+-------------------------------------------------------------------------------
+
+Release Name: 1.0_alpha_8 
+Notes:
+
+**** New Feature: Asynchronous Threads ****
+You can now execute a javascript function in a separate thread. The new thread 
+will run in the background, but will have access the the originating thread's 
+scope, event after the original request exits. Here is an example:
+
+var file = new Myna.File("/test_file.txt");
+new Myna.Thread(function(){
+	$profiler.mark("sleeping"); //this will show up as "Current Task" in the administrator
+	java.lang.Thread.sleep(60*1000); //sleep for one minute
+	
+	file.writeString(new Date())
+})
+
+$res.print("Will write to file '" + file.toString() +"' in about a minute");
+
+Note that there is no output from an asynchronous thread. Any results from 
+threads should be written to shared storage such as $session.set(), 
+$application.set(), filesystem or database.
+
+
+**** New Feature: Request Timeout ****
+Myna will now try to terminate long running requests. To set the default timeout 
+see General Settings, Default Request Timeout in the Myna Administrator. Any 
+request can adjust its own timeout by setting $req.timeout to a larger or 
+smaller value. The termination are implemented as a Scheduled Task, see below 
+
+
+**** New Feature: Scheduled Tasks ****
+Scheduled Tasks are "headless" scripts that are run on a schedule. This is 
+similar to to the UNIX cron systems or the Windows Task Scheduler. They are 
+useful for tasks that are not related to user input such as:
+
+	* Refreshing caches 
+	* Checking for new files in an ftp directory 
+	* Sending a daily email
+	* Generating a report
+	* Truncating log files or database tables
+	
+Currently the "kill_long_running_requests" task runs every 5 seconds to stop 
+threads that have exceeded their $req.timeout setting 
+	
+
+**** New Feature: Templates ****
+Myna.Template and Myna.XTemplate are classes based on the Ext classes of the 
+same names. These offer a pure java alternative to <ejs></ejs> blocks. Here is 
+a quick example:
+
+var qry = new Myna.Query({
+	dataSource:"someds",
+	sql:"select first,last,age from people"
+})
+var tpl = new Myna.XTemplate(
+	'<table width="100%" height="1" cellpadding="0" cellspacing="0" border="0" >',
+		'<tr>',
+			'<th>First Name</th>',
+			'<th>Last Name</th>',
+			'<th>Age</th>',
+		'</tr>',
+		'<tpl for="data">',
+			'<tr>',
+				'<td>{first}</td>',
+				'<td>{last}</td>',
+				'<td>{age}</td>',
+			'</tr>',
+		'</tpl>',
+	'</table>'		
+)
+
+$res.print(tpl.apply(qry));
+
+**** New Feature: Query Named Parameters ****
+This is an alternative way to set parameters for a query. Here is an example:
+
+var insertQry=new Query({
+	dataSource:":mem:",
+	sql:
+	'insert into event (			 '+
+		'event_type_id				,'+
+		'app_name					,'+
+		'app_purpose				,'+
+		'label						,'+
+		'detail						,'+
+		'event_ts					,'+
+		'request_elapsed			 '+
+	') values (						 '+
+		'{event_type_id:bigint}		,'+
+		'{app_name}					,'+
+		'{app_purpose}				,'+
+		'{label}					,'+
+		'{detail:clob}				,'+
+		'{event_ts:timestamp}		,'+
+		'{request_elapsed:bigint}	 '+
+	');', 
+	
+	values:{
+		event_type_id:$req.data.event_type_id,
+		app_name:$req.data.application,
+		app_purpose:$req.data.purpose,
+		label:$req.data.label,
+		detail:$req.data.detail,
+		event_ts:new Date(),
+		request_elapsed:new Date().getTime() - $server_gateway.started.getTime()
+	}
+}); 
+
+Note that the sql string contains placeholders for the parameters in the form of
+{param_name:type}. If type is not defined, it is assumed to be varchar. Every
+param_name is expected to be found in values, however any properties in values 
+that are not param_names will be ignored.
+
+insertQry can be executed again with different values:
+
+insertQry.execute({
+	values:{
+		event_type_id:$req.data.event_type_id,
+		app_name:$req.data.application,
+		app_purpose:$req.data.purpose,
+		label:$req.data.label,
+		detail:$req.data.detail,
+		event_ts:new Date(),
+		request_elapsed:new Date().getTime() - $server_gateway.started.getTime()
+	}
+});	 
+
+-------------------------------------------------------------------------------
+
+Release Name: 1.0_alpha_7
+Notes:
+
+**** New Feature: Request Management ****
+Myna now limits the number of concurrent thread it will allow. To change this 
+value, see "Max Requests" in General Settings. You can also white-list certain 
+request patterns to avoid this restriction. Whitelisted requests have effectively 
+higher priority and are more likely to work under high-load conditions. See 
+"Thread Management Whitelist" in General Settings
+
+There is also a new section in the administrator called "Running Requests" which 
+gives a live view of all running and queued request threads. Threads can even be 
+killed from here. 
+
+
+
+**** New Feature: Email ****
+Here is a quick example:
+
+new Myna.Mail({
+	to:"no-one@nowhere.info",
+	from:"some-one@nowhere.info",
+	subject:"Mail test",
+	isHtml:true,
+	body:<ejs>
+		<table	border="1" >
+			<tr>
+				<th >
+					this..
+				</th>
+				<td> is HTML</td>
+			</tr>
+		</table>
+	</ejs>,
+	attachments:[
+		new Myna.File("/application.sjs"),
+		"/shared/js/ext-2.0/resources/images/default/editor/tb-sprite.gif"
+	] 
+}).send()
+
+See the SMTP Mail Host property in the administrator to set your relay host.
+
+
+
+**** New Feature: parameter filtering ****
+Myna now filters input through String.escapeHtml() This prevents a large number
+of Cross Site Scripting (XSS) attacks with no extra effort by the developer. If 
+you need access to un-altered parameters, they are available in $req.rawData 
+
+
+
+**** New Feature: Myna.File.extractZip ****
+Extracts a zip family archive (zip, gzip, jar, war, ear, etc) into a destination 
+directory and returns an array of MyanPath strings representing the destination 
+paths. Here is an example:
+
+var entries = new File("/myna-1.0_alpha_6-1.war").extractZip("/upgrade_tmp");
+$res.print("Extracted " + entries.length + " files.");
+
+
+**** New Feature: Upgrade Myna ****
+Myna can now be upgraded from a .war file in the administrator. When upgraded 
+this way, only files that have been changed will be replaced, and replaced files 
+are automatically backed up. See Help under "Upgrade Myna" in the administrator 
+
+
+**** Updated Feature: Ext ****
+The Ext (http://extjs.com) client-side javascript framework bundled with Myna 
+has been updated to the stablw release version 2.0
+
+-------------------------------------------------------------------------------
+
+Release Name: 1.0_alpha_6-1
+Notes:
+* Added tutorial section to documentation 
+* Added documentation link to Administrator
+
+-------------------------------------------------------------------------------
+	
+Release Name: 1.0_alpha_6
+Notes:
+*** Major API change ****
+The standard library now comes in two flavors: Procedural and 
+Object-Oriented. 
+
+Most of the old .sjs files found in /shared/js
+can now be found in /shared/js/libproc. These files can be easily 
+loaded by /shared/js/libproc/libproc.sjs. Adding this file to your 
+shared scope should ensure compatibility for older code that depends
+on the original procedural library. You can also includeOnce 
+libproc.sjs in application.sjs of a directory to make the procedural
+library available to a subset of your applications.
+
+The new standard library is available in /shared/js/libOO/libOO.sjs.
+This version does away with $lib in favor of enhancing the prototypes
+for Object, String, Array, and Date. Functions and classes that do 
+not map to these standard objects are stored in a global Myna object.
+This makes it possible to chain several actions together in a more 
+readable way. for example:
+
+//old way
+var userJson = $lib.string.toJsonString(user); 
+var userEncrypted = $lib.string.encrypt(userJson,"mysecret");
+$cookie.set("user",userEncrypted);
+
+//new way
+$cookie.set("user",user.toJson().encrypt("mysecret");
+
+This is not only less typing, it also leaves no extra variables 
+lying around to cause trouble. 
+
+A consequence of adding functions to the object prototype is that for..in loops
+may not have the items you expect. For example this code:
+
+var empty = {}
+for (var x in empty) Myna.print(x + "<br>");
+
+prints:
+
+getKeys
+appendFunction
+typeOf
+checkRequired
+setDefaultProperties
+forEach
+applyTo
+toJson
+getProperties
+
+To get the intended behavior, use either Object.forEach() or Object.getKeys()
+
+var bob ={
+	id:12,
+	name:"Bob",
+	occupation:"being awesome",
+	isDeceased:false
+}
+bob.forEach(function(element,name,object){
+	Myna.print(name + ": " + element +"<br>");
+});
+
+var keys =bob.getKeys();
+Myna.print("bob has "+ keys.length + " properties.<br>")
+
+These new functions are packaged together in /shared/js/libOO/client.js for easy 
+inclusion client-side. 
+
+Have look at the js documentation in the "files" section: /shared/js/libOO for 
+more detail.
+
+
+*** Faster queries
+Connections and complied sql statements are cached within each request so 
+executing the same sql within a single request, even with different QueryParams,
+will use the compiled sql. Another side effect of this change is that the JDBC
+result set is now available on the query object as "resultSet"
+
+
+*** New Feature: DataManager
+The DataManager object provides a way to perform basic Create, Read, Update, and 
+Delete (CRUD) operations against tables with a single primary key. Here is a 
+quick example:
+(code)
+		+- - - - - - - - - - - - - - - - - -+
+		| table employees					|
+		+- - - - - - - - - - - - - - - - - -+
+		| emp_id		int4	primary key |
+		| fname		varchar				|
+		| mname		varchar				|
+		| lname		varchar				|
+		| manager_id	int4				|
+		| hire_date date				|
+		+- - - - - - - - - - - - - - - - - -+
+
+	var dm = new DataManager("hr_datasource");
+	
+	var empManager = dm.getManager("employees");
+	
+	var newEmpBean = empManager.create({
+		fname:"Bob",
+		lname:"Dobb",
+		hire_date:Date.parse("02/21/1992","m/d/Y")
+	})
+	
+	print (newEmp.get_emp_id()) // Prints the auto generated primary key
+	newEmp.set_mname("R"); //sets this value in an update
+	
+	// you can also add your own functions to mangers and beans
+	dm.subClasses.employeesBean = function(){}
+	dm.subClasses.employeesBean.prototype.getBoss = function(){
+		if (this.get_manager_id().length){
+			return this.manager.get_by_id(this.data.manager_id);
+		}
+	}
+	
+	var myBoss = empManager.get_by_id(1000012).getBoss();
+(end)
+
+Also check out empManager.columns for metadata about each column in the 
+table, such as name, default value, size, type, nullable, precision and 
+more.
+
+*** Myna.ValidationResult ***
+This object can store information about validation errors, and even merge 
+multiple ValidationResults together. This is primarily used to store the results 
+of an AJAX form post to return to the browser. The DataManager uses 
+ValidationResult to store any	 validation errors, and ValidationResult.toJson()
+returns a valid JSON object for Ext.
+
+*** Ext web 2.0 framework ***
+The Ext web 2.0 framework (version 2.0b1) is distributed with Myna as a 
+convenience. The Myna Administrator is implemented in Ext but there are no other
+dependencies on Ext. For more information see http://extjs.com
+
+*** Date handling ***
+Date handling is much improved by a modified version of Ext's Date.js. This 
+brings PHP style date formatting and date parsing to the Date object. Other 
+useful functions include Date.add() and Date.getDayOfYear(). See 
+shared/docs/js/files/shared/js/libOO/Date-js.html to see all the new functions.
+
+*** File Uploads ***
+File Uploads are now working thanks to Apache commons-fileupload. Information 
+about uploaded files can be found in
+	$req.data.<fieldname> ={
+		diskItem:item, org.apache.commons.fileupload.disk.DiskFileItem,
+		stats:{
+			fieldName:String name of field in form,
+			fileName:String name of file on client side,
+			contentType:String mime type,
+			isInMemory:boolean, true if file contents are in memory,
+			sizeInBytes:int size in bytes,
+			diskLocation:String, the current location of the uploaded file
+		}
+	}
+multiple uploads with the same fieldname are stored in 
+$req.data.<fieldname>$array. See examples/file_upload.ejs and 
+examples/file_upload_ext.ejs for examples and check out 
+http://commons.apache.org/fileupload/apidocs/org/apache/commons/fileupload/disk/DiskFileItem.html
+to see what you can do with a diskFileItem
+
+-------------------------------------------------------------------------------
+	
+Release Name: 1.0_alpha_5
+Notes:
+* New EJS macro <@loop array="array_expression" element="variable_name" [index="variable_name"]>.
+	This macro has 3 attributes: array, element, and index, and basically 
+	implements array.forEach(function(element,index){}). Index is optional.
+	ex: 
+		<@loop array="qry.data" element="curRow" index="rownum">
+			<tr>
+				<td><%=rownum%></td>
+				<td><%=curRow.first_name%></td>
+				<td><%=curRow.last_name%></td>
+			</tr>
+		</@loop>
+* New EJS macros <@if boolean_expr >, <@elseif boolean_expr>, <@else>.
+	These implement a decision structure. ex:
+	<@if qry1.data.length>
+		<h3><%=qry1.data.length%> rows displayed from query 1</h3>
+	<@elseif	qry2.data.length>
+		<h3><%=qry2.data.length%> rows displayed from query 2</h3>
+	<@else>
+		<h3>No rows to display.</h3>
+	</@if>
+* New EJS macro <@set assignment_expr>.
+	Sets a variable in the form of 'var assignment_expr;'. the expression is 
+	expected to NOT include a trailing semicolon. ex:
+	<@set curData = curRow[curCol.name]> 
+
+Have a look at examples/sql_example.ejs to see these in action
+
+-------------------------------------------------------------------------------
+	
+Release Name: 1.0_alpha_4
+Notes:
+Major changes include:
+* Removed all dependencies on the servlet environment from MynaThread. This is in 
+	preparation for asynchronous tasks
+* Replaced Embedded JS Parser with one generated from Antlr. This has resulted in 
+	a perfect match in line numbers in errors, and allows for more complicated
+	grammar in the future (custom tags?). This does have an up front cost in 
+	compile time.
+* Added support for query parameters. See webdir/examples/sql_example.sjs
+* Added $res.flush() function to send content to the browser before the end of 
+	the request
+	
+-------------------------------------------------------------------------------
+	
+Release Name: 1.0_alpha_3
+Notes:
+This release marks the completion of the Standard Library documentation, and the 
+beginning of the general "getting started" docs. The profiler has been improved 
+and several bugs are fixed.

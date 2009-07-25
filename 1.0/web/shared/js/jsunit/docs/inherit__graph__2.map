@@ -1,0 +1,7 @@
+<area shape="rect" href="$classError.html" title="Error class according ECMA specification." alt="" coords="7,81,60,108">
+<area shape="rect" href="$classJsUnitError.html" title="JsUnitError class." alt="" coords="111,81,201,108">
+<area shape="rect" href="$classAssertionFailedError.html" title="Thrown when a test assertion fails." alt="" coords="263,5,415,32">
+<area shape="rect" href="$classFunctionGluingError.html" title="FunctionGluingError class." alt="" coords="264,56,413,83">
+<area shape="rect" href="$classInterfaceDefinitionError.html" title="InterfaceDefinitionError class." alt="" coords="252,107,425,133">
+<area shape="rect" href="$classPrinterWriterError.html" title="PrinterWriterError class." alt="" coords="271,157,407,184">
+<area shape="rect" href="$classComparisonFailure.html" title="Thrown when a test assert comparing equal strings fail." alt="" coords="476,5,617,32">

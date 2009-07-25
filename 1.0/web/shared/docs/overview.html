@@ -1,0 +1,316 @@
+<html>
+	<body>
+	<LINK REL="StyleSheet" HREF="docs.css" TYPE="text/css"/>
+
+<div class="section_title">Summary:</div>	
+Myna is Java web application (.war file) that provides dynamic web content from 
+both interpreted and compiled JavaScript, as well as complete access to Java 
+libraries.   
+
+<div class="section_title">Goals:</div>
+To provide an open source rapid web development platform that:
+<ul>
+	<li>Can be distributed as a simple ".war" file.</li>
+	<li>Can leverage Java's large number of libraries.</li>
+	<li>Can be easily administered online.</li>
+	<li>Provides a rich standard library to speed development.</li>
+	<li>Provides easy access to databases.</li>
+	<li>Can run on JVM 1.5+</li>
+	<li>Can be deployed on top of any Java Servlets container</li>
+	<li>Can be distributed freely. All distributed code coverd under Open Source Licenses.</li>
+</ul>
+... but does <b>NOT</b>:
+<ul>
+	<li>Provide an MVC framework. Developers are free to implement their own framework if appropriate. </li>
+	<li>Require Java programing to extend. As much behavior as practical will be implemeneted in JavaScript.</li>
+</ul>
+
+
+<a name="license"><div class="section_title">Myna ships with:</div></a>
+<table  height="1" cellpadding="5" cellspacing="0" border="1" >
+	<tr>
+		<th >
+			Component	
+		</td>
+		<th>Homepage</td>
+		<th>License</td>
+	</tr>
+	<tr>
+		<td >
+			Myna java code, Myna Javascript code	
+		</td>
+		<td><a href="http://www.mynajs.org">http://www.mynajs.org</a></td>
+		<td><a href="license.txt">MIT License</a></td>
+	</tr>
+	<tr>
+		<td >
+			Mozilla Rhino Javascript interpreter	
+		</td>
+		<td><a href="http://www.mozilla.org/rhino/">http://www.mozilla.org/rhino/</a></td>
+		<td><a href="http://www.mozilla.org/MPL/">MPL 1.1/GPL 2.0</a></td>
+	</tr>
+	<tr>
+		<td >
+			Java Simplified Encryption	
+		</td>
+		<td><a href="http://www.jasypt.org/">http://www.jasypt.org/</a></td>
+		<td><a href="http://www.jasypt.org/license.html">Apache 2</a></td>
+	</tr>
+	<tr>
+		<td >
+			Apache Commons<br> 
+			(codec,
+			collections,
+			dbcp,
+			fileupload,
+			io,
+			lang,
+			logging,
+			pool)
+		</td>
+		<td><a href="http://commons.apache.org/">http://commons.apache.org/</a></td>
+		<td><a href="http://commons.apache.org/license.html">Apache 2</a></td>
+	</tr>
+	<tr>
+		<td >
+			concurrent.jar	
+		</td>
+		<td><a href="http://g.oswego.edu/dl/classes/EDU/oswego/cs/dl/util/concurrent/intro.html">homepage</a></td>
+		<td>Public Domain</td>
+	</tr>
+	<tr>
+		<td >
+			International Components for Unicode	
+		</td>
+		<td><a href="http://icu-project.org/">http://icu-project.org/</a></td>
+		<td><a href="http://source.icu-project.org/repos/icu/icu/trunk/license.html">ICU License</a></td>
+	</tr>
+	<tr>
+		<td >
+			Java Caching System	
+		</td>
+		<td><a href="http://jakarta.apache.org/jcs/index.html">http://jakarta.apache.org/jcs/index.html</a></td>
+		<td><a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache 2</a></td>
+	</tr>
+	<tr>
+		<td >
+			Java Uuid Generator (JUG) 	
+		</td>
+		<td><a href="http://jug.safehaus.org/">http://jug.safehaus.org/</a></td>
+		<td><a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache 2</a></td>
+	</tr>
+	<tr>
+		<td >
+			H2 Database engine	
+		</td>
+		<td><a href="http://www.h2database.com">http://www.h2database.com</a></td>
+		<td><a href="http://www.h2database.com/html/license.html">Modified MPL 1.1</a></td>
+	</tr>
+	<tr>
+		<td >
+			MySQL JDBC driver 	
+		</td>
+		<td><a href="http://www.mysql.com/products/connector/j/">http://www.mysql.com/products/connector/j/</a></td>
+		<td><a href="http://www.gnu.org/licenses/gpl.html">GPL</a></td>
+	</tr>
+	<tr>
+		<td >
+			PostgreSQL JDBC driver 	
+		</td>
+		<td><a href="http://jdbc.postgresql.org/">http://jdbc.postgresql.org/</a></td>
+		<td><a href="http://jdbc.postgresql.org/license.html">BSD</a></td>
+	</tr>
+	<tr>
+		<td >
+			jTDS JDBC driver for MS-SQL and Sybase 	
+		</td>
+		<td><a href="http://jtds.sourceforge.net/">http://jtds.sourceforge.net/</a></td>
+		<td><a href="http://jtds.sourceforge.net/license.html">LGPL</a></td>
+	</tr>
+	<tr>
+		<td >
+			Apache XMLBeans 	
+		</td>
+		<td><a href="http://xmlbeans.apache.org/">http://xmlbeans.apache.org/</a></td>
+		<td><a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache 2</a></td>
+	</tr>
+	<tr>
+		<td >
+			Ext Client-side javascript library 	
+		</td>
+		<td><a href="http://extjs.com">http://extjs.com</a></td>
+		<td><a href="http://extjs.com/license">GPL 3.0</a></td>
+	</tr>
+	<tr>
+		<td >
+			FAMFAMFAM "Silk" Icon library 	
+		</td>
+		<td><a href="http://www.famfamfam.com/lab/icons/silk/">http://www.famfamfam.com/lab/icons/silk/</a></td>
+		<td><a href="http://creativecommons.org/licenses/by/2.5/">Creative Commons Attribution 2.5 License</a></td>
+	</tr>
+</table>
+
+
+<div class="section_title">Myna Specific Features:</div>
+<table width="500" height="1" cellpadding="5" cellspacing="0" border="1" >
+
+<tr><td nowrap="true" class="feature_label"><b>JVM 1.4+ compatibility</b>:</td><td>
+	The Rhino API is accessed directly rather than through Java 6's 
+	scripting API.
+	
+<tr><td nowrap="true" class="feature_label"><b> Minimal setup</b>:</td><td>
+	Dynamic pages can be created immediately on deployment of the .war file. 
+	There is no need to to set up complicated application definitions.
+
+<tr><td nowrap="true" class="feature_label"><b> Server-side JavaScript </b>:</td><td>
+	Files in the in the application root or sub folders ending with ".sjs" 
+	are treated as server-side JavaScript. JavaScript content is executed 
+	server side and sent to there browser.
+	<pre>
+$res.print("&lt;html>");
+$res.print("	&lt;body>");
+$res.print("	Today's date is" + String(new Date()) + "!");
+$res.print("	&lt;/body>");
+$res.print("&lt;/html>");
+	</pre>
+<tr><td nowrap="true" class="feature_label"><b> Embedded JavaScript </b>:</td><td>
+	Files in the in the application root or sub folders ending with ".ejs" 
+	are treated as embedded JavaScript. Embedded JavaScript files can 
+	contain any text content (typically HTML) with JSP style escaped dynamic 
+	content.
+<pre>
+&lt;% var today = new Date(); %>
+&lt;html>
+	&lt;body>
+		Today's date is&lt;%=today%>!"
+	&lt;/body>
+&lt;/html>
+</pre>
+
+<tr><td nowrap="true" class="feature_label"><b> Embedded JavaScript Macros</b>:</td><td>
+	Macros are html-like contructs that make loops and conditionals easier to 
+	implement in ".ejs" files.
+<pre>
+&lt;@loop array="qry.data" element="curRow" index="rownum">
+	&lt;tr>
+		&lt;td class="">
+			&lt;%=rownum%>  
+		&lt;/td>
+		&lt;td class="">
+			&lt;%=curRow.first_name%>  
+		&lt;/td>
+		&lt;td class="">
+			&lt;%=curRow.last_name%>  
+		&lt;/td>
+		&lt;td class="">
+			&lt;@if curData.type == "A">
+				Administrator
+			&lt;@elseif curData.type == "M">
+				Manager
+			&lt;@else>
+				Non-Management
+			&lt;/@if>
+		&lt;/td>
+	&lt;/tr>
+&lt;/@loop>
+</pre>
+
+<tr><td nowrap="true" class="feature_label"><b> Embedded JavaScript Blocks </b>:</td><td>
+	EJS blocks work like .ejs paged but can be used in JavaScript code to 
+	return a string. All text between <ejs> and </ejs> will be returned as 
+	if it was included from a .ejs page. This makes it much easier to embed
+	other languages like SQL or HTML in JavaScript strings
+<pre>
+var qry = new Myna.Query({
+  dataSource:"ds_name",
+  sql:&lt;ejs>
+    select 
+      chanid,
+      name,
+      callsign
+    from 
+      channel
+    where 
+      channum = &lt;%=$req.data.channel_number%> 
+      &lt;@if !includeDeleted>
+      and deleted != 1
+      &lt;/@if>
+  &lt;/ejs>
+})
+</pre>
+<tr><td nowrap="true" class="feature_label"><b> E4X support </b>:</td><td>
+	<a href="http://developer.mozilla.org/en/docs/E4X_tutorial">http://developer.mozilla.org/en/docs/E4X_tutorial</a>
+	<br>Easily import, manipulate and export XML data from javascript 
+<tr><td nowrap="true" class="feature_label"><b> Standard library </b>:</td><td>
+	Structured library of useful functions. Client side compatible functions
+	are stored in seperate files so they can be loaded in the browser. See 
+	<a href="js/libOO/index.html">libOO JS docs</a> 
+	
+<tr><td nowrap="true" class="feature_label"><b>Standard Objects </b>:</td><td>
+	Pre-defined objects that contain useful information about the envirinment. See 
+	<a href="js/libOO/files/standard_objects-sjs.html">standard_object.sjs</a>
+	
+<tr><td nowrap="true" class="feature_label"><b> Application lifecycle hooks </b></td><td>
+	See <a href="js/libOO/files/standard_objects-sjs.html#$application">$application</a> standard object
+
+<tr><td nowrap="true" class="feature_label"><b>Easy Multi-line Queries </b></td><td>
+	See <a href="js/libOO/files/Query-sjs.html">Myna.Query</a>
+
+<tr><td nowrap="true" class="feature_label"><b>Database connection pooling </b>:</td><td>
+	Database connections are re-used to to reduce overhead. Future releases will 
+	allow the maximum size/age of connection threads to 
+	be managed in the administrator.
+	
+<tr><td nowrap="true" class="feature_label"><b>Object-relational Mapping (ORM) </b>:</td><td>
+	Rows in Database tables can be treated like objects and extended. See 
+	<a href="js/libOO/files/DataManager-sjs.html">Myna.DataManager</a>
+
+<tr><td nowrap="true" class="feature_label"><b> Profiling </b>:</td><td>
+	A global <a href="js/files/shared/js/libOO/Profiler-js.html">profiler</a> object is available for profiling code. An 
+	administrator setting can display an execution time summary at the 
+	bottom of every page.  
+	
+<tr><td nowrap="true" class="feature_label"><b> Script Compilation </b>:</td><td>
+	JavaScript files can be compiled and cached to improve performance
+	
+<tr><td nowrap="true" class="feature_label"><b> Web-based Administration </b>:</td><td>
+	All currently implemented settings can be modified through the provided 
+	administrator application
+	
+<tr><td nowrap="true" class="feature_label"><b> Easily extensible</b>:</td><td>
+	Most of the framework for request handling is implemented in JavaScript, 
+	so it is possible to completely re-architect the request lifecycle 
+	without re-compiling the Java servlet. 
+	
+<tr><td nowrap="true" class="feature_label"><b> Centralized datasources </b>:</td><td>
+	Datasources can be defined in the administrator and then referred to by 
+	name at runtime
+	
+<tr><td nowrap="true" class="feature_label"><b> Buffered content</b>:</td><td>
+	Generated content can be retrieved and cleared at any time during page 
+	execution, and is sent to the browser at the end of the request in a 
+	manner similar to PHP.	This allows cookies and other headers to be sent 
+	at any time during the request. See 
+	<a href="js/libOO/files/standard_objects-sjs.html#$res">$res</a> 
+	standard object
+
+<tr><td nowrap="true" class="feature_label"><b> Normalized Paths</b>:</td><td>
+	All file handling us done using String URIs. This allows easy 
+	cross-platform file access. Also file names that are not absolute are 
+	expanded relative to either the application root, or the currently 
+	running script. See <a href="js/libOO/files/File-sjs.html">Myna.File</a> and
+	<a href="js/libOO/files/MynaPath-txt.html">MynaPath</a>
+	
+<tr><td nowrap="true" class="feature_label"><b> LDAP Queries</b>:</td><td>
+	See 
+	<a href="js/libOO/files/Ldap-sjs.html">Myna.Ldap</a> 
+	
+<tr><td nowrap="true" class="feature_label"><b> Strong Encryption</b>:</td><td>
+	See 
+	<a href="js/libOO/files/String-sjs.html#String.toHash">String.toHash</a> and 
+	<a href="js/libOO/files/String-sjs.html#String.encrypt">String.encrypt</a>
+	</td></tr>
+</table>
+
+
+</html>

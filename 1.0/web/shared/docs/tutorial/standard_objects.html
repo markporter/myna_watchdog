@@ -1,0 +1,402 @@
+<script type="text/javascript" src="../../js/shjs/sh_main.js"></script>
+<script type="text/javascript" src="../../js/shjs/lang/sh_myna.js"></script>
+<script type="text/javascript" src="../../js/libOO/Function.js"></script>
+<script type="text/javascript" src="../../js/libOO/Array.js"></script>
+<script type="text/javascript" src="../../js/libOO/String.js"></script>
+
+<LINK REL="StyleSheet" HREF="../docs.css" TYPE="text/css"/>
+<link type="text/css" rel="stylesheet" href="../../js/shjs/css/sh_mild_white.css">
+<script>window.onload=function(){
+	var pre_tags = document.getElementsByTagName("pre");
+	pre_tags = Array.prototype.slice.call(pre_tags, 0);
+	pre_tags.forEach(function(tag){
+			if ("getAttribute" in tag){
+				tag.setAttribute("class", tag.getAttribute("class") + " sh_myna" );
+			} else {
+				tag.className +=" sh_myna"
+			}
+	})
+	sh_highlightDocument();
+}</script>
+<LINK REL="StyleSheet" HREF="../docs.css" TYPE="text/css"/>
+
+<h1>Myna Environment</h1>
+
+Myna, by default, includes a set of environment variables via 
+<a href="../js/libOO/files/standard_objects-sjs.html">standard_object.sjs</a>. 
+Myna also provides standard functions as extensions to JavaScript's base objects 
+(
+	<a href="../js/libOO/files/Object-js.html">Object.js</a>,
+	<a href="../js/libOO/files/Array-js.html">Array.js</a>,
+	<a href="../js/libOO/files/String-js.html">String.js</a>,
+	<a href="../js/libOO/files/String-sjs.html">String.sjs</a>,
+	<a href="../js/libOO/files/Date-js.html">Date.js</a>
+)
+and through the Global Myna Object (
+	<a href="../js/libOO/files/Myna-sjs.html">Myna.sjs</a>
+), as well as several classes that provide more specific functionality (
+	<a href="../js/libOO/files/Query-sjs.html">Myna.Query</a>,
+	<a href="../js/libOO/files/DataManager-sjs.html">Myna.DataManager</a>,
+	<a href="../js/libOO/files/ValidationResult-js.html">Myna.ValidationResult</a>,
+	<a href="../js/libOO/files/File-sjs.html">Myna.File</a>,
+	<a href="../js/libOO/files/Profiler-js.html">Myna.Profiler</a>,
+	<a href="../js/libOO/files/Ldap-sjs.html">Myna.Ldap</a>,
+	
+). This tutorial is a quick tour of the standard objects and how Myna handles 
+the normal web application workflow.
+<P>
+Let's start with one of the most useful functions in the library for debugging: 
+<a href="../js/libOO/files/Myna-sjs.html#Myna.dump">Myna.dump</a>. Myna.dump 
+returns nested HTML table representing the supplied object. Here is an example:
+
+<p>
+<a href="code/environment1.ejs">environment1.ejs</a><br>
+<pre class="code">
+&lt;%=Myna.dump(this,"Global Scope")%>
+
+</pre>
+
+
+This shows all of the objects defined in the global scope. Clicking bold-ed title 
+on the left side of a cell will collapse or expand that object. You may notice 
+that some cells end in "[ max recursion ]". This is a safety mechanism that 
+prevents infinite recursion. Sometimes the default maxRecursion of 4 is not 
+enough, in which case you can pass a third parameter to extend the recursion depth.
+
+<p>
+<pre class="code">
+&lt;%=Myna.dump(this,"Global Scope",6)%>
+
+</pre>
+
+
+<h2>Here is a quick tour of the standard_objects:</h2>
+<ul>
+	<li><a href="#$req">$req</a></li>
+	<li><a href="#$res">$res</a></li>
+	<li><a href="#$session">$session</a></li>
+	<li><a href="#$cookie">$cookie</a></li>
+	<li><a href="#$server">$server</a></li>
+	<li><a href="#$profiler">$profiler</a></li>
+	<li><a href="#$application">$application</a></li>
+</ul>
+
+<a name="$req"><h3>$req</h3></a>
+<a href="../js/libOO/files/standard_objects-sjs.html#$req">$req</a> is a global 
+object that contains information about the web request. It contains the 
+properties "paramNames" and "data". The paramNames property is an array of the 
+lower case parameter names passed to this request from either the url or a form post. The 
+data property contains the values for the request parameters, keyed by fieldName.
+From the <a href ="../js/libOO/files/standard_objects-sjs.html#$req.data">API documentation</a>:
+<p>
+<div class="quote">
+	Every parameter in the HttpServletRequest is copied as a 
+	lowercase property of the data object. 
+	<p>
+	If a parameter is passed multiple times, this property will be a 
+	comma-separated list of	each value of the parameter. In addition, 
+	a property called parameter_name$array is created. This property 
+	contains an array of all the values of that parameter name, in the 
+	order they were passed. This parameter is created even if only one 
+	value is passed
+	<p>
+	If a parameter value can be interpreted as JSON, a property 
+	called parameter_name$object is created by calling 
+	&lt;String.parseJson> against the value. If there are multiple
+	JSON valid objects, only the last will be stored in 
+	parameter_name$object, but a property called parameter_name$objectArray
+	is populated with every object created.
+	<p>
+	Every value in data.parameter_name and _data_.parameter_name$array 
+	is escaped via String.escapeHtml. This helps to protect 
+	against Cross-Site Scripting (XSS) and SQL injection. To access
+	un-altered parameter data, see 
+	<a href ="../js/libOO/files/standard_objects-sjs.html#$req.rawData">rawData</a>
+	
+	<p>
+	File uploads produce an object in $req.data containing 
+	information about the upload that looks like this
+	<pre>
+$req.data.&lt;fieldname> ={
+	diskItem: org.apache.commons.fileupload.disk.DiskFileItem,
+	stats:{
+		fieldName:String, name of field in form,
+		fileName:String, name of file on client side,
+		contentType:String, mime type,
+		isInMemory:boolean, true if file contents are in memory,
+		sizeInBytes:int, size in bytes,
+		diskLocation:String, the current location of the uploaded file
+	}
+}
+	</pre>
+	multiple uploads with the same fieldname are stored in 
+	$req.data.&lt;fieldname>$array.
+</div>
+
+Here is an example of a page that posts a form to itself, and dumps the values in $req:
+
+<p>
+<a href="code/environment2.ejs">environment2.ejs</a><br>
+<pre class="code">
+&lt;form method="post">
+   First Name: &lt;input name="first_name">&lt;br>
+   Favorite colors:&lt;br>
+   &lt;input type="checkbox" name="favorite_colors" value="red">Red
+   &lt;input type="checkbox" name="favorite_colors" value="orange">Orange
+   &lt;input type="checkbox" name="favorite_colors" value="yellow">Yellow
+   &lt;input type="checkbox" name="favorite_colors" value="green">Green
+   &lt;input type="checkbox" name="favorite_colors" value="blue">Blue
+   &lt;input type="checkbox" name="favorite_colors" value="indigo">Indigo
+   &lt;input type="checkbox" name="favorite_colors" value="violet">Violet
+   &lt;p>
+   
+   Some Json Code:&lt;br>
+   &lt;textarea cols="60" rows="10" name="json">
+   {
+      "array":[
+         "thing1",
+         "thing2"],
+      "number":12,
+      "string":"some string",
+      "sub_object":{
+         "number":12,
+         "string":"some string"
+      }
+   }
+   &lt;/textarea>&lt;p>
+   
+   More Json Code with the same name:&lt;br>
+   &lt;textarea cols="60" rows="3" name="json">
+   {
+      "phrase":"Dude, where's my car?"
+   }
+   &lt;/textarea>&lt;p>
+   
+   A Cross Site Scripting hack:&lt;br>
+   &lt;textarea name="xss">';alert(String.fromCharCode(88,83,83))//\';
+   alert(String.fromCharCode(88,83,83))//";alert(String.fromCharCode(88,83,83))//\";
+   alert(String.fromCharCode(88,83,83))//-->&lt;/SCRIPT>">'>
+   &lt;SCRIPT>alert(String.fromCharCode(88,83,83))&lt;/SCRIPT>&lt;/textarea>
+   &lt;p>
+   Display: &lt;select name="dump_data">
+      &lt;option value="filtered">$req.data&lt;/option>
+      &lt;option value="raw">$req.rawData&lt;/option>
+   &lt;/select>&lt;p>
+   &lt;button type="submit">submit&lt;/button>
+&lt;/form>
+
+
+&lt;@if $req.data.dump_data == "filtered">
+   &lt;%=Myna.dump($req.data,"$req.data")%>
+&lt;@elseif $req.data.dump_data == "raw">
+   &lt;%=Myna.dump($req.rawData,"$req.rawData")%>
+&lt;/@if>
+</pre>
+
+
+<a name="$res"><h3>$res</h3></a>
+<a href="../js/libOO/files/standard_objects-sjs.html#$res">$res</a> is the global 
+response object. It is used to manipulate what text will be sent to the browser 
+at the end of the request. Myna internally maintains a text buffer that represents
+the output for the current request. $res.print(), Myna.print() and the ejs tag 
+&lt;%=%> append to this 
+buffer, $res.clear() deletes the buffer and returns it's content, and 
+$res.getContent() returns the buffer content without deleting it. These  
+functions can be used to change the order of text in output, or even capture output
+for storage in a file or database. 
+
+<p>
+Here is an example of wrapping generated content: 
+
+<p>
+<a href="code/environment3.ejs">environment3.ejs</a><br>
+<pre class="code">
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Suspendisse nec nisi 
+nec nisi scelerisque vulputate. Nullam eu elit. Aenean eleifend. Donec ipsum metus, 
+ultricies sed, tincidunt non, elementum in, lorem. Maecenas vitae massa eget nibh 
+tempus mattis. Pellentesque dolor nulla, scelerisque a, gravida vitae, ullamcorper 
+quis, ipsum. Vestibulum velit ligula, rhoncus id, varius nec, porttitor auctor, 
+nisi. Praesent magna purus, pellentesque eu, ullamcorper eu, sodales in, odio. 
+Fusce sollicitudin. Nam adipiscing metus id lacus.
+
+Ut nibh nisi, cursus eget, aliquet eget, dapibus at, felis. Mauris mollis. 
+Nullam dapibus tempus tortor. Vivamus adipiscing rutrum sapien. Nullam et 
+tellus. Sed accumsan ultricies odio. Aliquam gravida elementum mauris. Quisque 
+convallis orci eu ante. Sed viverra, ipsum malesuada euismod ultrices, nisl 
+neque suscipit lectus, vel ultricies metus elit nec tellus. Aenean tristique 
+risus ut eros. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Fusce 
+augue. Curabitur placerat nunc quis justo. Sed ac pede in lorem laoreet semper. 
+In hac habitasse platea dictumst. Ut interdum dictum dui. Vivamus luctus. 
+Integer vitae arcu. Aliquam erat volutpat.
+
+
+&lt;% 
+   if(!$req.data.width) $req.data.width=100
+   var content = $res.clear();
+%>
+&lt;form method="post">
+   set width to:&lt;input name="width" value="&lt;%=$req.data.width%>">
+   &lt;button type="submit">resize&lt;/button>
+&lt;/form>
+&lt;table width="100%" height="1" cellpadding="10" cellspacing="0" border="0" >
+   &lt;tr>
+      &lt;td >
+         
+      &lt;/td>
+      &lt;td bgcolor="linen" width="&lt;%=$req.data.width%>">
+         &lt;%=content%>
+      &lt;/td>
+      &lt;td >
+         
+      &lt;/td>
+   &lt;/tr>
+&lt;/table>
+
+
+</pre>
+
+<a name="$session"><h3>$session</h3></a>
+<a href="../js/libOO/files/standard_objects-sjs.html#$session">$session</a> is 
+the global session object. It represents temporary variables associated with a 
+particular client. The get() and set() functions are used to store and retrieve 
+values, and clear() is used to forse the end of a session. Although usefull for 
+temporary values, be aware that sessions are not normally persisted and can be 
+destroyed unexpectedly. This can be a problem if the session is used to store 
+user information for the purposes of authentication.
+
+<a name="$cookie"><h3>$cookie</h3></a>
+<a href="../js/libOO/files/standard_objects-sjs.html#$cookie">$cookie</a> is for
+reading and writing browser cookies. $cookie.data contains an array of 
+<a href="http://java.sun.com/products/servlet/2.2/javadoc/javax/servlet/http/Cookie.html">javax.servlet.http.Cookie</a>
+objects. The set() and get() functions store and retrieve individual cookies. Note 
+that you cannot send a cookie after content is sent to the browser. This is 
+normally only an issue when using $res.flush() to send content before the end 
+of the request
+
+<a name="$server"><h3>$server</h3></a>
+<a href="../js/libOO/files/standard_objects-sjs.html#$server">$server</a> contains 
+information about the server environment. Notable properties are:
+
+<li><b>globalScope</b> a reference to the top level scope. Setting 
+properties on this object is the same as declaring global variables
+
+<li><b>servelet,request,response</b> refererences to the Java 
+<a href="http://java.sun.com/products/servlet/2.2/javadoc/javax/servlet/http/HttpServlet.html">servlet</a>, 
+<a href="http://java.sun.com/products/servlet/2.2/javadoc/javax/servlet/http/HttpServletRequest.html">request</a>,
+and <a href="http://java.sun.com/products/servlet/2.2/javadoc/javax/servlet/http/HttpServletResponse.html">response</a> 
+instances for this thread. 
+
+<li><b>currentDir,currentUrl,requestDir, requestUrl</b> the filesystem paths and 
+url paths for the the currently executing script and the requested script.   
+
+<a name="$profiler"><h3>$profiler</h3></a>
+<a href="../js/libOO/files/standard_objects-sjs.html#$profiler">$profiler</a> is 
+an instance of <a href="">Myna.Profiler</a> that is started at the beginning of 
+the request. 
+
+<p> Here is an eample of using the global profiler:
+
+<a href="code/environment4.ejs">environment4.ejs</a><br>
+<pre class="code">
+<% $profiler.mark("before loop") %>
+&lt;@loop array="new Array(10)" element="dummy">
+   &lt;% $profiler.begin("creating a hash") %>
+   &lt;%="thing's and stuff".toHash()%>&lt;br>
+   &lt;% $profiler.end("creating a hash") %>
+&lt;/@loop>
+&lt;% 
+   $profiler.mark("after loop")
+   $profiler.calcAverages();
+%>
+&lt;%=$profiler.getSummaryHtml()%>
+
+</pre>
+
+
+<a name="$application"><h3>$application</h3></a>
+<a href="../js/libOO/files/standard_objects-sjs.html#$application">$application</a> 
+contains functions that are executed as part of the request process. These 
+functions are:
+
+<li><b>onApplicationStart</b>	Called when a new application scope is created, before $application.onRequestStart.
+<li><b>onRequestStart</b>		Called before processing a request.
+<li><b>onRequestEnd</b>			Called after processing a request.
+<li><b>onSessionStart</b>		Called when a new session is created, before $application.onRequestStart. 
+
+These functions can be overridden by placing replacement functions in a file 
+called "applicaiotn.sjs" in you application directory. When a page is requested, 
+Myna searches every directory between the webroot and the requested file for 
+application.sjs files and executes them in order. This makes it possible to set 
+properties or execute code for every request in a set of sub-folders. 
+
+<p> Here is an eample from Myna Administrator's applicaiton.sjs file:
+
+<pre class="code">
+Myna.applyTo(this);
+
+
+$application.appName = "myna_admin";
+$application.prettyName = "Myna Adminstrator";
+$application.noAuthFuses=["login","auth"];
+$application.defaultFuseAction="login";
+$application.mainFuseAction="main";
+$application.extUrl =$server.rootUrl +"shared/js/ext_latest/"
+
+var sessionSecret = "SGlTij2aIO/fzqdgoM8RvDwAeBFVbGzW";
+//append request start function
+$application.appendFunction("onRequestStart",function(){
+   var session_cookie;      // stores encrypted session data
+   
+   //check for valid cookie
+      session_cookie = $cookie.get("session_cookie");
+      if (session_cookie && !$session.get("authenticated")){
+         try{
+            var data =session_cookie.decrypt(sessionSecret).parseJson();
+            if (data.password.hashEquals(getGeneralProperties().admin_password)){
+               $session.set("authenticated",true);
+            }
+            
+         } catch (e){} //bad cookies are ignored
+      }
+   if (!$req.data.fuseaction) $req.data.fuseaction=this.defaultFuseAction; 
+   //is the user authenticated?   
+   if (!$session.get("authenticated") ){
+      if (this.noAuthFuses.indexOf($req.data.fuseaction.toLowerCase()) != -1){
+         return;   
+      } else {
+         /*    if the fuseaction requires authentication, 
+            but the user is not authenticated, then set
+            the fuseaction to the default (login)
+         */
+         $req.data.fuseaction=this.defaultFuseAction;
+      }
+   }
+});
+
+//append request end function
+$application.appendFunction("onRequestEnd",function(){
+   if ($session.get("authenticated")){   
+      var json = {
+	  	password:getGeneralProperties().admin_password}.toJson().encrypt(sessionSecret);
+	  }
+      $cookie.set("session_cookie",json);
+   }
+});
+
+</pre>
+
+<div class="tutorial_foot" style="display:none">
+	<table width="100%" height="1" cellpadding="5" cellspacing="0" border="1" >
+		<tr>
+			<td class="">
+				<a href="index.html">&lt;&lt; Previous</a>
+			</td>
+			<td class="" align="center">
+				<a href="index.html">Table Of Contents</a>
+			</td>
+			<td class="" align="right">
+				<!-- <a href=".html">Next >></a> -->
+			</td>
+		</tr>
+	</table>
+</div>

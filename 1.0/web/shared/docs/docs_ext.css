@@ -1,0 +1,43 @@
+img.icon_page{
+	background-image: url(../images/famfamfam_silk/icons/page_white_go.png)	
+}
+.plain_html,.plain_html td{
+	font-size:10pt;
+	font-family:sans-serif;
+}
+
+
+pre.code{
+	/* white-space:pre; */
+	font-family:monospace;
+	background-color:#D9E8FB;
+	border: 1px solid #485569;
+	border-left:5px solid #485569;
+	width:auto; 
+	display:block;
+	margin:15px;
+	margin-right:0px;
+	margin-left:0px;
+	padding:10px;
+	padding-right:0px;
+	
+}
+.feature_label{
+	vertical-align:top;	
+	background-color:#8f9eb9;
+}
+
+.quote{
+	background-color:silver;
+	border: 1px solid black;
+	border-left:5px solid black;
+	border-right:5px solid black;
+	display:block;
+	margin:15px;
+	margin-right:30px;
+	padding:10px;	
+}
+.section_title{
+	font-size:14pt;
+	margin-top:15px;
+}

@@ -1,0 +1,34 @@
+<div id="help" style="padding:10px;">
+	Upgrading Myna will usually require a context reload or JVM restart so you 
+	may want to limit connections by setting Max Request to 0 in General 
+	Settings. 
+	<p>
+	The upgrade process for myna consists of of 4 steps:
+	
+	<h3>1. Upload new .war file</h3> You can download the latest copy of Myna from
+	<a href="http://sourceforge.net/project/showfiles.php?group_id=202389">http://sourceforge.net/project/showfiles.php?group_id=202389</a>
+	<br>Browse to the downloaded .war file and click "Start Upgrade" to start 
+	the upgrade
+	
+	<p><h3>2. Examine files</h3>
+	In this step the system will determine what files in the upload war are 
+	actually different from the installed files. These new files will be output 
+	to /WEB-INF/upgrade_files. At the same time, a new folder is created under 
+	/WEB-INF/upgrade_backups/backup_&lt;date and time>. This folder will contain 
+	the original version of any files replaced by the upgrade process.
+	
+	<p><h3>3. Run upgrade script (if needed)</h3>
+	Any changes not related to simple file updates will be handled by the 
+	upgrade script included in the war file (/WEB-INF/upgrade.sjs)
+	
+	<p><h3>4. Install upgraded files</h3>
+	Finally the new files will be copied to the webroot. If this upgrade 
+	replaced the java components, a context reload/JVM restart will be needed. 
+	This may happen automatically on some application servers. 
+	
+	<h2 name="failure">Recovering from a failed upgrade</h2>
+	The first step when it appears you have a failed upgrade is to restart your 
+	application server. If you are still having problems, you can revert to your 
+	original version by copying the files in  /WEB-INF/upgrade_backups/backup_&lt;date and time>
+	over the files in your webroot.
+</div>

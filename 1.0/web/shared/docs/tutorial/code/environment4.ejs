@@ -1,0 +1,11 @@
+<% $profiler.mark("before loop") %>
+<@loop array="Array.dim(10)" element="dummy">
+	<% $profiler.begin("creating a hash") %>
+	<%="thing's and stuff".toHash()%><br>
+	<% $profiler.end("creating a hash") %>
+</@loop>
+<% 
+	$profiler.mark("after loop")
+	$profiler.calcAverages();
+%>
+<%=$profiler.getSummaryHtml()%>

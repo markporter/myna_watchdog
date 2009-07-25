@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE web-app
+    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.2//EN"
+    "http://java.sun.com/j2ee/dtds/web-app_2_2.dtd">
+
+<web-app>
+<!-- JSServlet -->
+	<servlet>
+		<servlet-name>JSServlet</servlet-name>
+		<servlet-class>info.emptybrain.myna.JSServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+
+	</servlet>
+<!-- sjs -->
+	<servlet-mapping>
+		<servlet-name>JSServlet</servlet-name>
+		<url-pattern>*.sjs</url-pattern>
+	</servlet-mapping>
+<!-- sjs with REST simulation -->
+	<servlet-mapping>
+		<servlet-name>JSServlet</servlet-name>
+		<url-pattern>/URL-MAP/*</url-pattern>
+	</servlet-mapping>
+<!-- ejs -->
+	<servlet-mapping>
+		<servlet-name>JSServlet</servlet-name>
+		<url-pattern>*.ejs</url-pattern>
+	</servlet-mapping>
+
+	
+</web-app>

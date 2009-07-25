@@ -1,0 +1,40 @@
+<% 
+	if ("auth_token" in $req.rawData){
+		var user_id = Myna.Permissions.consumeAuthToken($req.rawData.auth_token)
+		if (user_id){
+			$cookie.setAuthUserId(user_id);
+			Myna.print('<META HTTP-EQUIV="refresh" content="0; url='+$server.scriptName+'">');
+			Myna.abort();
+		}
+	}
+%>
+
+
+<link rel="stylesheet" type="text/css" href="<%=$application.extUrl%>resources/css/ext-all.css" />
+<link rel="stylesheet" type="text/css" href="<%=$application.extUrl%>resources/css/xtheme-slate.css" />
+<LINK REL="StyleSheet" HREF="views/default.css" TYPE="text/css"/>
+<script type="text/javascript" src="<%=$application.extUrl%>adapter/ext/ext-base.js"></script>
+<script type="text/javascript" src="<%=$application.extUrl%>ext-all-debug.js"></script>
+<script type="text/javascript" src="<%=$server.rootUrl%>shared/js/libOO/client.sjs"></script>
+<script>
+	Ext.onReady(function(){
+		Ext.BLANK_IMAGE_URL = '<%=$application.extUrl%>resources/images/default/s.gif';
+	});
+</script>
+<script src="controller.js"></script>
+
+
+
+<script>
+	var version = '<%=$server.version%>';
+	var rootUrl = '<%=$server.rootUrl%>';
+	var prettyName = '<%=$application.prettyName%>';
+	var authenticated = <%=!!$session.get("authenticated")%>;
+	var appname = '<%=$req.data.appname||"myna_admin"%>'
+	var auth_token = null
+	
+	
+	Ext.onReady(function(){
+		C.init()
+	});
+</script>
