@@ -23,7 +23,7 @@
 						Directory, LDAP, or Open ID. Myna knows how to authenticate 
 						against its own local database in myna_permissions. To use 
 						this functionality, save a user name and password, and set 
-						the type to "local". You can then compare a plain text 
+						the type to "myna". You can then compare a plain text 
 						password to the stored password via <User.isCorrectPassword>. 
 			
 			Right -	A right is essentially just a name associated with an 
@@ -291,6 +291,28 @@ if (!Myna) var Myna={}
 				return null	
 			}
 		},
+		/* Function: getAuthAdapter
+			creates and configures and authentication adpter based on the 
+			_config_ name provided  
+			
+			Parameters:
+				config	-	name of the configuration to use to create the 
+				            adapter. This name should match a config file in 
+							/WEB-INF/myna.auth_types
+			
+		*/
+		getAuthAdapter:function(name){
+			var adapter = $server.get("MYNA_auth_adapter_" + name);
+			if (!adapter){
+				
+				var config = new Myna.File("/WEB-INF/myna/auth_types/" + name).readString().parseJson();
+				adapter = {}
+				Myna.include("/shared/js/libOO/auth_adapters/" + config.adapter +".sjs",adapter);
+				Myna.log("debug","adapter",Myna.dump(adapter.getProperties()));
+				$server.set("MYNA_auth_adapter_" + name,adapter);
+			}
+			return adapter;
+		},
 		/* Function: getAuthKey
 			retrieves a unique authKey from the crypt_keys table for the supplied 
 			name, or creates one if the name does not exist.  
@@ -368,6 +390,12 @@ if (!Myna) var Myna={}
 					}
 			})
 			return token;
+		},
+		/* Function: getAuthTypes
+			returns an array of valid auth type names for this system
+		*/
+		getAuthTypes:function(){
+			return new Myna.File("/WEB-INF/myna/auth_types").listFiles().valueArray("fileName")
 		},
 		/*	Function: getUserById
 			returns the User object that matches the supplied id or null
@@ -459,7 +487,51 @@ if (!Myna) var Myna={}
 				return null;	
 			}
 		},
-		
+		/*	Function: getUserIdByAuth
+			returns the User ID that matches the supplied username and password 
+			or null if no matches
+			
+			Parameters:
+				login		-	login string (username)
+				password	-	user's password
+				type		-	*Optional, default null*
+								auth type to check, or all types if not defined. 
+								if more than one user matches this login and 
+								password an excpetion is thrown
+				
+		*/
+		getUserIdByAuth:function(login,password,type){
+			var $this=Myna.Permissions;
+			var types=type?[type]:$this.getAuthTypes()
+			var user_ids=[];
+			
+			types.forEach(function(type){
+				var adapter =Myna.Permissions.getAuthAdapter(type);
+				
+				if (adapter.isCorrectPassword(login,password)){
+					if (type == "server_admin") {
+						user_ids.push("myna_admin");
+						return;
+					}
+					
+					var user =$this.getUserByLogin(type,login);
+					if (!user){
+						if (type == "myna") throw new Error("Attempt to create duplicate user")
+						user = $this.addUser(adapter.getUserByLogin(login))
+						user.setLogin({type:type,login:login})
+					}
+					user_ids.push(user.get_user_id());
+				}
+			})
+			if (user_ids.length==1) {
+				return user_ids[0];
+			} else if (user_ids.length==0){
+				return null;
+			} else {
+				var msg="duplicate users ("+userId.join()+") for login '" + login+ "'";
+				throw new Error(msg)
+			}
+		}
 		
 	}
 
@@ -539,20 +611,20 @@ if (!Myna) var Myna={}
 		returns query of rights associated with this group
 		
 	 */
-	Myna.Permissions.User.prototype.qryRights = function(){
-		var ug = this;
-		return new Myna.Query({
-			ds:ug.ds,
-			sql:<ejs>
-				select ar.* 
-				from assigned_rights ar,
-					user_group_members ugm
-				where ugm.user_group_id=ar.user_group_id
-					and user_id={id}
-			</ejs>	,
-			values:{id:ug.get_user_id()}
-		})
-	}
+		Myna.Permissions.User.prototype.qryRights = function(){
+			var ug = this;
+			return new Myna.Query({
+				ds:ug.ds,
+				sql:<ejs>
+					select ar.* 
+					from assigned_rights ar,
+						user_group_members ugm
+					where ugm.user_group_id=ar.user_group_id
+						and user_id={id}
+				</ejs>	,
+				values:{id:ug.get_user_id()}
+			})
+		}
 	
 	/* Function: inactivate
 		inactivates this user. Inactivating a user also removes the user from all
@@ -560,29 +632,29 @@ if (!Myna) var Myna={}
 		correct
 		
 	 */
-	Myna.Permissions.User.prototype.inactivate = function(){
-		var u = this;
-		var now = new Date();
-		u.set_inactive_ts(now)
-		
-		new Myna.Query({
-			ds:u.ds,
-			sql:<ejs>
-				delete from user_group_members 
-				where user_id ={id}
-			</ejs>	,
-			values:{
-				id:u.get_user_id()
-			}
-		})
-	}
+		Myna.Permissions.User.prototype.inactivate = function(){
+			var u = this;
+			var now = new Date();
+			u.set_inactive_ts(now)
+			
+			new Myna.Query({
+				ds:u.ds,
+				sql:<ejs>
+					delete from user_group_members 
+					where user_id ={id}
+				</ejs>	,
+				values:{
+					id:u.get_user_id()
+				}
+			})
+		}
 	/* Function: isActive
 		returns true if this user is active
 		
 	 */
-	Myna.Permissions.User.prototype.isActive = function(){
-		return !(this.get_inactive_ts() instanceof Date);
-	}
+		Myna.Permissions.User.prototype.isActive = function(){
+			return !(this.get_inactive_ts() instanceof Date);
+		}
 	/* Function: reactivate
 		reactivates this user
 		
@@ -597,6 +669,9 @@ if (!Myna) var Myna={}
 	/* Function: hasRight
 		returns true if this user has been assigned the supplied appname and right name
 		
+		Parameters:
+			appname		-	name appname of of application
+			right		-	right name
 	 */
 	Myna.Permissions.User.prototype.hasRight = function(appname,rightName){
 		var ug = this;
@@ -673,7 +748,7 @@ if (!Myna) var Myna={}
 		adds or updates an login for this user
 		
 		Parameters:
-			options	-	Anobject that conains the options for this login. see below
+			options	-	An object that conains the options for this login. see below
 			
 		Options:
 			type		-	type of login. This is a hint for how to authenticate using 
@@ -710,7 +785,7 @@ if (!Myna) var Myna={}
 	}
 	/* Function: isCorrectPassword
 			returns true if the supplied user login and plaintext password match 
-			the stored password hash. Only works for "local" login types. Will 
+			the stored password hash. Only works for "myna" auth type. Will 
 			always return false for inactive users 
 			
 			Parameters:
@@ -727,7 +802,7 @@ if (!Myna) var Myna={}
 			
 		var existing =user_logins.find({
 			user_id:user.get_user_id(),
-			type:"local",
+			type:"myna",
 			login:login
 		})
 			

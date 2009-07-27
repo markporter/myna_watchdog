@@ -1463,7 +1463,30 @@ var C ={
 					bodyStyle:"padding:10px;",
 					items:[
 						{name:"user_login_id", width:250, fieldLabel:"User Login Id", readOnly:true, cls:"key_field" },
-						{name:"type", width:250,  fieldLabel:"Auth Type", maxLength:255,  id:"type" + tabId },
+						//{name:"type", width:250,  fieldLabel:"Auth Type", maxLength:255,  id:"type" + tabId },
+						{
+							xtype:"combo",
+							fieldLabel: "Auth Type",
+							id: "type",
+							name: "type",
+							store:new Ext.data.SimpleStore({
+								fields: ['value'],
+								data:authTypes.map(function(type){
+									return [type];
+								})
+							}),
+							width:150,
+							listWidth:150,
+							displayField:'value',
+							valueField:'value', 
+							typeAhead: false,
+							mode: 'local',
+							triggerAction: 'all',
+							emptyText:'',
+							selectOnFocus:true,
+							editable:false,
+							allowBlank:false
+						},
 						{name:"login", width:250,  fieldLabel:"Login", maxLength:255,  id:"login" + tabId },
 						{name:"password", width:250,  allowBlank:false, fieldLabel:"Password", maxLength:255,  inputType:"password", id:"password1" + tabId },
 						{name:"password2", width:250,  allowBlank:false, fieldLabel:"Password (again)", maxLength:255,  inputType:"password", id:"password2" + tabId, 

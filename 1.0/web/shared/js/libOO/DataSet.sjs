@@ -219,7 +219,7 @@ if (!Myna) var Myna={}
 		columnName		-	String Column name to return
 	*/
 	Myna.DataSet.prototype.valueArray=function(columnName){
-		var name=columnName.toLowerCase(); 
+		var name=columnName; 
 		return this.map(function(element){ return (element[name])})	
 	}
 	

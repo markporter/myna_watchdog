@@ -1,9 +1,8 @@
 Myna.applyTo(this);
 
-
 $application.appName = "myna_admin";
 $application.prettyName = "Myna Adminstrator";
-$application.noAuthFuses=["login","auth"];
+$application.noAuthFuses=["login","auth", "logout"];
 $application.defaultFuseAction="login";
 $application.mainFuseAction="main";
 $application.extUrl =$server.rootUrl +"shared/js/ext_latest/"
@@ -31,7 +30,7 @@ $application.onError=function(exception){
 	} else {
 		$res.print(Myna.formatError(exception))	
 	}
-	
+	Myna.log("error",exception.message,Myna.formatError(exception));
 }
 
 
@@ -40,18 +39,29 @@ $application.appendFunction("onRequestStart",function(){
 	var session_cookie;		// stores encrypted session data
 	
 	if (!$req.data.fuseaction) $req.data.fuseaction=this.defaultFuseAction; 
-	//is the user authenticated?	
+	//is the user authenticated?
+	if (this.noAuthFuses.indexOf($req.data.fuseaction.toLowerCase()) != -1) return;	
 	if ( !$cookie.getAuthUserId() ){
-		if (this.noAuthFuses.indexOf($req.data.fuseaction.toLowerCase()) != -1){
-			return;	
-		} else {
+		
 			/* 	if the fuseaction requires authentication, 
 				but the user is not authenticated, then set
 				the fuseaction to the default (login)
 			*/
 			$req.data.fuseaction=this.defaultFuseAction;
-		}
+		
+	} else { //is the the user authorized for this fuseaction?
+		if ($cookie.getAuthUserId() == "myna_admin") return;
+		
+		var user = $cookie.getAuthUser();
+		if (user.hasRight("myna_admin","full_admin_access")) return;
+		
+		$req.data.fuseaction="no_access";
+		throw new Error("You do not have access to that feature")
+		
 	}
+	
+	
+	
 });
 
 /* onApplicationStart */

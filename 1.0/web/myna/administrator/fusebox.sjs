@@ -2,12 +2,16 @@ var fusebox={
 /* login/auth/main */
 	auth:function(data){
 		$req.returningJson = true;
-		data.checkRequired(["password"]);
-		if (data.password.hashEquals(getGeneralProperties().admin_password)){
-			
-			$cookie.setAuthUserId("myna_admin");
+		data.checkRequired(["username","password"]);
+		var success = false;
+		var user_id = Myna.Permissions.getUserIdByAuth(data.username,data.password)
+		
+		if (user_id){
+			$cookie.setAuthUserId(user_id);
 			print({success:true,url:"?fuseaction="+$application.mainFuseAction}.toJson());
 		} else {
+			$session.clear();
+			$cookie.clearAuthUserId();
 			print({success:false,errorMsg:"Login invalid. Please try again."}.toJson());
 		}
 	},
@@ -665,6 +669,12 @@ var fusebox={
 		return "";
 	},
 /* Misc */
+	no_access:function(){
+		return {
+			success:false,
+			message:"You do not have access to this feature"
+		}
+	},
 	create_uuid:function(){
 		return {success:true,value:Myna.createUuid()}
 	},
