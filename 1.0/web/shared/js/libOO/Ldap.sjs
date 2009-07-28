@@ -19,6 +19,29 @@ if (!Myna) Myna={}
         this.server = server;
         this.user = username;
         this.password = password;
+        
+        var Context = Packages.javax.naming.Context;
+        var directory = Packages.javax.naming.directory;
+       
+        var env = new java.util.Hashtable();
+        //env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
+        env.put(Context.PROVIDER_URL, this.server);
+       
+        
+        env.put(Context.REFERRAL, "follow");
+
+        if (this.user){
+           env.put(Context.SECURITY_AUTHENTICATION, "simple");
+            env.put(Context.SECURITY_PRINCIPAL, this.user);
+            env.put(Context.SECURITY_CREDENTIALS, this.password);
+        } else {
+            env.put(Context.SECURITY_AUTHENTICATION, "none");  
+        }
+       
+        // Create the initial context
+        //var ctx = new directory.InitialDirContext(env);
+        this.ctx = new Packages.com.sun.jndi.ldap.LdapCtxFactory.getLdapCtxInstance(this.server,env);
+        this.env = env
     }
    
 /* Function: search
@@ -29,7 +52,7 @@ if (!Myna) Myna={}
                             > (cn=mporter)
                             > (&(orgcode=01018346)(positioncode=80569))
         attributes        -    *Optional default null* a comma separated list of attributes to
-                            retrieve from the lda server. If not specified, all attributes
+                            retrieve from the ldap server. If not specified, all attributes
                             are returned
     Returns:
         An array of ldap results that looks like this
@@ -58,23 +81,8 @@ if (!Myna) Myna={}
        
         var Context = Packages.javax.naming.Context;
         var directory = Packages.javax.naming.directory;
-       
-        var env = new java.util.Hashtable();
-        //env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-        env.put(Context.PROVIDER_URL, this.server);
-       
-        env.put(Context.SECURITY_AUTHENTICATION, "simple");
-        env.put(Context.REFERRAL, "follow");
-
-        if (this.user){
-            env.put(Context.SECURITY_PRINCIPAL, this.user);
-            env.put(Context.SECURITY_CREDENTIALS, this.password);
-        }
-       
-        // Create the initial context
-        //var ctx = new directory.InitialDirContext(env);
-        var ctx = new Packages.com.sun.jndi.ldap.LdapCtxFactory.getLdapCtxInstance(this.server,env);
-
+        var ctx = this.ctx;
+        var env = this.env;
         var ctls = new directory.SearchControls();
         ctls.setReturningAttributes(attributes);
         ctls.setSearchScope(directory.SearchControls.SUBTREE_SCOPE);

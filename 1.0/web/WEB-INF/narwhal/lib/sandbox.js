@@ -6,22 +6,24 @@ exports.Loader = function (options) {
     var extensions = options.extensions || ["", ".js"];
     var timestamps = {};
 
-    loader.resolve = function (id, baseId) {
-        if (typeof id != "string")
-            throw new Error("module id '" + id + "' is not a String");
-        if (id.charAt(0) == ".") {
-            id = dirname(baseId) + system.fs.SEPARATOR + id;
-        }
-        return normal(id);
-    };
+
+    loader.resolve = exports.resolve;
 
     loader.find = function (topId) {
         for (var j = 0; j < extensions.length; j++) {
-            var ext = extensions[j];
-            for (var i = 0; i < paths.length; i++) {
-                var fileName = join(paths[i], topId + ext);
-                if (system.fs.isFile(fileName))
-                    return fileName;
+            var extension = extensions[j];
+            if (system.fs.isAbsolute(topId)) {
+                var path = topId + extension;
+                if (system.fs.isFile(path)) {
+                    return path;
+                }
+            }
+            else {
+                for (var i = 0; i < paths.length; i++) {
+                    var path = system.fs.join(paths[i], topId + extension);
+                    if (system.fs.isFile(path))
+                        return path;
+                }
             }
         }
         throw new Error("require error: couldn't find \"" + topId + '"');
@@ -89,26 +91,26 @@ exports.MultiLoader = function (options) {
         [".js", self.loader]
     ];
 
-    self.resolve = function (id, baseId) {
-        if (typeof id != "string")
-            throw new Error("module id '" + id + "' is not a String");
-        if (id.charAt(0) == ".") {
-            id = dirname(baseId) + system.fs.SEPARATOR + id;
-        }
-        return normal(id);
-    };
+    self.resolve = exports.resolve;
 
     self.find = function (topId) {
         for (var j = 0; j < self.loaders.length; j++) {
             var pair = self.loaders[j];
             var extension = pair[0];
             var loader = pair[1];
-            for (var i = 0; i < self.paths.length; i++) {
-                //windows hack
-                if (system.fs.SEPARATOR == "\\") topId=topId.replace(/\//g,"\\"); 
-                var path = join(self.paths[i], topId + extension);
+
+            if (system.fs.isAbsolute(topId)) {
+                var path = topId + extension;
                 if (system.fs.isFile(path)) {
                     return [loader, path];
+                }
+            }
+            else {
+                for (var i = 0; i < self.paths.length; i++) {
+                    var path = system.fs.join(self.paths[i], topId + extension);
+                    if (system.fs.isFile(path)) {
+                        return [loader, path];
+                    }
                 }
             }
         }
@@ -379,69 +381,11 @@ exports.sandbox = function(main, system, options) {
     return sandbox.main(main);
 };
 
-
-
-////////////////////////////////////////////////
-// Ugh, these are duplicated from the File object, since they're required for 
-// require, which is required for loading the File object.
-
-var dirname = function(path) {
-    if (system.fs.SEPARATOR == "\\"){
-       var raw = String(path),
-           match = raw.match(/^(.*)\\[^\\]+\\?$/);
-       if (match && match[1])
-           return match[1]
-       else if (raw.charAt(0) == "\\")
-           return "\\"
-       else
-           return "."
-    } else {
-       var raw = String(path),
-           match = raw.match(/^(.*)\/[^\/]+\/?$/);
-       if (match && match[1])
-           return match[1]
-       else if (raw.charAt(0) == "/")
-           return "/"
-       else
-           return "."
+exports.resolve = function (id, baseId) {
+    if (typeof id != "string")
+        throw new Error("module id '" + id + "' is not a String");
+    if (id.charAt(0) == ".") {
+        id = system.fs.dirname(baseId) + "/" + id;
     }
+    return system.fs.normal(id);
 };
-
-var normal = function(path) {
-    var original;
-    do {
-        if (system.fs.SEPARATOR == "\\"){
-           path = path.replace(/\//g,"\\");
-           original = path
-           path = path
-               .replace(/[^\\]+\\\.\.\\/g, "")
-               .replace(/([^\.])\.\\/g, "$1")
-               .replace(/^\.\\/g, "")
-               .replace(/\\\\+/g, "\\");
-        } else {
-           original = path;
-           path = path
-               .replace(/[^\/]+\/\.\.\//g, "")
-               .replace(/([^\.])\.\//g, "$1")
-               .replace(/^\.\//g, "")
-               .replace(/\/\/+/g, "/");
-        }
-    } while (path !== original);
-    return path;
-};
-
-var join = function (base) {
-    for (var i = 1; i < arguments.length; i++) {
-        var rel = arguments[i];
-        if (
-           rel.match(/^\//)
-           || rel.match(/[a-zA-Z]:/) //windows support
-        ) {
-            base = rel;
-        } else {
-            base = base + system.fs.SEPARATOR + rel;
-        }
-    }
-    return normal(base);
-};
-////////////////////////////////////////////////

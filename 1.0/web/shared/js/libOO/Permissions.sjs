@@ -304,10 +304,10 @@ if (!Myna) var Myna={}
 		getAuthAdapter:function(name){
 			var adapter = $server.get("MYNA_auth_adapter_" + name);
 			if (!adapter){
-				
-				var config = new Myna.File("/WEB-INF/myna/auth_types/" + name).readString().parseJson();
-				adapter = {}
-				Myna.include("/shared/js/libOO/auth_adapters/" + config.adapter +".sjs",adapter);
+				adapter = {
+               config:new Myna.File("/WEB-INF/myna/auth_types/" + name).readString().parseJson()
+            }
+				Myna.include("/shared/js/libOO/auth_adapters/" + adapter.config.adapter +".sjs",adapter);
 				Myna.log("debug","adapter",Myna.dump(adapter.getProperties()));
 				$server.set("MYNA_auth_adapter_" + name,adapter);
 			}
