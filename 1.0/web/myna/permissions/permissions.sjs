@@ -266,7 +266,7 @@ var ws = new Myna.WebService({
 							obj.logins = new Myna.Query({
 								dataSource:"myna_permissions",
 								sql:<ejs>
-									select login from user_logins
+									select type || '/' || login as login from user_logins
 									where user_id = {user_id}
 								</ejs>,
 								values:{
@@ -277,7 +277,6 @@ var ws = new Myna.WebService({
 							return obj;
 						}
 					})
-					Myna.log("debug","show_inactive=" + !!data.show_inactive,Myna.dump(qry));
 					return qry.result;
 				}		
 			},

@@ -1,1 +1,1 @@
-Myna.include("/shared/js/libOO/upgrade_tables.sjs");
+Myna.include("/shared/js/libOO/upgrade_tables.sjs",{});

@@ -360,6 +360,21 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 				columns:["name"]
 			})
 		}
-	
-
+        
+    /* check for Myna Admin rights */
+        var installed_rights = new Myna.Query({
+            ds:"myna_permissions",
+            sql:<ejs>
+                select name from rights
+                where appname='myna_admin'
+            </ejs>
+        }).valueArray("name").join()
+        var man = new Myna.DataManager("myna_permissions").getManager("rights");
+        if (!installed_rights.listContains("full_admin_access")){
+            Myna.Permissions.addRight({
+                appname:"myna_admin",
+                description:"Full access to all parts of the application",
+                name:"full_admin_access"
+            })  
+        }
 $server_gateway.loadDataSources();

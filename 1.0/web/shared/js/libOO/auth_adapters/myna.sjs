@@ -37,9 +37,6 @@ function searchUsers(search){
 	return qry.data;
 }
 
-function getUserId(login){
-	return Myna.Permissions.getUserByLogin("myna",username).get_user_id()
-}
 
 function getUserByLogin(login){
 	var qry= new Myna.Query({

@@ -302,6 +302,11 @@ if (!Myna) var Myna={}
 			
 		*/
 		getAuthAdapter:function(name){
+            if (!/^(\w+)$/.test(name)) {
+                throw new Error("Invalid adpater name '"
+                + name
+                +"'. Adapter names must only contain letters, numbers, and the underscore");
+            }
 			var adapter = $server.get("MYNA_auth_adapter_" + name);
 			if (!adapter){
 				adapter = {
@@ -395,7 +400,12 @@ if (!Myna) var Myna={}
 			returns an array of valid auth type names for this system
 		*/
 		getAuthTypes:function(){
-			return new Myna.File("/WEB-INF/myna/auth_types").listFiles().valueArray("fileName")
+			return new Myna.File("/WEB-INF/myna/auth_types")
+                .listFiles()
+                .valueArray("fileName")
+                .filter(function(name){
+                    return /^(\w+)$/.test(name)
+                })
 		},
 		/*	Function: getUserById
 			returns the User object that matches the supplied id or null

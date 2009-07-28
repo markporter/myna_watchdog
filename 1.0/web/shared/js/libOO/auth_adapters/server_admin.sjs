@@ -23,9 +23,6 @@ function searchUsers(search){
 	})
 }
 
-function getUserId(login){
-	return "myna_admin";	
-}
 
 function getUserByLogin(login){
 	return {
