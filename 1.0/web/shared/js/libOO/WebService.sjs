@@ -64,10 +64,6 @@ if (!Myna) var Myna={}
 						request to continue. Throwing an exception will return
 						an error to the client.
 						
-	authSecret		-	*Optional default Myna Administrator password*
-						Password to use for encrypting username and password in 
-						the client's cookie. 
-						
 	authTimeout		- 	*Optional default 20*
 						Lifetime of auth cookie in client's browser, in minutes.
 						
@@ -377,7 +373,6 @@ Myna.WebService.prototype.executeFunctionHandler=function(functionName,functionD
 	//default timeout is 24 hours
 	var timeout = ws.spec.authTimeout?ws.spec.authTimeout:24*60;
 	timeout=parseInt(timeout)*60*1000;
-	var secret = ws.spec.authSecret?ws.spec.authSecret:Myna.getGeneralProperties().admin_password;
 	if (ws.spec.authFunction){
 		var user_id =$cookie.getAuthUserId();
 		if (user_id){

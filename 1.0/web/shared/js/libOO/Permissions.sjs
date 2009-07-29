@@ -115,7 +115,7 @@
 if (!Myna) var Myna={}
 /* ============= Permissions Main  ========================================== */
 	Myna.Permissions ={
-		/*	Function: addRight
+    /* Function: addRight
 			adds a new right, and returns an instance of <Myna.Right>
 		
 			Parameters:
@@ -144,7 +144,7 @@ if (!Myna) var Myna={}
 			
 			return right;
 		},
-		/*	Function: deleteRight
+    /* Function: deleteRight
 			deletes a right
 		
 			Parameters:
@@ -164,7 +164,7 @@ if (!Myna) var Myna={}
 				})
 			}
 		},
-		/*	Function: addUserGroup
+    /* Function: addUserGroup
 			adds a new user group, and returns an instance of <Myna.UserGroup>
 		
 			Parameters:
@@ -197,7 +197,7 @@ if (!Myna) var Myna={}
 					
 			return user_group;
 		},
-		/*	Function: deleteUserGroup
+    /* Function: deleteUserGroup
 			removes a user group
 		
 			Parameters:
@@ -217,7 +217,7 @@ if (!Myna) var Myna={}
 				})
 			}
 		},
-		/*	Function: addUser
+    /* Function: addUser
 			adds a new user, and returns an instance of <Myna.Permissions.User>
 		
 			Parameters:
@@ -247,7 +247,7 @@ if (!Myna) var Myna={}
 					created:new Date()
 			}))
 		},
-		/* Function: consumeAuthToken
+    /* Function: consumeAuthToken
 			returns associated user_id or null if invalid
 			
 			Parameters:
@@ -291,7 +291,7 @@ if (!Myna) var Myna={}
 				return null	
 			}
 		},
-		/* Function: getAuthAdapter
+    /* Function: getAuthAdapter
 			creates and configures and authentication adpter based on the 
 			_config_ name provided  
 			
@@ -318,7 +318,7 @@ if (!Myna) var Myna={}
 			}
 			return adapter;
 		},
-		/* Function: getAuthKey
+    /* Function: getAuthKey
 			retrieves a unique authKey from the crypt_keys table for the supplied 
 			name, or creates one if the name does not exist.  
 			
@@ -354,7 +354,7 @@ if (!Myna) var Myna={}
 				return localKeys[name]
 			}
 		},
-		/* Function: getAuthToken
+    /* Function: getAuthToken
 			creates stores and return a one-use authentication token for the 
 			supplied user_id  
 			
@@ -396,7 +396,7 @@ if (!Myna) var Myna={}
 			})
 			return token;
 		},
-		/* Function: getAuthTypes
+    /* Function: getAuthTypes
 			returns an array of valid auth type names for this system
 		*/
 		getAuthTypes:function(){
@@ -407,13 +407,14 @@ if (!Myna) var Myna={}
                     return /^(\w+)$/.test(name)
                 })
 		},
-		/*	Function: getUserById
+    /* Function: getUserById
 			returns the User object that matches the supplied id or null
 			
 			Parameters:
 				id		-	user id to search
 		*/
 		getUserById:function(id){
+            var $this= this;
 			if (!id){
 				throw new Error("Myna.Permissions.User.getUserById: id is required") 	
 			}
@@ -427,7 +428,7 @@ if (!Myna) var Myna={}
 				return null;	
 			}
 		},
-		/*	Function: getRightById
+    /* Function: getRightById
 			returns the right object that matches the supplied id or null
 			
 			Parameters:
@@ -445,7 +446,20 @@ if (!Myna) var Myna={}
 				return null;	
 			}
 		},
-		/*	Function: getUserGroupById
+        
+    /* Function: getRightsByAppname
+        returns a <Myna.DataSet> of all the rights associated with the 
+        supplied appname
+			
+			Parameters:
+				appname		-	appname to filter by
+		*/
+		getRightsByAppname:function(appname){
+			return new Myna.DataManager("myna_permissions").getManager("rights")
+            .findBeans({appname:appname})
+		},
+        
+    /* Function: getUserGroupById
 			returns the user group object that matches the supplied id or null
 			
 			Parameters:
@@ -463,7 +477,7 @@ if (!Myna) var Myna={}
 				return null;	
 			}
 		},
-		/*	Function: getUserByLogin
+    /* Function: getUserByLogin
 			returns the User object that matches the supplied login or null
 			
 			Parameters:
@@ -497,8 +511,8 @@ if (!Myna) var Myna={}
 				return null;	
 			}
 		},
-		/*	Function: getUserIdByAuth
-			returns the User ID that matches the supplied username and password 
+    /* Function: getUserByAuth
+			returns the <User> that matches the supplied username and password 
 			or null if no matches
 			
 			Parameters:
@@ -510,7 +524,7 @@ if (!Myna) var Myna={}
 								password an excpetion is thrown
 				
 		*/
-		getUserIdByAuth:function(login,password,type){
+		getUserByAuth:function(login,password,type){
 			var $this=Myna.Permissions;
 			var types=type?[type]:$this.getAuthTypes()
 			var user_ids=[];
@@ -534,7 +548,7 @@ if (!Myna) var Myna={}
 				}
 			})
 			if (user_ids.length==1) {
-				return user_ids[0];
+				return $this.getUserById(user_ids[0]);
 			} else if (user_ids.length==0){
 				return null;
 			} else {
@@ -669,11 +683,11 @@ if (!Myna) var Myna={}
 		reactivates this user
 		
 	 */
-	Myna.Permissions.User.prototype.reactivate = function(){
-		var u = this;
-		u.set_inactive_ts(null);
-		
-	}
+        Myna.Permissions.User.prototype.reactivate = function(){
+            var u = this;
+            u.set_inactive_ts(null);
+            
+        }
 	
 	
 	/* Function: hasRight
@@ -683,48 +697,48 @@ if (!Myna) var Myna={}
 			appname		-	name appname of of application
 			right		-	right name
 	 */
-	Myna.Permissions.User.prototype.hasRight = function(appname,rightName){
-		var ug = this;
-		return new Myna.Query({
-			ds:ug.ds,
-			sql:<ejs>
-				select 'x' 
-				from 
-					rights r,
-					assigned_rights ar,
-					user_group_members ugm
-				where 1=1
-					and r.right_id = ar.right_id
-					and ugm.user_group_id=ar.user_group_id
-					and user_id={id}
-					and appname={appname}
-					and name={rightName}
-			</ejs>	,
-			values:{
-				id:ug.get_user_id(),
-				appname:appname,
-				rightName:rightName
-			}
-		}).data.length
-	}
+        Myna.Permissions.User.prototype.hasRight = function(appname,rightName){
+            var ug = this;
+            return new Myna.Query({
+                ds:ug.ds,
+                sql:<ejs>
+                    select 'x' 
+                    from 
+                        rights r,
+                        assigned_rights ar,
+                        user_group_members ugm
+                    where 1=1
+                        and r.right_id = ar.right_id
+                        and ugm.user_group_id=ar.user_group_id
+                        and user_id={id}
+                        and appname={appname}
+                        and name={rightName}
+                </ejs>	,
+                values:{
+                    id:ug.get_user_id(),
+                    appname:appname,
+                    rightName:rightName
+                }
+            }).data.length
+        }
 	/* Function: getLogins
 		returns an array of objects in the form of [{type,login}] of the logins 
 		associated with this user
 	 */
-	Myna.Permissions.User.prototype.getLogins = function(){
-		var user = this;
-		return new Myna.Query({
-			ds:this.dao.ds,
-			sql:<ejs>
-				select type,login
-				from user_logins
-				where user_id={user_id}
-			</ejs>,
-			values:{
-				user_id:user.get_user_id()
-			},
-		}).data;
-	}
+        Myna.Permissions.User.prototype.getLogins = function(){
+            var user = this;
+            return new Myna.Query({
+                ds:this.dao.ds,
+                sql:<ejs>
+                    select type,login
+                    from user_logins
+                    where user_id={user_id}
+                </ejs>,
+                values:{
+                    user_id:user.get_user_id()
+                },
+            }).data;
+        }
 	/* Function: getLoginList
 		returns a list of type/login pairs in the form of "type:login,type:login" of 
 		the logins associated with this user
@@ -735,24 +749,24 @@ if (!Myna) var Myna={}
 			seperator		-		*Optional, default ':'*
 									seperator between each type and login in each login set
 	 */
-	Myna.Permissions.User.prototype.getLoginList = function(delimiter,seperator){
-		var user = this;
-		if (!delimiter) delimiter = ",";
-		if (!seperator) seperator = ":";
-		return new Myna.Query({
-			ds:this.dao.ds,
-			sql:<ejs>
-				select type,login
-				from user_logins
-				where user_id={user_id}
-			</ejs>,
-			values:{
-				user_id:user.get_user_id()
-			},
-		}).data.map(function(e){
-			return e.type + seperator + e.login
-		}).join(delimiter);
-	}
+        Myna.Permissions.User.prototype.getLoginList = function(delimiter,seperator){
+            var user = this;
+            if (!delimiter) delimiter = ",";
+            if (!seperator) seperator = ":";
+            return new Myna.Query({
+                ds:this.dao.ds,
+                sql:<ejs>
+                    select type,login
+                    from user_logins
+                    where user_id={user_id}
+                </ejs>,
+                values:{
+                    user_id:user.get_user_id()
+                },
+            }).data.map(function(e){
+                return e.type + seperator + e.login
+            }).join(delimiter);
+        }
 	
 	/* Function: setLogin
 		adds or updates an login for this user
@@ -768,31 +782,31 @@ if (!Myna) var Myna={}
 			password	-	*optional default ""*
 							a plain text password to encrypt with this login
 	 */
-	Myna.Permissions.User.prototype.setLogin = function(options){
-		var user = this;
-		var dm = new Myna.DataManager("myna_permissions");
-		var user_logins = dm.getManager("user_logins");
-		
-		options.user_id = user.get_user_id();
-		if ("password" in options){
-			options.password =options.password.toHash();
-		} else {
-			options.password = ""	
-		}
-		var existing =user_logins.find({
-			user_id:options.user_id,
-			type:options.type,
-			login:options.login
-		})
-			
-		if (existing.length){
-			//Myna.log("debug","existing[0]",Myna.dump(existing));
-			user_logins.getById(existing[0]).set_password(options.password)
-		} else {
-			options.user_login_id = Myna.createUuid();
-			user_logins.create(options)
-		}
-	}
+        Myna.Permissions.User.prototype.setLogin = function(options){
+            var user = this;
+            var dm = new Myna.DataManager("myna_permissions");
+            var user_logins = dm.getManager("user_logins");
+            
+            options.user_id = user.get_user_id();
+            if ("password" in options){
+                options.password =options.password.toHash();
+            } else {
+                options.password = ""	
+            }
+            var existing =user_logins.find({
+                user_id:options.user_id,
+                type:options.type,
+                login:options.login
+            })
+                
+            if (existing.length){
+                //Myna.log("debug","existing[0]",Myna.dump(existing));
+                user_logins.getById(existing[0]).set_password(options.password)
+            } else {
+                options.user_login_id = Myna.createUuid();
+                user_logins.create(options)
+            }
+        }
 	/* Function: isCorrectPassword
 			returns true if the supplied user login and plaintext password match 
 			the stored password hash. Only works for "myna" auth type. Will 
@@ -802,26 +816,26 @@ if (!Myna) var Myna={}
 				login		-	user login 
 				password	-	a plain text password for comparison
 		*/
-	Myna.Permissions.User.prototype.isCorrectPassword=function(login,password){
-		var user = this;
-		if (!user.isActive()) return false;
-		var dm = new Myna.DataManager("myna_permissions");
-		var user_logins = dm.getManager("user_logins");
-		
-		if (!password ) password = "";	
-			
-		var existing =user_logins.find({
-			user_id:user.get_user_id(),
-			type:"myna",
-			login:login
-		})
-			
-		if (existing.length){
-			return password.hashEquals(user_logins.getById(existing[0]).get_password());
-		} else {
-			return false;
-		}
-	}
+        Myna.Permissions.User.prototype.isCorrectPassword=function(login,password){
+            var user = this;
+            if (!user.isActive()) return false;
+            var dm = new Myna.DataManager("myna_permissions");
+            var user_logins = dm.getManager("user_logins");
+            
+            if (!password ) password = "";	
+                
+            var existing =user_logins.find({
+                user_id:user.get_user_id(),
+                type:"myna",
+                login:login
+            })
+                
+            if (existing.length){
+                return password.hashEquals(user_logins.getById(existing[0]).get_password());
+            } else {
+                return false;
+            }
+        }
 /* ============= Permissions Right  ========================================= */
 	/* Class: Myna.Permissions.Right
 		Provides access to Right specific actions. see <Myna.Permissions> for 
@@ -858,13 +872,13 @@ if (!Myna) var Myna={}
 		Parameters:
 			value	-	new value
 	 */
-	Myna.Permissions.Right = function(dao){
-		this.dao = dao;
-		//copy properties to this 
-		dao	.applyTo(this);
-		//get rid of set_right_id. It is unnecessary and dangerous
-		delete this.set_right_id;
-	}
+        Myna.Permissions.Right = function(dao){
+            this.dao = dao;
+            //copy properties to this 
+            dao	.applyTo(this);
+            //get rid of set_right_id. It is unnecessary and dangerous
+            delete this.set_right_id;
+        }
 
 /* ============= Permissions UserGroup  ===================================== */
 	/* Class: Myna.Permissions.UserGroup
@@ -915,29 +929,29 @@ if (!Myna) var Myna={}
 		adds one or more users to this group, if not already added
 		
 		Parameters:
-			user_id_list		-	array of list of user_ids of user to add
+			user_id_list		-	array or list of user_ids to add
 			
 	 */
-	Myna.Permissions.UserGroup.prototype.addUsers = function(user_id_list){
-		var ugm = this.dm.getManager("user_group_members");
-		if (!(user_id_list instanceof Array)){
-				user_id_list = user_id_list.split(/,/)
-		}
-		var ug = this;
-		user_id_list.forEach(function(user_id){
-			var existing = ugm.find({
-				user_group_id:ug.get_user_group_id(),
-				user_id:user_id
-			})
-			if (!existing.length){
-				ugm.create({
-					user_group_member_id:Myna.createUuid(),
-					user_group_id:ug.get_user_group_id(),
-					user_id:user_id
-				})
-			}
-		})
-	}
+        Myna.Permissions.UserGroup.prototype.addUsers = function(user_id_list){
+            var ugm = this.dm.getManager("user_group_members");
+            if (!(user_id_list instanceof Array)){
+                    user_id_list = user_id_list.split(/,/)
+            }
+            var ug = this;
+            user_id_list.forEach(function(user_id){
+                var existing = ugm.find({
+                    user_group_id:ug.get_user_group_id(),
+                    user_id:user_id
+                })
+                if (!existing.length){
+                    ugm.create({
+                        user_group_member_id:Myna.createUuid(),
+                        user_group_id:ug.get_user_group_id(),
+                        user_id:user_id
+                    })
+                }
+            })
+        }
 	
 	
 	/* Function: addRights
@@ -947,43 +961,43 @@ if (!Myna) var Myna={}
 			right_id_list		-	array or list of right_ids of rights to add
 			
 	 */
-	Myna.Permissions.UserGroup.prototype.addRights = function(right_id_list){
-		var assigned_rights = this.dm.getManager("assigned_rights");
-		if (!(right_id_list instanceof Array)){
-			right_id_list = right_id_list.split(/,/)
-		}
-		var ug = this;
-		right_id_list.forEach(function(right_id){
-			var existing = assigned_rights.find({
-				user_group_id:ug.get_user_group_id(),
-				right_id:right_id
-			})
-			if (!existing.length){
-				assigned_rights.create({
-					assigned_rights_id:Myna.createUuid(),
-					user_group_id:ug.get_user_group_id(),
-					right_id:right_id
-				})
-			}
-		})
-	}
+        Myna.Permissions.UserGroup.prototype.addRights = function(right_id_list){
+            var assigned_rights = this.dm.getManager("assigned_rights");
+            if (!(right_id_list instanceof Array)){
+                right_id_list = right_id_list.split(/,/)
+            }
+            var ug = this;
+            right_id_list.forEach(function(right_id){
+                var existing = assigned_rights.find({
+                    user_group_id:ug.get_user_group_id(),
+                    right_id:right_id
+                })
+                if (!existing.length){
+                    assigned_rights.create({
+                        assigned_rights_id:Myna.createUuid(),
+                        user_group_id:ug.get_user_group_id(),
+                        right_id:right_id
+                    })
+                }
+            })
+        }
 	
 	/* Function: qryRights
 		returns query of rights associated with this group
 		
 	 */
-	Myna.Permissions.UserGroup.prototype.qryRights = function(){
-		var ug = this;
-		return new Myna.Query({
-			ds:ug.ds,
-			sql:<ejs>
-				select * 
-				from assigned_rights
-				where user_group_id={id}
-			</ejs>	,
-			values:{id:ug.get_user_group_id()}
-		})
-	}
+        Myna.Permissions.UserGroup.prototype.qryRights = function(){
+            var ug = this;
+            return new Myna.Query({
+                ds:ug.ds,
+                sql:<ejs>
+                    select * 
+                    from assigned_rights
+                    where user_group_id={id}
+                </ejs>	,
+                values:{id:ug.get_user_group_id()}
+            })
+        }
 	
 	/* Function: removeRights
 		removes one or more rights from this group, if not already removed
@@ -992,25 +1006,25 @@ if (!Myna) var Myna={}
 			right_id_list		-	array or list of right_ids of user to add
 			
 	 */
-	Myna.Permissions.UserGroup.prototype.removeUsers = function(right_id_list){
-		if (right_id_list instanceof Array){
-			right_id_list = right_id_list.join();
-		}
-		var ug = this;
-		new Myna.Query({
-			ds:this.ds,
-			sql:<ejs>
-				delete from assigned_rights 
-				where right_id in ({list})
-					and user_group_id = {id}
-			</ejs>,
-			values:{
-				list:right_id_list,
-				id:ug.get_user_group_id()
-			}
-		})
-		
-	}
+        Myna.Permissions.UserGroup.prototype.removeUsers = function(right_id_list){
+            if (right_id_list instanceof Array){
+                right_id_list = right_id_list.join();
+            }
+            var ug = this;
+            new Myna.Query({
+                ds:this.ds,
+                sql:<ejs>
+                    delete from assigned_rights 
+                    where right_id in ({list})
+                        and user_group_id = {id}
+                </ejs>,
+                values:{
+                    list:right_id_list,
+                    id:ug.get_user_group_id()
+                }
+            })
+            
+        }
 	
 	/* Function: removeUsers
 		removes one or more users from this group, if not already removed
@@ -1019,45 +1033,45 @@ if (!Myna) var Myna={}
 			user_id_list		-	array or list of user_ids of user to add
 			
 	 */
-	Myna.Permissions.UserGroup.prototype.removeUsers = function(user_id_list){
-		if (user_id_list instanceof Array){
-			user_id_list = user_id_list.join();
-		}
-		var ug = this;
-		new Myna.Query({
-			ds:this.ds,
-			sql:<ejs>
-				delete from user_group_members 
-				where user_id in ({list})
-					and user_group_id = {id}
-			</ejs>,
-			values:{
-				list:user_id_list,
-				id:ug.get_user_group_id()
-			}
-		})
-		
-	}
+        Myna.Permissions.UserGroup.prototype.removeUsers = function(user_id_list){
+            if (user_id_list instanceof Array){
+                user_id_list = user_id_list.join();
+            }
+            var ug = this;
+            new Myna.Query({
+                ds:this.ds,
+                sql:<ejs>
+                    delete from user_group_members 
+                    where user_id in ({list})
+                        and user_group_id = {id}
+                </ejs>,
+                values:{
+                    list:user_id_list,
+                    id:ug.get_user_group_id()
+                }
+            })
+            
+        }
 	
 	
 	/* Function: qryUsers
 		returns a query of user information associated with this group
 		
 	 */
-	Myna.Permissions.UserGroup.prototype.qryUsers = function(){
-		var ug = this;
-		return new Myna.Query({
-			ds:ug.ds,
-			sql:<ejs>
-				select u.* 
-				from 
-					users u,
-					user_group_members ugm
-				where u.user_id = ugm.user_id
-					and ugm.user_group_id = {id}
-			</ejs>,
-			values:{id:ug.get_user_group_id()}
-		})
-	}
+        Myna.Permissions.UserGroup.prototype.qryUsers = function(){
+            var ug = this;
+            return new Myna.Query({
+                ds:ug.ds,
+                sql:<ejs>
+                    select u.* 
+                    from 
+                        users u,
+                        user_group_members ugm
+                    where u.user_id = ugm.user_id
+                        and ugm.user_group_id = {id}
+                </ejs>,
+                values:{id:ug.get_user_group_id()}
+            })
+        }
 
 

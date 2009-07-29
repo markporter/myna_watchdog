@@ -47,7 +47,6 @@ var ws = new Myna.WebService({
 			return false;
 		}
 	},
-	authSecret:"w1cked/warb[er",
 	authTimeout:20,
 /* =========== Local Functions ============================================== */
 	localFunctions:{
@@ -61,7 +60,7 @@ var ws = new Myna.WebService({
 					return false
 				} else {
 					return user.hasRight(appname,"edit_permissions") 
-						|| user.hasRight("myna_admin","edit_permissions");
+						|| user.hasRight("myna_admin","full_admin_access");
 				}
 			}
 		}

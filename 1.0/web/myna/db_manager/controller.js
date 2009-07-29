@@ -255,7 +255,8 @@ var C ={
 						Ext.Ajax.request({
 							url:'?fuseaction=auth',
 							params:{
-								password:Ext.getCmp("password").getValue()
+								password:Ext.getCmp("password").getValue(),
+								username:Ext.getCmp("username").getValue()
 							},
 							waitMsg:"Authenticating...",
 							callback:C.cbHandler(function(result){
@@ -270,6 +271,11 @@ var C ={
 				},
 				//floating:true,
 				items: [{
+					fieldLabel: 'Username',
+					value:"Admin",
+					id: 'username',
+					allowBlank:false
+				},{
 					fieldLabel: 'Password',
 					inputType:'password',
 					id: 'password',

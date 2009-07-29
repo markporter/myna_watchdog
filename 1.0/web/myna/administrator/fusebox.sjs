@@ -3,12 +3,16 @@ var fusebox={
 	auth:function(data){
 		$req.returningJson = true;
 		data.checkRequired(["username","password"]);
-		var success = false;
-		var user_id = Myna.Permissions.getUserIdByAuth(data.username,data.password)
+		var user = Myna.Permissions.getUserByAuth(data.username,data.password)
 		
-		if (user_id){
-			$cookie.setAuthUserId(user_id);
-			print({success:true,url:"?fuseaction="+$application.mainFuseAction}.toJson());
+		if (user){
+            Myna.log("debug","user",Myna.dump(user));
+			$cookie.setAuthUserId(user.get_user_id());
+            if (user.hasRight("myna_admin","full_admin_access")){
+                print({success:true,url:"?fuseaction="+$application.mainFuseAction}.toJson());
+            } else {
+                print({success:false,errorMsg:"You do not have access to this application."}.toJson());
+            }
 		} else {
 			$session.clear();
 			$cookie.clearAuthUserId();

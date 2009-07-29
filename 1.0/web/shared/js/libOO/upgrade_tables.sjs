@@ -1,10 +1,10 @@
-
 /* installs or upgrades standard tables */
 
 
 var ds;
 var db;
 var table;
+var dm;
 Myna.include("/myna/administrator/myna_admin.sjs");
 /* myna_log */
 	ds = "myna_log"
@@ -361,6 +361,7 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 			})
 		}
         
+    dm = new Myna.DataManager("myna_permissions");
     /* check for Myna Admin rights */
         var installed_rights = new Myna.Query({
             ds:"myna_permissions",
@@ -369,7 +370,6 @@ Myna.include("/myna/administrator/myna_admin.sjs");
                 where appname='myna_admin'
             </ejs>
         }).valueArray("name").join()
-        var man = new Myna.DataManager("myna_permissions").getManager("rights");
         if (!installed_rights.listContains("full_admin_access")){
             Myna.Permissions.addRight({
                 appname:"myna_admin",
@@ -377,4 +377,33 @@ Myna.include("/myna/administrator/myna_admin.sjs");
                 name:"full_admin_access"
             })  
         }
+    /* check for myna_admin user */
+        var users = dm.getManager("users");
+        if (!users.find("myna_admin").length){
+            users.create({
+                user_id:"myna_admin",
+                first_name:"Myna",
+                middle_name:"",
+                last_name:"Administrator",
+                title:"",
+                created:new Date()
+            })
+            Myna.Permissions.getUserById("myna_admin")
+            .setLogin({type:"server_admin",login:"Admin"})
+        }
+    /* check for "Myna Administrators" user group */
+        var user_groups = dm.getManager("user_groups");
+        if (!user_groups.find({name:"Myna Administrators",appname:"myna_admin"}).length){
+            var group = Myna.Permissions.addUserGroup({
+                name:"Myna Administrators",
+                appname:"myna_admin",
+                description:"Users with full access to Myna's administrative tools"
+            })
+            group.addUsers("myna_admin");
+            group.addRights(
+                Myna.Permissions.getRightsByAppname("myna_admin")
+                    .valueArray("right_id")
+            );
+        }
+    
 $server_gateway.loadDataSources();
