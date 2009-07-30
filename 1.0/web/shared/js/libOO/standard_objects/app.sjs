@@ -549,7 +549,6 @@ var $application={
 			var appFile = new Myna.File(curPath + "application.sjs");
 			if (appFile.exists()){
 				$application.directory = curPath;
-				//Myna.log("debug",x+" app: '"+$application.directory+"'");
 				Myna.includeOnce(curPath + "application.sjs");
 			}
 		}

@@ -313,7 +313,6 @@ if (!Myna) var Myna={}
                config:new Myna.File("/WEB-INF/myna/auth_types/" + name).readString().parseJson()
             }
 				Myna.include("/shared/js/libOO/auth_adapters/" + adapter.config.adapter +".sjs",adapter);
-				Myna.log("debug","adapter",Myna.dump(adapter.getProperties()));
 				$server.set("MYNA_auth_adapter_" + name,adapter);
 			}
 			return adapter;
@@ -455,8 +454,23 @@ if (!Myna) var Myna={}
 				appname		-	appname to filter by
 		*/
 		getRightsByAppname:function(appname){
-			return new Myna.DataManager("myna_permissions").getManager("rights")
-            .findBeans({appname:appname})
+			var beans = new Myna.DataManager("myna_permissions").getManager("rights")
+            .findBeans({appname:appname}).map(function(bean){
+                return new Myna.Permissions.Right(bean)
+            })
+		},
+    /* Function: getUserGroupsByAppname
+        returns a <Myna.DataSet> of all the user groups associated with the 
+        supplied appname
+			
+			Parameters:
+				appname		-	appname to filter by
+		*/
+		getUserGroupsByAppname:function(appname){
+			return new Myna.DataManager("myna_permissions").getManager("user_groups")
+            .findBeans({appname:appname}).map(function(bean){
+                return new Myna.Permissions.UserGroup(bean)
+            })
 		},
         
     /* Function: getUserGroupById
@@ -800,7 +814,6 @@ if (!Myna) var Myna={}
             })
                 
             if (existing.length){
-                //Myna.log("debug","existing[0]",Myna.dump(existing));
                 user_logins.getById(existing[0]).set_password(options.password)
             } else {
                 options.user_login_id = Myna.createUuid();

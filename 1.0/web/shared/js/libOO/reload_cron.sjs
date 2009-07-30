@@ -19,7 +19,6 @@ cronProperties.forEach(function(propJson,name){
 						$server_gateway.includeOnce("/shared/js/libOO/standard_objects.sjs")
 						Myna.include(this.scriptPath);
 						$application._onRequestEnd();
-						//Myna.log("debug","running cron " + this.scriptPath);
 					},
 					cancel:function(){return true},
 					scheduledExecutionTime:function(){return 100}

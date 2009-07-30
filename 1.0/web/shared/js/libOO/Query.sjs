@@ -528,7 +528,7 @@ Myna.Query.prototype={
 					st =  con.prepareStatement(sql,ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);
 				} catch(e){
 					st =  con.prepareStatement(sql);
-					Myna.log("debug","Error creating scrollable statement",Myna.formatError(__exception__));
+					Myna.log("error","Error creating scrollable statement",Myna.formatError(__exception__));
 				}
 			}
 			$req["__CACHE__STATEMENT"].put(qry.dataSource +sql,st); 

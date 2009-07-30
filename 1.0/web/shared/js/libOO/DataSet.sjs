@@ -222,7 +222,18 @@ if (!Myna) var Myna={}
 		var name=columnName; 
 		return this.map(function(element){ return (element[name])})	
 	}
-	
+/* Function: map
+	Creates a new DataSet with the results of calling a provided function on every element in this array.
+
+	See:
+		<Array.map>
+    */
+    Myna.DataSet.prototype.map = function(func) {
+        return new Myna.DataSet({
+            data:Array.prototype.map.call(this,func),
+            columns:this.columns
+        })
+    }	
 /* Function: minByCol
 	returns the "smallest" value of a column.
 	

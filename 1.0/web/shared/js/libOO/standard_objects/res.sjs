@@ -218,7 +218,6 @@ var $res = {
 			<$res.clear>, <$res.getContent>
 	*/
 	print:function (text){
-		//Myna.log("debug","text - " + $server.isThread,text);
 			$server_gateway.generatedContent.append(String(text));
 	},
 }

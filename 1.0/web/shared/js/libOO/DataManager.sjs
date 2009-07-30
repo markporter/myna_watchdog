@@ -491,7 +491,6 @@ if (!Myna) var Myna={}
 					</@loop>
 				</ejs>
 			})
-			//Myna.log("debug","db_manage::find",Myna.dump(qry) + Myna.dump(qry.valueArray(pkey)));
 			return qry.valueArray(pkey);
 		}
 	/* Function: findBeans

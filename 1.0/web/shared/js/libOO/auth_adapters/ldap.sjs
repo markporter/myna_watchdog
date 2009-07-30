@@ -14,6 +14,9 @@ this.config.map.checkRequired([
 
 var ldap;
 if (this.config.username){
+   if (this.config.ad_domain && !/@/.test(this.config.username)) {
+        this.config.username +="@" +this.config.ad_domain;
+   }
    ldap = new Myna.Ldap(this.config.server, this.config.username,this.config.password);
 } else {
    ldap = new Myna.Ldap(this.config.server);  
@@ -36,13 +39,18 @@ function getDN(username){
 }
 
 function isCorrectPassword(username,password){
-   var dn = this.getDN(username);
-   if (!dn) return false;
+   if (this.config.ad_domain){
+       dn = username +"@"+this.config.ad_domain;
+   } else {
+       var dn = this.getDN(username);
+       if (!dn) return false;
+   }
+       
    //try to auth against the ldap server, and serch for this dn
    try {
       new Myna.Ldap(this.config.server, dn, password);
       return true;
-   } catch(e){return false}
+      } catch(e){return false}
 }
 
 function searchUsers(search){
