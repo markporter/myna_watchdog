@@ -111,6 +111,26 @@ if (!("JavaUtils" in Myna)) Myna.JavaUtils={}
 	Myna.JavaUtils.createByteArray=function(size){
 		return new java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE,size);	
 	}
+/* Function: createClassArray 
+	returns a java Byte array of the supplied size 
+		
+	Paramters:
+        className     - full classname to instantiate, e.g. java.lang.String   
+		size	      -	initial size of array
+		
+	Detail: 
+		creates an array of a particular class 
+	*/
+	Myna.JavaUtils.createClassArray=function(className,size){
+        var type = className.split(/\./).reduce(function(current,subName){
+            return current[subName];
+        },Packages)
+        if ("TYPE" in type){
+            return new java.lang.reflect.Array.newInstance(type.TYPE,size);
+        } else {
+             return new java.lang.reflect.Array.newInstance(type,size);
+        }
+	}    
 /* Function: createCharArray 
 	returns a java Character array of the supplied size 
 		
