@@ -128,11 +128,22 @@ public class JSServlet extends HttpServlet {
 				
 				//flush output
 				res.setContentLength(thread.generatedContent.length());
-				//res.setContentType("image/jpeg");
-				res.getWriter().print(thread.generatedContent);
+				String ETag = new Integer(thread.generatedContent.toString().hashCode()).toString();
+				String IfNoneMatch  =null;
+				Enumeration IfNoneMatchHeaders = req.getHeaders("If-None-Match");
+				if (IfNoneMatchHeaders.hasMoreElements()){
+					IfNoneMatch = (String) IfNoneMatchHeaders.nextElement(); 
+				} 
+				res.setHeader("ETag",ETag);
+				if (IfNoneMatch != null && IfNoneMatch.equals(ETag)){
+					res.setStatus(304);		
+				} else {
+					res.getWriter().print(thread.generatedContent);	
+				}
+				
 				
 			} catch(Exception e){
-				res.getWriter().print("rhino catch");
+				res.getWriter().print("rhino catch" + e);
 				thread.handleError(e);
 				
 				//flush any error output
