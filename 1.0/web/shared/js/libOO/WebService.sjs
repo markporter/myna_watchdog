@@ -1,23 +1,26 @@
 /* Class: Myna.WebService
-	A WebService meta object that can serve requests for SOAP, XML-RPC and 
-	JSON-RPC, and JSON-MYNA
+	A WebService meta object that can serve requests for SOAP, XML-RPC, 
+	JSON-RPC, JSON-MYNA, and Ext.Direct
 		
 	Detail:
 		This object can be used directly to implement web rpc services or as a 
 		wrapper around existing objects. For SOAP, this attempts to provide the 
-		simplest useable implementation. For the simpler XML-RPC and JSON-RPC 
-		specifications this object aims to provide a complete implementation. 
+		simplest usable implementation. For the simpler XML-RPC JSON-RPC, and 
+		Ext.Direct specifications, this object aims to provide a complete 
+		implementation. 
 		
 	JSON-MYNA: 
 		This is a Myna specific protocol that aims to be the simplest 
 		implementation of WebService. Requests are made via GET or POST. A 
-		paramter "method" must be passed to indicate which function on this 
-		WebService to execute. All other paramters are assumed to be named 
+		parameter "method" must be passed to indicate which function on this 
+		WebService to execute. All other GET or POST parameters are assumed to be named 
 		function parameters. The response body will be a JSON encoding of the 
-		funciton result without any extra metadata.  
-		
-	See <handleRequest> for how to call the web service using each of the 
-	supported protocols
+		function result without any extra metadata.  
+		   
+	See:
+      * <WebService> for how to construct a web service
+      * <handleRequest> for how to call the web service using each of the 
+        supported protocols
 	
 	See Also:
 		* http://www.w3.org/TR/soap/
@@ -26,131 +29,196 @@
 */
 if (!Myna) var Myna={}
 
-/* Constructor: Myna.WebService
+/* Constructor: WebService
 	Constructor function for WebService class
 	
+   Detail: 
+      Web services are defined by creating a file with a ".ws" extension 
+      containing an object literal as defined in "Spec Definition" below. This 
+      file will be handled internally like this:
+      
+      (code)
+         new Myna.WebService(<.ws file contents>).handleRequest($req)
+      (end)
+   
 	Parameters:
 		spec		-	object that describes a web service - see below
 		
 	Spec Definition:
 	name				-	A name for this set of services. Like a class name
 	desc				-	A string describing this service set
+   authFunction		-	*Optional default null*
+                     Function that handles authentication before each 
+                     function request. This function will be called with a 
+                     single parameter, an object with these properties: 
+                     *	username 		   - 	supplied username
+                     *	password			- 	supplied password
+                     *	user				-	<Myna.Permissions.User> object 
+														associated with this cookie. To 
+														associate a user with this call 
+														<$cookie.setAuthUserId>
+                     *	functionName		- 	name of function called
+                     *	functionDef		- 	reference to the function 
+                                       		definition called
+                     Returning false from this function will request an HTTP 
+                     basic auth request. Returning true will allow the 
+                     request to continue. Throwing an exception will return
+                     an error to the client.
 	beforeHandler	-	*Optional default null*
-						A function to execute before proccessing the function
-						handler. This function is called with three parameters:
-						the name of the function handler, a reference to the 
-						function definition, and an array of the function 
-						parameters from the request.
+                     A function to execute after _authFunction_ but before 
+							processing the function handler. This function is called 
+							with three parameters: 
+							
+							* *name* 		- 	the name of the function handler
+							* *def*		- 	a reference to the function definition
+							* *params*	- 	an object of the function parameters to 
+							           		request.
 						
 	afterHandler		-	*Optional default null*
-						A function to execute after proccessing the function
-						handler. This function is called with four parameters:					
-						the name of the function handler, a reference to the 
-						function definition, an array of  the function 
-						parameters from the request, and the returned value from 
-						the function handler
-						
-	authFunction		-	*Optional default null*
-						Function that handles authentication before each 
-						function request. This function will be called with a 
-						single parameter, an object with these properties: 
-						*	username 		- 	supplied username
-						*	password			- 	supplied password
-						*	functionName		- 	name of function called
-						*	functionDef		- 	reference to the fucntion 
-												definition called
-						Returning false from this function will request an HTTP 
-						basic auth request. Returning true will allow the 
-						request to continue. Throwing an exception will return
-						an error to the client.
-						
-	authTimeout		- 	*Optional default 20*
-						Lifetime of auth cookie in client's browser, in minutes.
+							A function to execute after processing the function
+							handler. This function is called with four parameters:
+							
+							* *name*	 	- the name of the function handler
+							* *def*		- a reference to the function definition
+							* *params*	- an object of the function parameters to 
+											  request.
+							* *retval*	- the return value from the request										  
 						
 	functions		-	An object where each property is a function name and the 
 						value is an object representing a function definition as
 						described below
 					
 	Function Definition:
-	desc		-	*Optional default null*
-					A string describing this function
-	params		-	An array of Parameter Definitions. See below 
+	desc			-	*Optional default null*
+						A string describing this function
+	params			-	An array of Parameter Definitions. See below 
 	handler		-	Function to execute. 
-	scope		-	*Optional default: Spec Definition object*
-					Object to use as "this" when executing the _handler_. 
+	scope			-	*Optional default: Spec Definition object*
+						Object to use as "this" when executing the _handler_. 
 	returns		-	A representation of the type of data to return. If this is a
-	                string, it should be one of these type names:
-					"string,numeric,date,date_time". If this is an array object, 
-					then the first item should be either a string type name, 
-					another array, or an object. If this is an object, each 
-					property should be set equal to either a string type name, 
-					another object, or an array.
+						string, it should be one of these type names:
+						"string,numeric,date,date_time". If this is an array object, 
+						then the first item should be either a string type name, 
+						another array, or an object. If this is an object, each 
+						property should be set equal to either a string type name, 
+						another object, or an array.
 					
 	Parameter Definition:
-	name		-	name of the parameter
+	name			-	name of the parameter
 	type			-	Type of the parameter. Currently, the only available types 
-					are "string,numeric,date ,date_time"
-		
+						are "string,numeric,date,date_time"
+	desc			-	*Optional default null*
+						description of the parameter	
 	Returns:
 		Reference to WebService instance
 		
 	Example:
 	(code)
-	var ws = new Myna.WebService({
-		name:"stuff",
+   //MyService.ws
+	{
+		name:"MyService",
 		desc:"A thing that does stuff",
+		myFunction:function(arg1,arg2){
+			//	arbitrary functions and properties can be defined on the spec object.
+			//	in this case "myFunction" can be accessed as "this.myFunction" in 
+			//	authFunction, beforeHandler, afterHandler or in the handler function
+			//	requested
+			
+		},
+		authFunction:function(authData){
+			//	authData contans:
+			//		*	username 		   - 	supplied username
+			//		*	password			- 	supplied password
+			//		*	user				-	<Myna.Permissions.User> object 
+			//									associated with this cookie. To 
+			//									associate a user with this call 
+			//									<$cookie.setAuthUserId>
+			//		*	functionName		- 	name of function called
+			//		*	functionDef		- 	reference to the function 
+			//										definition called
+			//	returning true allows the cal, and false requests a login. Generally 
+			//	you want to return false if the username or password is invalid, and 
+			//	throw an exception if   
+			 
+			return true;
+		},
+		beforeHandler:function(name,def,params){
+			//	name		- 	the name of the function handler
+			//	def		   - 	a reference to the function definition
+			//	params 	- 	an object of the function parameters torequest.
+			//
+			//	This is called after authFunction but before the handler function.
+			//	This function can manipulate the "params" object before the handler is 
+			//	called, or can throw an error to abort processing
+		},
+		afterHandler:function(name,def,params,result){
+			//	name		- 	the name of the function handler
+			//	def		   - 	a reference to the function definition
+			//	params 	- 	an object of the function parameters to the request.
+			//	result		-	result of the handler call
+			//
+			//	This is called after the handler function but before out processing.
+			//	This is generally used for logging, or manipulating the result
+		},
 		functions:{
-			echo:{
-				desc:"returns what you send",
-				returns:"string",
-				params:[{
-					name:"arg_string",
-					type:"string"
-				},{
-					name:"arg_number",
-					type:"numeric"
-				},{
-					name:"arg_any",
-					type:"any"
-				}],
-				handler:function(params){
-					return Myna.dump(params)
-				}
-			},
-			get_employee:{
-				desc:"Always returns bob",
-				returns:{
-					name:"string",
-					age:"numeric",
-					children:[{
+			 echo:{
+				  desc:"returns your parameters as an html table",
+				  returns:"string",
+				  params:[{
+						name:"arg_string",
+						type:"string",
+						desc:"A string params"
+				  },{
+						name:"arg_number",
+						type:"numeric",
+						desc:"A numeric param"
+				  },{
+						name:"arg_date",
+						type:"date",
+						desc:"A date param"
+				  }],
+				  handler:function(params){
+						return Myna.dump(params)
+				  }
+			 },
+			 get_spec:{
+				  desc:"returns the spec object as JSON string",
+				  returns:"string",
+				  params:[],
+				  handler:function(){
+					  //you can access the spec as "this"
+					  return this.toJson()
+				  }
+			 },
+			 get_bob:{
+				  desc:"Always returns bob. Example of a complex return type",
+				  returns:{
 						name:"string",
-						age:"numeric"
-					}],  
-					favorite_colors:["string"] 
-				},
-				params:[{
-					name:"employee_id",
-					type:"numeric"
-				}],
-				handler:function(employee_id){
-					return {
-						name:"Bob Dobb",
-						age:"44", 
+						age:"numeric",
 						children:[{
-							name:"julie",
-							age:9
-						},{
-							name:"sam",
-							age:13
-						}],  
-						favorite_colors:["yellow","green","blue"] 
-					}
-				}
-			} 
+							 name:"string",
+							 age:"numeric"
+						}],
+						favorite_colors:["string"]
+				  },
+				  params:[],
+				  handler:function(){
+						return {
+							 name:"Bob Dobb",
+							 age:"44",
+							 children:[{
+								  name:"julie",
+								  age:9
+							 },{
+								  name:"sam",
+								  age:13
+							 }],
+							 favorite_colors:["yellow","green","blue"]
+						}
+				  }
+			 }
 		}
-	})
-	ws.handleRequest($req);
-	(end)
+	}
 	*/
 	Myna.WebService = function(spec){
 		this.spec =spec
@@ -166,7 +234,7 @@ if (!Myna) var Myna={}
 		this.authData={}
 	}
 	
-	/* Function: Myna.WebService.generateQueryType
+	/* Function: generateQueryType
 		Static function that takes a columns definition and returns a type that 
 		represents the <Myna.Query.result> type for the supplied columns that is 
 		suitible for use in the "returns" section of a web service function 
@@ -258,7 +326,7 @@ if (!Myna) var Myna={}
 		} else if ("ext-route" in req.data){
 			this.executeExtRoute();
 		} else { //TODO: display help
-			
+			this.printHelp()
 		}
 	}
 
@@ -336,20 +404,20 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 		Parameters:
 			user_id	-	user_id of user to register
 	*/
-Myna.WebService.prototype.setAuthUserId=function(user_id){
-	this.authUserId = user_id;
-	$cookie.setAuthUserId(user_id);
-}
+   Myna.WebService.prototype.setAuthUserId=function(user_id){
+      this.authUserId = user_id;
+      $cookie.setAuthUserId(user_id);
+   }
 /* Function: clearAuthUserId
 		sets WebService.authUserId to null and calls <$cookie.clearAuthUserId>
 		
 		Parameters:
 			user_id	-	user_id of user to register
 	*/
-Myna.WebService.prototype.clearAuthUserId=function(){
-	this.authUserId = null;
-	$cookie.clearAuthUserId()
-}
+   Myna.WebService.prototype.clearAuthUserId=function(){
+      this.authUserId = null;
+      $cookie.clearAuthUserId()
+   }
 /* Function: executeFunctionHandler
 		*INTERNAL* handles the execution of web service function. Used by service 
 		specific function handlers 
@@ -359,77 +427,198 @@ Myna.WebService.prototype.clearAuthUserId=function(){
 			functionDef		-	reference to the function definition in the spec
 			paramArray		-	array of parameters to the method
 	*/
-Myna.WebService.prototype.executeFunctionHandler=function(functionName,functionDef,paramArray){
-	$profiler.mark("begin executeFunctionHandler");
-	var ws = this;
-	this.authData={
-		username:$req.authUser,
-		password:$req.authPassword,
-		functionName:functionName,
-		functionDef:functionDef
-	}
-	var authData = this.authData;
-	var authSuccess=false;
-	//default timeout is 24 hours
-	var timeout = ws.spec.authTimeout?ws.spec.authTimeout:24*60;
-	timeout=parseInt(timeout)*60*1000;
-	if (ws.spec.authFunction){
-		var user_id =$cookie.getAuthUserId();
-		if (user_id){
-			ws.setAuthUserId(user_id);
-		}
-		authSuccess = ws.spec.authFunction.call(ws.spec,authData);
-		
-		if (!authSuccess) {
-			$res.requestBasicAuth(ws.spec.name)
-		} else {
-			//Myna.log("debug","auth success",Myna.dump(authData));	
-		}
-		
-	}
-	var paramObject ={}
-	if ("params" in  functionDef){
-		functionDef.params.forEach(function(p,index){
-			if (paramArray[index] == undefined){
-				if ("defaultValue" in p){
-					paramObject[p.name] = p.defaultValue;
-				} else if ("required" in p && p.required){
-					throw new Error(p.name + " parameter is required");	
-				}
-			} else {
-				paramObject[p.name] = paramArray[index];
-			}
-		})
-	}
-	try{
-		if (ws.spec.beforeHandler){
-			ws.spec.beforeHandler.call(ws.spec,functionName,functionDef,paramObject)
-		}
-		if (!functionDef.scope) functionDef.scope = ws.spec;
-		
-		var result = functionDef.handler.call(functionDef.scope,paramObject,ws.spec,functionName,functionDef)
-	} catch(exception){
-		if (__exception__) exception =__exception__;
-		var formattedError = Myna.formatError(exception) 
-		var message = exception.message || exception.getMessage();
-		Myna.log("ERROR","Error in "+ this.spec.name +":" +message,formattedError);
-		throw exception;
-	} finally {
-		try {
-			if (ws.spec.afterHandler){
-				ws.spec.afterHandler.call(ws.spec,functionName,functionDef,paramObject,result);
-			}
-		} catch(exception){
-			if (__exception__) exception =__exception__;
-			formattedError = Myna.formatError(exception) 
-			message = exception.message || exception.getMessage();
-			Myna.log("ERROR","Error in "+ this.spec.name +" afterHandler :" +message,formattedError);
-		}
-		 
-	}
-	return result;
-}
+   Myna.WebService.prototype.executeFunctionHandler=function(functionName,functionDef,paramArray){
+      $profiler.mark("begin executeFunctionHandler");
+      var ws = this;
+      this.authData={
+         username:$req.authUser,
+         password:$req.authPassword,
+         user:$cookie.getAuthUser(),
+         functionName:functionName,
+         functionDef:functionDef
+      }
+      var authData = this.authData;
+      var authSuccess=false;
+      //default timeout is 24 hours
+      var timeout = ws.spec.authTimeout?ws.spec.authTimeout:24*60;
+      timeout=parseInt(timeout)*60*1000;
+      if (ws.spec.authFunction){
+         var user_id =$cookie.getAuthUserId();
+         if (user_id){
+            ws.setAuthUserId(user_id);
+         }
+         
+         authSuccess = ws.spec.authFunction.call(ws.spec,authData);
+         
+         if (!authSuccess) {
+            $res.requestBasicAuth(ws.spec.name)
+         } else {
+            //Myna.log("debug","auth success",Myna.dump(authData));	
+         }
+         
+      }
+      var paramObject ={}
+      if ("params" in  functionDef){
+         functionDef.params.forEach(function(p,index){
+            if (paramArray[index] == undefined){
+               if ("defaultValue" in p){
+                  paramObject[p.name] = p.defaultValue;
+               } else if ("required" in p && p.required){
+                  throw new Error(p.name + " parameter is required");	
+               }
+            } else {
+               paramObject[p.name] = paramArray[index];
+            }
+         })
+      }
+      try{
+         if (ws.spec.beforeHandler){
+            ws.spec.beforeHandler.call(ws.spec,functionName,functionDef,paramObject)
+         }
+         if (!functionDef.scope) functionDef.scope = ws.spec;
+         
+         var result = functionDef.handler.call(functionDef.scope,paramObject,ws.spec,functionName,functionDef)
+      } catch(exception){
+         if (__exception__) exception =__exception__;
+         var formattedError = Myna.formatError(exception) 
+         var message = exception.message || exception.getMessage();
+         Myna.log("ERROR","Error in "+ this.spec.name +":" +message,formattedError);
+         throw exception;
+      } finally {
+         try {
+            if (ws.spec.afterHandler){
+               ws.spec.afterHandler.call(ws.spec,functionName,functionDef,paramObject,result);
+            }
+         } catch(exception){
+            if (__exception__) exception =__exception__;
+            formattedError = Myna.formatError(exception) 
+            message = exception.message || exception.getMessage();
+            Myna.log("ERROR","Error in "+ this.spec.name +" afterHandler :" +message,formattedError);
+         }
+          
+      }
+      return result;
+   }
 
+/* Function: printHelp
+	 prints an HTML response to the requester with documentation of this 
+	 WebService 
+	*/
+	Myna.WebService.prototype.printHelp=function(){
+		var ws = this;
+		var spec = ws.spec;
+		var serviceUrl = $server.requestServerUrl + $server.requestUrl + $server.requestScriptName;
+		var methods = spec.functions.getKeys().sort().map(function(name){
+			var obj = spec.functions[name]
+			obj.setDefaultProperties({
+				name:name,
+				desc:"",
+				params:[]
+			})
+			obj.params.forEach(function(p){
+				p.setDefaultProperties({
+					desc:""
+				})
+			})
+			return obj
+		})
+		$res.print(<ejs>
+		<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+		<html>
+			<head>
+			<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+			<title>Myna WebService documentation for "<%=spec.name%>"</title>
+			
+			<style type="text/css">
+				<%=new Myna.File("/shared/docs/web_service_help.css").readString()%>			
+			</style>
+
+			</head>
+			<body>
+				<a name="top"/>
+				<h1>Myna WebService documentation for "<%=spec.name%>"</h1>
+				<p>
+				This is <a href="http://www.mynajs.org" target="myna">Myna</a> 
+				<a href="http://www.mynajs.org/shared/docs/js/libOO/files/WebService-sjs.html" 
+					target="docs_ws">WebService</a>. 
+				This service can be called via:
+				<uL>
+					<li>
+						<a href="http://www.w3.org/TR/soap/" target="soap">SOAP</a><br>
+						<i>WSDL URL:</i> <%=serviceUrl+"?wsdl"%><br>
+						<i>Service URL:</i> <%=serviceUrl+"?soap"%>
+					</li>
+					<li>
+						<a href="http://www.xmlrpc.com/" target="xml-rpc">XML-RPC</a><br>
+						<i>Service URL:</i> <%=serviceUrl+"?xml-rpc"%><br>
+					</li>
+					<li>
+						<a href="http://json-rpc.org/" target="json-rpc">JSON-RPC</a><br>
+						<i>Service URL:</i> <%=serviceUrl+"?json-rpc"%><br>
+					</li>
+					<li>
+						<a href="http://extjs.com/products/extjs/direct.php" target="ext">Ext.Direct</a><br>
+						<i><a href="http://www.mynajs.org/shared/docs/js/libOO/files/WebService-sjs.html#Myna.WebService.printExtApi" target="ext-api">API</a>
+							URL:</i> <%=serviceUrl+"?ext-api[&amp;ns=&lt;namespace&gt;][&amp;scriptvar=&lt;varname&gt;]"%><br>
+						<i>Service URL:</i> <%=serviceUrl+"?ext-route"%><br>
+					</li>
+					<li>
+						<a href="http://www.mynajs.org/shared/docs/js/libOO/files/WebService-sjs.html" 
+							target="docs_ws">JSON-MYNA</a><br>
+						<i>Service URL:</i> 
+							<%=serviceUrl+"?json-myna&method=<method name>&amp;param=value..."%><br>
+					</li>
+				</ul>
+				<p>
+				<h2><%=spec.name%> Description</h2>
+				<%=spec.desc%>
+				<p>
+				<table class="method_summary" width="100%" height="1" cellpadding="0" cellspacing="0" border="1" >
+					<caption>Method Summary</caption>
+					<@loop array="methods" element="m">
+				 	<tr>
+				 		<td class="method_name" >
+							<a href="#<%=m.name%>"><%=m.name%></a>
+							</td>
+							<td class="method_arguments">
+							<@loop array="m.params" element="p" index="i">
+							<%=p.name%> : <%=p.type%><br>
+							</@loop>
+						</td>
+						<td valign="top"><%=m.desc%></td>
+				 	</tr>
+					</@loop>
+				</table> 
+				
+				<@loop array="methods" element="m">
+					<hr><a name="<%=m.name%>"><a href="#top">top</a>
+					<div class="method">
+						<h3><%=m.name%></h3>
+						<%=m.desc%>
+						<h4>Arguments:</h4>
+						<table cellpadding="10" cellspacing="0" border="0" >
+							<@loop array="m.params" element="p">
+							<tr>
+								<td class="arg_name"><%=p.name%></td>
+								<td class="arg_type"><%=p.type%></td>
+								<td class="arg_desc"><%=p.desc%></td>
+							</tr>
+							</@loop>
+						</table>
+						<h4>Return type</h4>
+						<%=Myna.dump(m.returns)%>
+					</div>
+				</@loop>
+				
+				
+				<hr>
+				
+				
+			</body>
+		</html>
+		</ejs>);	
+	}
+		
 /* Function: printWsdl
 	 prints a SOAP WSDL document representing this web service
 	*/
@@ -872,16 +1061,28 @@ Myna.WebService.prototype.executeFunctionHandler=function(functionName,functionD
 		$res.setContentType("application/json");
 		
 		$res.clear();
+		var resultString=""
 		if (typeof f.returns == "string"){
 			if (f.returns =="numeric"){
-				$res.print(parseFloat(result))
+				resultString=parseFloat(result)
 			} else if (f.returns =="date"){
-				$res.print(new Date(result).getTime());
+				resultString=new Date(result).getTime();
 			} else if (f.returns =="string"){
-				$res.print(String(result).toJson());	
+				resultString=String(result).toJson();	
 			}
-		} else $res.print(result.toJson()) 
+		} else resultString=result.toJson() 
 		
+		if ("scriptvar" in $req.data){
+			$res.setContentType("text/javascript");
+			$res.print("var " + $req.data.scriptvar +"=" + resultString +";")
+		} else if ("callback" in $req.data){
+			$res.setContentType("text/javascript");
+			$res.print($req.data.callback +"(" + resultString +");")
+		} else {
+			$res.setContentType("application/json");	
+			$res.print(resultString)
+		}
+			
 		
 	}
 
@@ -1117,9 +1318,7 @@ Myna.WebService.prototype.executeFunctionHandler=function(functionName,functionD
 					} else {
 						var customXml =<impl:{tagName} xmlns:impl={impl} />
 						
-						
 						valuePart.getKeys().forEach(function(key){
-							
 							parseResultPart(key,customXml, specPart[key], valuePart[key])
 						})
 						xmlPart.appendChild(customXml);

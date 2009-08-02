@@ -18,6 +18,17 @@ try{
 		} catch(e){
 			$server_gateway.log("ERROR","ThreadError: " + String(e.message),Myna.formatError(__exception__));
 		} 
+   } else if (/\.ws$/.test($server.requestScriptName)){ //web service calls
+		var file = new Myna.File($server.requestDir + $server.requestScriptName)
+		var config =$server_gateway.threadContext.evaluateString(
+		  this,
+		  "(" +file.readString() +")",
+		  file.toString(),
+		  1,
+		  null
+		);
+		new Myna.WebService(config).handleRequest($req);
+     
 	} else {
 		//request script
 		var rs = new Myna.File($server.requestDir + $server.requestScriptName); 

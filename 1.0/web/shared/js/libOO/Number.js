@@ -1,3 +1,8 @@
+/* Class: Number
+	Myna extensions to the JavaScript Number object
+
+*/
+
 /* Function: times
 	Executes the supplied function parseInt(this) times.
 	

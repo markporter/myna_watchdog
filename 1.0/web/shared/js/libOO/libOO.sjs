@@ -4,7 +4,6 @@
 	"ObjectLib.js",
 	"Object.js",
 	"String.js",
-	"String.sjs",
 	"Date.js",
 	"Function.js",
 	"Template.sjs",

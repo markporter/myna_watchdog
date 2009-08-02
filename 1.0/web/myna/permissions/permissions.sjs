@@ -1,7 +1,13 @@
 var ws = new Myna.WebService({
 /* =========== setup ======================================================== */
 	name:$application.prettyName,
-   	desc:"Service for interacting with "+$application.prettyName,
+   	desc:<ejs>
+		Service for interacting with <%=$application.prettyName%>.
+		All methods except "logout, auth, auth_transfer, has_active_session" require authentication via 
+		HTTP Basic Auth or stored cookie (as set by the <a href="#auth">auth</a> method). 
+		Authenticated users must have either the myna_admin/full_admin_access right or
+		&lt;appname&gt;/edit_permissions right
+   </ejs>,
 	no_auth_list:"logout,auth,auth_transfer,has_active_session",
 	admin_only_list:"save_user_data,save_user_login_data,save_right_data",
 	beforeHandler:function(name,def,args){

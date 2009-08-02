@@ -67,10 +67,6 @@ File: Myna.Thread  (Thread.sjs)
 File: Myna.ValidationResult  (ValidationResult.js)
 File: Myna.WebService  (WebService.sjs)
 File: MynaPath  (MynaPath.txt)
-File: Object  (Object.js)
-File: ObjectLib  (ObjectLib.js)
-File: String  (String.js)
-File: String  (String.sjs)
 
 Group: Standard_objects  {
 
@@ -83,7 +79,11 @@ Group: Standard_objects  {
    File: $session  (standard_objects/session.sjs)
    }  # Group: Standard_objects
 
-File: times  (Number.js)
+File: Number  (Number.js)
+File: Object  (Object.js)
+File: ObjectLib  (ObjectLib.js)
+File: String  (String.js)
+File: String  (String.sjs)
 
 Group: Index  {
 
