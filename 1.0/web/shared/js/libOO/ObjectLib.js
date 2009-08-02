@@ -380,8 +380,11 @@ var ObjectLib = {}
 	sets default properties on an object 
 	 
 	Parameters: 
-		obj			- object to apply to
-		defaults 	- Object that represents the default properties
+		obj				- 	object to apply to
+		defaults		- 	Object that represents the default properties
+		looseMatch	-	If true, consider "null" values and 0 length strings to be 
+							the same as undefined. By default, only strictly undefined 
+							properties are overwritten by their _defaults_. 
 		
  
 	Returns: 
@@ -401,9 +404,14 @@ var ObjectLib = {}
 		(end)
 	 
 	*/
-	ObjectLib.setDefaultProperties=function (obj,defaults){
+	ObjectLib.setDefaultProperties=function (obj,defaults,looseMatch){
 		for (var key in defaults) {
-			if (obj[key] === undefined) {
+			if (obj[key] === undefined
+				|| looseMatch && (
+					obj[key] === null
+					|| obj[key] === ""
+				)
+			) {
 				obj[key] = defaults[key];
 			}
 		}	

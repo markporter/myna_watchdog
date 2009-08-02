@@ -1,22 +1,41 @@
 var fusebox={
 /* login/auth/main */
-	auth:function(data){
+	auth:function(data,rawData){
 		$req.returningJson = true;
 		data.checkRequired(["username","password"]);
-		var user = Myna.Permissions.getUserByAuth(data.username,data.password)
-		
-		if (user){
-			$cookie.setAuthUserId(user.get_user_id());
-            if (user.hasRight("myna_admin","full_admin_access")){
-                print({success:true,url:"?fuseaction="+$application.mainFuseAction}.toJson());
-            } else {
-               
-               print({success:false,errorMsg:"You do not have access to this application."});
-            }
+		var success,reason;
+		//bypass perms for admin user in case perms DB isn't available
+		if (rawData.username.toLowerCase() == "admin"){
+			var props=getGeneralProperties();
+			if (rawData.password.hashEquals(props.admin_password)){
+				$cookie.setAuthUserId("myna_admin");
+				success = true; 
+			} else {
+				success=false;
+				reason="Admin Login invalid. Please try again.";
+			}
 		} else {
-			$session.clear();
-			$cookie.clearAuthUserId();
-			print({success:false,errorMsg:"Login invalid. Please try again."}.toJson());
+			var user = Myna.Permissions.getUserByAuth(rawData.username,rawData.password)
+			if (user){
+				$cookie.setAuthUserId(user.get_user_id());
+					if (user.hasRight("myna_admin","full_admin_access")){
+						 success = true;
+					} else {
+						success=false;
+						reason="You do not have access to this application.";
+					}
+			} else {
+				$session.clear();
+				$cookie.clearAuthUserId();
+				success=false;
+				reason="Login invalid. Please try again.";
+			}
+		}
+		
+		if (success){
+			print({success:true,url:"?fuseaction="+$application.mainFuseAction}.toJson());
+		} else {
+			print({success:false,errorMsg:reason}.toJson());
 		}
 	},
 	login:function(data){

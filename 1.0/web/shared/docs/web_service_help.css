@@ -1,0 +1,45 @@
+body, td, th{
+	font-family:sans-serif;
+	padding:10px;	
+	font-size:10pt;
+}
+
+.dump_toggle_table td{
+	padding:2px;
+}
+.method{
+	padding-left:30px;
+}
+
+.method_summary .method_name{
+	width:150px;
+}
+.method_summary .method_arguments{
+	width:250px;
+}
+.arg_name{
+	font-weight:bold;	
+}
+.arg_type{
+	font-style:italic;
+}
+.arg_desc{
+	
+}
+.method_summary caption{
+	text-align:left;
+	font-weight:bold;
+	background-color:silver;	
+	border:1px solid gray;
+	padding:10px;
+	border-bottom:0px;
+}
+
+.method_summary {
+	border-top:1px solid gray;
+	border-left:1px solid gray;	
+}
+.method_summary td{
+	border-bottom:1px solid gray;
+	border-right:1px solid gray;	
+}

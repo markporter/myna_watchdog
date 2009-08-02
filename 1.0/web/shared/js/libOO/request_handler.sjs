@@ -28,7 +28,9 @@ try{
 		  null
 		);
 		new Myna.WebService(config).handleRequest($req);
-     
+	} else if (/\application.sjs$/.test($server.requestScriptName)){
+		$res.setStatus(500);
+		Myna.print("application.sjs files cannot be accessed remotely")
 	} else {
 		//request script
 		var rs = new Myna.File($server.requestDir + $server.requestScriptName); 

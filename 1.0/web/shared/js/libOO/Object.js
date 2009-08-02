@@ -208,7 +208,10 @@
 	sets default properties on this object 
 	 
 	Parameters: 
-		defaults 	- Object that represents the default properties
+		defaults 		- 	Object that represents the default properties
+		looseMatch	-	If true, consider "null" values and 0 length strings to be 
+							the same as undefined. By default, only strictly undefined 
+							properties are overwritten by their _defaults_.
  
 	Returns: 
 		void
@@ -227,8 +230,8 @@
 		(end)
 	 
 	*/
-	Object.prototype.setDefaultProperties=function (defaults){
-		return ObjectLib.setDefaultProperties(this,defaults);
+	Object.prototype.setDefaultProperties=function (defaults,looseMatch){
+		return ObjectLib.setDefaultProperties(this,defaults,looseMatch);
 	}
 /* Function: forEach
 	loops over each non-function property of this object an executes the 

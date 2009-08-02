@@ -677,8 +677,9 @@ if (!Myna) var Myna={}
 			if (this.dm.subClasses.hasOwnProperty(subClassName)){
 				bean = new this.dm.subClasses[subClassName](this.dm,this,qry.data);
 			} 
-			bean.baseBean = new this.dm.BeanBase(this);
 			
+			
+			bean.baseBean = new this.dm.BeanBase(this);
 			bean.data=qry.data[0];
 			bean.id=id;
 			
@@ -715,6 +716,8 @@ if (!Myna) var Myna={}
 			})
 			
 			bean.setDefaultProperties(bean.baseBean);
+			
+			  
 			
 			bean.setDefaultProperties(this);
 			return bean;

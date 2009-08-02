@@ -267,6 +267,9 @@ var ws = new Myna.WebService({
 								if (obj[key] instanceof Date){
 									obj[key] = obj[key].format("m/d/Y H:i:s");
 								}
+								if (obj[key] == null){
+									obj[key] = "";
+								}
 							})
 							obj.logins = new Myna.Query({
 								dataSource:"myna_permissions",

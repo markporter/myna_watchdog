@@ -210,9 +210,7 @@ if (!Myna) var Myna={}
 			d;		// recursive dump function
 		if (maxDepth == undefined) maxDepth=4;
 		if (label) {
-			label = "Object Dump of '" + label +"'";
-		} else {
-			label= "Object Dump";
+			label = label;
 		}
 		result=[
 			'<style>',
@@ -535,7 +533,7 @@ if (!Myna) var Myna={}
 		//result += d(obj,maxDepth);
 		result += [
 			'<table class="dump_toggle_table">',
-				'<caption style="cursor:pointer" onclick="_dump_toggle(this)">' + label  + '</caption><tr>',
+			label?'<caption style="cursor:pointer" onclick="_dump_toggle(this)">' + label  + '</caption><tr>':'',
 					'<td>' + d(obj,maxDepth) + '</td>',
 				'</tr>',
 			'</table>',

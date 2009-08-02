@@ -406,27 +406,7 @@ if (!Myna) var Myna={}
                     return /^(\w+)$/.test(name)
                 })
 		},
-    /* Function: getUserById
-			returns the User object that matches the supplied id or null
-			
-			Parameters:
-				id		-	user id to search
-		*/
-		getUserById:function(id){
-            var $this= this;
-			if (!id){
-				throw new Error("Myna.Permissions.User.getUserById: id is required") 	
-			}
-			var dm = new Myna.DataManager("myna_permissions");
-			
-			var users = dm.getManager("users");
-			
-			if (users.find(id).length){
-				return new Myna.Permissions.User(users.getById(id))
-			} else{
-				return null;	
-			}
-		},
+    
     /* Function: getRightById
 			returns the right object that matches the supplied id or null
 			
@@ -488,6 +468,27 @@ if (!Myna) var Myna={}
 			if (exists) {
 				return new Myna.Permissions.UserGroup(manager.getById(id));
 			} else {
+				return null;	
+			}
+		},
+	 /* Function: getUserById
+			returns the User object that matches the supplied id or null
+			
+			Parameters:
+				id		-	user id to search
+		*/
+		getUserById:function(id){
+            var $this= this;
+			if (!id){
+				throw new Error("Myna.Permissions.User.getUserById: id is required") 	
+			}
+			var dm = new Myna.DataManager("myna_permissions");
+			
+			var users = dm.getManager("users");
+			
+			if (users.find(id).length){
+				return new Myna.Permissions.User(users.getById(id))
+			} else{
 				return null;	
 			}
 		},
@@ -581,6 +582,11 @@ if (!Myna) var Myna={}
 	
 	Myna.Permissions.User = function(dao){
 		this.dao = dao;
+		dao.data.setDefaultProperties({
+			first_name:"",
+			middle_name:"",
+			last_name:""
+		},true)
 		//copy properties to this 
 		dao	.applyTo(this);
 		//get rid of set_user_id. It is unnecessary and dangerous
