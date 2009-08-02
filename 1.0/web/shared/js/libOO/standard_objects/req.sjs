@@ -81,6 +81,10 @@ var $req={
 			$req.data.<fieldname>$array.
 	*/
 	data:{},
+/* Property: handled
+	set this to true to prevent requested page from processing
+*/
+	handled:false,
 /* Property: headers
 		a JavaScript Object where the properties are header names and the 
 		property values are an array of strings containing each of request 

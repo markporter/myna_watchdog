@@ -1,7 +1,6 @@
 <% Myna.applyTo(this); %>
 <@if $req.data.upload>
 	{success:true,result:<%=$req.data.toJson()%>}
-	<% java.lang.System.out.println($req.data.toJson()); %>
 <@elseif $req.data.showprogress>
 		<%=$session.get("$uploadProgress")?$session.get("$uploadProgress").toJson():"{}"%>
 <@else >
@@ -79,17 +78,8 @@
 						checkProgress.defer(1000);
 					}
 				}
-			}],
-			listeners:[{
-				actioncomplete:function(form,action){
-					alert("got here");
-					if (action.type=="submit"){
-						Ext.get(document.body).createChild({
-							html:"bob"+action.response.result
-						})
-					}
-				}
 			}]
+			
 			
 		}).render(document.body);
 		

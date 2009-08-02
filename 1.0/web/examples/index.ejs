@@ -1,0 +1,98 @@
+<html>
+	<head>
+		<title> Myna Example Code</title> 
+		<script type="text/javascript" src="<%=$server.rootUrl%>shared/js/libOO/client.sjs"></script>
+		<style>
+			/* #main_table{
+				position:absolute;
+				top:0;
+				left:0;
+			} */
+			body,td,button  {
+				font-size:11px;
+				font-family:sans-serif;
+			}
+			.link{
+				color:blue;
+				cursor:pointer;
+				text-decoration:underline;
+			}
+			ul{
+				padding-left:10px;	
+			}
+		</style>
+		<script>
+			var old;
+			function viewCode(){
+				var iframe =document.getElementById("example");
+				console.dir(iframe)
+				var src =iframe.getAttribute("src");
+				old=src
+				iframe.src=src.listFirst("?")+"?view_source"
+			}
+			function viewExample(path){
+				
+				if (path) old = path
+				
+				var iframe =document.getElementById("example");
+				
+				iframe.src="<%=$server.rootUrl%>shared/js/ext_latest/resources/images/default/shared/loading-balls.gif"
+				window.setTimeout(function(){
+					iframe.src=old
+					document.getElementById("examples_pane").style.visibility = "visible";
+				},100)
+				
+			}
+		</script>
+	</head>
+	<body>
+		
+	<table id="main_table" width="100%" height="100%" cellpadding="0" cellspacing="0" border="0" >
+		<tr><td colspan="2" height="1"><h1>Myna Example Code</h1></td></tr>
+		<tr>
+			<td width="200" valign="top">
+				<ul>
+					<li><span class="link" onclick="viewExample('file_upload.ejs')">File Uploads</span></li>
+					<li><span class="link" onclick="viewExample('file_upload_ext.ejs')">File Uploads (Ext)</span></li>
+					<li>WebService
+						<ul>
+							<li><span class="link" onclick="viewExample('web_service/MyService.ws')">WebService: MyService.ws</span></li>
+							<li><span class="link" onclick="viewExample('web_service/call_services.ejs')">JSON-MYNA WebService calls</span></li>
+						</ul>
+					<li>Ext.Direct
+						<ul>
+						<li><span class="link" onclick="viewExample('ext_direct/ExtTest.ws')">WebService: ExtTest.ws</span></li>
+						<li><span class="link" onclick="viewExample('ext_direct/callback.ejs')">Batch Routing</span></li>
+						<li><span class="link" onclick="viewExample('ext_direct/ext_direct_tree.ejs')">Routing Ext Tree</span></li>
+						</ul>
+					</li>
+					<li>Myna.Query Examples
+						<ul>
+						<li><span class="link" onclick="viewExample('sql_examples/simple.ejs')">First 10 rows</span></li>
+						<li><span class="link" onclick="viewExample('sql_examples/simple2.ejs')">Second 10 rows</span></li>
+						<li><span class="link" onclick="viewExample('sql_examples/params1.ejs')">PreparedStatements (QueryParams)</span></li>
+						<li><span class="link" onclick="viewExample('sql_examples/params2.ejs')">PreparedStatements (Values)</span></li>
+						</ul>
+					</li>
+				</ul>
+			</td>
+			<td valign="top">
+				<table id="examples_pane" style="visibility:hidden" width="100%" height="100%" cellpadding="0" cellspacing="0" border="0" >
+					<tr>
+						<td class="" id="switchbar" height="1">
+							<button onclick="viewExample()">View Example</button> <button onclick="viewCode()">View Code</button>
+						</td>
+					</tr>
+					<tr>
+						<td class="">
+							<iframe name="example" id="example" width="100%" height="100%"></iframe			
+						</td>
+					</tr>
+				</table>
+				
+			</td>
+		</tr>
+	</table>
+		
+	</body>
+</html>	

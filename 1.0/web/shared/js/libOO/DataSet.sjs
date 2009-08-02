@@ -233,7 +233,50 @@ if (!Myna) var Myna={}
             data:Array.prototype.map.call(this,func),
             columns:this.columns
         })
-    }	
+    }
+/* Function: filter
+	Performs Array.filter, but returns a new DataSet with the same columns as 
+	this one
+
+	See:
+		<Array.filter>
+    */
+	Myna.DataSet.prototype.filter = function() {
+	  var args = Array.prototype.slice.call(arguments,0);
+	  return new Myna.DataSet({
+			data:Array.prototype.filter.apply(this,args),
+			columns:this.columns
+	  })
+	}
+/* Function: concat
+	Performs Array.concat, but returns a new DataSet with the same columns as 
+	this one
+
+	See:
+		<Array.concat>
+    */
+	Myna.DataSet.prototype.concat = function() {
+		var args = Array.prototype.slice.call(arguments,0);
+		return new Myna.DataSet({
+			data:Array.prototype.concat.apply(this,args),
+			columns:this.columns
+		})
+	}
+/* Function: slice
+	Performs Array.slice, but returns a new DataSet with the same columns as 
+	this one
+
+	See:
+		<Array.slice>
+    */
+	Myna.DataSet.prototype.slice = function() {
+		var args = Array.prototype.slice.call(arguments,0);
+		return new Myna.DataSet({
+			data:Array.prototype.slice.apply(this,args),
+			columns:this.columns
+		})
+	}	
+	
 /* Function: minByCol
 	returns the "smallest" value of a column.
 	

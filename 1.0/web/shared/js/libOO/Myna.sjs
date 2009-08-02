@@ -35,6 +35,7 @@ if (!Myna) var Myna={}
 		} else if (label != undefined){
 			$res.print("<hr>" +label);
 		}
+		if ($req) $req.handled=true;
 		throw ("___MYNA_ABORT___");
 	}
 	
@@ -868,7 +869,7 @@ if (!Myna) var Myna={}
 		return Myna.mapToObject($server_gateway.generalProperties)
 	}
 /* Function: include 
-	Includes a text file or executes a .js, .sjs, or .ejs file in the current thread
+	executes a .js, .sjs, or .ejs file in the current thread
 	 
 	Parameters: 
 		path	-	<MynaPath> repesenting location of file 
@@ -886,9 +887,7 @@ if (!Myna) var Myna={}
 		This behavior is similar to the JavaScript "apply" function. The code in the file will be 
 		treated like the body of a function on _scope_.
 		
-		If the file is not one of the above extentions, or if _scope_ is null:
 		
-		This function prints the text of the file
 		
 	See:
 		* http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Global_Objects:Function:apply
@@ -899,31 +898,42 @@ if (!Myna) var Myna={}
 		var file =new Myna.File(path); 
 		if (typeof $profiler !== "undefined") $profiler.begin("Include " + path);
 		var content =file.readString();
-		var type="text";
 		
-		if (/.*.ejs$/.test(path)){
-			type="ejs";
+		if (/\.ejs$/.test(path)){
 			content = "<"+"%try{%" +">" + content 
 				+"<" +"%} catch(e) {if (__exception__ && !e.rhinoException) e.rhinoException=__exception__;if($application && $application._onError) {$application._onError(e)} else{throw(e)}}%" +">";
-		} else if (/.*.sjs$/.test(path) || scope){
-			type="sjs";
+		} else if (/\.s?js$/.test(path) || scope){
 			content = "try{" + content 
 				+"} catch(e) {if (__exception__ && !e.rhinoException) e.rhinoException=__exception__; if($application && $application._onError) {$application._onError(e)} else{throw(e)}}";
+		} else {
+			throw new Error("include can only be called with .js .sjs or .ejs files")	
 		}
 		content +="\n";
-		if (type =="text" || scope === null){
-			$res.print(content);
-		} else if (scope){
-			/* if ($server.isThread){
-				$server_gateway.threadScope.applyTo(scope);
-			} */
-			
+		if (scope){
 			$server_gateway.executeJsString(scope,content,path);
 		} else {
 			$server_gateway.executeJsString($server_gateway.threadScope,content,path);
 		} 
 		
 		if (typeof $profiler !== "undefined") $profiler.end("Include " + path);
+	}
+/* Function: includeText 
+	Includes a text file in the current thread
+	 
+	Parameters: 
+		path	-	<MynaPath> repesenting location of file 
+		 
+	Returns: 
+		void
+		
+	See:
+		* http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Global_Objects:Function:apply
+		* <Myna.includeOnce>
+		
+	*/
+	Myna.includeText=function Myna_includeText(path){
+		var file =new Myna.File(path); 
+		$res.print(file.readString())
 	}
 	/* Experimental code */
 	/* Myna.evalIinclude=function Myna_evalIinclude(path,scope){

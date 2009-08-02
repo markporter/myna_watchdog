@@ -1,0 +1,35 @@
+<html>
+   <head>
+      <title>Example SQL queries</title> 
+   </head>
+   <body>
+      <h2>A where clause using prepared statements (QueryParams)</h2>
+      Using defined SQL parameters improves speed, especially for for repeated 
+      queries, and they prevent <a href="http://en.wikipedia.org/wiki/SQL_injection">SQL injection</a> 
+      by forcing the input to be interpreted as data rather than SQL. Notice the 
+      parameterized values in the SQL dump <p>
+      This example explicitly uses Myna.QueryParams object to store the parameters, 
+      and then passes it as "parameters" to Myna.Query() 
+     
+      
+      <p>returns:
+      <%
+      var p = new Myna.QueryParams();
+      var result = new Myna.Query({
+         ds:"myna_log",
+         sql:<ejs>
+            Select 
+               log_id,
+               type,
+               label
+            from myna_log_general
+            where type=<%=p.addValue("INFO","varchar")%>
+         </ejs>,
+         maxRows:10,
+         parameters:p
+      })
+      Myna.print(Myna.dump(result));
+      %>
+   
+   </body>
+</html>

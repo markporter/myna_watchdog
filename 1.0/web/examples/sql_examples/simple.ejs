@@ -1,0 +1,29 @@
+<html>
+   <head>
+      <title>Example SQL queries</title> 
+   </head>
+   <body>
+      <h2>First 10 rows of the general log</h2> 
+      Note that the totalRows property of the Query object indicates how many rows 
+		would have been returned if maxRows was not defined
+      <p>returns:
+      <%
+		/*
+		maxRows limits the size of the result set
+		*/
+      var result = new Myna.Query({
+         ds:"myna_log",
+         sql:<ejs>
+            Select 
+               log_id,
+               type,
+               label
+            from myna_log_general
+         </ejs>,
+         maxRows:10
+      })
+      Myna.print(Myna.dump(result));
+      %>
+   
+   </body>
+</html>

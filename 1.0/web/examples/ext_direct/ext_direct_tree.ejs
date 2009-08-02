@@ -2,19 +2,14 @@
 <head>
    <title>Ext.Direct TreeLoader</title>
    <link rel="stylesheet" type="text/css" href="<%=extUrl%>resources/css/ext-all.css" />
-
-   <!-- GC -->
- 	<!-- LIBS -->
- 	<script type="text/javascript" src="<%=extUrl%>adapter/ext/ext-base.js"></script>
- 	<!-- ENDLIBS -->
-
+	<script type="text/javascript" src="<%=extUrl%>adapter/ext/ext-base.js"></script>
    <script type="text/javascript" src="<%=extUrl%>ext-all.js"></script>
+	
+	<%-- Including the Ext.Direct API from the ExtTest.ws WebService --%>
 	<script type="text/javascript" src="ExtTest.ws?ext-api&callback=Ext.Direct.addProvider"></script>
 
    <script language="javascript" >
 		Ext.onReady(function(){
-			//Ext.Direct.addProvider(Ext.app.REMOTING_API);
-			
 			var tree = new Ext.tree.TreePanel({
 			  width: 400,
 			  height: 400,
@@ -37,17 +32,12 @@
 		});
 
 	</script>
-
-	
 </head>
 
 <body>
-
-<h1>Ext.Direct Remoting With Tree</h1>
-Server side API: ExtTest.ws <br>
-<% var api_doc=$server.currentUrl+"ExtTest.ws" %>
-view the auto generated API for ExtTest.ws: <a target="view_api" href="<%=api_doc%>"><%=api_doc%></a>  
-
-
+	<h1>Ext.Direct Remoting With Tree</h1>
+	Server side API: ExtTest.ws <br>
+	<% var api_doc="ExtTest.ws" %>
+	View the auto generated API for ExtTest.ws: <a target="view_api" href="<%=api_doc%>"><%=api_doc%></a>
 </body>
 </html>

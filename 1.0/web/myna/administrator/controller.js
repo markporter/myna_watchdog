@@ -131,6 +131,8 @@ var C ={
 					html:'<a href="?fuseaction=new_password_form" class="link" >Change Admin Password</a>'
 				},{
 					html:'<span class="link" onclick="window.open(\'' + rootUrl + 'shared/docs/index.html\')">Documentation</span>'
+				},{
+					html:'<span class="link" onclick="window.open(\'' + rootUrl + 'examples/index.ejs\')">Code Examples</span>'
 				}]
 			},{
 				region:"south",
