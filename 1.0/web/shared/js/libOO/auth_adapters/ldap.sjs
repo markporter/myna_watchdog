@@ -1,3 +1,70 @@
+/* Topic: LDAP Auth Adapter 
+
+The LDAP auth adapter ( see <AuthAdapters> ) allows for authentication against LDAP sources, including 
+Active Directory.
+
+There are no pre-defined auth_types for the ldap adapter. To create one, 
+create a file in /WEB-INF/myna/auth_types/ with the name you would for your 
+adapter. In this example we will call it /WEB-INF/myna/auth_types/our_domain.
+in this file you will need a valid config. A config is a valid JSON String with 
+the following properties:
+
+auth_type				-	name of the this config. This should be the same as the config's 
+							filename
+adapter				-	"ldap"
+server					-	Server and initial subtree to connect to.
+							 > ldap://server.yourdomain.com:389/o=top,ou=people
+							 > ldaps://server.yourdomain.com:636/o=top,ou=people
+							 Note: AD needs to have the domain translated to initial context
+							 > my.domain.com becomes ldap://my.domain.com:389/dc=my,dc=domain,dc=com
+search	_columns		-	a comma separated list of ldap properties to use when 
+							searching this adapter
+map						-	object that maps Myna User properties to ldap properties. 
+							At the very least this object must have these properties:
+							"login,first_name,last_name"
+filter					-	*Optional, default null*							
+							LDAP query to filter results, ex: (ObjectClass=Person)
+ad_domain				-	*Optional, default null* 
+							The Active Directory domain. if set, then special Active 
+							Directory processing is activated
+username				-	*Optional, default null*
+							username of user with whom to bind to the directory. Only 
+							needed if you directory doesn't allow anonymous binds for 
+							searches. AD users should just put the username here, all
+							other should use a fully qualified Distinguished Name(dn)
+password				-	*Optional, default null*
+							password of user with whom to bind to the directory.
+
+
+
+
+Here is an Active Directory 
+example:
+
+(code)
+{
+	"auth_type":"our_domain",
+	"adapter":"ldap",
+	"server":"ldap://our_domain.com/dc=our_domain,dc=com",
+	"search_columns":"cn,name",
+	"filter":"(ObjectClass=Person)",
+	"ad_domain":"our_domain",
+	"username":"search_user",
+	"password":"search_password",
+	"map":{
+		"first_name":"givenName",
+		"last_name":"sn",
+		"middle_name":"initials",
+		"login":"cn"
+	}
+}
+(end)
+
+Once this is in place you can add users via the Permissions area of the 
+administrator
+
+*/
+
 var type="ldap"
 
 //check the config file for needed values
@@ -16,7 +83,7 @@ var ldap;
 if (this.config.username){
    if (this.config.ad_domain && !/@/.test(this.config.username)) {
         this.config.username +="@" +this.config.ad_domain;
-   }
+   }                        
    ldap = new Myna.Ldap(this.config.server, this.config.username,this.config.password);
 } else {
    ldap = new Myna.Ldap(this.config.server);  
@@ -29,16 +96,28 @@ function userExists(username){
 }
 
 function getDN(username){
-   var searchString="(cn="+username+")";
-   var users = ldap.search(searchString);
-   if (users.length == 1) return users[0].name
-   if (users.length > 1) {
-      Myna.log("warning","Auth type '"  + this.config.auth_type+ "': duplicate DN for username '"+username+"'",Myna.dump($req.data));
-   }
-   return null;
+	$this = this;
+	var baseDn = $this.config.server.listLast("/");
+	if (/=/.test(baseDn)){
+		baseDn="," +baseDn;
+	} else {
+		baseDn="";
+	}
+	
+	var searchString="(cn="+username+")";
+	if ($this.config.filter){
+		qry = "(&" + $this.config.filter + qry + ")"
+	}
+	var users = ldap.search(searchString);
+	if (users.length == 1) return users[0].name + baseDn
+	if (users.length > 1) {
+	  Myna.log("warning","Auth type '"  + this.config.auth_type+ "': duplicate DN for username '"+username+"'",Myna.dump($req.data));
+	}
+	return null;
 }
 
 function isCorrectPassword(username,password){
+	$this = this;
    if (this.config.ad_domain){
        dn = username +"@"+this.config.ad_domain;
    } else {
@@ -50,7 +129,10 @@ function isCorrectPassword(username,password){
    try {
       new Myna.Ldap(this.config.server, dn, password);
       return true;
-      } catch(e){return false}
+      } catch(e){
+		  Myna.log("ERROR","Failed login to " +$this.config.auth_type +"/" + dn,Myna.formatError(e));
+	  	return false
+	 }
 }
 
 function searchUsers(search){
@@ -86,7 +168,7 @@ function searchUsers(search){
                 result[myna_attribute] = row.attributes[ldap_attribute][0];
              }
          })
-         if (result.login.length) return result
+         return result;
                
       }),
 		columns:"login,first_name,last_name,middle_name,title"
