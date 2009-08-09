@@ -89,6 +89,8 @@ Group: Myna Global Objects  {
 
    }  # Group: Myna Global Objects
 
+File: AuthAdapters  (auth_adapters/auth_adapters.txt)
+File: LDAP Auth Adapter  (auth_adapters/ldap.sjs)
 File: debug_window.js  (debug_window.js)
 File: MynaPath  (MynaPath.txt)
 File: ObjectLib  (ObjectLib.js)

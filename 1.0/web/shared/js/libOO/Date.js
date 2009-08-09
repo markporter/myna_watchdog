@@ -55,9 +55,9 @@ Format  Output      Description
 	 Example usage (note that you must escape format specifiers with '\\' to render them as character literals):
 	 (code)
 var dt = new Date('1/10/2007 03:05:01 PM GMT-0600');
-document.write(dt.format('Y-m-d'));                         //2007-01-10
-document.write(dt.format('F j, Y, g:i a'));                 //January 10, 2007, 3:05 pm
-document.write(dt.format('l, \\t\\he dS of F Y h:i:s A'));  //Wednesday, the 10th of January 2007 03:05:01 PM
+Myna.println(dt.format('Y-m-d'));                         //2007-01-10
+Myna.println(dt.format('F j, Y, g:i a'));                 //January 10, 2007, 3:05 pm
+Myna.println(dt.format('l, \\t\\he dS of F Y h:i:s A'));  //Wednesday, the 10th of January 2007 03:05:01 PM
  (end)
 	
 	 Here are some standard date/time patterns that you might find helpful.  They
@@ -83,7 +83,7 @@ Date.patterns = {
 	 Example usage:
 	 (code)
 var dt = new Date();
-document.write(dt.format(Date.patterns.ShortDate));
+Myna.println(dt.format(Date.patterns.ShortDate));
  (end)
  */
 
@@ -598,7 +598,7 @@ Date.prototype.isLeapYear = function() {
 	 Example:
 	(code)
 var dt = new Date('1/10/2007');
-document.write(Date.dayNames[dt.getFirstDayOfMonth()]); //output: 'Monday'
+Myna.println(Date.dayNames[dt.getFirstDayOfMonth()]); //output: 'Monday'
 (end)
 	 
 Returns: 
@@ -616,7 +616,7 @@ Date.prototype.getFirstDayOfMonth = function() {
 	 Example:
 	(code)
 var dt = new Date('1/10/2007');
-document.write(Date.dayNames[dt.getLastDayOfMonth()]); //output: 'Wednesday'
+Myna.println(Date.dayNames[dt.getLastDayOfMonth()]); //output: 'Wednesday'
 (end)
 	 
 Returns: 
@@ -750,13 +750,13 @@ Date.monthNumbers = {
 var orig = new Date('10/1/2006');
 var copy = orig;
 copy.setDate(5);
-document.write(orig);  //returns 'Thu Oct 05 2006'!
+Myna.println(orig);  //returns 'Thu Oct 05 2006'!
 
 //correct way:
 var orig = new Date('10/1/2006');
 var copy = orig.clone();
 copy.setDate(5);
-document.write(orig);  //returns 'Thu Oct 01 2006'
+Myna.println(orig);  //returns 'Thu Oct 01 2006'
 (end)
 	 
 Returns: 
@@ -805,38 +805,62 @@ Date.YEAR = "y";
 	 does not modify the Date instance being called - it creates and returns
 	 a new Date instance containing the resulting date value.
 	
-	 Examples:
-	 (code)
-//Basic usage:
-var dt = new Date('10/29/2006').add(Date.DAY, 5);
-document.write(dt); //returns 'Fri Oct 06 2006 00:00:00'
-
-//Negative values will subtract correctly:
-var dt2 = new Date('10/1/2006').add(Date.DAY, -5);
-document.write(dt2); //returns 'Tue Sep 26 2006 00:00:00'
-
-//You can even chain several calls together in one line!
-var dt3 = new Date('10/1/2006').add(Date.DAY, 5).add(Date.HOUR, 8).add(Date.MINUTE, -30);
-document.write(dt3); //returns 'Fri Oct 06 2006 07:30:00'
- (end)
-	
-	 interval 	- Date interval . see below  
-	 value 		- {Number}The amount to add to the current date
+	 Parameters:
+	 interval			-	Either a Date Interval Type (see below) or a time in 
+	 						milliseconds to add to this date (see <Date.getInterval>). 
+							If this is a negative time, it will be subtracted
+	 value				-	*Optional default 0*
+							This is only necessary if _interval_ is a Date Interval 
+							Type (see below). In that case this the number of units to 
+							add. If this is a negative value it will be subtracted 
 	 
-Date Intervals:
-	* Date.MILLI
-	* Date.SECOND
-	* Date.MINUTE
-	* Date.HOUR
-	* Date.DAY
-	* Date.MONTH
-	* Date.YEAR
-Returns: 
- {Date} The new Date instance
+	Date Interval Types:
+		Date.MILLI 	-	"ms"
+		Date.SECOND 	-	"s"
+		Date.MINUTE 	-	"mi"
+		Date.HOUR 	-	"h"
+		Date.DAY 		-	"d"
+		Date.MONTH	-	"mo"
+		Date.YEAR		-	"y"
+		
+	Returns: 
+		The new Date instance
+		
+	Examples:
+	(code)
+	//Basic usage:
+	var dt = new Date('10/29/2006').add(Date.DAY, 5);
+	Myna.println(dt); //returns 'Fri Oct 06 2006 00:00:00'
+	
+	//can also use string codes:
+	var dt = new Date('10/29/2006').add("d", 5);
+	Myna.println(dt); //returns 'Fri Oct 06 2006 00:00:00'
+	
+	//Or use an interval for applying to multiple dates
+	var interval = Date.getInterval("d",7) //one week
+	//add a week to all the dates in the 'preDefinedDates' array
+	var modifiedDates =preDefinedDates.map(function(date){
+		return date.add(interval);
+	})
+	
+	
+	//Negative values will subtract correctly:
+	var dt2 = new Date('10/1/2006').add(Date.DAY, -5);
+	Myna.println(dt2); //returns 'Tue Sep 26 2006 00:00:00'
+	
+	//You can even chain several calls together in one line!
+	var dt3 = new Date('10/1/2006').add(Date.DAY, 5).add(Date.HOUR, 8).add(Date.MINUTE, -30);
+	Myna.println(dt3); //returns 'Fri Oct 06 2006 07:30:00'
+	(end)
  */
 Date.prototype.add = function(interval, value){
   var d = this.clone();
   if (!interval || value === 0) return d;
+  //if we have a numeric interval
+  if (parseInt(interval) == interval) {
+	  d.setMilliseconds(this.getMilliseconds() + interval);
+	  return d;
+  }
   switch(interval.toLowerCase()){
     case Date.MILLI:
       d.setMilliseconds(this.getMilliseconds() + value);
@@ -866,4 +890,62 @@ Date.prototype.add = function(interval, value){
       break;
   }
   return d;
+};
+/* Function: getInterval
+	 returns a time interval in milliseconds. This can be used with <Date.add>
+	 instead of specifying the type and length
+	 
+	Parameters:
+		interval		-	Either a Date Interval Type (see below) or a time in 
+							milliseconds to add to this date (see <Date.getInterval>). 
+							If this is a negative time, it will be subtracted
+		value			-	*Optional default 0*
+							This is only necessary if _interval_ is a Date Interval 
+							Type (see below). In that case this the number of units to 
+							add. If this is a negative value it will be subtracted 
+	
+	Date Interval Types:
+		Date.MILLI 	-	"ms"
+		Date.SECOND 	-	"s"
+		Date.MINUTE 	-	"mi"
+		Date.HOUR 	-	"h"
+		Date.DAY 		-	"d"
+		Date.MONTH	-	"mo"
+		Date.YEAR		-	"y"
+	
+	Note: 
+		* Date.MONTH is always 30 days
+		* Date.YEAR is always 365 days
+		
+	
+		
+	Example:
+	(code)
+	var interval = Date.getInterval("d",7) //one week
+	//add a week to all the dates in the 'preDefinedDates' array
+	var modifiedDates = preDefinedDates.map(function(date){
+		return date.add(interval);
+	})
+	
+	(end)
+ */
+Date.getInterval = function(interval, value){
+	if (!interval || !value) return 0;
+	switch(interval.toLowerCase()){
+	case Date.MILLI:
+		return value
+	case Date.SECOND:
+		return value * 1000;
+	case Date.MINUTE:
+		return value * 1000 * 60;
+	case Date.HOUR:
+		return value * 1000 * 60 *60;
+	case Date.DAY:
+		return value * 1000 * 60 *60 *24;
+	case Date.MONTH:
+		return value * 1000 * 60 *60 *24*30;
+	case Date.YEAR:
+		return value * 1000 * 60 *60 *24*365;
+	}
+  return 0;
 };

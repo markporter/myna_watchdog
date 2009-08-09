@@ -1,3 +1,109 @@
+Release Name: 1.0_alpha_15
+Notes:
+
+New Features:
+   * Added support for auth adapters. 
+     These are customizable authentication 
+	  modules that can be used with Myna's permissions system or separately. An 
+	  adapter is a combination of a auth_type config file 
+	  ( /WEB-INF/myna/auth_types/) and an implementation 
+	  (/shared/js/libOO/auth_adapters). Myna currently comes with 3 
+	  implementations (server_admin, myna, and ldap) and 2 pre-defined auth_types 
+	  (myna and server_admin). auth_types are analogous to DataSources and 
+	  auth_adapters are analogous to database drivers. Here is an example of 
+	  authenticating a username and password against the server_admin adapter:
+	  
+	  (code)
+		var adapter = Myna.Permissions.getAuthAdapter("server_admin");
+		var adminPassword ="...";
+		if (adapter.isCorrectPassword("admin",$req.data.password)){
+			Myna.print("is good")	
+		} else {
+			Myna.print("is bad")
+		} 
+	  (end)
+
+	  An even more powerful way to use adapters is in conjunction with the 
+	  permissions system. Here is an excerpt from the db_manager authentication 
+	  function:
+	  
+	  (code)
+	  var user = Myna.Permissions.getUserByAuth(data.username,data.password)
+		
+		if (user){
+			$cookie.setAuthUserId(user.get_user_id());
+			if (user.hasRight("myna_admin","full_admin_access")){
+				 print({success:true,url:"?fuseaction="+$application.mainFuseAction}.toJson());
+			} else {
+				 print({success:false,errorMsg:"You do not have access to this application."}.toJson());
+			}
+		} else {
+			$session.clear();
+			$cookie.clearAuthUserId();
+			print({success:false,errorMsg:"Login invalid. Please try again."}.toJson());
+		}
+	  (end)
+	  
+	  Myna.Permissions.getUserByAuth(username,password[,auth_type]) attempts to
+	  authenticate against the indicated adapter, and then look up and return the 
+	  associated user for that login. We can then check to see if that user has
+	  any rights in this application. Calling getUserByAuth without specifying an
+	  adapter, as in the code above, causes myna to authenticate against every 
+	  available adapter until there is a match. Matching more than one user is 
+	  considered a failure since Myna cannot tell which login is correct. Because 
+	  a User can have many logins, it is possible for a given user to 
+	  authenticate successfully via more than one adapter. For example, a user 
+	  may have a local Myna login and an Active Directory (ldap) login.
+	 
+	  See: 
+	  	* http://www.mynajs.org/shared/docs/js/libOO/files/auth_adapters/auth_adapters-txt.html
+		* http://www.mynajs.org/shared/docs/js/libOO/files/auth_adapters/ldap-sjs.html
+	  
+   * Web Service Changes
+	  * Added dynamic HTML documentation of WebServices. Connection to a WebService 
+       without specifying URL or FORM parameters will display the documentation.
+	  * Added new extension ".ws" for WebService files. This is now the official 
+	    way to create WebServices. The only contents of the file should be the 
+		 WebService config itself. See http://www.mynajs.org/shared/docs/js/libOO/files/WebService-sjs.html#Myna.WebService.WebService
+		 
+	* Improved Examples
+	  Myna examples have been re-organized and indexed. To see the new UI for 
+	  examples, see the "Examples" link in the Myna administrator. Executing 
+	  examples now requires admin access to avoid security vulnerabilities
+	  
+	* Added ETag support. This means that if the content just generated matches the 
+	  If-None-Match header from the browser, a "304 Not Modified" is returned 
+	  instead of the content. This saves network traffic.
+	  
+Other Changes:
+
+* Modified Administrator to authenticate against any available adapter
+* Changed upgrade_tables.sjs to pre-populate an Admin user with user ID
+  "myna_admin" and a login "Admin" Also created the group "Myna Adminstrators"
+  with myna_admin and the right "full_admin_access". This allows the server
+  admin user to be treated the same as any other user
+* added DataSet.map(). This does the same thing as Array.map but it returns a 
+  Myna.DataSet
+* added Permissions.getUserGroupsByAppname() and getRightsByAppname() 
+* added improved support for ActiveDirectory to ldap adapter
+* Created JavaUtils.createClassArray for creating Java arrays of any class 
+* added Ext.Direct example directory with very basic example in 
+  examples/ext_direct
+* added WebService example in /examples/web_service
+* re-organized generated docs
+* Modified debug_window to only enumerate non-function properties
+* modified request_handler to not serve direct calls to application.sjs. 
+* modified Myna.Dump to only include the root caption if a label is defined
+* added Ext.Direct tree demo: /examples/ext_direct/ext_direct_tree.ejs
+* added /examples/index.ejs which is an index of the code examples
+* Added link to Myna administrator to examples index
+* broke sql_examples into several examples in /examples/sql_examples
+* removed text including ability from Myna.include()
+* added Myna.includeText() for calling $res.print with the text of a file 
+   
+    
+-----------------------------------
+
 Release Name: 1.0_alpha_14
 Notes:
 

@@ -22,14 +22,19 @@ import EDU.oswego.cs.dl.util.concurrent.*;
 */
 public class MynaThread {
 	//static public Log logger = LogFactory.getLog(MynaThread.class);
-	static public String version="1.0_alpha_14-1";
+	static public String version="1.0_alpha_15";
 	static public FIFOSemaphore threadPermit;
+	static public FIFOSemaphore manageLocksPermit;
 	static public volatile CopyOnWriteArrayList runningThreads 	= new CopyOnWriteArrayList();
 	static public volatile CopyOnWriteArrayList recentThreads 	= new CopyOnWriteArrayList();
 	
-	static public Hashtable cron = new Hashtable();	
+	static public Hashtable cron = new Hashtable();
 	
 	static public Hashtable dataSources = new Hashtable();
+	
+	
+	
+	static public Hashtable locks = new Hashtable(); //used by Myna.getLock()
 	static public Hashtable scriptCache = new Hashtable();
 	static public Properties generalProperties = new Properties();
 	static public Hashtable serverVarMap = new Hashtable();//used by $server.get/set
@@ -42,6 +47,7 @@ public class MynaThread {
 	
 	static public int threadHistorySize=0; // number of completed threads to store in recentThreads. Set with property "thread_history_size"
 	static public java.util.Date serverStarted = new java.util.Date(); //date object representing the time this server was started
+	
 	
 	public boolean isInitThread = false; //Is this the first thread after server restart?
 	public boolean isWaiting=true;// am I waiting for a thread permit?
@@ -285,6 +291,7 @@ public class MynaThread {
 			
 			int max_running_threads = Integer.parseInt(generalProperties.getProperty("max_running_threads"));
 			threadPermit = new FIFOSemaphore(max_running_threads);
+			manageLocksPermit = new FIFOSemaphore(1);
 			
 			this.threadHistorySize = Integer.parseInt(generalProperties.getProperty("thread_history_size"));
 			
@@ -643,7 +650,7 @@ public class MynaThread {
 	public void handleError(Exception originalException) throws Exception{
 		/* if (this.inError) return;*/
 		this.inError = true; 
-		
+		System.err.println(originalException);
 		
 		try{
 			if (!this.inError &&(originalException instanceof RhinoException || originalException instanceof EcmaError)){
@@ -778,12 +785,14 @@ public class MynaThread {
 			
 			cx.setOptimizationLevel(optimizationLevel);
 			JCS cache = JCS.getInstance("scriptCache");
-			Script compiled= (Script) cache.get(scriptPath);
+			//scriptPath =getNormalizedPath(scriptPath) 
+			int key = script.hashCode();
+			Script compiled= (Script) cache.get(key);
+			
 			script = translateString(script,scriptPath);
 			this.currentScript = script;
 			
-			
-			if (optimizationLevel == -1 || compiled == null){
+			if (compiled == null){
 				/* reference to original lexer/parser, just in case the new one becomes problematic */
 					/* script = parseEmbeddedJsBlocks(script);
 					if (scriptPath.matches(".*.ejs")) {
@@ -792,11 +801,11 @@ public class MynaThread {
 					
 				
 				  
-				
 				compiled = cx.compileString(script, scriptPath, 1, null);
-				if (optimizationLevel > -1){
-					scriptCache.put(scriptPath,compiled);
-				}
+				/*if (optimizationLevel > -1){*/
+					cache.put(key,compiled);
+					//System.out.println(scriptPath.toString() +" =  " + compiled);
+				/*}*/
 			} 
 			//Object server_gateway = Context.javaToJS(this,scope);
 			//ScriptableObject.putProperty(scope, "$server_gateway", server_gateway);
@@ -809,13 +818,15 @@ public class MynaThread {
 	
 	void executeJsFile(Scriptable scope, String scriptPath) throws Exception{
 		File scriptFile;
+		scriptPath = getNormalizedPath(scriptPath);
+		JCS cache = JCS.getInstance("scriptCache");
 		try {
 			 scriptFile = new File(new URI(scriptPath));
 		} catch (java.lang.IllegalArgumentException e){
 			throw new java.lang.IllegalArgumentException("'" +scriptPath + "' is not a valid URI.");
 		}
+		
 		try {
-			JCS cache = JCS.getInstance("scriptCache");
 			if (cache.get(scriptPath) != null){
 				IElementAttributes attributes = cache.getCacheElement(scriptPath).getElementAttributes();
 				if ( scriptFile.lastModified() > attributes.getCreateTime()){
@@ -825,8 +836,12 @@ public class MynaThread {
 		} catch (org.apache.jcs.access.exception.CacheException e){
 			//assume cache exceptions mean it is unavailable	
 		}
-		
-		executeJsString(scope, readScript(scriptPath), scriptPath);
+		String script = (String) cache.get(scriptPath); 
+		if (script == null){
+			script = readScript(scriptPath);
+			cache.put(scriptPath,script);
+		}
+		executeJsString(scope, script, scriptPath);
 	}
 	
 	/**
@@ -1226,6 +1241,19 @@ public class MynaThread {
 		}
 		
 		return uri.toString();
+	}
+	
+	public FIFOSemaphore getLock(String name) throws Exception{
+		manageLocksPermit.acquire();
+		try{
+			FIFOSemaphore lock = (FIFOSemaphore) locks.get(name);
+			if (lock == null) locks.put(name, new FIFOSemaphore(1));
+			lock.acquire();
+			return lock;
+		} finally{
+			manageLocksPermit.release();
+		}
+		
 	}
 	
 	/** 

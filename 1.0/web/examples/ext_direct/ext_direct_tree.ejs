@@ -9,6 +9,7 @@
 	<script type="text/javascript" src="ExtTest.ws?ext-api&callback=Ext.Direct.addProvider"></script>
 
    <script language="javascript" >
+	if (!("Ext" in window)) alert("unable to find Ext 3.0. See application.sjs in the this directory for details")
 		Ext.onReady(function(){
 			var tree = new Ext.tree.TreePanel({
 			  width: 400,

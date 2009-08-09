@@ -879,7 +879,7 @@
 		},this)
 	}
 /* ======================= Myna-only functions ============================== */
-if ($server_gateway){
+if ("$server_gateway" in this){
 	/* Function: hashEquals 
 	Returns true if the plaintext password matches the encrypted password 
 	 

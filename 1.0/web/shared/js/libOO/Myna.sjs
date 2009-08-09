@@ -115,6 +115,299 @@ if (!Myna) var Myna={}
 		}
 		return result;
 	}
+/* Function: cacheOutput
+	caches the text output of a function. 
+	 
+	Parameters: 
+		options		-	options object, see below
+		
+	Options:
+		code		-		A function to cache. All parameters will be passed as a 
+							single object. see _params_
+		params		-		*Optional, default {}*
+							An object that contains all the parameters for _code_
+		interval	-		*Optional, default 0*
+							Time in milliseconds between cache refreshes. See 
+							<Date.getInterval>. 0 will force a refresh.
+		
+	Detail:
+		Myna.cache() executes _code_, with _params_ and saves the output printed 
+		to the browser. Subsequent calls to this page within _interval_ 
+		milliseconds will print the cached text value instead of executing _code_.
+		Calls to this page after _interval_ milliseconds will start a background 
+		thread to update the cache and return the old value. This means 
+		only the first call to cache() blocks the browser. All subsequent calls 
+		will always return from the cache. If you want to keep the cache fresh, 
+		set up a scheduled task in the administrator with a period shorter than 
+		_interval_
+		
+	Example:
+	(code)
+		Myna.println("This line is not cached");
+		Myna.cacheOutput({
+			interval:Date.getInterval(Date.SECOND,10),
+			code:function(params){
+				Myna.println("This line is cached with value " + params.value);
+				
+				//an artificially long process
+				java.lang.Thread.sleep(10000);
+				
+				Myna.println(new Date())
+				Myna.println(new Date().getTime())
+				
+				Myna.printDump(new Myna.Query({
+						ds:"myna_log",
+						sql:<ejs>select * from myna_log_general</ejs>,
+						maxRows:10
+				}))
+			},
+			params:{
+				value:$req.data.value
+			}
+		})
+	(end)
+		
+
+	*/ 	
+	Myna.cacheOutput=function(options){
+		options.checkRequired(["code"]);
+		var c = org.apache.jcs.JCS.getInstance("fragment");
+		var hashCode = new java.lang.String(
+			options.code.toSource() 
+			+ (options.params?options.params.toJson():"{}")
+		).hashCode();
+		var key = (options.name || "global") 
+			+":" + ($application.appName || "general") 
+			+":" + hashCode
+			
+		var attributes,time;
+		//make sure that only one thread checks the cache at a time
+		var fragment = c.get(key);
+		
+		if (fragment) {
+			attributes = c.getElementAttributes(key);
+			attributes.getCreateTime()
+		}
+		
+		if ("interval" in options){
+			if (!options.interval 
+				|| !fragment 
+				|| attributes.getCreateTime() + options.interval < new Date().getTime() 
+			){
+				if (fragment){ //return old value and do a background refresh of the content
+					new Myna.Thread(function(options,key, time){
+						var c = org.apache.jcs.JCS.getInstance("fragment");
+						var lock =Myna.attemptLock(key); 
+						
+						if (!lock){
+							return;
+						}
+							
+						try {
+							/* 
+							Now that we have a lock, check if another thread has 
+							updated the cache
+							*/ 
+							if (!c.get(key) //no value
+								||	c.getElementAttributes(key).getCreateTime() == time //value hasn't changed
+							){
+								var before = c.get(key);
+								options.code(options.params);
+								var newValue = $res.clear();
+								c.put(key,newValue);
+							} else return; //some other thread beat us to it
+						} finally {
+							lock.release()
+						}
+					},[options,key,attributes.getCreateTime()])	
+				} else { //
+					var lock =Myna.attemptLock(key); 
+					try {
+						/* 
+							Now that we have a lock, check if another thread has 
+							updated the cache
+							*/
+						if (!c.get(key) //no value
+								||	c.getElementAttributes(key).getCreateTime() == time //value hasn't changed
+						){
+							fragment =getFragment();
+							c.put(key,fragment);
+						} else {
+							//Another thread beat us to it, we'll use the updated value
+							fragment = c.get(key); 
+						} 
+					} finally {
+						lock.release();
+					}
+				}
+			} else { //return cached value
+				/* Myna.printDump({
+					options:options,
+					time:attributes.getCreateTime(),
+					fragment:fragment
+				}) */
+				
+			}
+		}//end interval check
+		
+		printFragment(fragment);
+		
+		function getFragment(){
+			var before = $res.clear();
+			options.code(options.params)
+			var result = $res.clear();
+			Myna.print(before);
+			return result;
+		}
+		function printFragment(text){
+			if (text != fragment) c.put(key,text);
+			Myna.print(text);
+			
+		}
+		
+	}
+/* Function: cacheValue
+	caches the return value of a function. 
+	 
+	Parameters: 
+		options		-	options object, see below
+		
+	Options:
+		code		-		A function to cache. All parameters will be passed as a 
+							single object. see _params_
+		params		-		*Optional, default {}*
+							An object that contains all the parameters for _code_
+		interval	-		*Optional, default 0*
+							Time in milliseconds between cache refreshes. See 
+							<Date.getInterval>. 0 will force a refresh.
+		
+	Detail:
+		Myna.cache() executes _code_, with _params_ and saves the returned value. 
+		Subsequent calls to this page within _interval_ 
+		milliseconds will return the cached value instead of executing _code_.
+		Calls to this page after _interval_ milliseconds will start a background 
+		thread to update the cache and return the old value. This means 
+		only the first call to cache() blocks the browser. All subsequent calls 
+		will always return from the cache. If you want to keep the cache fresh, 
+		set up a scheduled task in the administrator with a period shorter than 
+		_interval_
+		
+	Example:
+	(code)
+		Myna.println("This line is not cached");
+		Myna.cache({
+			interval:Date.getInterval(Date.SECOND,10),
+			code:function(params){
+				Myna.println("This line is cached with value " + params.value);
+				
+				//an artificially long process
+				java.lang.Thread.sleep(10000);
+				
+				Myna.println(new Date())
+				Myna.println(new Date().getTime())
+				
+				Myna.printDump(new Myna.Query({
+						ds:"myna_log",
+						sql:<ejs>select * from myna_log_general</ejs>,
+						maxRows:10
+				}))
+			},
+			params:{
+				value:$req.data.value
+			}
+		})
+	(end)
+		
+
+	*/ 	
+	Myna.cacheValue=function(options){
+		options.checkRequired(["code"]);
+		var c = org.apache.jcs.JCS.getInstance("value");
+		var hashCode = new java.lang.String(
+			options.code.toSource() 
+			+ (options.params?options.params.toJson():"{}")
+		).hashCode();
+		var key = (options.name || "global") 
+			+":" + ($application.appName || "general") 
+			+":" + hashCode
+			
+		var attributes,time;
+		//make sure that only one thread checks the cache at a time
+		var value = c.get(key);
+		
+		if (value) {
+			attributes = c.getElementAttributes(key);
+			attributes.getCreateTime()
+		}
+		
+		if ("interval" in options){
+			if (!options.interval 
+				|| !value 
+				|| attributes.getCreateTime() + options.interval < new Date().getTime() 
+			){
+				if (value){ //return old value and do a background refresh of the content
+					new Myna.Thread(function(options,key, time){
+						var c = org.apache.jcs.JCS.getInstance("value");
+						var lock =Myna.attemptLock(key); 
+						
+						if (!lock){
+							return;
+						}
+							
+						try {
+							/* 
+							Now that we have a lock, check if another thread has 
+							updated the cache
+							*/ 
+							if (!c.get(key) //no value
+								||	c.getElementAttributes(key).getCreateTime() == time //value hasn't changed
+							){
+								var newValue = options.code(options.params);
+								c.put(key,newValue);
+							} else return; //some other thread beat us to it
+						} finally {
+							lock.release()
+						}
+					},[options,key,attributes.getCreateTime()])	
+				} else { //
+					var lock =Myna.attemptLock(key); 
+					try {
+						/* 
+							Now that we have a lock, check if another thread has 
+							updated the cache
+							*/
+						if (!c.get(key) //no value
+								||	c.getElementAttributes(key).getCreateTime() == time //value hasn't changed
+						){
+							value =getValue();
+							c.put(key,value);
+						} else {
+							//Another thread beat us to it, we'll use the updated value
+							value = c.get(key); 
+						} 
+					} finally {
+						lock.release();
+					}
+				}
+			} else { //return cached value
+				/* Myna.printDump({
+					options:options,
+					time:attributes.getCreateTime(),
+					value:value
+				}) */
+				
+			}
+		}//end interval check
+		
+		return value;
+		
+		function getValue(){
+			return options.code(options.params)
+		}
+		
+		
+	}
+	
 /* Function: createSyncFunction 
 	returns a thread-safe version of a javascript function  
 	 
@@ -868,6 +1161,87 @@ if (!Myna) var Myna={}
 	Myna.getGeneralProperties=function Myna_getGeneralProperties(){
 		return Myna.mapToObject($server_gateway.generalProperties)
 	}
+/* Function: getLock 
+		Gets an exclusive lock by name. 
+		
+		Parameters:
+		name 		-	name of the lock to acquire
+		
+		Returns:
+			lock object. call the release() function of this object to release the 
+			lock. 
+		
+		Detail:
+		If more than one thread calls getLock() near the same time, the first call 
+		will get access and the other call will be placed in a FIFO queue until 
+		the first thread calls release() on the returned lock object. For this 
+		reason it is best to call release as soon as possible. If you do not call 
+		release, Myna will attempt to release all outstanding locks at the end of 
+		the thread.   
+	 
+	*/
+	Myna.getLock=function Myna_getLock(name){	
+		$server_gateway.manageLocksPermit.acquire();
+		try{
+			var lock = $server_gateway.locks.get(name);
+			if (!lock) {
+				var FIFOSemaphore = Packages.EDU.oswego.cs.dl.util.concurrent.FIFOSemaphore;
+				lock = new FIFOSemaphore(1);
+				$server_gateway.locks.put(name,lock);
+				
+			}
+			lock.acquire();
+			$application.addOpenObject({
+				close:function(){
+					lock.relase()
+				},
+				lock:lock
+			})
+			return lock;
+		} finally {
+			$server_gateway.manageLocksPermit.release();	
+		}
+	}
+	
+/* Function: attemptLock 
+		attempts to get an exclusive lock by name. 
+		
+		Parameters:
+		name 		-	name of the lock to acquire
+		
+		Returns:
+			lock object or null if attempt fails. Call the release() function of 
+			this object to release the lock. 
+		
+		Detail:
+		This is similar to <Myna.GetLock> except that it won't queue. If a lock 
+		isn't available it will return false immediately. 
+	 
+	*/
+	Myna.attemptLock=function Myna_attemptLock(name){	
+		$server_gateway.manageLocksPermit.acquire();
+		try{
+			var lock = $server_gateway.locks.get(name);
+			if (!lock) {
+				var FIFOSemaphore = Packages.EDU.oswego.cs.dl.util.concurrent.FIFOSemaphore;
+				lock = new FIFOSemaphore(1);
+				$server_gateway.locks.put(name,lock);
+				
+			}
+			if (lock.attempt(0)){
+				$application.addOpenObject({
+					close:function(){
+						lock.relase()
+					},
+					lock:lock
+				})
+				return lock;
+			} return false
+		} finally {
+			$server_gateway.manageLocksPermit.release();	
+		}
+		
+	}
 /* Function: include 
 	executes a .js, .sjs, or .ejs file in the current thread
 	 
@@ -1251,6 +1625,38 @@ if (!Myna) var Myna={}
 	*/
 	Myna.print=function Myna_print(string){
 		$res.print(String(string));
+	}
+/* Function: printDump
+	shortcut for $res.print(Myna.dump())
+	 
+	Parameters: 
+		obj			-	Object to dump
+		label		-	*Optional* 
+						Caption for the dump table
+		maxDepth	-	*Optional, default=4* 
+						Maximum depth of recursion. This is	to protect against 
+						circular references and to speed performance. 
+ 
+	Returns: 
+		void
+	 
+	*/
+	Myna.printDump=function Myna_printDump(obj,label,maxDepth){
+		$res.print(Myna.dump(obj,label,maxDepth));
+	}
+/* Function: println
+	shortcut for $res.print(<text> + "<br>")
+	 
+	Parameters: 
+		text		-	text to print
+		
+ 
+	Returns: 
+		void
+	 
+	*/
+	Myna.println=function Myna_println(text){
+		$res.print(String(text) + "<br>");
 	}
 /* Function: sealObject 
 	This seals a JavaScript object, preventing it from being modified.

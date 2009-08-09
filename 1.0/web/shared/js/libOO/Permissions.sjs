@@ -296,9 +296,9 @@ if (!Myna) var Myna={}
 			_config_ name provided  
 			
 			Parameters:
-				config	-	name of the configuration to use to create the 
-				            adapter. This name should match a config file in 
-							/WEB-INF/myna.auth_types
+				config		-	name of the configuration to use to create the 
+								adapter. This name should match a config file in 
+								/WEB-INF/myna.auth_types
 			
 		*/
 		getAuthAdapter:function(name){

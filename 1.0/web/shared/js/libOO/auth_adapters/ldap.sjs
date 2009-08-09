@@ -96,28 +96,19 @@ function userExists(username){
 }
 
 function getDN(username){
-	$this = this;
-	var baseDn = $this.config.server.listLast("/");
-	if (/=/.test(baseDn)){
-		baseDn="," +baseDn;
-	} else {
-		baseDn="";
-	}
-	
-	var searchString="(cn="+username+")";
+   var searchString="(cn="+username+")";
 	if ($this.config.filter){
-		qry = "(&" + $this.config.filter + qry + ")"
-	}
-	var users = ldap.search(searchString);
-	if (users.length == 1) return users[0].name + baseDn
-	if (users.length > 1) {
-	  Myna.log("warning","Auth type '"  + this.config.auth_type+ "': duplicate DN for username '"+username+"'",Myna.dump($req.data));
-	}
-	return null;
+        qry = "(&" + $this.config.filter + qry + ")"
+   }
+   var users = ldap.search(searchString);
+   if (users.length == 1) return users[0].name
+   if (users.length > 1) {
+      Myna.log("warning","Auth type '"  + this.config.auth_type+ "': duplicate DN for username '"+username+"'",Myna.dump($req.data));
+   }
+   return null;
 }
 
 function isCorrectPassword(username,password){
-	$this = this;
    if (this.config.ad_domain){
        dn = username +"@"+this.config.ad_domain;
    } else {
@@ -129,10 +120,7 @@ function isCorrectPassword(username,password){
    try {
       new Myna.Ldap(this.config.server, dn, password);
       return true;
-      } catch(e){
-		  Myna.log("ERROR","Failed login to " +$this.config.auth_type +"/" + dn,Myna.formatError(e));
-	  	return false
-	 }
+      } catch(e){return false}
 }
 
 function searchUsers(search){
@@ -168,7 +156,7 @@ function searchUsers(search){
                 result[myna_attribute] = row.attributes[ldap_attribute][0];
              }
          })
-         return result;
+         if (result.login.length) return result
                
       }),
 		columns:"login,first_name,last_name,middle_name,title"
