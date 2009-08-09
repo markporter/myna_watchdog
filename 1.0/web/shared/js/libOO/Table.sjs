@@ -97,7 +97,7 @@ Myna.Table.prototype.init = function(){
 	
 	var rsTables = table.db.md.getTables(
 		table.db.catalog,
-		table.db.defaultSchema,
+		table.schema||table.db.defaultSchema,
 		"%",
 		null
 	)
@@ -200,7 +200,7 @@ Myna.Table.prototype.__defineGetter__("exists", function() {
 	var table= this;
 	var rsTables= table.db.md.getTables(
 		table.db.catalog,
-		table.db.defaultSchema,
+		table.schema||table.db.defaultSchema,
 		table.tableName,
 		null
 	)

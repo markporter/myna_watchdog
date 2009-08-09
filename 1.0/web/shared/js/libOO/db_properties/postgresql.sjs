@@ -94,6 +94,7 @@ var functions={
 		}
 		return defaultSchema;
 	},
+	
 	getSchemas:function(db){
 		return new Myna.Query({
 			ds:db.ds,
@@ -106,20 +107,14 @@ var functions={
 			</ejs>
 		}).valueArray("owner")
 		
-	},
-	getSchemas:function(db){
-		return new Myna.Query({
-			ds:db.ds,
-			sql:<ejs>
-				select t.table_schema as owner, count('x')
-				from INFORMATION_SCHEMA.TABLES t
-				
-				group by t.table_schema
-				having count('x') > 0
-			</ejs>
-		}).valueArray("owner")
-		
-	},
+	}, 
+	/* getSchemas:function(db){
+		var rsSchemas = db.md.getSchemas();
+		var schemas = new Myna.Query(rsSchemas).valueArray("table_schem");
+		schemas.push("");
+		rsSchemas.close();
+		return schemas;
+	}, */
 	getTables:function(db, schema){
 		/* return new Myna.Query({
 			ds:db.ds,

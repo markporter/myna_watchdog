@@ -266,13 +266,12 @@ if (!Myna) var Myna={}
 	*/
 		Myna.DataManager.prototype.ManagerBase.prototype.loadTableData=function(tableName){
 			var manager = this;
-			manager.tableName=tableName;
-			
 			var con = manager.db.con;
 			//var tables = manager.db.tables;
 			
 			
 			manager.tableName = manager.table.tableName;
+			manager.sqlTableName = manager.table.sqlTableName;
 			
 			
 			if (!manager.table.exists){
@@ -305,7 +304,7 @@ if (!Myna) var Myna={}
 			var qry = new Myna.Query({
 				dataSource:this.ds,
 				sql:<ejs>
-					delete from "<%=this.tableName%>"
+					delete from "<%=this.sqlTableName%>"
 					where <%=this.columns[this.primaryKey].column_name%> = 
 						<%=p.addValue(id,this.columns[this.primaryKey].data_type)%>
 				</ejs>,
@@ -357,7 +356,7 @@ if (!Myna) var Myna={}
 	*/
 		Myna.DataManager.prototype.ManagerBase.prototype.create=function(requiredFields){
 			var manager = this;
-			if (!requiredFields) requiredFields={}
+						if (!requiredFields) requiredFields={}
 			if (this.primaryKey	 && !requiredFields[this.primaryKey]){
 				/* if (this.columns[this.primaryKey].column_def.length ==0) { */
 					requiredFields[this.primaryKey] = this.genKey();
@@ -386,7 +385,7 @@ if (!Myna) var Myna={}
 				dataSource:this.ds,
 				parameters:p,
 				sql:<ejs>
-					insert into <%=this.tableName%>(<%=fieldArray.join()%>) 
+					insert into <%=this.sqlTableName%>(<%=fieldArray.join()%>) 
 					values (
 					<% 
 						columnArray.forEach(function(colName,index){
@@ -484,7 +483,7 @@ if (!Myna) var Myna={}
 				parameters:p,
 				sql:<ejs>
 					select <%=pkey%>
-					from <%=this.tableName%>
+					from <%=this.sqlTableName%>
 					where 1=1
 					<@loop array="criteria" element="col" >
 						and <%=col.column%> <%=col.op%> <%=p.addValue(col.pattern)%>
@@ -580,7 +579,7 @@ if (!Myna) var Myna={}
 		Myna.DataManager.prototype.ManagerBase.prototype.genKey=function(){
 			var maxId =new Myna.Query({
 				dataSource:this.ds,
-				sql:'select max(' + this.columns[this.primaryKey].column_name+ ') as id from "' + this.tableName +'"'
+				sql:'select max(' + this.columns[this.primaryKey].column_name+ ') as id from "' + this.sqlTableName +'"'
 			}).data[0].id;
 			if (!maxId) {
 			 	return 1;
@@ -634,7 +633,7 @@ if (!Myna) var Myna={}
 					dataSource:this.ds,
 					sql:<ejs>
 						select 'x' 
-						from <%=this.manager.tableName%> 
+						from <%=this.manager.sqlTableName%> 
 						where ssn = <%=p.addValue(newval,this.manager.columns.ssn.data_type)%>
 						and emp_id != <%=p.addValue(this.data.emp_id,this.manager.columns.emp_id.data_type)%>
 					</ejs>,
@@ -662,7 +661,7 @@ if (!Myna) var Myna={}
 							"<%=manager.columns[name].column_name%>" <@if i < manager.columnNames.length - 1 >,</@if>
 						</@loop>
 						
-					from <%=this.tableName%>
+					from <%=this.sqlTableName%>
 					where <%=this.columns[this.primaryKey].column_name%> = 
 						<%=p.addValue(id,this.columns[this.primaryKey].data_type)%>
 				</ejs>,
@@ -670,10 +669,10 @@ if (!Myna) var Myna={}
 			});
 			
 			if (!qry.data.length) {
-				throw new Error("Unable to find '" + this.tableName + "' by id '" + id +"'.");
+				throw new Error("Unable to find '" + this.sqlTableName + "' by id '" + id +"'.");
 			}
 				
-			var subClassName = manager.tableName+"Bean";
+			var subClassName = manager.sqlTableName.replace(/\./g,"_")+"Bean";
 			if (this.dm.subClasses.hasOwnProperty(subClassName)){
 				bean = new this.dm.subClasses[subClassName](this.dm,this,qry.data);
 			} 
@@ -819,7 +818,7 @@ if (!Myna) var Myna={}
 				dataSource:this.manager.ds,
 				parameters:p,
 				sql:<ejs>
-					UPDATE "<%=this.tableName%>"
+					UPDATE "<%=this.sqlTableName%>"
 					SET
 						"<%=columnName%>" = <%=p.addValue(value,type,isNull)%>
 					WHERE
@@ -865,12 +864,12 @@ if (!Myna) var Myna={}
 		
 		if (!column) {
 			fkrow = this.manager.table.foreignKeys.findFirst("pkcolumn_name",/\w+/)
-			if (!fkrow) throw new SyntaxError("No foreign keys in table '" + this.manager.table.tableName +"'")
+			if (!fkrow) throw new SyntaxError("No foreign keys in table '" + this.manager.table.sqlTableName +"'")
 			column = fkrow.fkcolumn_name;	
 		} else {
 			fkrow = this.manager.table.foreignKeys.findFirst("fkcolumn_name",new RegExp("^"+column+"$","i"));
 		}
-		if (!fkrow) throw new SyntaxError("No foreign key '"+column+"' in table '" + this.manager.table.tableName +"'")
+		if (!fkrow) throw new SyntaxError("No foreign key '"+column+"' in table '" + this.manager.table.sqlTableName +"'")
 		return this.manager.dm.getManager(fkrow.pktable_name).getById(this[column.toLowerCase()])
 	}
 	/* Function: getChildren

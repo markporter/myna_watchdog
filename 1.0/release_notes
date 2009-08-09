@@ -1,6 +1,40 @@
 Release Name: 1.0_alpha_15
 Notes:
 
+This is a BugFix release that also introduces some experimental features
+
+
+New in this release
+-------------------
+
+* Compiled script caching: 
+  * Fixed a bug in script caching that was disabling it. 
+    Fixing this improves speed by about 10%. This also make selecting higher 
+	 optimization levels more practical. Prior to this change optimization 
+	 levels > -1 typically slowed down execution
+  * Modified caching algorithm.
+    Now file and script caching are separated. This means that script fragments
+	 that are not associated with a path are cached. Furthermore, there is now a 
+	 disk cache that prevents Myna from reading a script file unless it it has 
+	 changes newer than the cached copy. This can dramatically improve 
+	 performance when disk is slow and or experiencing high I/O load
+* Added Myna.println() and Myna.printDump();
+* Added static function Date.getInterval(). This is similar to 
+  Date.prototype.add(), but instead of returning a new Date instance, this 
+  returns the interval in milliseconds. This interval can later be passed to 
+  Date.prototype.add to do the actual date math.
+* Added Myna.lock(name,timeout,func). This halts the current thread for up to *timeout* seconds until a named lock is available and then runs *func*. Calling release() on the returned lock allows the next thread to acquire a lock
+* Added Myna.cacheOutput() This allows you cache fragments of your pages that
+  don't change very often. 
+* Added Myna.cacheValue() This allows you cache function results that don't 
+  change very often. 
+* BugFix: schemas now better supported in Myna.Table and Myna.DataManager
+
+--------------------------------------
+
+Release Name: 1.0_alpha_15
+Notes:
+
 New Features:
    * Added support for auth adapters. 
      These are customizable authentication 

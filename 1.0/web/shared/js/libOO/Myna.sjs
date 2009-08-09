@@ -348,13 +348,7 @@ if (!Myna) var Myna={}
 				if (value){ //return old value and do a background refresh of the content
 					new Myna.Thread(function(options,key, time){
 						var c = org.apache.jcs.JCS.getInstance("value");
-						var lock =Myna.attemptLock(key); 
-						
-						if (!lock){
-							return;
-						}
-							
-						try {
+						Myna.lock(key,0,function(){
 							/* 
 							Now that we have a lock, check if another thread has 
 							updated the cache
@@ -365,13 +359,10 @@ if (!Myna) var Myna={}
 								var newValue = options.code(options.params);
 								c.put(key,newValue);
 							} else return; //some other thread beat us to it
-						} finally {
-							lock.release()
-						}
+						})
 					},[options,key,attributes.getCreateTime()])	
 				} else { //
-					var lock =Myna.attemptLock(key); 
-					try {
+					Myna.lock(key,0,function(){
 						/* 
 							Now that we have a lock, check if another thread has 
 							updated the cache
@@ -379,15 +370,13 @@ if (!Myna) var Myna={}
 						if (!c.get(key) //no value
 								||	c.getElementAttributes(key).getCreateTime() == time //value hasn't changed
 						){
-							value =getValue();
+							value =options.code(options.params);
 							c.put(key,value);
 						} else {
 							//Another thread beat us to it, we'll use the updated value
 							value = c.get(key); 
 						} 
-					} finally {
-						lock.release();
-					}
+					})
 				}
 			} else { //return cached value
 				/* Myna.printDump({
@@ -400,12 +389,6 @@ if (!Myna) var Myna={}
 		}//end interval check
 		
 		return value;
-		
-		function getValue(){
-			return options.code(options.params)
-		}
-		
-		
 	}
 	
 /* Function: createSyncFunction 
@@ -1161,15 +1144,17 @@ if (!Myna) var Myna={}
 	Myna.getGeneralProperties=function Myna_getGeneralProperties(){
 		return Myna.mapToObject($server_gateway.generalProperties)
 	}
-/* Function: getLock 
+/* Function: lock 
 		Gets an exclusive lock by name. 
 		
 		Parameters:
 		name 		-	name of the lock to acquire
+		timeout	-	time in seconds to wait to acquire a lock. If this is 0, the 
+						lock will only be acquired if no other thread is using it
+		func		-	function to execute inside the lock
 		
 		Returns:
-			lock object. call the release() function of this object to release the 
-			lock. 
+			true if a lock was acquired and _func_ was executed
 		
 		Detail:
 		If more than one thread calls getLock() near the same time, the first call 
@@ -1180,24 +1165,34 @@ if (!Myna) var Myna={}
 		the thread.   
 	 
 	*/
-	Myna.getLock=function Myna_getLock(name){	
-		$server_gateway.manageLocksPermit.acquire();
+	Myna.lock=function Myna_getLock(name, timeout, func){
 		try{
 			var lock = $server_gateway.locks.get(name);
 			if (!lock) {
-				var FIFOSemaphore = Packages.EDU.oswego.cs.dl.util.concurrent.FIFOSemaphore;
-				lock = new FIFOSemaphore(1);
-				$server_gateway.locks.put(name,lock);
-				
+				$server_gateway.manageLocksPermit.acquire();
+				lock = $server_gateway.locks.get(name);
+				if (!lock) {
+					var FIFOSemaphore = Packages.EDU.oswego.cs.dl.util.concurrent.FIFOSemaphore;
+					lock = new FIFOSemaphore(1);
+					$server_gateway.locks.put(name,lock);
+				}
+				$server_gateway.manageLocksPermit.release();
 			}
-			lock.acquire();
-			$application.addOpenObject({
-				close:function(){
-					lock.relase()
-				},
-				lock:lock
-			})
-			return lock;
+			
+			if (lock.attempt(timeout*1000)){
+				$application.addOpenObject({
+					close:function(){
+						lock.release()
+					},
+					lock:lock
+				})
+				try {
+					func();
+				} finally {
+					lock.release();
+				}
+			} else return false;
+			
 		} finally {
 			$server_gateway.manageLocksPermit.release();	
 		}
