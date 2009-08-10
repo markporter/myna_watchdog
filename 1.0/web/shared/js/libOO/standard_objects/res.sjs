@@ -84,9 +84,13 @@ var $res = {
 		returns a "Basic" http auth request 
 		
 		Parameters: 
-			realm - *default 'Myna Application Server'* an organization or 
-					application name to indicate to the user what 
-					credentials to enter	
+			realm 	- 	*Optional, default 'Myna Application Server'* 
+						an organization or application name to indicate to the 
+						user what credentials to enter
+			message	-	*Optional, default null*
+						A message to include withthe request. This may not be 
+						shown by the browser, or may only be shown after three 
+						failures
 			
 		Detail:
 			sets the WWW-Authenticate header and returns a 401 HTTP status.
@@ -95,9 +99,10 @@ var $res = {
 		
 		
 	*/
-	requestBasicAuth:function(realm){
-		$res.setHeader("WWW-Authenticate",'Basic realm="' + realm + '"');
-		$res.setStatusCode(401,"Access Denied")
+	requestBasicAuth:function(realm, message){
+		$res.setHeader("WWW-Authenticate",'Basic realm="' 
+			+ (realm||"Myna Application Server") + '"');
+		$res.setStatusCode(401,message||"")
 	},
 /* 	Function: setContentType
 		sets the content MIME type of the response.
@@ -218,6 +223,7 @@ var $res = {
 			<$res.clear>, <$res.getContent>
 	*/
 	print:function (text){
+		//Myna.log("debug","text - " + $server.isThread,text);
 			$server_gateway.generatedContent.append(String(text));
 	},
 }
