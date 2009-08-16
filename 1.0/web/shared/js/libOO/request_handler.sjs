@@ -13,8 +13,9 @@ try{
 				var f=$server_gateway.environment.get("threadFunction");
 				var args = $server_gateway.environment.get("threadFunctionArguments");
 				args = Array.prototype.slice.call(args,0);
-				
-				f.apply($server.globalScope,args||[]);
+				var result = f.apply($server.globalScope,args||[])
+				$server_gateway.environment.put("threadReturn",result);
+				$server_gateway.environment.put("threadComplete",true);
 			} catch(e){
 				$server_gateway.log("ERROR","ThreadError: " + String(e.message),Myna.formatError(__exception__));
 			} 

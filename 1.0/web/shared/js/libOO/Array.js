@@ -422,4 +422,47 @@ Array.prototype.avg = function(accessor) {
 }
 
 
-
+/* Function: parse 
+	Static function that returns an array from an array like object, or null if 
+	conversion is not possible
+	
+	Parameters:
+		obj						-	object to convert
+		accessFunction		-	*Optional, default function(obj,index){return obj[index]}*
+									function that takes _obj_ and an index and returns 
+									the item at that index
+		lengthFunction		-	*Optional, default function(obj){return obj.length}*
+									function that takes _obj_ and returns the length of 
+									the collection
+		
+	Detail:
+		Takes an array-like object and returns an array containing its items.
+	
+	Example:
+	(code)
+	//convert function arguments into an array of arguments
+	function echoArgs(){
+		Myna.printDump(Array.parse(arguments))
+	}
+	
+	// client side example:
+	// getElementsByTagName() returns an array-like collection, but it doesn't 
+	// have any of the Array extras like "filter"
+	debug_window(
+		Array.parse(document.getElementsByTagName("div"))
+		.filter(function(div){
+			return /panel/.test(div.className);
+		})
+	)
+	(end)
+*/
+Array.parse = function ParseArray(obj,accessFunction,lengthFunction){
+	if (!accessFunction) accessFunction = function(obj,index){return obj[index]}
+	if (!lengthFunction) lengthFunction = function(obj){return obj.length}
+	
+	var result =[];
+	for (var x=0; x < lengthFunction(obj); ++x){
+		result.push(accessFunction(obj,x));	
+	}
+	return result;
+}

@@ -96,7 +96,7 @@ Function.prototype.repeat = function(count){
 						any passed arguments will used, and _args_ will be 
 						appended to the passed in arguments.
 						- If _appendArgs_ is a number, then _args_ will be 
-						inserted into the passed arguments at the indeicated 
+						inserted into the passed arguments at the indicated 
 						position. For example, a value of 0 would cause _args_ 
 						to be placed before the passed in arguments instead of
 						after them.
@@ -104,7 +104,7 @@ Function.prototype.repeat = function(count){
 	
 	Detail:
 		The purpose of this function is to simplify calling a function with a 
-		defined set of paramters, and a defined scope.
+		defined set of parameters, and a defined scope.
 		
 	Note:
 		This function was adapted from Ext 2.0.1 (http://extjs.com)
@@ -112,29 +112,39 @@ Function.prototype.repeat = function(count){
 	Example:
 	(code)
 	
-	var a={
+		var a={
 		myVal:20,
 		myFunc:function(label,otherVal){
-			print("<br>label:" + label + "<br>myVal:" + this.myVal
+			Myna.println("<br>label:" + label + "<br>myVal:" + this.myVal
 				+ "<br>otherVal:" + otherVal + "<br>");	
 		}
 	}
 	var b;
-	//old way:
+	
+	// Problem:
+	// Can't set default values, and a's function executes against b's properties
+	b={
+		myVal:10,
+		myFunc:a.myFunc
+	}
+	b.myFunc("Doh!");
+	
+	// classic solution:
 	b={
 		myVal:10,
 		myFunc:function(label){
 			var args = [label,"calling from b"]
 			
-			a.myFunc.apply(this,args);	
+			a.myFunc.apply(a,args);	
 		}
 	}
 	b.myFunc("woot!");
 	
-	//new way:
+	// with createDelegate:
+	// appends "calling form b" to the arguments passed to myFunc
 	b={
 		myVal:10,
-		myFunc:a.myFunc.createDelegate(b,["calling from b"],true)
+		myFunc:a.myFunc.createDelegate(a,["calling from b"],true)
 	}
 	b.myFunc("woot! woot!");
 	

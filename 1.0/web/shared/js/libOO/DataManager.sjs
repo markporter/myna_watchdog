@@ -514,7 +514,7 @@ if (!Myna) var Myna={}
 			var bob_exists = employees.find("55652315").length
 			
 			//one column search for exact match
-			var bobs_emps = employees.find({
+			var bobs_emps = employees.findBeans({
 				manager_id:"55652315"
 			})
 			
@@ -522,13 +522,22 @@ if (!Myna) var Myna={}
 			bobs_emps.forEach(function(employee){
 				Myna.print(employee.get_name() +"<br>");
 			})
+			//What are their email addresses?
+			Myna.printDump(bobs_emps.valueArray("email"),"Bob's Emloyees' Email")
 			
 			
 			//more complicated search with wildcards
-			var bobs_helpers = employees.find({
+			var bobs_helpers = employees.findBeans({
 				manager_id:"55652315",
 				job_title:"%assitant%"
 			})
+			
+			//Using aggregate math: Bob's employees average salary
+			//See Myna.DataSet
+			var bobs_emps_avg_sal = employees.findBeans({
+				manager_id:"55652315"
+			}).average("salary")
+			
 		(end)
 			
 			See:

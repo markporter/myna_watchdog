@@ -135,6 +135,22 @@
 	<Myna.Query.execute> executes a query again, optionally overriding its 
 	properties
 	
+	Caching:
+	Queries can be cached to enhance performance of frequently accessed but 
+	infrequently changing data
+	
+	(code)
+		//cache employee information for 12 hours
+		var qry=new Myna.Query({
+			ds:"hr_ds",
+			sql:"select * from employees",
+			cache:{
+				interval:Date.getInterval(Date.HOUR,12)
+			}
+		})
+	(end)
+	See <Myna.Cache> for more detail on caching.
+	
 	See also <Myna.Query.getRowByColumn> and <Myna.Query.valueArray> for 
 	alternate ways of accessing the data in a query object
 	
@@ -153,27 +169,38 @@ if (!Myna) var Myna={}
 	Options:
 		sql			-	SQL string 
 		dataSource	-	string datasource name defined in Myna Administrator
-		deferExec	-	*Optional default false* Normally, new query objects are
-						executed immediately. Setting this to true cancels that 
-						behavior. The query will not be executed without an 
-						explicit call to <execute>
-		parameters	- 	*Optional Default null* <Myna.QueryParams>
-		maxRows		-	*Optional Default null* Maximum number of rows to return. null 
-						for all rows
-		rowHandler	-	*Optional Default defaultRowHandler* function to process 
-						each row in the resultset. This fucntion is passed an 
-						instance of <Myna.QueryResultRow> and what is returned 
-						will be pushed onto <Myna.Query.data>
-		startRow	-	*Optional Default 1* Row number in result from which to start returning 
-						rows. Starts with 1. Used with _maxRows_
+		deferExec		-	*Optional default false* Normally, new query objects are
+							executed immediately. Setting this to true cancels that 
+							behavior. The query will not be executed without an 
+							explicit call to <execute>
+		parameters	- 	*Optional Default null* 
+							<Myna.QueryParams>
+		maxRows		-	*Optional Default null* 
+							Maximum number of rows to return. null 
+							for all rows
+		rowHandler	-	*Optional Default defaultRowHandler* 
+							function to process each row in the resultset. This 
+							function is passed an instance of <Myna.QueryResultRow> 
+							and what is returned will be pushed onto <Myna.Query.data>
+		startRow		-	*Optional Default 1* 
+							Row number in result from which to start returning 
+							rows. Starts with 1. Used with _maxRows_
 						
-		pageSize	-	*Optional Default null* Number of rows to return per page. Null 
-						means all rows. Used with _page_
+		pageSize		-	*Optional Default null* 
+							Number of rows to return per page. Null 
+							means all rows. Used with _page_
 						
-		page		-	*Optional Default null* Page to return. Starts with 1. This is used with 
-						_pageSize_ as a shortcut for startRow and maxRows.
+		page			-	*Optional Default null* Page to return. Starts with 1. This 
+							is used with _pageSize_ as a shortcut for startRow and 
+							maxRows.
+		cache			-	*Optional, default null*
+							If defined, this is an options object describing how this
+							query should be cached. All options of <Myna.Cache> are 
+							supported except the the "code" parameter which is generated
+							by the query.
+							
 			
-	
+		
 */
 Myna.Query = function (optionsOrResultSet){
 	/* Property: columns
@@ -316,14 +343,14 @@ Myna.Query = function (optionsOrResultSet){
 		if (optionsOrResultSet.hasOwnProperty("rowHandler")){
 			qry.rowHandler = optionsOrResultSet.rowHandler;
 		}
-		optionsOrResultSet.getKeys().forEach(function(key,index,array){
-			qry[key] = optionsOrResultSet[key];
-		});
+		optionsOrResultSet.applyTo(qry,true);
+	
 		
 		if (!optionsOrResultSet.deferExec){
-			this.execute();
+			return this.execute();
 		}
 	} 
+	return this
 }
 
 Myna.Query.prototype={
@@ -581,7 +608,7 @@ Myna.Query.prototype={
 		});
 		
 		if (qry.values) sql = this.parseSql(qry.values);
-		
+			
 		var sqlParameters = this.parameters;
 		if (qry.pageSize){
 			qry.maxRows = qry.pageSize;
@@ -592,77 +619,95 @@ Myna.Query.prototype={
 			qry.maxRows = qry.pageSize;
 		}
 		
-		
-		
-		try {
+		if (qry.cache){
+			var cacheQry ={}
+			var cache = qry.cache.setDefaultProperties({
+				name:sql,
+				code:function(options){
+					//just to be safe, we'll remove the cache settings
+					if (options.cache) options.cache=false;
+					var qry =new Myna.Query(options)
+					qry.cachedAt = new Date();
+					return qry
+				}
+			});
+			/* this keeps cache settings from being copied to cache version. We 
+			want "if (qry.cache)" to return false inside the cache function */
+			cacheQry.cache=false;
+			cacheQry.setDefaultProperties(qry)
 			
-			var st = this.getStatement(sql);
-			var db = new Myna.Database(dsName);
-			var con = db.con;
-			
-			if (sqlParameters instanceof Myna.QueryParams){
-				sqlParameters.params.forEach(function(element,index){
-					try {
-						
-						if (element.type == java.sql.Types.CLOB && db.functions.setClob){	
-							db.functions.setClob(con.getInnermostDelegate(),st.getInnermostDelegate(),index,element.value)
-						} else if (element.type == java.sql.Types.BLOB && db.functions.setBlob){	
-							db.functions.setBlob(con.getInnermostDelegate(),st.getInnermostDelegate(),index,element.value)
-						} else {
-							if (String(element.value).length == 0){//empty strings are considered NULL
-								st.setNull(index+1,element.type);
+			var result = new Myna.Cache(cache).call(cacheQry)
+			return result;
+		} else {
+			try {
+				var st = this.getStatement(sql);
+				var db = new Myna.Database(dsName);
+				var con = db.con;
+				
+				if (sqlParameters instanceof Myna.QueryParams){
+					sqlParameters.params.forEach(function(element,index){
+						try {
+							
+							if (element.type == java.sql.Types.CLOB && db.functions.setClob){	
+								db.functions.setClob(con.getInnermostDelegate(),st.getInnermostDelegate(),index,element.value)
+							} else if (element.type == java.sql.Types.BLOB && db.functions.setBlob){	
+								db.functions.setBlob(con.getInnermostDelegate(),st.getInnermostDelegate(),index,element.value)
 							} else {
-								st.setObject(index+1,element.value,element.type);
+								if (String(element.value).length == 0){//empty strings are considered NULL
+									st.setNull(index+1,element.type);
+								} else {
+									st.setObject(index+1,element.value,element.type);
+								}
 							}
+						} catch (e){
+							e.message +="<br>attempting to set value '" +String(element.value) + "' to a parameter of type '" 
+								+ element.type +"' typeName: '" + element.typeName + "'."; 
+							throw e;
 						}
-					} catch (e){
-						e.message +="<br>attempting to set value '" +String(element.value) + "' to a parameter of type '" 
-							+ element.type +"' typeName: '" + element.typeName + "'."; 
-						throw e;
-					}
-				});
-			}
-			
-			var start = java.lang.System.currentTimeMillis();
-			qry.success = false;
-			var hasResults = st.execute();
-			qry.success = true;
-			qry.executionTime=java.lang.System.currentTimeMillis()-start;
-			if (hasResults ){
-				qry.resultSet = st.getResultSet();
-				qry.parseResultSet(qry.resultSet);
+					});
+				}
+				
+				var start = java.lang.System.currentTimeMillis();
+				qry.success = false;
+				var hasResults = st.execute();
+				qry.success = true;
+				qry.executionTime=java.lang.System.currentTimeMillis()-start;
+				if (hasResults ){
+					qry.resultSet = st.getResultSet();
+					qry.parseResultSet(qry.resultSet);
+					qry.parseTime=java.lang.System.currentTimeMillis()-start;
+					/* st.close();
+					qry.resultSet.close() */
+					return qry;
+				} else {
+					/* 	Apparently if the driver does not support this feature it throws 
+						an exception that cannot be caught. There does not appear to be 
+						a way to tell if the driver supports this feature other than to 
+						try and fail. I will have to make this something you turn on in 
+						the datasource if you think your driver supports it
+					*/ 
+					try{
+						qry.generatedKey=new Myna.Query(st.getGeneratedKeys()).valueArray('identity()').join();
+					} catch(e){}  
+					qry.updateCount=st.getUpdateCount();
+				}
 				qry.parseTime=java.lang.System.currentTimeMillis()-start;
-				/* st.close();
-				qry.resultSet.close() */
-				return qry;
-			} else {
-				/* 	Apparently if the driver does not support this feature it throws 
-					an exception that cannot be caught. There does not appear to be 
-					a way to tell if the driver supports this feature other than to 
-					try and fail. I will have to make this something you turn on in 
-					the datasource if you think your driver supports it
-				*/ 
-				try{
-					qry.generatedKey=new Myna.Query(st.getGeneratedKeys()).valueArray('identity()').join();
-				} catch(e){}  
-				qry.updateCount=st.getUpdateCount();
+			} catch (e){
+				Myna.log("error","Query Error",Myna.formatError(__exception__)+Myna.dump(qry,"Query"));
+				e.query = qry;
+				qry.last_error = e;
+				throw e;
 			}
-			qry.parseTime=java.lang.System.currentTimeMillis()-start;
-		} catch (e){
-			Myna.log("error","Query Error",Myna.formatError(__exception__)+Myna.dump(qry,"Query"));
-			e.query = qry;
-			qry.last_error = e;
-			throw e;
+			$profiler.end("Executing Query '" + sql +"'")
+			/* 	let's give commiting a try, this will likely fail if the datasource
+				supports autoCommit
+			*/
+			try {  
+				con.commit();
+			} catch(e){}
+			
+			return qry;
 		}
-		$profiler.end("Executing Query '" + sql +"'")
-		/* 	let's give commiting a try, this will likely fail if the datasource
-			supports autoCommit
-		*/
-		try {  
-			con.commit();
-		} catch(e){}
-		
-		return qry;
 	}
 }
 

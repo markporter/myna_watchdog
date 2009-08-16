@@ -2,12 +2,12 @@
 	Global object that stores information about the server environment.
 */
 var $server={
-/*  property: isThread
+/* property: isThread
 	true if this is an independent thread with no access to session or servlet 
 	*/
 	get isThread(){return !!$server_gateway.environment.get("threadFunction") },
 
-/*  property: threadFunction
+/* property: threadFunction
 	the function that the current subthread is executing, or null if 
 	this is not a subthread 
 	*/
@@ -15,11 +15,11 @@ var $server={
 	
 	
 	//isThread:false,
-/*  property: instance_id 
+/* property: instance_id 
 	an identifier for this server instance 
 	*/
 	get instance_id(){return String($server_gateway.generalProperties.getProperty("instance_id"))},
-/*  property: purpose 
+/* property: purpose 
 	A short name that describes the purpose of this instance. Set in General 
 	Settings of Myna Administrator
 	*/
@@ -213,7 +213,6 @@ var $server={
 	The current number of free bytes on the heap. 
 	
 	For the total memory available for new objects, see <memAvailable>
-	To attempt to free memory immediately, see 
 	
 	See:
 		<$server.memMax>, 

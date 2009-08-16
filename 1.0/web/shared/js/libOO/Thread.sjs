@@ -23,7 +23,7 @@ if (!Myna) var Myna={}
 	
 	Detail:
 		Executes _f_ in a separate thread. This can be used to take advantage of 
-		multiple processors be spliting a long running task into multiple 
+		multiple processors be splitting a long running task into multiple 
 		functions running in parallel, or to execute non-interactive code in the 
 		background.
 		
@@ -37,6 +37,9 @@ if (!Myna) var Myna={}
 */
 Myna.Thread=function(f,args,priority){
 	
+	if (!("__MYNA_THREADS__" in $req)) $req.__MYNA_THREADS__=[];
+	
+	
 	
 	var parent = this;
 	this.functionSource = f.toSource();
@@ -46,39 +49,53 @@ Myna.Thread=function(f,args,priority){
 		a local instance of java.lang.Thread
 	*/
 	this.javaThread=$server_gateway.spawn(f,args);
-	//thread killed due to recursion
-	if (!p) return;
-	
-	var p = java.lang.Thread.NORM_PRIORITY;
-	if (priority > 0){
-		p += (priority/100) * (java.lang.Thread.MAX_PRIORITY - p);
-	} else if (priority < 0){
-		p += (priority/100) * (p - java.lang.Thread.MIN_PRIORITY);
+	if (this.javaThread){
+		var p = java.lang.Thread.NORM_PRIORITY;
+		if (priority > 0){
+			p += (priority/100) * (java.lang.Thread.MAX_PRIORITY - p);
+		} else if (priority < 0){
+			p += (priority/100) * (p - java.lang.Thread.MIN_PRIORITY);
+		}
+		this.javaThread.setPriority(p)
+		$req.__MYNA_THREADS__.push(this);
 	}
-	this.javaThread.setPriority(p)
 	 
 }
 
 /* Function: join
-	Pauses the current thread until this thread exits
+	Pauses the current thread until this thread exits, and then returns thread function result
+	
+	Returns:
+		return value of thread function
 	
 	Parameters:
 		timeout			-	*Optional, default 300000 (30 seconds)*
 								time in milliseconds to wait for the thread to finish. 
 								If the thread has not finished before the timeout 
 								control is returned to the current thread
-		throwOnTimeout	-	*Optional, default false*
+		throwOnTimeout	-	*Optional, default true*
 								If the thread has not finished before the timeout, 
 								throw an Error.
 */
 Myna.Thread.prototype.join=function(timeout,throwOnTimeout){
+	var $this = this;
+	if (throwOnTimeout === undefined) throwOnTimeout=true;
 	if (!timeout) timeout = 30*1000; //30 seconds
 	if (this.javaThread.isAlive()){
 		this.javaThread.join(timeout);
-		if (throwOnTimeout && this.javaThread.isAlive()){
-			Myna.log("error","Thread ("+this.javaThread.toString()+") Timeout detail", this.functionSource);
-			throw new Error("Thread ("+this.javaThread.toString()+") Timeout on join(). See log for thread detail.")	
-		}
+		if (this.javaThread.isAlive()){
+			if (throwOnTimeout){
+				Myna.log("error","Thread ("+this.javaThread.toString()+") Timeout detail", this.functionSource);
+				throw new Error("Thread ("+this.javaThread.toString()+") still running after "+timeout+" miliseconds. See log for thread detail.")	
+			} else return undefined 
+		} else return threadValue();
+	} else return threadValue();
+	
+	function threadValue(){
+		var threadId = $this.javaThread.getName();
+		var subThread = $server_gateway.environment.get("subthread_" + threadId);
+		var result = subThread.environment.get("threadReturn");
+		return result
 	}
 }
 
@@ -101,6 +118,18 @@ Myna.Thread.prototype.getContent=function(){
 	return String(subThread.generatedContent)	
 }
 
+/* Function: getReturnValue
+	returns the value returned by the thread function.
+	
+	Don't expect to see anything while <isRunning> returns true
+*/
+Myna.Thread.prototype.getContent=function(){
+	var threadId = this.javaThread.getName();
+	var subThread = $server_gateway.environment.get("subthread_" + threadId);
+	var result = subThread.environment.get("threadReturn");
+	return result;
+}
+
 
 /* Function: stop
 	stops this thread.
@@ -114,4 +143,23 @@ Myna.Thread.prototype.stop=function(){
 */
 Myna.Thread.prototype.kill=function(){
 	return this.javaThread.stop();
+}
+/* Function: joinAll 
+	Static function that calls <join> on all threads spawned from the current 
+	thread, and returns an array of their return values
+	
+	Example:
+	(code)
+	(10).times(function(i){
+		new Myna.Thread(function(i){
+			return i;
+		},[i])
+	})
+	Myna.printDump(Myna.Thread.joinAll())
+	(end)
+*/
+Myna.Thread.joinAll = function(){
+	return $req.__MYNA_THREADS__.map(function(t){
+		return t.join();
+	})	
 }

@@ -97,7 +97,9 @@ var ObjectLib = {}
 		if (shouldOverwrite == undefined) shouldOverwrite=false;
 		for (var x in obj) {
 			if (shouldOverwrite || target[x] === undefined){
-				target[x] = obj[x];	
+				try {//sometimes this fails, for instance if "key" is readonly
+					target[x] = obj[x];
+				} catch(e){}
 			}
 		}
 		return target;
@@ -388,7 +390,7 @@ var ObjectLib = {}
 		
  
 	Returns: 
-		void
+		_obj_
 		
 	Detail: 
 		Every property in _defaults_ is checked against this. If the 
@@ -412,9 +414,12 @@ var ObjectLib = {}
 					|| obj[key] === ""
 				)
 			) {
-				obj[key] = defaults[key];
+				try {//sometimes this fails, for instance if "key" is readonly
+					obj[key] = defaults[key];
+				} catch(e){}
 			}
 		}	
+		return obj
 	}
 /* Function: forEach
 	loops over each non-function property of an object an executes the 

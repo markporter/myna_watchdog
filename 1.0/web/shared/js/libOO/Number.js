@@ -7,8 +7,8 @@
 	Executes the supplied function parseInt(this) times.
 	
 	Parameters:
-		func	-	a function to execute. This function will eb called with the 
-					current index
+		func	-	a function to execute. This function will be called with the 
+					current 0-based index
 			
 	Example:
 	(code)

@@ -22,6 +22,22 @@
 		"-"
 	]
 	
+	String.regexEscapeChars=[
+		"\,",
+		"*", 
+		"+",
+		"?", 
+		"|", 
+		"{", 
+		"[", 
+		"(",
+		")", 
+		"^", 
+		"$",
+		".", 
+		"#"
+	]
+	
 /* function: charToHtmlEntity
 	returns the HTML/XML entity of the supplied character in &#code; format where code is the decimal ASCII code
 	
@@ -279,7 +295,38 @@
 		}
 		return new_string;
 	}
-
+/* Function: escapeRegex 
+	returns string with symbols that might be interpreted as regex escaped   
+	 
+	Detail:
+		the purpose of this function is to prevent a string from being 
+		interpreted as a regex string when using new RegExp 
+		
+	Returns: 
+		converted string
+	
+	*/
+	String.prototype.escapeRegex=function(string){
+		return Array.parse(this).map(function(c){
+			if (String.regexEscapeChars.indexOf(c) != -1){
+				return "\\" + c;
+			} else {
+				return c;
+			}
+		}).join("")
+		
+		/* var new_string = ""
+		this.length.times(function(x){
+			var c= this.charAt(x);
+			var escapeIndex =String.regexEscapeChars.indexOf(c);
+			if (escapeIndex != -1){
+				new_string+="\\" + c;
+			} else {
+				new_string+=c;
+			}		
+		})
+		return new_string; */
+	}
 
 
 

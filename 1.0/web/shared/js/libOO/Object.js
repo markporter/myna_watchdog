@@ -214,7 +214,7 @@
 							properties are overwritten by their _defaults_.
  
 	Returns: 
-		void
+		this
 		
 	Detail: 
 		Every property in _defaults_ is checked against this. If the 

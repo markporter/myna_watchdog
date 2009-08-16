@@ -108,11 +108,11 @@ if (!Myna) var Myna={}
 		if (!compare 
 			|| (
 				!(compare instanceof RegExp ) 
-				&& !(compare instanceof String) 
+				&& !(typeof compare =="string") 
 				&& !(compare instanceof Function)
 			)
 		) throw new SyntaxError("compare is required, and must be either a RegExp object,a string regular expression, or a function") 
-		if (compare instanceof String) compare = new RegExp(compare);
+		if (typeof compare  =="string") compare = new RegExp(compare);
 		if (compare instanceof RegExp){
 			var regex = compare;
 			compare = function(columnValue){
@@ -150,11 +150,11 @@ if (!Myna) var Myna={}
 		if (!compare 
 			|| (
 				!(compare instanceof RegExp ) 
-				&& !(compare instanceof String) 
+				&& !(typeof compare  =="string") 
 				&& !(compare instanceof Function)
 			)
 		) throw new SyntaxError("compare is required, and must be either a RegExp object,a string regular expression, or a function") 
-		if (compare instanceof String) compare = new RegExp(compare);
+		if (typeof compare=="string") compare = new RegExp("^"+compare.escapeRegex()+"$");
 		if (compare instanceof RegExp){
 			var regex = compare;
 			compare = function(columnValue){
@@ -174,7 +174,7 @@ if (!Myna) var Myna={}
 	
 	Parameters:
 		column			-	name of the column to search.
-		compare		-	RegExp, string regular expresion, or function to compare. 
+		compare		-	RegExp, string regular expression, or function to compare. 
 							if _compare_ is a function, it will be called with the 
 							"Compare Function Arguments" below. The supplied compare
 							function should return true if the current row should be 
@@ -184,20 +184,20 @@ if (!Myna) var Myna={}
 		columnValue	-	Value of _column_ in the current row,
 		data			-	An object that represents all the columns in this row
 		index			-	The index of the current row
-		dataset		-	A reference to this dataset
+		dataset		-	A reference to this DataSet
 		
 	*/	
-	Myna.DataSet.prototype.findAll = function DataSet_findFirst(column, compare){
+	Myna.DataSet.prototype.findAll = function DataSet_findAll(column, compare){
 		var $this = this;
 		if (!column) throw new SyntaxError("column is required")
 		if (!compare 
 			|| (
 				!(compare instanceof RegExp ) 
-				&& !(compare instanceof String) 
+				&& !(typeof compare  =="string") 
 				&& !(compare instanceof Function)
 			)
 		) throw new SyntaxError("compare is required, and must be either a RegExp object,a string regular expression, or a function") 
-		if (compare instanceof String) compare = new RegExp(compare);
+		if (typeof compare  =="string") compare = new RegExp("^"+compare.escapeRegex()+"$");
 		if (compare instanceof RegExp){
 			var regex = compare;
 			compare = function(columnValue){
@@ -286,7 +286,7 @@ if (!Myna) var Myna={}
 						A compare function like sort() uses to determine the minimum
 						value
 	
-*/
+	*/
 	Myna.DataSet.prototype.minByCol = function(column,compare) {
 		if (!compare) compare = function(a,b){return a < b}
 		return this.reduce(function(result,e){
@@ -304,7 +304,7 @@ if (!Myna) var Myna={}
 						A compare function like sort() uses to determaxe the maximum
 						value
 	
-*/
+	*/
 	Myna.DataSet.prototype.maxByCol = function(column,compare) {
 		if (!compare) compare = function(a,b){return a > b}
 		return this.reduce(function(result,e){
@@ -324,7 +324,7 @@ if (!Myna) var Myna={}
 						to sum a property of the objects in the column rather than
 						the objects themselves.
 	
-*/
+	*/
 	Myna.DataSet.prototype.sumByCol = function(column,accessor) {
 		if (!accessor) accessor = function(element){return element}
 		return this.reduce(function(result,e){
@@ -340,7 +340,7 @@ if (!Myna) var Myna={}
 						A compare function that takes 2 elements and returns either
 						1, 0, or -1 
 	
-*/
+	*/
 	Myna.DataSet.prototype.sortByCol = function(column,compare) {
 		if (!compare) compare=String.compareAlpha;
 		this.sort(function(a,b){
@@ -367,7 +367,7 @@ if (!Myna) var Myna={}
 				return element===null?0:element;
 			}
 		(end)
-*/
+	*/
 Array.prototype.avgByCol = function(column,accessor) {
 	if (!accessor) accessor = function(element){return element}
 	return this.filter(function(e){
