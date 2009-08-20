@@ -220,7 +220,7 @@ if (!Myna) var Myna={}
 	*/
 	Myna.DataSet.prototype.valueArray=function(columnName){
 		var name=columnName; 
-		return this.map(function(element){ return (element[name])})	
+		return Array.prototype.map.call(this,function(element){ return element[name]})	
 	}
 /* Function: map
 	Creates a new DataSet with the results of calling a provided function on every element in this array.
@@ -368,23 +368,19 @@ if (!Myna) var Myna={}
 			}
 		(end)
 	*/
-Array.prototype.avgByCol = function(column,accessor) {
-	if (!accessor) accessor = function(element){return element}
-	return this.filter(function(e){
-		return accessor(e[column]) !== null;
-	}).reduce(function(result,e,index,array){
-		if (index < array.length -1){
-			return result + accessor(e[column]);
-		} else {
-			result += accessor(e[column]);
-			return result / array.length + " : " + array.length;
-		}
-	},0);
-}
+	Array.prototype.avgByCol = function(column,accessor) {
+		if (!accessor) accessor = function(element){return element}
+		return this.filter(function(e){
+			return accessor(e[column]) !== null;
+		}).reduce(function(result,e,index,array){
+			if (index < array.length -1){
+				return result + accessor(e[column]);
+			} else {
+				result += accessor(e[column]);
+				return result / array.length + " : " + array.length;
+			}
+		},0);
+	}
 
-/* 	
-	
-contains(key,"value regex")// returns true if any object matches key and value
-sortByKey(key,"compare function");// see String for compare functions in Myna
- */
+
 	
