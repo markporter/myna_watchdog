@@ -481,7 +481,7 @@ Myna.Query.prototype={
 	*/
 	valueArray:function(columnName){
 		var name=columnName.toLowerCase(); 
-		return this.data.map(function(element){ return (element[name])})	
+		return this.data.valueArray(columnName)	
 	},
 	
 	parseSql:function(values) {

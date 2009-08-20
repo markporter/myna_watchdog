@@ -221,8 +221,8 @@ Myna.Table.prototype.__defineGetter__("primaryKeys", function() {
 			this.schema,
 			this.tableName
 		);
-		var result =new Myna.Query(rsTemp).data.map(function(element){
-			return String(element.column_name.toLowerCase())
+		var result =new Myna.Query(rsTemp).data.valueArray("column_name").map(function(element){
+			return String(element.toLowerCase())
 		});
 		rsTemp.close();
 		return result;

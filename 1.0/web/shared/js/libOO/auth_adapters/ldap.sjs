@@ -105,7 +105,7 @@ function getDN(username){
 	if (users.length == 1) {
 		var dn= users[0].name;
 		if ($this.config.server.listLen("/")>1){
-			dn+=","+a.config.server.listLast("/")	
+			dn+=","+$this.config.server.listLast("/")	
 		}
 		return dn;
 	}
