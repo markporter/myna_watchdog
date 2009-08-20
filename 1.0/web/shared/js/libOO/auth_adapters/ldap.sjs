@@ -96,6 +96,7 @@ function userExists(username){
 }
 
 function getDN(username){
+	var $this = this;
    var searchString="(cn="+username+")";
 	if ($this.config.filter){
         qry = "(&" + $this.config.filter + qry + ")"

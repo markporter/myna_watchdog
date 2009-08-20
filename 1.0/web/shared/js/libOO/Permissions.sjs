@@ -302,10 +302,10 @@ if (!Myna) var Myna={}
 			
 		*/
 		getAuthAdapter:function(name){
-            if (!/^(\w+)$/.test(name)) {
-                throw new Error("Invalid adpater name '"
+            if (!/^[^~]$/.test(name)) {
+                throw new Error("Invalid adapter name '"
                 + name
-                +"'. Adapter names must only contain letters, numbers, and the underscore");
+                +"'. Adapter names cannot contain tilde(~) characters");
             }
 			var adapter = $server.get("MYNA_auth_adapter_" + name);
 			if (!adapter){
@@ -403,7 +403,7 @@ if (!Myna) var Myna={}
                 .listFiles()
                 .valueArray("fileName")
                 .filter(function(name){
-                    return /^(\w+)$/.test(name)
+                    return /^[^~]+$/.test(name)
                 })
 		},
     
