@@ -216,16 +216,21 @@ Myna.Table.prototype.__defineGetter__("exists", function() {
 */
 Myna.Table.prototype.__defineGetter__("primaryKeys", function() {
 	if (this.exists){
-		var rsTemp =this.db.md.getPrimaryKeys(
-			null,
-			this.schema,
-			this.tableName
-		);
-		var result =new Myna.Query(rsTemp).data.valueArray("column_name").map(function(element){
-			return String(element.toLowerCase())
-		});
-		rsTemp.close();
-		return result;
+		//some "table" types aren't really tables (views,synonyms,etc)
+		try {
+			var rsTemp =this.db.md.getPrimaryKeys(
+				null,
+				this.schema,
+				this.tableName
+			);
+			var result =new Myna.Query(rsTemp).data.valueArray("column_name").map(function(element){
+				return String(element.toLowerCase())
+			});
+			rsTemp.close();
+			return result;
+		}catch(e){
+			return [];
+		}
 	} else {
 		return [];
 	}
@@ -246,14 +251,20 @@ Myna.Table.prototype.__defineGetter__("primaryKeys", function() {
 */
 Myna.Table.prototype.__defineGetter__("primaryKeyInfo", function() {
 	if (this.exists){
-		var rsTemp =this.db.md.getPrimaryKeys(
-			null,
-			this.schema,
-			this.tableName
-		);
-		var data =new Myna.Query(rsTemp).data
-		rsTemp.close();
-		return data;
+		//some "table" types aren't really tables (views,synonyms,etc)
+		try {
+			var rsTemp =this.db.md.getPrimaryKeys(
+				null,
+				this.schema,
+				this.tableName
+			);
+			var data =new Myna.Query(rsTemp).data
+			rsTemp.close();
+			return data;
+		} catch(e) {
+			return [];
+		}
+		
 	} else {
 		return [];
 	}
@@ -314,14 +325,19 @@ Myna.Table.prototype.__defineGetter__("primaryKeyInfo", function() {
 */
 Myna.Table.prototype.__defineGetter__("foreignKeys", function() {
 	if (this.exists){
-		var rsTemp = this.db.md.getImportedKeys(
-			null,
-			this.schema,
-			this.tableName
-		)
-		var data =new Myna.Query(rsTemp).data
-		rsTemp.close();
-		return data;
+		//some "table" types aren't really tables (views,synonyms,etc)
+		try {
+			var rsTemp = this.db.md.getImportedKeys(
+				null,
+				this.schema,
+				this.tableName
+			)
+			var data =new Myna.Query(rsTemp).data
+			rsTemp.close();
+			return data;
+		} catch(e) {
+			return [];
+		}
 	} else {
 		return [];
 	}
@@ -375,14 +391,19 @@ Myna.Table.prototype.__defineGetter__("foreignKeys", function() {
 */
 Myna.Table.prototype.__defineGetter__("exportedKeys", function() {
 	if (this.exists){
-		var rsTemp =this.db.md.getExportedKeys(
-			null,
-			this.schema,
-			this.tableName
-		)
-		var data =new Myna.Query(rsTemp).data
-		rsTemp.close();
-		return data;
+		//some "table" types aren't really tables (views,synonyms,etc)
+		try {
+			var rsTemp =this.db.md.getExportedKeys(
+				null,
+				this.schema,
+				this.tableName
+			)
+			var data =new Myna.Query(rsTemp).data
+			rsTemp.close();
+			return data;
+		} catch(e) {
+			return [];
+		}
 	} else {
 		return []	
 	}
@@ -431,31 +452,36 @@ Myna.Table.prototype.__defineGetter__("exportedKeys", function() {
 */
 Myna.Table.prototype.__defineGetter__("indexInfo", function() {
 	if (this.exists){
-		var rsTemp = this.db.md.getIndexInfo(
-			null,
-			this.schema,
-			this.tableName,
-			false,
-			false
-		)
-		var indexInfo=[];
-		var localIndexes={};
-		new Myna.Query(rsTemp).data.forEach(function(row){
-			var curIndex;
-			if (localIndexes[row.index_name]){
-				curIndex = localIndexes[row.index_name];
-			} else {
-				curIndex=localIndexes[row.index_name] ={
-					name:row.index_name,
-					unique:!row.non_unique,
-					columns:[]
+		//some "table" types aren't really tables (views,synonyms,etc)
+		try {
+			var rsTemp = this.db.md.getIndexInfo(
+				null,
+				this.schema,
+				this.tableName,
+				false,
+				false
+			)
+			var indexInfo=[];
+			var localIndexes={};
+			new Myna.Query(rsTemp).data.forEach(function(row){
+				var curIndex;
+				if (localIndexes[row.index_name]){
+					curIndex = localIndexes[row.index_name];
+				} else {
+					curIndex=localIndexes[row.index_name] ={
+						name:row.index_name,
+						unique:!row.non_unique,
+						columns:[]
+					}
+					indexInfo.push(curIndex)
 				}
-				indexInfo.push(curIndex)
-			}
-			curIndex.columns[row.ordinal_position-1] = row.column_name;
-		}); 
-		rsTemp.close();
-		return indexInfo;
+				curIndex.columns[row.ordinal_position-1] = row.column_name;
+			}); 
+			rsTemp.close();
+			return indexInfo;
+		} catch(e) {
+			return [];
+		}
 	} else {
 		return []	
 	}

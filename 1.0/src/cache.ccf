@@ -50,37 +50,15 @@ jcs.region.application.cacheattributes.MaxSpoolPerRun=500
 jcs.region.application.elementattributes=org.apache.jcs.engine.ElementAttributes
 jcs.region.application.elementattributes.IsEternal=true
 
-# query cache
-jcs.region.query=
-jcs.region.query.cacheattributes=org.apache.jcs.engine.CompositeCacheAttributes
-jcs.region.query.cacheattributes.MaxObjects=100
-jcs.region.query.cacheattributes.MemoryCacheName=org.apache.jcs.engine.memory.lru.LRUMemoryCache
-jcs.region.query.cacheattributes.UseMemoryShrinker=true
-jcs.region.query.cacheattributes.MaxMemoryIdleTimeSeconds=3600
-jcs.region.query.cacheattributes.ShrinkerIntervalSeconds=60
-jcs.region.query.cacheattributes.MaxSpoolPerRun=500
-jcs.region.query.elementattributes=org.apache.jcs.engine.ElementAttributes
-jcs.region.query.elementattributes.IsEternal=false
 
-# fragment cache
-jcs.region.fragment=
-jcs.region.fragment.cacheattributes=org.apache.jcs.engine.CompositeCacheAttributes
-jcs.region.fragment.cacheattributes.MaxObjects=100
-jcs.region.fragment.cacheattributes.MemoryCacheName=org.apache.jcs.engine.memory.lru.LRUMemoryCache
-jcs.region.fragment.cacheattributes.UseMemoryShrinker=true
-jcs.region.fragment.cacheattributes.MaxMemoryIdleTimeSeconds=3600
-jcs.region.fragment.cacheattributes.ShrinkerIntervalSeconds=60
-jcs.region.fragment.cacheattributes.MaxSpoolPerRun=500
-jcs.region.fragment.elementattributes=org.apache.jcs.engine.ElementAttributes
-jcs.region.fragment.elementattributes.IsEternal=false
 
 # value cache
 jcs.region.value=
 jcs.region.value.cacheattributes=org.apache.jcs.engine.CompositeCacheAttributes
-jcs.region.value.cacheattributes.MaxObjects=100
+jcs.region.value.cacheattributes.MaxObjects=10000
 jcs.region.value.cacheattributes.MemoryCacheName=org.apache.jcs.engine.memory.lru.LRUMemoryCache
 jcs.region.value.cacheattributes.UseMemoryShrinker=true
-jcs.region.value.cacheattributes.MaxMemoryIdleTimeSeconds=3600
+jcs.region.value.cacheattributes.MaxMemoryIdleTimeSeconds=84000
 jcs.region.value.cacheattributes.ShrinkerIntervalSeconds=60
 jcs.region.value.cacheattributes.MaxSpoolPerRun=500
 jcs.region.value.elementattributes=org.apache.jcs.engine.ElementAttributes

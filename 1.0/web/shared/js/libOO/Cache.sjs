@@ -11,7 +11,7 @@
 	var result = new Myna.Cache({
 		name:"test",
 		tags:"test,query,output",
-		interval:Date.getInterval(Date.MINUTE,3),
+		refreshInterval:Date.getInterval(Date.MINUTE,3),
 		code:function(sleepTime){
 			//an artificially long process
 			Myna.sleep(Date.getInterval("s",sleepTime));
@@ -30,12 +30,30 @@
 /* Property: tags
 	*Optional* A comma separated list of strings associated with this cache object.
 */
-/* Property: interval
-	*Optional* Time in milliseconds between cache refreshes.
+/* Property: refreshInterval
+	*Optional, default 1 hour*
+	Cache values older than this interval will be 
+	refreshed when accessed. See <Date.getInterval>. 
+	A value of -1 will disable refreshing.
+*/
+/* Property: maxIdleInterval
+	*Optional, default 24 hours* 
+	Interval that a cached object can be 
+	idle (not accessed) before being deleted. See 
+	<Date.getInterval>. A value of -1 means the cache 
+	never expires, it is only refreshed. Note that if 
+	_maxIdleInterval_ is less than _interval_, it 
+	will effectively become the refresh interval 
+	during periods of infrequent access
 */
 /* Property: allowBackgroundRefresh
-	*Optional* boolean value indicating whether cache refreshes can be made in a background
-	thread
+	*Optional, default true*
+	if true, and a cached value is available, then 
+	cache refreshes happen in a background thread 
+	and the current cached value is returned. Note 
+	that if _maxIdleInterval_ is set, background 
+	refreshes will only happen if _interval_ has 
+	been exceeded but _maxIdleInterval_ has not.
 */
 if (!Myna) var Myna={}
 /* Constructor: Cache
@@ -58,13 +76,25 @@ if (!Myna) var Myna={}
 										multiple cache objects from other threads. If 
 										$application.appName is defined, it is 
 										automatically added as a tag. 
-		interval				-		*Optional, default 0*
-										Time in milliseconds between cache refreshes. See 
-										<Date.getInterval>. 0 will disable caching.
+		refreshInterval		-		*Optional, default 1 hour*
+										Cache values older than this interval will be 
+										refreshed when accessed. See <Date.getInterval>. 
+										A value of -1 will disable refreshing. 
+		maxIdleInterval		-		*Optional, default 24 hours* 
+										Interval that a cached object can be 
+										idle (not accessed) before being deleted. See 
+										<Date.getInterval>. A value of -1 means the cache 
+										never expires, it is only refreshed. Note that if 
+										_maxIdleInterval_ is less than _interval_, it 
+										will effectively become the refresh interval 
+										during periods of infrequent access 
 		allowBackgroundRefresh	-	*Optional, default true*
 											if true, and a cached value is available, then 
 											cache refreshes happen in a background thread 
-											and the current cached value is returned.
+											and the current cached value is returned. Note 
+											that if _maxIdleInterval_ is set, background 
+											refreshes will only happen if _interval_ has 
+											been exceeded but _maxIdleInterval_ has not.
 	*/
 	Myna.Cache = function CacheConstructor(options){
 		var $this = this;
@@ -73,7 +103,9 @@ if (!Myna) var Myna={}
 			params:{},
 			tags:"",
 			allowBackgroundRefresh:true,
-			name:this.code.toSource()
+			name:this.code.toSource(),
+			maxIdleInterval:Date.getInterval("h",24),
+			refreshInterval:Date.getInterval("h",1),
 		})
 		if (this.tags instanceof Array) this.tags = this.tags.join();
 		if ("appName" in $application) {
@@ -87,7 +119,7 @@ if (!Myna) var Myna={}
 				cacheStore = $server.get("MYNA:cacheStore");
 				if (!cacheStore){
 					cacheStore = new Myna.DataSet({
-						columns:"name,tags,interval",
+						columns:"name,tags,refreshInterval,maxIdleInterval",
 						data:[]
 					})	
 					$server.set("MYNA:cacheStore", cacheStore)
@@ -143,8 +175,13 @@ if (!Myna) var Myna={}
 						content:$res.clear()
 					}
 					
+					var att = c.getDefaultElementAttributes();
+					//set max idle time to  
+					if (cacheObj.maxIdleInterval != -1){
+						att.maxIdleTimeSeconds =(Math.floor(cacheObj.maxIdleInterval/1000));
+					}
+					c.put(key,cacheValue,att);
 					
-					c.put(key,cacheValue);
 				} 
 				
 			})
@@ -196,6 +233,8 @@ if (!Myna) var Myna={}
 		var $this = this;
 		var c = org.apache.jcs.JCS.getInstance("value");
 		var args = Array.parse(arguments); 
+		var storeEntry  = $server.get("MYNA:cacheStore").findFirst("name",this.name);
+		
 		var key = $this.name+ ":" +new java.lang.String(
 			args.toJson()
 		).hashCode();
@@ -203,11 +242,14 @@ if (!Myna) var Myna={}
 		//make sure that only one thread checks the cache at a time
 		var cacheObj = c.get(key);
 		
+		
 		if (cacheObj) {
-			if ("interval" in $this){
-				var time = c.getElementAttributes(key).getCreateTime();
-				if (!$this.interval 
-					|| time + $this.interval < new Date().getTime() 
+			if ("refreshInterval" in $this){
+				var att = c.getElementAttributes(key)
+				var time = att.getCreateTime();
+				storeEntry.lastAccessed =new Date( att.getLastAccessTime()); 
+				if (!$this.refreshInterval 
+					|| time + $this.refreshInterval < new Date().getTime() 
 				){
 					if ($this.allowBackgroundRefresh){
 						$this.backgroundRefresh(args);
@@ -252,15 +294,26 @@ if (!Myna) var Myna={}
 	Myna.Cache.prototype.getCachedValues = function Cache_getCachedValues(){
 		var $this = this;
 		var c = org.apache.jcs.JCS.getInstance("value");
+		var elements = Myna.JavaUtils.mapToObject(c.getMatchingCacheElements($this.name +":.*"))
+		var key_list = elements.getKeys().join();
 		return new Myna.DataSet({
-			columns:"key,created,lastAccessed,value",
+			columns:"key,created,lastAccessed,maxLifeSeconds,idleSeconds,value",
 			data:$this.cacheKeys.getKeys()
-				.map(function(key){
-					var att = c.getElementAttributes(key)
+				.filter(function(key){
+					if (key_list.listContains(key)){
+						return true;
+					}else{
+						delete $this.cacheKeys[key];
+						return false;
+					}
+				}).map(function(key){
+					var att = elements[key].getElementAttributes()
 					return {
 						key:key,
 						created: new Date(att.getCreateTime()),
 						lastAccessed: new Date(att.getLastAccessTime()),
+						maxLifeSeconds:att.getMaxLifeSeconds(),
+						idleSeconds: att.getIdleTime(),
 						value:c.get(key)
 					}
 				})
@@ -293,8 +346,10 @@ if (!Myna) var Myna={}
 	
 	Example:
 	(code)
+	//clear all the cached values of the "test" cache
 	var cacheObject = Myna.Cache.getByName("test")
 	if (cacheObject) cacheObject.clear()
+	
 	(end)
 	*/	
 	Myna.Cache.getByName=function CacheGetByName(name){

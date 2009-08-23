@@ -949,3 +949,51 @@ Date.getInterval = function(interval, value){
 	}
   return 0;
 };
+/* Function: formatInterval
+	 returns an interval in milliseconds as human readable string in this format:
+	 'n years, n weeks, n days, n hours, n minutes, n seconds, n milliseconds', 
+	 omitting any 0 values  
+	 
+	Parameters:
+		interval		-	an interval in milliseconds to format
+	
+ */
+Date.formatInterval = function(interval, value){
+	var second = 1000;
+	var minute = second*60;
+	var hour = minute*60;
+	var day = hour*24;
+	var week = day*7;
+	var year = day*365;
+	var result=[]
+	
+	var years = Math.floor(interval/year);
+	interval = interval % year;
+	if (years) result.push(years +" years");
+	
+	var weeks = Math.floor(interval/week);
+	interval = interval % week;
+	if (weeks) result.push(weeks +" weeks");
+	
+	var days = Math.floor(interval/day);
+	interval = interval % day;
+	if (days) result.push(days +" days");
+	
+	var hours = Math.floor(interval/hour);
+	interval = interval % hour;
+	if (hours) result.push(hours +" hours");
+	
+	var minutes = Math.floor(interval/minute);
+	interval = interval % minute;
+	if (minutes) result.push(minutes +" minutes");
+	
+	var seconds = Math.floor(interval/second);
+	interval = interval % second;
+	if (seconds) result.push(seconds +" seconds");
+	
+	var milliseconds = interval;
+	if (milliseconds) result.push(milliseconds +" milliseconds");
+	
+	return result.join(", ")
+	
+};

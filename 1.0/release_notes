@@ -1,4 +1,5 @@
-Release Name: 1.0_alpha_15
+
+Release Name: 1.0_alpha_15-1
 Notes:
 
 This is a BugFix release that also introduces some experimental features
@@ -23,7 +24,9 @@ New in this release
   Date.prototype.add(), but instead of returning a new Date instance, this 
   returns the interval in milliseconds. This interval can later be passed to 
   Date.prototype.add to do the actual date math.
-* Added Myna.lock(name,timeout,func). This halts the current thread for up to *timeout* seconds until a named lock is available and then runs *func*. Calling release() on the returned lock allows the next thread to acquire a lock
+* Added Myna.lock(name,timeout,func). This halts the current thread for up to 
+  *timeout* seconds until a named lock is available and then runs *func*. Calling 
+  release() on the returned lock allows the next thread to acquire a lock
 * Added Myna.cacheOutput() This allows you cache fragments of your pages that
   don't change very often. 
 * Added Myna.cacheValue() This allows you cache function results that don't 
