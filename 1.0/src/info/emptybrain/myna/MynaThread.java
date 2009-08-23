@@ -22,7 +22,7 @@ import EDU.oswego.cs.dl.util.concurrent.*;
 */
 public class MynaThread {
 	//static public Log logger = LogFactory.getLog(MynaThread.class);
-	static public String version="1.0_alpha_15-2";
+	static public String version="1.0_alpha_16";
 	static public FIFOSemaphore threadPermit;
 	static public FIFOSemaphore manageLocksPermit;
 	static public volatile CopyOnWriteArrayList runningThreads 	= new CopyOnWriteArrayList();
