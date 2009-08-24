@@ -762,6 +762,9 @@
 	String.prototype.listToArray=function(delimiter,qualifier){
 		if (!delimiter) delimiter =",";
 		if (!qualifier) qualifier ="";
+		if (typeof delimiter == "string"){
+			delimiter = delimiter.escapeRegex();
+		}
 		
 		var array =this.split(delimiter).filter(function(item){
 			return item && item.length;
