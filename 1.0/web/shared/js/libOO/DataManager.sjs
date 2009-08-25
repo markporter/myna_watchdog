@@ -304,7 +304,7 @@ if (!Myna) var Myna={}
 			var qry = new Myna.Query({
 				dataSource:this.ds,
 				sql:<ejs>
-					delete from "<%=this.sqlTableName%>"
+					delete from <%=this.sqlTableName%>
 					where <%=this.columns[this.primaryKey].column_name%> = 
 						<%=p.addValue(id,this.columns[this.primaryKey].data_type)%>
 				</ejs>,
@@ -588,7 +588,7 @@ if (!Myna) var Myna={}
 		Myna.DataManager.prototype.ManagerBase.prototype.genKey=function(){
 			var maxId =new Myna.Query({
 				dataSource:this.ds,
-				sql:'select max(' + this.columns[this.primaryKey].column_name+ ') as id from "' + this.sqlTableName +'"'
+				sql:'select max(' + this.columns[this.primaryKey].column_name+ ') as id from ' + this.sqlTableName 
 			}).data[0].id;
 			if (!maxId) {
 			 	return 1;
@@ -827,7 +827,7 @@ if (!Myna) var Myna={}
 				dataSource:this.manager.ds,
 				parameters:p,
 				sql:<ejs>
-					UPDATE "<%=this.sqlTableName%>"
+					UPDATE <%=this.sqlTableName%>
 					SET
 						"<%=columnName%>" = <%=p.addValue(value,type,isNull)%>
 					WHERE

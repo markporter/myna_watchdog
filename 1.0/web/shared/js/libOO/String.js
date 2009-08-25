@@ -766,7 +766,7 @@
 			delimiter = delimiter.escapeRegex();
 		}
 		
-		var array =this.split(delimiter).filter(function(item){
+		var array =this.split(new RegExp(delimiter)).filter(function(item){
 			return item && item.length;
 		})
 		

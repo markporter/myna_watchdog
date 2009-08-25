@@ -22,7 +22,7 @@ Myna.Table = function (db,tableName){
 	
 	table.init();
 	if (this.schema && this.schema.trim().length){
-		this.sqlTableName = this.schema + "." + this.tableName;
+		this.sqlTableName = '"' + this.schema + '"."' + this.tableName +'"';
 	} else{
 		this.sqlTableName = this.tableName;		
 	}
