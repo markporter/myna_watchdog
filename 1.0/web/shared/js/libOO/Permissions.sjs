@@ -302,7 +302,7 @@ if (!Myna) var Myna={}
 			
 		*/
 		getAuthAdapter:function(name){
-            if (!/^[^~]$/.test(name)) {
+            if (!/^[^~]+$/.test(name)) {
                 throw new Error("Invalid adapter name '"
                 + name
                 +"'. Adapter names cannot contain tilde(~) characters");
