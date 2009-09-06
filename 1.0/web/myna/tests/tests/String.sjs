@@ -207,17 +207,28 @@
 		String_List.prototype.test_listContains=function(){
 			this.assertTrue("default",this.original_list1.listContains(4));
 			this.assertTrue("pipe",this.original_list2.listContains(4,'|'));
-			this.assertTrue("quote",this.original_list3.listContains("c",",",'"'));
+			this.assertTrue("quote",this.original_list3.listContains('c',",",'"'));
 			
 			this.assertFalse("default-not contains",this.original_list1.listContains(14));
 			this.assertFalse("pipe-not contains",this.original_list2.listContains(14,'|'));
-			this.assertFalse("quote-not contains",this.original_list3.listContains("q",",",'"'));
+			this.assertFalse("quote-not contains",this.original_list3.listContains('q',",",'"'));
+			
+			this.assertTrue("default",this.original_list1.listContains("4,2"));
+			this.assertTrue("pipe",this.original_list2.listContains("4|2",'|'));
+			this.assertTrue("quote",this.original_list3.listContains('"c","a"',",",'"'));
+			
+			this.assertFalse("default-not contains",this.original_list1.listContains("4,12"));
+			this.assertFalse("pipe-not contains",this.original_list2.listContains("4|12",'|'));
+			this.assertFalse("quote-not contains",this.original_list3.listContains('"c","dude"',",",'"'));
+			
 		}
 	/* ----- listContainsNoCase -------------------------------------------- */
 		String_List.prototype.test_listContainsNoCase=function(){
 			this.assertTrue("quote",this.original_list3.listContainsNoCase("C",",",'"'));
-			
 			this.assertFalse("quote-not contains",this.original_list3.listContainsNoCase("q",",",'"'));
+			
+			this.assertTrue("quote",this.original_list3.listContainsNoCase('"C","b"',",",'"'));
+			this.assertFalse("quote-not contains",this.original_list3.listContainsNoCase('"q","x"',",",'"'));
 		}
 		
 	/* ----- listLen ------------------------------------------------------- */
@@ -321,16 +332,16 @@
 		String_List.prototype.test_listAppendUnique=function(){
 			this.assertEquals("default, shouldn't append",this.original_list1,this.original_list1.listAppendUnique(4));
 			this.assertEquals("pipe, shouldn't append",this.original_list2,this.original_list2.listAppendUnique(4,"|"));
-			this.assertEquals("quote, shouldn't append",this.original_list3,this.original_list3.listAppendUnique("c",",",'"'));
+			this.assertEquals("quote, shouldn't append",this.original_list3,this.original_list3.listAppendUnique('"c"',",",'"'));
 			
 			this.assertEquals("default, should append",this.original_list1+",14",this.original_list1.listAppendUnique(14));
 			this.assertEquals("pipe, should append",this.original_list2+"|14",this.original_list2.listAppendUnique(14,"|"));
-			this.assertEquals("quote, should append",this.original_list3+',"14c"',this.original_list3.listAppendUnique("14c",",",'"'));
+			this.assertEquals("quote, should append",this.original_list3+',"14c"',this.original_list3.listAppendUnique('"14c"',",",'"'));
 		}
 	/* ----- listAppendUniqueNoCase ---------------------------------------- */
 		String_List.prototype.test_listAppendUniqueNoCase=function(){
-			this.assertEquals("quote, shouldn't append",this.original_list3,this.original_list3.listAppendUniqueNoCase("C",",",'"'));
-			this.assertEquals("quote, should append",this.original_list3+',"14C"',this.original_list3.listAppendUniqueNoCase("14C",",",'"'));
+			this.assertEquals("quote, shouldn't append",this.original_list3,this.original_list3.listAppendUniqueNoCase('"C"',",",'"'));
+			this.assertEquals("quote, should append",this.original_list3+',"14C"',this.original_list3.listAppendUniqueNoCase('"14C"',",",'"'));
 		}
 	/* ----- listToArray ------------------------------------------------------ */
 		String_List.prototype.test_listToArray=function(){

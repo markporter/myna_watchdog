@@ -86,7 +86,14 @@ var C ={
 		if (authenticated===true){
 			C.main()
 		}else{
-			C.login();
+			//C.login();
+			var url = rootUrl+"myna/auth/auth.sjs?"+[
+				"fuseaction=login",
+				"callback=" +String(location.href),
+				"title=" +escape("DB Administrator Login")
+			].join("&")
+			
+			location.href=url;
 		}
 	}
 /* ================ helper functions ======================================== */

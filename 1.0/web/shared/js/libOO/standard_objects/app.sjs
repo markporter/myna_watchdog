@@ -185,6 +185,7 @@ var $application={
 	
 	_initScopes:function(){
 		$profiler.mark("Runtime scripts included");
+		
 		$server_gateway.runtimeStats.put("currentTask","built-in onRequestStart");
 		
 		if ($server.request){
@@ -254,7 +255,22 @@ var $application={
 						return value.escapeHtml();
 					})
 				});
-				
+			//import auth_token
+				if ("auth_token" in $req.data){
+					var user_id =Myna.Permissions.consumeAuthToken($req.rawData.auth_token)
+					$cookie.setAuthUserId(user_id)
+					var queryVars = $req.paramNames.filter(function(key){
+						return key != "auth_token"
+					}).map(function(key){
+						return key +"="+$req.rawData[key].escapeUrl()
+					}).join("&");
+					if (queryVars) queryVars ="?"+queryVars
+					$res.clear();
+					
+					
+					$res.metaRedirect($server.requestUrl+$server.requestScriptName + queryVars)
+					$req.handled = true;
+				}
 			//process uploads if necessary
 				$server_gateway.runtimeStats.put("currentTask","processUploads");
 				

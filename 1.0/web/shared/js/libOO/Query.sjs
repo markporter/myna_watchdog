@@ -145,7 +145,7 @@
 			ds:"hr_ds",
 			sql:"select * from employees",
 			cache:{
-				interval:Date.getInterval(Date.HOUR,12)
+				refreshInterval:Date.getInterval(Date.HOUR,12)
 			}
 		})
 	(end)

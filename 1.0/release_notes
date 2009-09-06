@@ -1,3 +1,90 @@
+Release Name: 1.0_alpha_16
+Notes:
+
+This release sees improvements in the threading API and the completion of fragment and query caching
+
+New in this release:
+--------------------
+
+* **Fragment and query caching** 
+  
+  Fragment and query caching has eveolved from the partially
+  completed state in `1.0_alpha_15-1`. Now caching is handled via 
+  [Myna.Cache] like so:
+
+        Myna.println("This line is not cached");
+        var result = new Myna.Cache({
+            name:"test",
+            tags:"test,query,output",
+            refreshInterval:Date.getInterval(Date.MINUTE,3),
+            code:function(sleepTime){
+                //an artificially long process
+                Myna.sleep(Date.getInterval("s",sleepTime));
+                Myna.print("this line is cached: " + new Date())
+            }
+        }).call(10)
+
+  Queries can also be cached by including a "cache" option with the
+  same parameters as Myna.Cache()
+
+        //cache employee information for 12 hours
+        var qry=new Myna.Query({
+            ds:"hr_ds",
+            sql:"select * from employees",
+            cache:{
+                refreshInterval:Date.getInterval(Date.HOUR,12)
+            }
+        })               
+  
+  There is now a check during cache creation for free memory. if less than 20% of [memMax] is available, the caching system will attempt to release the least recently used cache objects until memory usage drops below this threshold. This should reduce the danger of runaway caching. You can also use [Myna.Cache].maxIdleInterval  to preemptively release the memory of infrequently used cached objects based on idle time.
+
+  See [Myna.Cache] and [Myna.Query] for more information
+
+  [Myna.Cache]:http://www.mynajs.org/shared/docs/js/libOO_raw/files/Cache-sjs.html
+  [Myna.Query]:http://www.mynajs.org/shared/docs/js/libOO/files/Query-sjs.html
+  [memMax]:http://www.mynajs.org/shared/docs/js/libOO_raw/files/standard_objects/server-sjs.html#$server.memMax
+
+* Added static function [Array.parse()]. This takes an Array-like object and 
+  returns an array of the contents
+
+  [Array.parse()]:http://www.mynajs.org/shared/docs/js/libOO_raw/files/Array-js.html#Array.parse
+
+* Replaced getLock and attemptLock with [Myna.lock] (name,timeout,function). When
+  the supplied function is complete, the lock is released automatically. Passing  a timeout of 0 will will only lock if no other thread currently has a lock
+
+  [Myna.lock]:http://www.mynajs.org/shared/docs/js/libOO_raw/files/Myna-sjs.html#Myna.lock
+
+
+* Myna.[Thread] function can now return values. This will be returned from 
+  [Thread].join(), or can be accessed via [Thread].getReturnValue()
+
+  [Thread]:http://www.mynajs.org/shared/docs/js/libOO_raw/files/Thread-sjs.html
+
+* Added Myna.[Thread].joinAll(). This is a static function that calls join() on  all the threads spawned from the current thread, and returns an array of their  return values
+
+Other Changes:
+--------------
+
+* Replaced Myna.cacheValue and Myna.cacheOutput with Myna.Cache. This allows for
+  other threads to manipulate cache contents
+* Object.setDefaultProperties now returns the modified object so this can be 
+  chained  
+* Added String.escapeRegex() to escape regex characters in strings
+* Fixed bug in DataSet.findFirst() and .findAll() where string compares were 
+  matching partial matches and failing on strings that contained regex 
+  characters 
+* added optional 'message' argument to .requestBasicAuth
+* fixed various bugs related to making Queries into DataSets
+* Upgraded JCS to 1.3.3.5RC
+* Added Date.formatInterval(). This a static function that takes a time interval 
+  in milliseconds and formats as a human readable string 
+* Changed Cache.inteval to to Cache.refreshInterval
+* Added Cache.maxIdleInterval. This is the amount of time a cache value can be 
+  idle before being garbage collected
+
+
+
+------------------------------------
 
 Release Name: 1.0_alpha_15-1
 Notes:

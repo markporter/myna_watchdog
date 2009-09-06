@@ -23,7 +23,8 @@ var fusebox={
 	logout:function(data){
 			$session.clear();
 			$cookie.clearAuthUserId();
-			this.main({});
+			//this.main({});
+			$res.metaRedirect("?fuseaction=main")
 	},
 	main:function(data){
 		//abort("session_cookie",$session.get("authenticated"))

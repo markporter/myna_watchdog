@@ -1,12 +1,12 @@
 
-if ("auth_token" in $req.rawData){
+/* if ("auth_token" in $req.rawData){
 	var user_id = Myna.Permissions.consumeAuthToken($req.rawData.auth_token)
 	if (user_id){
 		$cookie.setAuthUserId(user_id);
 		$res.metaRedirect($server.scriptName+'?fuseaction=main&ds='+$req.rawData.ds)
 		Myna.abort();
 	}
-}
+} */
 
 includeOnce("fusebox.sjs"); // load functions as properties of the fusebox object
 

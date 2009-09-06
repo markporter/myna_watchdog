@@ -1,4 +1,6 @@
 {
 	"auth_type":"myna",
+	"prettyName":"Local Account",
+	"desc":"Login using a local account",
 	"adapter":"myna"
 }

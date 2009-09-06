@@ -140,19 +140,41 @@ var $res = {
 		}
 	},
 /* 	Function: metaRedirect
-		redirect this page using META HTTP-EQUIV="refresh" tag. This method 
-		preserves any headers, such as cookies, sent to the browser during this 
-		request.
+		Redirect this page using META HTTP-EQUIV="refresh" tag. 
+		
+		Note: 
+			This method preserves any headers, such as cookies, sent to the 
+			browser during this request. Page processing continues after calling 
+			this function.
 		
 		Parameters: 
-			url - url to redirect to
+			url - absolurte url to redirect to
 		
 		Example:
-			$res.metaRedirect("some_other_page.ejs");
+			$res.metaRedirect("http://example.com/page.html");
 	*/
 	metaRedirect:function(url){
 		this.print('<META HTTP-EQUIV="refresh" content="0; url=' + url + '">');	
 	},
+/* 	Function: redirect
+		Redirect this page using HTTP 302 temporary redirect. 
+		
+		Note: 
+			This method does NOT preserve any headers, such as cookies, sent to the 
+			browser during this request. Page processing is aborted when calling 
+			this function
+		
+		Parameters: 
+			url - absolute url to redirect to
+		
+		Example:
+			$res.redirect("http://example.com/page.html");
+	*/
+	redirect:function(url){
+		$server.response.sendRedirect(url);
+		Myna.abort();		
+	},
+	
 /* 	Function: setHeader
 		sets a header to return to the browser
 		

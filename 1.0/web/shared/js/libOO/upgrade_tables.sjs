@@ -131,8 +131,63 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 			});
 			
 		}
-	
-		/* user_logins table */
+		/* add newer columns */
+			if (!("country" in table.columns)){
+				table.addColumn({
+					name:"country",
+					type:"VARCHAR",
+					maxLength:255
+				})	
+			}
+			if (!("dob" in table.columns)){
+				table.addColumn({
+					name:"dob",
+					type:"DATE"
+				})	
+			}
+			if (!("email" in table.columns)){
+				table.addColumn({
+					name:"email",
+					type:"VARCHAR",
+					maxLength:255
+				})	
+			}
+			if (!("gender" in table.columns)){
+				table.addColumn({
+					name:"gender",
+					type:"VARCHAR",
+					maxLength:1
+				})	
+			}
+			if (!("language" in table.columns)){
+				table.addColumn({
+					name:"language",
+					type:"VARCHAR",
+					maxLength:255
+				})	
+			}
+			if (!("nickname" in table.columns)){
+				table.addColumn({
+					name:"nickname",
+					type:"VARCHAR",
+					maxLength:255
+				})	
+			}
+			if (!("postcode" in table.columns)){
+				table.addColumn({
+					name:"postcode",
+					type:"VARCHAR",
+					maxLength:255
+				})	
+			}
+			if (!("timezone" in table.columns)){
+				table.addColumn({
+					name:"timezone",
+					type:"VARCHAR",
+					maxLength:255
+				})	
+			}
+	/* user_logins table */
 		table = db.getTable("user_logins");
 		if (!table.exists){
 			table.create({
@@ -171,6 +226,23 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 				columns:["user_id","login","type"]
 			})
 		}
+		/* add newer columns */
+			/* if (!("failed_logins" in table.columns)){
+				table.addColumn({
+					name:"failed_logins",
+					type:"BIGINT",
+					defaultValue:0
+				})	
+			}
+			if (!("last_failed_login" in table.columns)){
+				table.addColumn({
+					name:"last_failed_login",
+					type:"TIMESTAMP"
+				})	
+			} */
+		
+		
+			
 	
 	/* groups table */
 		table = db.getTable("user_groups");

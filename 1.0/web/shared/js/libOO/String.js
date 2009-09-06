@@ -1,7 +1,7 @@
 /* Class: String 
 	Additional functions on the JS String object    
 	
-	 
+	
 */
 
 /* Property: htmlEscapeChars
@@ -378,11 +378,16 @@
 	String.prototype.listAppend=function(val, delimiter,qualifier){
 		if (!delimiter) delimiter =",";
 		if (!qualifier) qualifier ="";
+		val = String(val);
 		var result =new String(this);
 		if (delimiter.length && result.length && result.right(delimiter.length) != delimiter){
 			result += delimiter;
 		}
-		result += qualifier + String(val) + qualifier;
+		if (qualifier.length && val.charAt(0) != qualifier){
+			result += qualifier + val + qualifier;	
+		} else {
+			result += val;
+		}
 		return result;	
 	}
 
@@ -481,23 +486,32 @@
 	returns true if list contains the value. 
 	 
 	Parameters: 
-		val			-	String Value to search fpr 
+		val			-	String Value to search for. If _val_ is a list with the same 
+						delimiter then all values in _val_ must also be in this string 
 		delimiter	- 	*Optional default ','*
 						String delimiter between values 
 		qualifier	-	*Optional, default null* 
 						String found before and after _val_
 	Returns: 
-		true if _val_ exists in _list_
+		true if _val_ exists in this string
 	 
 	*/
 	String.prototype.listContains=function(val, delimiter, qualifier){
-		return this.listFind(val,0,delimiter,qualifier) > -1;
+		if (String(val).listLen(delimiter,qualifier) > 1){
+			var $this = this;
+			return String(val).listToArray(delimiter,qualifier).every(function(val){
+				return $this.listFind(val,0,delimiter,qualifier) > -1;
+			})
+		} else {
+			return this.listFind(val,0,delimiter,qualifier) > -1;
+		}
 	}
 /* Function: listContainsNoCase
 	returns true if list contains the value, ignoring case. 
 	 
 	Parameters: 
-		val			-	String Value to search fpr 
+		val			-	String Value to search for. If _val_ is a list with the same 
+						delimiter then all values in _val_ must also be in this string 
 		delimiter	- 	*Optional default ','*
 						String delimiter between values 
 		qualifier	-	*Optional, default null* 
@@ -508,7 +522,14 @@
 	 
 	*/
 	String.prototype.listContainsNoCase=function(val, delimiter,qualifier){
-		return this.listFindNoCase(val,0,delimiter,qualifier) > -1;
+		if (String(val).listLen(delimiter,qualifier) > 1){
+			var $this = this;
+			return String(val).listToArray(delimiter,qualifier).every(function(val){
+				return $this.listFindNoCase(val,0,delimiter,qualifier) > -1;
+			})
+		} else {
+			return this.listFindNoCase(val,0,delimiter,qualifier) > -1;
+		}
 	}
 
 /* Function: listFind 
@@ -534,7 +555,10 @@
 		if (startFrom == undefined ) startFrom = 0;
 		if (!delimiter) delimiter =",";
 		if (!qualifier) qualifier ="";
-		val = qualifier+String(val)+qualifier;
+		val = String(val);
+		if (qualifier.length && val.charAt(0) != qualifier){
+			val = qualifier+val+qualifier;	
+		} 	
 		
 		var arr =this.listToArray(delimiter)
 		for (var x=startFrom; x < arr.length; ++x){
@@ -1084,5 +1108,13 @@ if ("$server_gateway" in this){
 		.replace(/^<\?xml\s+version\s*=\s*(["'])[^\1]+\1[^?]*\?>/, "") /* mozilla bug 336551*/
 		.trim())
 	}
-		
+/* Function: escapeUrl 
+	returns a URL encoded version of this string 
+	 
+	
+	
+	*/
+	String.prototype.escapeUrl=function(){
+		return String(java.net.URLEncoder.encode(this,"UTF-8"));
+	}		
 }

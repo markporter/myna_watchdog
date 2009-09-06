@@ -39,7 +39,7 @@ var $server={
 		> index.sjs
 	*/	
 	get requestScriptName(){ return String($server_gateway.requestScriptName)},
-/* 	property: requestServerUrl
+/* 	property: serverUrl
 		The the server name and protocol of the request
 		
 		Example:
@@ -51,14 +51,20 @@ var $server={
 			* <$server.scriptName>
 			* <$server.requestScriptName>
 	*/
-	get requestServerUrl(){
+	get serverUrl(){
 		if (!$server.request) return "";
 		var URL = String($server_gateway.environment.get("requestURL"));
 		var URI = String($server_gateway.environment.get("requestURI"));
 		//return URL + ":" +URI;
 		return URL.left(URL.length-URI.length);
 	},
-	
+/* 	property: requestServerUrl
+		*DEPRECATED* see  <$server.serverUrl>
+	*/	
+	get requestServerUrl(){
+		Myna.log("WARNING","Deprecated property 'requestServerUrl' called.",Myna.dump($req.data));
+		return $server.serverUrl
+	},
 /* 	property: requestDir
 		<MynaPath> representing the directory of the originally requested script.
 		
@@ -66,6 +72,7 @@ var $server={
 		> file:/usr/share/tomcat/webapps/myna/myna/administrator/
 	*/
 	get requestDir(){ return String($server_gateway.requestDir)},
+	
 /* property: requestUrl
 			URL Path representing the directory of the originally requested script.
 		  

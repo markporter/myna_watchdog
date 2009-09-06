@@ -79,41 +79,25 @@ var C ={
 				delete conn.waitInstance;
 			}
 		})
-		/* if (authenticated===true){
-			C.main()
-		}else {*/
-		if (auth_token){
-			Ext.Ajax.request({
-				url:'permissions.sjs?json-myna&method=auth_transfer',
-				params:{
-					auth_token:auth_token,
-					appname:appname
-				},
-				waitMsg:"Authorizing...",
-				callback:C.cbHandler(function(result){
-					if (result.success){
-						C.main();	
-					} else { 
-						C.login();
-					}
-				})
-			})	
-		} else {
-			Ext.Ajax.request({
-				url:'permissions.sjs?json-myna&method=has_active_session&appname=' + appname,
-				
-				waitMsg:"Authorizing...",
-				callback:C.cbHandler(function(result){
-					if (result.success){
-						C.main();	
-					} else { 
-						if ("message" in result) alert(result.message);
-						C.login();
-					}
-				})
-			})	
-		}
-		/* } */
+		
+		Ext.Ajax.request({
+			url:'permissions.sjs?json-myna&method=has_active_session&appname=' + appname,
+			
+			waitMsg:"Authorizing...",
+			callback:C.cbHandler(function(result){
+				if (result.success){
+					C.main();	
+				} else { 
+					if ("message" in result) alert(result.message);
+					var url = rootUrl+"myna/auth/auth.sjs?"+[
+						"fuseaction=login",
+						"callback=" +String(location.href).listFirst("?"),
+						"title=" +escape("Myna Permissions Login")
+					].join("&")
+					location.href=url
+				}
+			})
+		})	
 	}
 /* ================ helper functions ======================================== */
 	/* ---------------- addTab ----------------------------------------------- */
@@ -1008,6 +992,16 @@ var C ={
 							{name:'last_name'},
 							{name:'middle_name'},
 							{name:'title'},
+							
+							{name:'country'},
+							{name:'created'},
+							{name:'dob'},
+							{name:'email'},
+							{name:'gender'},
+							{name:'language'},
+							{name:'nickname'},
+							{name:'postcode'},
+							{name:'timezone'},
 							{name:'logins'}
 						]),
 						remoteSort: true
@@ -1019,6 +1013,15 @@ var C ={
 						{id:"first_name", header: "First Name", dataIndex:'first_name', width: 100, sortable: true},
 						{id:"middle_name", header: "Middle Name", dataIndex:'middle_name', width: 20, sortable: true},
 						{id:"title", header: "Title", dataIndex:'title', width: 20, sortable: true},
+						{id:"country", header: "Country", dataIndex:'country', width: 20, sortable: true},
+						
+						{id:"dob", header: "DOB", dataIndex:'dob', width: 40, sortable: true},
+						{id:"email", header: "Email", dataIndex:'email', width: 40, sortable: true},
+						{id:"gender", header: "Gender", dataIndex:'gender', width: 20, sortable: true},
+						{id:"language", header: "Language", dataIndex:'language', width: 20, sortable: true},
+						{id:"nickname", header: "Nickname", dataIndex:'nickname', width: 50, sortable: true},
+						{id:"postcode", header: "Postcode", dataIndex:'postcode', width: 30, sortable: true},
+						{id:"timezone", header: "Timezone", dataIndex:'timezone', width: 30, sortable: true},
 						{id:"logins", header: "Login Names", dataIndex:'logins', width: 300, sortable: true},
 						{id:"created", header: "Created", dataIndex:'created', width: 100, sortable: true},
 						{id:"inactive_ts", renderer:Ext.util.Format.dateRenderer("m/d/Y H:i:s"), header: "Inactive Date", dataIndex:'inactive_ts', width: 100, sortable: true}
@@ -1196,6 +1199,15 @@ var C ={
 						{name:"first_name", width:250,  fieldLabel:"First Name", maxLength:255,  id:"first_name" + tabId },
 						{name:"middle_name", width:250,  fieldLabel:"Middle Name", maxLength:255,  id:"middle_name" + tabId },
 						{name:"last_name", width:250,  fieldLabel:"Last Name", maxLength:255,  id:"last_name" + tabId },
+						{name:"country", width:250,  fieldLabel:"Country", maxLength:255,  id:"country" + tabId },
+						{name:"dob", width:250,  xtype:"datefield", fieldLabel:"DOB", maxLength:255,  id:"dob" + tabId },
+						{name:"email", width:250,  fieldLabel:"Email", maxLength:255,  id:"email" + tabId },
+						{name:"gender", width:250,  fieldLabel:"Gender", maxLength:255,  id:"gender" + tabId },
+						{name:"language", width:250,  fieldLabel:"Language", maxLength:255,  id:"language" + tabId },
+						{name:"nickname", width:250,  fieldLabel:"Nickname", maxLength:255,  id:"nickname" + tabId },
+						{name:"postcode", width:250,  fieldLabel:"Postcode", maxLength:255,  id:"postcode" + tabId },
+						{name:"timezone", width:250,  fieldLabel:"Timezone", maxLength:255,  id:"timezone" + tabId },
+						
 						{name:"logins", xtype:"textarea", disabled:true, width:250,   fieldLabel:"Logins",  readOnly:true, cls:"readonly_field",  id:"logins" + tabId }
 					],
 					buttons:[{

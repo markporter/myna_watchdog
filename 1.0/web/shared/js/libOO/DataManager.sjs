@@ -490,7 +490,7 @@ if (!Myna) var Myna={}
 					</@loop>
 				</ejs>
 			})
-			return qry.valueArray(pkey);
+			return qry.valueArray(pkey.toLowerCase());
 		}
 	/* Function: findBeans
 		returns a <Myna.DataSet> of bean objects that match a search
@@ -543,15 +543,15 @@ if (!Myna) var Myna={}
 			See:
 				<find>
 	*/
-	Myna.DataManager.prototype.ManagerBase.prototype.findBeans=function(pattern,caseSensitive){
-		var $this = this;
-		return new Myna.DataSet({
-			columns:$this.columnNames,
-			data:this.find(pattern,caseSensitive).map(function(id){
-				return $this.getById(id);
+		Myna.DataManager.prototype.ManagerBase.prototype.findBeans=function(pattern,caseSensitive){
+			var $this = this;
+			return new Myna.DataSet({
+				columns:$this.columnNames,
+				data:this.find(pattern,caseSensitive).map(function(id){
+					return $this.getById(id);
+				})
 			})
-		})
-	}
+		}
 	/* Function: genKey
 		generates a primary key value
 		
@@ -856,15 +856,15 @@ if (!Myna) var Myna={}
 		
 		Parameters:
 			column		-	*Optional, default: first foreign key*
-							column containing id to retrieve. Must be a properly 
-							defined foreign key in the database 
+							column name in this table to dereference. Must be a 
+							properly defined foreign key in the database 
 		
 		Example:
 		(code)
 			var orderBean = new Myna.DataManager("myapp")
 								.getManager("orders")
 								.getById(curOrderId);
-			var customerBean = orderBean.getParent("custormer_id");
+			var customerBean = orderBean.getParent("customer_id");
 			Myna.print(customerBean.last_name);
 		(end)
 	*/
@@ -885,10 +885,10 @@ if (!Myna) var Myna={}
 		return a <Myna.DataSet> of beans representing this bean's child records
 		
 		Parameters:
-			table		-	name of table to check for children
+			table		-	name of child table to check for matching rows
 			column		-	*Optional, default: first exported key to child table*
 							column_name to match in child table. This is only 
-							necessary if the child table declares mor than one foreign 
+							necessary if the child table declares more than one foreign 
 							key to this table 
 		
 		Example:
@@ -896,7 +896,7 @@ if (!Myna) var Myna={}
 			var customerBean = new Myna.DataManager("myapp")
 								.getManager("customers")
 								.getById(curCustomerId);
-			var orders = orderBean.getChildren();
+			var orders = customerBean.getChildren("orders");
 			Myna.print("Orders Total: " +orders.sumByCol("order_total"));
 		(end)
 	*/

@@ -8,6 +8,7 @@ $application.defaultFuseAction="main";
 $application.mainFuseAction="main";
 $application.extUrl =$server.rootUrl +"shared/js/ext_latest/"
 
+
 /* Load datasource driver properties */
 	if (!$application.get("db_properties")){
 		var propFiles = new File("/shared/js/libOO/db_properties").listFiles("sjs");

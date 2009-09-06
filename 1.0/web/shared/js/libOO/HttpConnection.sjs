@@ -59,11 +59,18 @@ if (!Myna) var Myna={}
 		contentType	-	*Optional default "text/plain"* 
 							content type of posted content
 							
-		username		-	*Optional default null* 
+		username	-	*Optional default null* 
 							username to send in a "Basic" auth header
 							
-		password		-	*Optional default null* 
+		password	-	*Optional default null* 
 							password to send in a "Basic" auth header
+		timeout		-	*Optional, default null*
+						If specified, this is the amount of time in milliseconds 
+						to wait for a connection, or between data chunks. If 
+						null then timeouts are disabled. If a timeout occurs 
+						then a java.net.SocketTimeoutException or 
+						org.apache.commons.httpclient.ConnectTimeoutException is 
+						thrown
 	
 	Returns:							
 		Reference to HttpConnection instance
@@ -87,13 +94,25 @@ Myna.HttpConnection = function(options){
 	//var conMan = new MultiThreadedHttpConnectionManager();
 
 	this.client = new HttpClient();
+	if (this.timeout){
+		var conMan =this.client.getHttpConnectionManager(); 
+		var p = conMan.getParams()
+		p.setSoTimeout(this.timeout)
+		p.setTcpNoDelay(true);
+		p.setLinger(0);
+		p.setConnectionTimeout(this.timeout)
+		conMan.setParams(p);
+	}
 }
 
 /* Function: connect
-	connects to an HTTP           
+	connects to HTTP resource specified in constructor
+	
+	
+	
 	
 */
-Myna.HttpConnection.prototype.connect=function(){
+Myna.HttpConnection.prototype.connect=function(timeout){
 	importPackage(Packages.org.apache.commons.httpclient.methods);
 	var con = this;
 	var url_params = this.url.match(/[?|&][^?&]+/g)
@@ -155,6 +174,8 @@ Myna.HttpConnection.prototype.connect=function(){
 			
 		break;
 	}
+		
+		
 	con.headers.getKeys().forEach(function(key){
 		con.methodHandler.setRequestHeader(key, con.headers[key]);
 	})
@@ -188,6 +209,11 @@ Myna.HttpConnection.prototype.connect=function(){
 	
 	
 	var method = this.methodHandler;
+	/* if (this.timeout){
+		var params = new Packages.org.apache.commons.httpclient.params.HttpMethodParams()
+		params.setSoTimeout(this.timeout)
+		con.methodHandler.setParams(params);
+	} */
 	this.responseText = null;
 	this.statusCode = null;
 	$application.closeArray.push({

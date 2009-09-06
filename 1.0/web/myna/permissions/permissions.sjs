@@ -34,6 +34,7 @@ var ws = new Myna.WebService({
 		},[name,def,args,retval,$profiler],-.9);
 	},
 	authFunction:function(authData){
+		Myna.log("debug","authData",Myna.dump(authData));
 		if (ws.spec.no_auth_list.listContainsNoCase(authData.functionName)){
 			return true;
 		}
@@ -136,23 +137,6 @@ var ws = new Myna.WebService({
 				
 			},
 		},
-	/* --------- auth_transfer  ---------------------------------------------- */
-		auth_transfer:{
-			desc:"Login and obtain auth cookie via authToken",
-			returns:{success:"numeric"},
-			params:[{
-				name:"auth_token",
-				type:"string",
-			}],
-			handler:function(data){
-				data.checkRequired(["auth_token"]);
-				var user_id = Myna.Permissions.consumeAuthToken(data.auth_token)
-				if (user_id){
-					ws.setAuthUserId(user_id);
-					return {success:1};
-				} else return {success:0}
-			},
-		},
 	/* --------- logout  ----------------------------------------------------- */
 		logout:{
 			desc:"Logout and end session",
@@ -208,6 +192,16 @@ var ws = new Myna.WebService({
 					middle_name:"string",
 					title:"string",
 					created:"string",
+					country:"string",
+					dob:"string",
+					email:"string",
+					gender:"string",
+					language:"string",
+					last_name:"string",
+					middle_name:"string",
+					nickname:"string",
+					postcode:"string",
+					timezone:"string",
 					inactive_ts:"string",
 					logins:"string"
 				}),
@@ -240,6 +234,16 @@ var ws = new Myna.WebService({
 								middle_name,
 								title,
 								created,
+								country,
+								dob,
+								email,
+								gender,
+								language,
+								last_name,
+								middle_name,
+								nickname,
+								postcode,
+								timezone,
 								inactive_ts,
 								'' as "logins"
 							from users
@@ -303,6 +307,16 @@ var ws = new Myna.WebService({
 						middle_name:"string",
 						title:"string",
 						created:"string",
+						country:"string",
+						dob:"string",
+						email:"string",
+						gender:"string",
+						language:"string",
+						last_name:"string",
+						middle_name:"string",
+						nickname:"string",
+						postcode:"string",
+						timezone:"string",
 						inactive_ts:"string"
 					}
 				},
@@ -317,6 +331,16 @@ var ws = new Myna.WebService({
 								middle_name,
 								title,
 								created,
+								country,
+								dob,
+								email,
+								gender,
+								language,
+								last_name,
+								middle_name,
+								nickname,
+								postcode,
+								timezone,
 								inactive_ts,
 								'' as "logins"
 							from users
@@ -376,6 +400,16 @@ var ws = new Myna.WebService({
 					{ name:"first_name", type:"string"},
 					{ name:"middle_name", type:"string"},
 					{ name:"title", type:"string"},
+					{name:"country",type:"string"},
+					{name:"dob",type:"string"},
+					{name:"email",type:"string"},
+					{name:"gender",type:"string"},
+					{name:"language",type:"string"},
+					{name:"last_name",type:"string"},
+					{name:"middle_name",type:"string"},
+					{name:"nickname",type:"string"},
+					{name:"postcode",type:"string"},
+					{name:"timezone",type:"string"},
 				],
 				returns:{
 					success:"numeric",
@@ -387,6 +421,11 @@ var ws = new Myna.WebService({
 					var exists = man.find(data.user_id).length;
 					if (exists){
 						var user =Myna.Permissions.getUserById(data.user_id)
+						if ("dob" in data){
+							try{
+								data.dob = Date.parseDate(data.dob,"m-d-Y")
+							} catch(e){}
+						}
 						user.setFields(data);
 						user.reactivate();
 						

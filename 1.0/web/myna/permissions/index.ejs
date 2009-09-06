@@ -1,15 +1,3 @@
-<% 
-	if ("auth_token" in $req.rawData){
-		var user_id = Myna.Permissions.consumeAuthToken($req.rawData.auth_token)
-		if (user_id){
-			$cookie.setAuthUserId(user_id);
-			Myna.print('<META HTTP-EQUIV="refresh" content="0; url='+$server.scriptName+'">');
-			Myna.abort();
-		}
-	}
-%>
-
-
 <link rel="stylesheet" type="text/css" href="<%=$application.extUrl%>resources/css/ext-all.css" />
 <link rel="stylesheet" type="text/css" href="<%=$application.extUrl%>resources/css/xtheme-slate.css" />
 <LINK REL="StyleSheet" HREF="views/default.css" TYPE="text/css"/>

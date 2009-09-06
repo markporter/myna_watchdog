@@ -15,6 +15,7 @@ import org.apache.commons.dbcp.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory; 
 import EDU.oswego.cs.dl.util.concurrent.*;
+import org.openid4java.consumer.ConsumerManager;
 
 /**
 * This class handles the execution of *.sjs and *.ejs files
@@ -31,9 +32,7 @@ public class MynaThread {
 	static public Hashtable cron = new Hashtable();
 	
 	static public Hashtable dataSources = new Hashtable();
-	
-	
-	
+		
 	static public Hashtable locks = new Hashtable(); //used by Myna.getLock()
 	static public Hashtable scriptCache = new Hashtable();
 	static public Properties generalProperties = new Properties();
@@ -47,6 +46,9 @@ public class MynaThread {
 	
 	static public int threadHistorySize=0; // number of completed threads to store in recentThreads. Set with property "thread_history_size"
 	static public java.util.Date serverStarted = new java.util.Date(); //date object representing the time this server was started
+	
+	static public ConsumerManager openidConsumerManager; //initialized in constructor
+	
 	
 	
 	public boolean isInitThread = false; //Is this the first thread after server restart?
@@ -277,6 +279,7 @@ public class MynaThread {
 	
 	
 	public MynaThread() throws Exception{
+		
 		//ContextFactory.initGlobal(new CustomContextFactory());
 	}
 	
@@ -287,6 +290,12 @@ public class MynaThread {
 	*/
 	public void init() throws Exception{
 		synchronized (MynaThread.class){
+			try {
+				openidConsumerManager = new ConsumerManager();
+			} catch(Exception e){
+				handleError(e);
+			}
+			
 			loadGeneralProperties();
 			
 			int max_running_threads = Integer.parseInt(generalProperties.getProperty("max_running_threads"));
