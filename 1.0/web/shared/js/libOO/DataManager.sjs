@@ -691,6 +691,7 @@ if (!Myna) var Myna={}
 			bean.data=qry.data[0];
 			bean.id=id;
 			
+			for (var p in bean) bean.hideProperty(p);
 			//print(dump(qry,"bean query"))
 			this.columnNames.forEach(function(colname){
 				var fname = colname;
@@ -701,7 +702,7 @@ if (!Myna) var Myna={}
 				bean.__defineGetter__(fname, bean.baseBean["get_"+fname]);
 				
 				bean.baseBean["get_"+fname].fieldName = colname;
-				
+				bean.hideProperty("get_"+fname);
 
 				
 				if (fname != manager.primaryKey){
@@ -719,15 +720,18 @@ if (!Myna) var Myna={}
 					}
 					bean.__defineSetter__(fname, bean.baseBean["set_"+fname]);
 					bean.baseBean["set_"+fname].fieldName = colname;
+					bean.hideProperty("set_"+fname);
 				}
 				
 			})
 			
 			bean.setDefaultProperties(bean.baseBean);
-			
+			for (var p in bean.baseBean) bean.hideProperty(p);
 			  
 			
 			bean.setDefaultProperties(this);
+			for (var p in this) bean.hideProperty(p);
+			
 			return bean;
 		}
 /* Class: Myna.DataManager.prototype.BeanBase

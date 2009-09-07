@@ -216,7 +216,8 @@ var $application={
 				
 				for (keyId=0; keyId < keyValueArray.length; ++keyId){
 					valArray = keyValueArray[keyId].getValue();
-					key =keyValueArray[keyId].getKey().toLowerCase();
+					key =keyValueArray[keyId].getKey()
+					
 					$req.paramNames.push(String(key));	
 					//check for null value, ie "&somevar="
 					if (valArray.length ==0){
@@ -540,6 +541,28 @@ var $application={
 		return false;
 	},
 	
+	_onError404:function(){
+		$res.clear();
+		if (!this.onError404 || !this.onError404()){
+			Myna.print("The file you requested is not available at that location.")
+		}
+		$res.setStatusCode(404);
+		$res.flush();
+	},
+/* Function: onError404
+		Called when a an error occurrs. 
+		
+		Parameters:
+			exception	-	a caught exception object
+		
+		Detail:
+			This function is executed before the default error handler. 
+			Return true to cancel the default error handler.
+			
+	*/
+	onError404:function(){
+		return false;
+	},
 	_onSessionStart:function(){
 		if (this.onSessionStart) this.onSessionStart();
 	},
@@ -553,8 +576,8 @@ var $application={
 	onSessionStart:function(){},
 	_mergeApplications:function(){
 		$profiler.begin("$application import");
-		
 		var appPaths = $server.requestDir.substring($server.rootDir.length).split("/");
+		//var appPaths = path.substring($server.rootDir.length).split("/");
 		
 		appPaths.splice(0,0,""); //prepend rootDir entry
 		appPaths.pop(); //remove trailing blank caused by trailing slash in $server.requestDir

@@ -38,9 +38,10 @@ try{
 			if (rs.exists()){
 				Myna.includeOnce($server.requestDir + $server.requestScriptName)
 			} else {
-				$res.setStatusCode(404, "The file you requested is not available at that location.");
+				$application._onError404();
+				/* $res.setStatusCode(404, "The file you requested is not available at that location.");
 				$res.clear();
-				Myna.abort();
+				Myna.abort(); */
 			}
 		}
 	}

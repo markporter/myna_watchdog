@@ -58,6 +58,23 @@ var $server={
 		//return URL + ":" +URI;
 		return URL.left(URL.length-URI.length);
 	},
+/* 	property: remoteAddr
+		The IP address of the requestor
+		
+		Example:
+		> 123.345.678.910
+		
+		Detail:
+			This is normally the IP address of the request. If the X-Forwarded-For
+			header is set, then that IP address is returned instead
+	*/
+	get remoteAddr(){
+		var ip =String($server.request.getRemoteAddr());
+		if ("X-Forwarded-For" in $req.headers){
+			ip = String($req.headers["X-Forwarded-For"][0])
+		}
+		return ip;
+	},
 /* 	property: requestServerUrl
 		*DEPRECATED* see  <$server.serverUrl>
 	*/	

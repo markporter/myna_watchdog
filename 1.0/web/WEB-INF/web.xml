@@ -32,6 +32,9 @@
 		<servlet-name>JSServlet</servlet-name>
 		<url-pattern>*.ejs</url-pattern>
 	</servlet-mapping>
-
-	
+<!-- 404 handling -->
+	<error-page>
+		<error-code>404</error-code>
+		<location>/__ERROR_404__.sjs</location>
+	</error-page>
 </web-app>

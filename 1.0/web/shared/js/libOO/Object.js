@@ -268,7 +268,7 @@
 		return ObjectLib.forEach(this,func);
 	}
 
-if ($server_gateway){
+if ("$server_gateway" in this){
   var hide = function (o, p) {
 	 java.lang.Class.forName ("org.mozilla.javascript.ScriptableObject")
 		.getMethod("setAttributes", java.lang.String, java.lang.Integer.TYPE)

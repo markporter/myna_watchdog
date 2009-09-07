@@ -80,7 +80,15 @@ public class JSServlet extends HttpServlet {
 			thread.environment.put("request",req);
 			thread.environment.put("response",res);
 			thread.environment.put("servlet",this);
-			thread.environment.put("requestURI",req.getRequestURI());
+			String servletPath = req.getServletPath();
+			if (
+					req.getAttribute("javax.servlet.forward.servlet_path") != null
+			){
+				servletPath =(String) req.getAttribute("javax.servlet.forward.servlet_path"); 
+				thread.environment.put("requestURI", servletPath);
+			} else {
+				thread.environment.put("requestURI",req.getRequestURI());
+			}
 			thread.environment.put("requestURL",req.getRequestURL());
 			
 			thread.rootDir = new File(this.getServletContext().getRealPath("/")).toURI().toString();
@@ -122,7 +130,7 @@ public class JSServlet extends HttpServlet {
 						/* res.getWriter().print(context + "<br>" + parts[0].toString() +"<br>" + scriptPath + "<br>" + url_map.toString());
 						return; */
 				} else {
-					scriptPath = new File(this.getServletContext().getRealPath(req.getServletPath())).toURI().toString();
+					scriptPath = new File(this.getServletContext().getRealPath(servletPath)).toURI().toString();
 				}
 				thread.handleRequest(scriptPath);
 				
