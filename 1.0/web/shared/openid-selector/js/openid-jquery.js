@@ -175,7 +175,7 @@ var openid = {
     	if (hidden.length > 0) {
     		hidden[0].value = url;
     	} else {
-    		$('#openid_form').append('<input type="text" id="' + this.input_id + '" name="' + this.input_id + '" value="'+url+'"/>');
+    		$('#openid_form').append('<input type="hidden" id="' + this.input_id + '" name="' + this.input_id + '" value="'+url+'"/>');
     	}
 	
     },
@@ -234,3 +234,4 @@ var openid = {
 		$('#'+id).focus();
     }
 };
+

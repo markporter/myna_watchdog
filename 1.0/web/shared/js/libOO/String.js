@@ -24,6 +24,7 @@
 	
 	String.regexEscapeChars=[
 		"\,",
+		"/",
 		"*", 
 		"+",
 		"?", 
@@ -35,7 +36,8 @@
 		"^", 
 		"$",
 		".", 
-		"#"
+		"#",
+		"\\"
 	]
 	
 /* function: charToHtmlEntity
