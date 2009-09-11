@@ -50,7 +50,7 @@ Group: JavaScript Global Objects  {
    File: Array  (Array.js)
    File: Date  (Date.js)
    File: Function  (Function.js)
-   File: Number  (Number.js)
+   File: Number  (no auto-title, Number.js)
    File: Object  (Object.js)
    File: String  (String.js)
    File: String  (String.sjs)

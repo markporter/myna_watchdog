@@ -1111,7 +1111,7 @@ Myna.Table.prototype.create = function(options){
 	var qry =new Myna.Query({
 		dataSource:table.db.ds,
 		sql:table.getTemplate("createTable").apply({
-			tableName:table.sqlTableName,
+			tableName:table.tableName,
 			columns:options.columns.map(function(col){
 				col.checkRequired(["name","type"]);
 				col.name=col.name.toUpperCase();

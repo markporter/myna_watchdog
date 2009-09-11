@@ -11,9 +11,7 @@ var ws = new Myna.WebService({
 	no_auth_list:"logout,auth,auth_transfer,has_active_session",
 	admin_only_list:"save_user_data,save_user_login_data,save_right_data",
 	beforeHandler:function(name,def,args){
-		new Myna.Thread(function(name,def,args){
-			Myna.log("debug"," Starting " + name, Myna.dump(def) + "<hr>" + Myna.dump(args));
-		},[name,def,args],-.9);
+		
 		
 		if (ws.spec.admin_only_list.listContains(name)){
 			hasAccess = ws.spec.localFunctions.hasAccess(ws.authUserId,"myna_admin");
@@ -29,26 +27,16 @@ var ws = new Myna.WebService({
 		
 	},
 	afterHandler:function(name,def,args,retval){
-		new Myna.Thread(function(name,def,args,retval,$profiler){
-			Myna.log("debug","finished " + name, Myna.dump(def) + "<hr>" + Myna.dump(args)+ "<hr>" + Myna.dump(retval) + Myna.dump($profiler.getSummaryHtml()));
-		},[name,def,args,retval,$profiler],-.9);
+		
 	},
 	authFunction:function(authData){
-		Myna.log("debug","authData",Myna.dump(authData));
 		if (ws.spec.no_auth_list.listContainsNoCase(authData.functionName)){
 			return true;
 		}
-		
-		//if ($session.get("authenticated")) return true;
-		
-		//Myna.log("debug","authData",Myna.dump(authData));
-		//Myna.log("debug","ws",Myna.dump(ws) +Myna.dump(authData));
 		if (ws.authUserId && ws.authUserId.length){
 			return true;
 		}
 		if( ws.spec.functions.auth.handler(authData)){ 		
-			//$session.set("user_id",user_id);
-			//Myna.log("debug","returning true");
 			return true;
 		} else {
 			return false;
@@ -61,7 +49,6 @@ var ws = new Myna.WebService({
 			if (user_id == "myna_admin"){
 				return true;
 			} else {
-				Myna.log("debug","user_id =" + user_id,Myna.dump($req));
 				var user = Myna.Permissions.getUserById(ws.authUserId);
 				if (user == null) {
 					return false
@@ -239,8 +226,6 @@ var ws = new Myna.WebService({
 								email,
 								gender,
 								language,
-								last_name,
-								middle_name,
 								nickname,
 								postcode,
 								timezone,
@@ -1146,7 +1131,6 @@ var ws = new Myna.WebService({
 	/*  */
 	}
 })
-
 
 ws.handleRequest($req);
 

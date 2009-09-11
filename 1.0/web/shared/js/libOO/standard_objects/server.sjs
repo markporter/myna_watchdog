@@ -45,6 +45,11 @@ var $server={
 		Example:
 		> http://localhost:8080
 		
+		Note:
+			If Myna is behind a proxy you will want to make sure that the 
+			X-Forwarded-Host and optionally X-Forwarded-Proto request headers 
+			are set by the proxy so that a valid result is generated 
+		
 		See:
 			* <$server.rootUrl>
 			* <$server.currentUrl>
@@ -53,10 +58,19 @@ var $server={
 	*/
 	get serverUrl(){
 		if (!$server.request) return "";
-		var URL = String($server_gateway.environment.get("requestURL"));
-		var URI = String($server_gateway.environment.get("requestURI"));
-		//return URL + ":" +URI;
-		return URL.left(URL.length-URI.length);
+		if ($req.headers.getKeys().join().listContains("X-Forwarded-Host")){
+				
+			var proto = "http";
+			if ("X-Forwarded-Proto" in $req.headers){
+				proto = $req.headers["X-Forwarded-Proto"][0];
+			}
+			return proto+"://"+$req.headers["X-Forwarded-Host"][0]		
+		} else {
+			var URL = String($server_gateway.environment.get("requestURL"));
+			var URI = String($server_gateway.environment.get("requestURI"));
+			//return URL + ":" +URI;
+			return URL.left(URL.length-URI.length);
+		}
 	},
 /* 	property: remoteAddr
 		The IP address of the requestor

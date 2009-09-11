@@ -80,7 +80,7 @@ Group: Standard_objects  {
    File: $session  (standard_objects/session.sjs)
    }  # Group: Standard_objects
 
-File: Number  (Number.js)
+File: Number  (no auto-title, Number.js)
 File: Object  (Object.js)
 File: ObjectLib  (ObjectLib.js)
 File: String  (String.js)

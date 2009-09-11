@@ -65,7 +65,9 @@
 				 activeTab: 0,
 				 deferredRender: false,
 				 autoTabs: true,
-				 bodyStyle:"padding:10px;background-color:#6B869F"
+				 enableTabScroll:true,
+				 bodyStyle:"padding:10px;background-color:#E6E8E8"
+				 //bodyStyle:"padding:10px;background-color:#6B869F"
 				 
 			}); 
 		})
@@ -77,14 +79,14 @@
 		<div class="reset_default hide-in-ext">
 			Select your account type:
 			<ul  class="hide-in-ext">
-			<@loop array="$req.data.providers.split(/,/)" element="provider">
+			<@loop array="providers.split(/,/)" element="provider">
 				<li><a href="#<%=provider%>"><%=providerMap[provider].name%></a>: <%=providerMap[provider].desc%></li>
 			</@loop>
 			</ul>
 		</div>
 		
 		
-		<@loop array="$req.data.providers.split(/,/)" element="provider">
+		<@loop array="providers.split(/,/)" element="provider">
 			<div id="<%=provider%>_div" class="reset_default x-tab login_div" title="<%=providerMap[provider].name%>"> 
 				<a name="#<%=provider%>"></a>
 				<form id="<%=provider%>_form" action="?fuseaction=auth" method="post">
@@ -93,11 +95,11 @@
 					<input type="hidden" name="callback" value="<%=callback%>">
 					<input type="hidden" name="login_page" value="<%=login_page%>">
 					<fieldset>
-						<legend class="hide-in-ext"><%=providerMap[provider].name%></legend>
+						<legend ><%=providerMap[provider].desc%></legend>
 						
 				<@if provider == "openid">
 					<div id="openid_choice">
-						<%-- <p>Please click your account provider:</p> --%>
+						
 						<div id="openid_btns"></div>
 					</div>
 					
@@ -110,12 +112,12 @@
 					Find out <a href="http://openid.net/what/">more about OpenID</a> and <a href="http://openid.net/get/">how to get an OpenID enabled account</a>.</p>
 					</noscript>
 				<@elseif provider == "server_admin">
-						<b><%=providerMap[provider].desc%></b><br/><br/>
+						<%-- <b><%=providerMap[provider].desc%></b><br/><br/> --%>
 						<input type="hidden" name="username" value="admin">
 						<b>Admin Password:</b> <input type="password" name="password"><br/>
 						<button type="submit">Login</button>
 				<@else>
-						<b><%=providerMap[provider].desc%><b><br/><br/>
+						<%-- <b><%=providerMap[provider].desc%><b><br/><br/> --%>
 						<b>Username:</b> <input name="username"><br/>
 						<b>Password:</b> <input type="password" name="password"><p/>
 						<button type="submit">Login</button>

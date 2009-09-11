@@ -16,7 +16,8 @@
 }
 	#openid_highlight {
 		padding: 3px;
-		background-color: #FFFCC9;
+		background-color:#6B869F; 
+		/* #FFFCC9; */
 		float: left;
 	}
 	.openid_large_btn {

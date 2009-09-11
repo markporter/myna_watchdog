@@ -12,7 +12,7 @@ var fusebox={
 			if (p == "openid"){
 				data.providerMap[p]={
 					name:"OpenID: Google, Yahoo, AOL, and more",
-					desc:"OpenID: Google, Yahoo, AOL, and more"
+					desc:"Select your login service:"
 				}
 			} else {
 				var adapter = Myna.Permissions.getAuthAdapter(p);
@@ -132,6 +132,7 @@ var fusebox={
 		}
 	},
 	openid_return:function(data,rawData){
+		Myna.log("debug","$req",Myna.dump($req.data));
 		var SRegResponse = org.openid4java.message.sreg.SRegResponse;
 		var SRegMessage = org.openid4java.message.sreg.SRegMessage;
 		importPackage(org.openid4java.message);
@@ -155,9 +156,10 @@ var fusebox={
 	
 		// verify the response; ConsumerManager needs to be the same
 		// (static) instance used to place the authentication request
+		
 		var verification = manager.verify(
-				  receivingURL.toString(),
-				  response, null);
+			$server.serverUrl + $server.requestUrl+$server.requestScriptName +"?" + httpReq.getQueryString(),
+			response, null);
 	
 		// examine the verification result and extract the verified identifier
 		var verified = verification.getVerifiedId();
@@ -167,9 +169,20 @@ var fusebox={
 			var claimed_id = auth_data.claimed_id = $req.rawData.requested_id;
 			if ("openid.claimed_id" in $req.rawData) auth_data.claimed_id =$req.rawData["openid.claimed_id"];
 			
-			var ext = verification.getAuthResponse()
-						.getExtension(SRegMessage.OPENID_NS_SREG);
+			var ext = verification.getAuthResponse().getExtension(SRegMessage.OPENID_NS_SREG);
 			
+			//try to find user by this login
+			user = Myna.Permissions.getUserByLogin("openid",auth_data.claimed_id);
+			if (!user){
+				user = Myna.Permissions.getUserByLogin("openid",auth_data.requested_id);
+				if (!user){
+					user = Myna.Permissions.getUserByLogin("openid",auth_data["openid.identity"]);
+					if (!user){ //ok, I guess there is no existing user, let's create one
+						user = Myna.Permissions.addUser({})
+					}
+				}
+			}
+				
 			if (ext instanceof SRegResponse) {
 				auth_data.userAttributes = Myna.JavaUtils.mapToObject(ext.getAttributes())
 				auth_data.userAttributes.forEach(function(value,key,obj){
@@ -192,29 +205,25 @@ var fusebox={
 						break;
 						
 					}
+					if (!user[key])  user.saveField(key,value)
 				})
-				//try to find user by this login
-				user = Myna.Permissions.getUserByLogin("openid",auth_data.claimed_id);
-				if (user){
-					user.setFields(auth_data.userAttributes)
-				} else {
-					//Myna.log("debug","reg fail",Myna.dump(claimed_id));
-					user =Myna.Permissions.addUser(auth_data.userAttributes)
-				}
 				
-			} else {//no registration details
-				//try to find user by this login
-				user = Myna.Permissions.getUserByLogin("openid",auth_data.claimed_id);
-				if (!user){
-					//Myna.log("debug","noreg fail",Myna.dump(claimed_id));
-					user = Myna.Permissions.addUser({})
-				}
+				//user.setFields(auth_data.userAttributes)
 				
 			}
+			
 			auth_data.user = user;
 			user.setLogin({
 				type:"openid",
 				login:auth_data.claimed_id
+			})
+			user.setLogin({
+				type:"openid",
+				login:rawData.requested_id
+			})
+			user.setLogin({
+				type:"openid",
+				login:auth_data.identity
 			})
 			if (rawData.callback.listLen("?")>1){
 				rawData.callback+="&"
@@ -226,7 +235,7 @@ var fusebox={
 			$res.metaRedirect(rawData.callback);
 		} else {
 			Myna.log("WARNING","Failed OpenID authentication",Myna.dump(Myna.JavaUtils.beanToObject(verified))+ Myna.dump($req.data));
-			fusebox.login({callback:data.callback,providers:data.providers,message:"Unable to verify your OpenID"})
+			fusebox.login({message:"Unable to verify your OpenID"})
 		}
 	},
 }

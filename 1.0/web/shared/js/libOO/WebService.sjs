@@ -447,7 +447,6 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
          if (user_id){
             ws.setAuthUserId(user_id);
          }
-         
          authSuccess = ws.spec.authFunction.call(ws.spec,authData);
          
          if (!authSuccess) {
@@ -1064,7 +1063,6 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 				})
 			}
 			result =ws.executeFunctionHandler(data.method,f,params)
-			
 		} catch(e){
 			result={
 				success:false,
