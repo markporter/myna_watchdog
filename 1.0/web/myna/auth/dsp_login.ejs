@@ -60,16 +60,42 @@
 					contentEl:"login_div"
 				//}]
 			}).show();
-			new Ext.TabPanel({
+			var tp =new Ext.TabPanel({
 				 applyTo: 'login_div',
-				 activeTab: 0,
+				 //activeTab: 0,
 				 deferredRender: false,
 				 autoTabs: true,
 				 enableTabScroll:true,
-				 bodyStyle:"padding:10px;background-color:#E6E8E8"
-				 //bodyStyle:"padding:10px;background-color:#6B869F"
-				 
+				 bodyStyle:"padding:10px;background-color:#E6E8E8",
+				 defaults:{
+					 listeners:{
+						 activate:function(tab){
+							 document.cookie = "MynaAuthDefaultTab=" + 
+							 	escape(tab.title) + 
+								"; expires=" + new Date().add("d",365).toGMTString() + 
+								"; path=/; domain=<%=$server.hostName.listAfter('.')%>" 
+							 //debug_window(tab)
+						 }
+					 }
+				 }
 			}); 
+			document.cookie.split(/;/).forEach(function(tuple){
+				if (tuple.listFirst("=").trim() == "MynaAuthDefaultTab"){
+					var defaultTab = tuple.listLast("=");
+					tp.items.each(function(item,index){
+						if (item.title == defaultTab) {
+							//alert("setting_active_tab" +index )
+							tp.setActiveTab(index);
+							
+						}
+					})
+				} //else alert("'" + tuple.listFirst("=") + "'")
+			})
+			if (!tp.getActiveTab()) tp.setActiveTab(0);
+			//alert(document.cookie)
+			
+			/* 
+			}) */
 		})
 	</script>
 </head>

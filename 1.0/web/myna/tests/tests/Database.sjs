@@ -6,11 +6,11 @@
 			Myna.includeOnce("/myna/administrator/myna_admin.sjs");
 			//Myna.print("running tests for:");
 			this.dataSources =[
-				/* "myna_test_mssql", */   
+				// "myna_test_mssql",    
 				"myna_test_h2", 
-				/* "myna_test_mysql",*/
+				"myna_test_mysql",
 				"myna_test_pgsql",
-				/*"myna_test_oracle", */
+				// "myna_test_oracle", 
 				
 				
 			].filter(function(name){
@@ -248,7 +248,6 @@
 							pref_user_id == 1);
 					
 				} catch (e){
-					e.rhinoException=__exception__;
 					Myna.print(Myna.formatError(e));
 					Myna.print(Myna.dump(all_col,"all_col",10));
 					Myna.print(Myna.dump(users,"users",10));

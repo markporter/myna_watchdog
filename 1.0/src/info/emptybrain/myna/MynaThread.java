@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
+import javax.sql.DataSource;
 import org.mozilla.javascript.*;
 import java.util.*;
 import java.util.regex.*;
@@ -31,7 +32,8 @@ public class MynaThread {
 	
 	static public Hashtable cron = new Hashtable();
 	
-	static public Hashtable dataSources = new Hashtable();
+	static public Hashtable dataSources = new Hashtable(); //stores ds properties
+	static public Hashtable javaDataSources = new Hashtable(); //stores dbcp BasicDataSource instances
 		
 	static public Hashtable locks = new Hashtable(); //used by Myna.getLock()
 	static public Hashtable scriptCache = new Hashtable();
@@ -47,9 +49,12 @@ public class MynaThread {
 	static public int threadHistorySize=0; // number of completed threads to store in recentThreads. Set with property "thread_history_size"
 	static public java.util.Date serverStarted = new java.util.Date(); //date object representing the time this server was started
 	
-	static public ConsumerManager openidConsumerManager; //initialized in constructor
+	static public ConsumerManager openidConsumerManager; //initialized in init
 	
 	
+	
+	
+/* End static resources */	
 	
 	public boolean isInitThread = false; //Is this the first thread after server restart?
 	public boolean isWaiting=true;// am I waiting for a thread permit?
@@ -903,24 +908,29 @@ public class MynaThread {
 			dataSources.put(dsName,ds);
 			
       /* special handling of file paths */
-        if (
-            !ds.getProperty("type").equals("other") 
-            && ds.getProperty("location").equals("file")
-            && ds.getProperty("file") != null
-            && !new File(ds.getProperty("file")).exists()
-        ){
-          String newPath = getNormalizedPath(ds.getProperty("file"))
-          .replaceAll("file:","").replaceAll("//","/");
-          ds.setProperty("url",
-            ds.getProperty("url").replaceAll(
-              ds.getProperty("file"),
-              newPath 
-             )
-           );
-        }
+			if (
+				!ds.getProperty("type").equals("other") 
+				&& ds.getProperty("location").equals("file")
+				&& ds.getProperty("file") != null
+				&& !new File(ds.getProperty("file")).exists()
+			){
+			 	String newPath = getNormalizedPath(ds.getProperty("file"))
+				.replaceAll("file:","").replaceAll("//","/");
+				ds.setProperty("url",
+					ds.getProperty("url").replaceAll(
+						ds.getProperty("file"),
+						newPath 
+					)
+				);
+			}
 			//register connection pool
+			
 			GenericObjectPool connectionPool = new GenericObjectPool(null);
-			ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(ds.getProperty("url"), ds.getProperty("username"), ds.getProperty("password"));
+			ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(
+				ds.getProperty("url"), 
+				ds.getProperty("username"),
+				ds.getProperty("password")
+			);
 			PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory,connectionPool,null,null,false,true);
 			PoolingDriver driver = new PoolingDriver();
 			driver.setAccessToUnderlyingConnectionAllowed(true);
@@ -931,6 +941,16 @@ public class MynaThread {
 				//this line should trigger an error if the datsource is incorrect or unavailable
 				java.sql.DriverManager.getConnection("jdbc:apache:commons:dbcp:" + dsName).close();
 			}
+			
+			BasicDataSource bds = new BasicDataSource();
+			bds.setDriverClassName(ds.getProperty("driver"));
+			bds.setUsername(ds.getProperty("username"));
+			bds.setPassword(ds.getProperty("password"));
+			bds.setUrl(ds.getProperty("url"));
+
+			this.javaDataSources.put(dsName,bds);
+
+			
 		} catch(Exception e){
 			this.log("ERROR","Error Loading Datasource " + dsName +": " +e.getMessage(),e.toString());
 			
@@ -1275,6 +1295,9 @@ public class MynaThread {
 	public String translateString(String content, String scriptPath) throws Exception{
 		MynaEjsParser parser = new MynaEjsParser();
 		String translated = parser.parseString(content,scriptPath);
+		//log("TRANSLATED",scriptPath,translated);
+		//java.lang.System.out.println(scriptPath);
+		
 		//java.lang.System.out.println(translated);
 		return translated;
 	}

@@ -35,11 +35,10 @@ var fusebox={
 		var httpReq = $server.request; 
 		var httpResp = $server.response;
 		if (data.provider =="openid"){
-			//Myna.log("debug","openid_request",Myna.dump($req.data));
 			var manager = $server_gateway.openidConsumerManager;
 			
 			var returnToUrl = $server.serverUrl + $server.requestUrl + $server.requestScriptName 
-				+"?fuseaction=openid_return&requested_id=" + rawData.openid +"&callback=" + data.callback;
+				+"?fuseaction=openid_return&callback=" + data.callback;
 				
 			// --- Forward proxy setup (only if needed) ---
 			// var proxyProps = new ProxyProperties();
@@ -56,6 +55,7 @@ var fusebox={
 				var discovered = manager.associate(discoveries);
 				
 				// store the discovery information in the user's session
+				$session.set("__MYNA_OPENID_DISCOVERED__", discovered)
 				//httpReq.getSession().setAttribute("openid-disc", discovered);
 				
 				// obtain a AuthRequest message to be sent to the OpenID provider
@@ -115,7 +115,6 @@ var fusebox={
 		} else {
 			var username = data.username || ""
 			var password = data.password || ""
-			//Myna.log("debug","username",username + ";"+password+Myna.dump($req.data));
 			var user = Myna.Permissions.getUserByAuth(username,password,data.provider);
 			if (user){
 				if (rawData.callback.listLen("?")>1){
@@ -132,7 +131,6 @@ var fusebox={
 		}
 	},
 	openid_return:function(data,rawData){
-		Myna.log("debug","$req",Myna.dump($req.data));
 		var SRegResponse = org.openid4java.message.sreg.SRegResponse;
 		var SRegMessage = org.openid4java.message.sreg.SRegMessage;
 		importPackage(org.openid4java.message);
@@ -166,7 +164,7 @@ var fusebox={
 		var user;
 		if (verified != null) {
 			var auth_data =$session.get("auth_data");
-			var claimed_id = auth_data.claimed_id = $req.rawData.requested_id;
+			var claimed_id =null;
 			if ("openid.claimed_id" in $req.rawData) auth_data.claimed_id =$req.rawData["openid.claimed_id"];
 			
 			var ext = verification.getAuthResponse().getExtension(SRegMessage.OPENID_NS_SREG);
@@ -211,19 +209,18 @@ var fusebox={
 				//user.setFields(auth_data.userAttributes)
 				
 			}
-			
 			auth_data.user = user;
+			var discovered = $session.get("__MYNA_OPENID_DISCOVERED__")
+			Myna.log("debug","disc",Myna.dump(Myna.JavaUtils.beanToObject(discovered)));
+			if (discovered.getClaimedIdentifier()){
+				user.setLogin({
+					type:"openid",
+					login:discovered.getClaimedIdentifier()
+				})
+			}
 			user.setLogin({
 				type:"openid",
-				login:auth_data.claimed_id
-			})
-			user.setLogin({
-				type:"openid",
-				login:rawData.requested_id
-			})
-			user.setLogin({
-				type:"openid",
-				login:auth_data.identity
+				login:rawData["openid.identity"]
 			})
 			if (rawData.callback.listLen("?")>1){
 				rawData.callback+="&"

@@ -79,20 +79,25 @@ this.config.map.checkRequired([
 	 "last_name"
 ])
 
-var ldap;
-if (this.config.username){
-	if (this.config.ad_domain && !/@/.test(this.config.username)) {
-		  this.config.username +="@" +this.config.ad_domain;
-	}								
-	ldap = new Myna.Ldap(this.config.server, this.config.username,this.config.password);
-} else {
-	ldap = new Myna.Ldap(this.config.server);  
+function getLdap(){
+	var ldap;
+	if (this.config.username){
+		if (this.config.ad_domain && !/@/.test(this.config.username)) {
+			  this.config.username +="@" +this.config.ad_domain;
+		}								
+		ldap = new Myna.Ldap(this.config.server, this.config.username,this.config.password);
+	} else {
+		ldap = new Myna.Ldap(this.config.server);  
+	}	
+	return ldap;	
 }
+
+
 
 
 function userExists(username){
 	var searchString="("+this.config.map.login+"="+username+")";
-	return !!ldap.search(searchString).length;
+	return !!getLdap().search(searchString).length;
 }
 
 function getDN(username){
@@ -101,7 +106,7 @@ function getDN(username){
 	if ($this.config.filter){
 		  qry = "(&" + $this.config.filter + qry + ")"
 	}
-	var users = ldap.search(searchString);
+	var users = getLdap().search(searchString);
 	if (users.length == 1) {
 		var dn= users[0].name;
 		if ($this.config.server.listLen("/")>1){
@@ -150,7 +155,7 @@ function searchUsers(search){
 	})
 	
 	return new Myna.DataSet({
-		data:$this.ldap.search(qry,attributes).map(function(row){
+		data:$this.getLdap().search(qry,attributes).map(function(row){
 			var result = {
 				login:"",
 				first_name:"",
@@ -181,7 +186,7 @@ function getUserByLogin(login){
 		  qry = "(&" + $this.config.filter + qry + ")"
 	}
 		  
-	return $this.ldap.search(qry).map(function(row){
+	return $this.getLdap().search(qry).map(function(row){
 	  var result = {
 		  login:"",
 		  first_name:"",
@@ -195,6 +200,7 @@ function getUserByLogin(login){
 			}
 	  })
 	  if (result.login.length) return result
+	 else return null 
   })[0];
 	
 }

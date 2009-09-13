@@ -41,6 +41,7 @@ if (!Myna) Myna={}
         // Create the initial context
         //var ctx = new directory.InitialDirContext(env);
         this.ctx = new Packages.com.sun.jndi.ldap.LdapCtxFactory.getLdapCtxInstance(this.server,env);
+		  $application.addOpenObject(this.ctx);
         this.env = env
     }
    

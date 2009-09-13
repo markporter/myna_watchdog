@@ -356,7 +356,7 @@ if (!Myna) var Myna={}
 	*/
 		Myna.DataManager.prototype.ManagerBase.prototype.create=function(requiredFields){
 			var manager = this;
-						if (!requiredFields) requiredFields={}
+			if (!requiredFields) requiredFields={}
 			if (this.primaryKey	 && !requiredFields[this.primaryKey]){
 				/* if (this.columns[this.primaryKey].column_def.length ==0) { */
 					requiredFields[this.primaryKey] = this.genKey();

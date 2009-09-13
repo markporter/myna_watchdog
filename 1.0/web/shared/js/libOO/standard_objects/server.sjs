@@ -2,6 +2,7 @@
 	Global object that stores information about the server environment.
 */
 var $server={
+	
 /* property: isThread
 	true if this is an independent thread with no access to session or servlet 
 	*/
@@ -83,6 +84,8 @@ var $server={
 			header is set, then that IP address is returned instead
 	*/
 	get remoteAddr(){
+		if ($server.isThread) return "localhost/Thread";
+		
 		var ip =String($server.request.getRemoteAddr());
 		if ("X-Forwarded-For" in $req.headers){
 			ip = String($req.headers["X-Forwarded-For"][0])

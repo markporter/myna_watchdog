@@ -26,7 +26,7 @@
 		
 		Example:
 		(code)
-		// this creates a Page object that will be available to evey page under 
+		// this creates a Page object that will be available to every page under 
 		// this directory 
 		var Page={
 			includeLayout:true,
@@ -64,6 +64,20 @@ var $application={
 			
 	*/
 	directory:null,
+/* Property: url
+		url path of closest application.sjs
+		
+		Detail:
+			application.sjs files are loaded consecutively from the web root 
+			to the requested file. This property is the URL path of the last 
+			application.sjs file to run and generally represents the  "home" 
+			directory of the application.
+			
+		Example:
+			/servlet-context/my_app/
+	*/
+	url:null,	
+	
 /* Property: appName
 		String application name. 
 		
@@ -588,6 +602,7 @@ var $application={
 			var appFile = new Myna.File(curPath + "application.sjs");
 			if (appFile.exists()){
 				$application.directory = curPath;
+				$application.url = $server.rootUrl +$application.directory.right($application.directory.length -$server.rootDir.length)
 				Myna.includeOnce(curPath + "application.sjs");
 			}
 		}

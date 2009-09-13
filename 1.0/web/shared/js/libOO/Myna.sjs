@@ -745,8 +745,16 @@ if (!Myna) var Myna={}
 					'<tpl for="javaStack">',
 						'<div >{.}</div>',
 					'</tpl>',
-				'<tr><th >$req:</th><td>{req}</td></tr>',
+				
+				'<tr><th >$server:</th><td>',
+					'<b>Server URL</b>: {serverUrl}<br>',
+					'<b>Hostname</b>: {hostname}<br>',
+					'<b>Instance ID</b>: {instance_id}<br>',
+					'<b>Purpose</b>: {purpose}<br>',
+					'<b>Request Path</b>: {requestPath}<br>',
+					'<b>Client IP</b>: {remoteAddr}<br>',
 				'</td></tr>',
+				'<tr><th >$req:</th><td>{req}</td></tr>',
 			'</table>'
 		)
 		
@@ -778,6 +786,12 @@ if (!Myna) var Myna={}
 				rootIndex:e.rootIndex,
 				req: Myna.dump($req.data,"Request Data",10),
 				lines:lines,
+				serverUrl:$server.serverUrl,
+				instance_id:$server.instance_id,
+				requestPath:$server.requestUrl+$server.requestScriptName,
+				hostname:$server.hostName,
+				remoteAddr:$server.remoteAddr,
+				purpose:$server.purpose,
 				scriptLines:String($server_gateway.currentScript).split(/\n/)
 					.map(function(element,index){
 						return {
@@ -903,10 +917,10 @@ if (!Myna) var Myna={}
 		
 		if (/\.ejs$/.test(path)){
 			content = "<"+"%try{%" +">" + content 
-				+"<" +"%} catch(e) {if (__exception__ && !e.rhinoException) e.rhinoException=__exception__;if($application && $application._onError) {$application._onError(e)} else{throw(e)}}%" +">";
+				+"<" +"%\n} catch(e) {if (__exception__ && !e.rhinoException) e.rhinoException=__exception__;if($application && $application._onError) {$application._onError(e)} else{throw(e)}}%" +">";
 		} else if (/\.s?js$/.test(path) || scope){
 			content = "try{" + content 
-				+"} catch(e) {if (__exception__ && !e.rhinoException) e.rhinoException=__exception__; if($application && $application._onError) {$application._onError(e)} else{throw(e)}}";
+				+"\n} catch(e) {if (__exception__ && !e.rhinoException) e.rhinoException=__exception__; if($application && $application._onError) {$application._onError(e)} else{throw(e)}}";
 		} else {
 			throw new Error("include can only be called with .js .sjs or .ejs files")	
 		}
@@ -1275,25 +1289,35 @@ if (!Myna) var Myna={}
 	 
 	*/
 	Myna.parseJsStack=function Myna_parseJsStack(e){
+		var 
+			originalTrace,
+			pw,
+			lines,
+			st
+		;
 		
-			/* var originalTrace = new java.io.StringWriter();
-			var pw = new java.io.PrintWriter(originalTrace);
-			
-			e.rhinoException.printStackTrace(pw);
-			
-			var lines = String(originalTrace).split(/\n/);
-			return lines.filter(function(e){
-				return e.length && (
-					/\(file:/.test(e)
-				);
-			})  */
 			
 			
-			return String(e.rhinoException.getScriptStackTrace())
+		st = String(e.rhinoException.getScriptStackTrace())
 			.split(/\n/).filter(function(e){
 				return e.length;
 			})
-		
+		if (!st.length && "rhinoException" in e){
+			originalTrace = new java.io.StringWriter();
+			pw = new java.io.PrintWriter(originalTrace);
+			
+			e.rhinoException.printStackTrace(pw);
+			
+			lines = String(originalTrace).split(/\n/);
+			st = lines.filter(function(line){
+				return line.length && (
+					/\(file:.*:/.test(line)
+				);
+			}).map(function(line){
+				return line.replace(/.*\((.*)\).*/g,"at $1")
+			})	
+		}
+		return st;
 	}
 /* Function: print 
 	This is an alias for <$res.print>

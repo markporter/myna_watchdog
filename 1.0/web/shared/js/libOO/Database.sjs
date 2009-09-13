@@ -13,9 +13,11 @@ if (!Myna) var Myna={}
 Myna.Database = function (ds){
 	var db = this;
 	if (!ds) {
-			throw new Error("Unable to load datasource '" + String(ds) +"'")
+		throw new Error("Unable to load datasource '" + String(ds) +"'")
 	}
-	db.ds = String(ds).toLowerCase();
+	if (typeof ds === "string"){
+		db.ds = String(ds).toLowerCase();
+	} else {db.ds=ds;}
 	
 	db.init()
 }
@@ -33,7 +35,13 @@ Myna.Database.prototype.__defineGetter__("con", function() {
 			if (/^:mem:/.test(this.ds)){
 				con = java.sql.DriverManager.getConnection("jdbc:h2:mem");
 			} else {
-				con = java.sql.DriverManager.getConnection("jdbc:apache:commons:dbcp:" + this.ds);
+				//con = java.sql.DriverManager.getConnection("jdbc:apache:commons:dbcp:" + this.ds);
+				if (typeof this.ds === "string"){
+					con = $server_gateway.javaDataSources.get(this.ds).getConnection()
+				} else /* if (this.ds instanceof Myna.DataSet) */{
+					
+					con = this.ds.getConnection()
+				}
 			}
 			$req["__CACHE__CONNECTION" + $server.threadId].put(this.ds,con); 
 			$application.addOpenObject(con);

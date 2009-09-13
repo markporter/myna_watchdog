@@ -20,10 +20,11 @@
 		"%",
 		"+",
 		"-"
-	]
+	];
+	
 	
 	String.regexEscapeChars=[
-		"\,",
+		",",
 		"/",
 		"*", 
 		"+",
@@ -38,7 +39,7 @@
 		".", 
 		"#",
 		"\\"
-	]
+	];
 	
 /* function: charToHtmlEntity
 	returns the HTML/XML entity of the supplied character in &#code; format where code is the decimal ASCII code
@@ -49,7 +50,7 @@
 		*/	
 	String.charToHtmlEntity = function(c){
 		return "&#" + c.charCodeAt(0) + ";";
-	}
+	};
 /* Function: compareAlpha
 	A static sort function that will compare two strings by lexigraphical order.
 	
@@ -68,14 +69,16 @@
 	*/
 	String.compareAlpha = function(a,b) {
 		a = String(a);
-		b = String(b)
-		if(a > b)
+		b = String(b);
+		if(a > b){
 			return 1;
-		if(a < b)
+		}
+		if(a < b){
 			return -1;
+		}
 		return 0;
 
-	}
+	};
 /* Function: compareAlphaReverse
 	A descending version of <compareAlpha>.
 	
@@ -93,7 +96,7 @@
 	*/
 	String.compareAlphaReverse = function(a,b) {
 		return String.compareAlpha(b,a);
-	}
+	};
 /* Function: compareNatural
 	A static sort function that will compare two strings in a natural way.
 	
@@ -148,18 +151,26 @@
 		
 	*/
 	String.compareNatural = function(a,b) {
-		
-		var left = String(a).toLowerCase().match(/(\D+|\d+)/g);
-		var right = String(b).toLowerCase().match(/(\D+|\d+)/g);
-		if (left === undefined || left === null) left=[];
-		if (right === undefined || right === null) right=[];
-		var retVal =0;
+		var 
+			left,
+			right,
+			retVal,
+			compare,
+			x,
+			rightPart,
+			leftPart
+		;
+		left = String(a).toLowerCase().match(/(\D+|\d+)/g);
+		right = String(b).toLowerCase().match(/(\D+|\d+)/g);
+		if (left === undefined || left === null) {left=[];}
+		if (right === undefined || right === null) {right=[];}
+		retVal =0;
 		
 		//print("<hr> " + a +" to " + b + " <p>")
 		
-		var compare = function(a,b){
-			a = (parseInt(a) == a)?parseInt(a):a
-			b = (parseInt(b) == b)?parseInt(b):b
+		compare = function(a,b){
+			a = (parseInt(a,10) == a)?parseInt(a,10):a;
+			b = (parseInt(b,10) == b)?parseInt(b,10):b;
 			//print("comparing " + a + " to " + b +" <br>")
 			if ( a < b) {
 				return -1;
@@ -168,29 +179,27 @@
 				return 1;	
 			}
 			return 0;
-		}
+		};
 		
-		for (var x=0;x < left.length;++x){
-			var rightPart = right[x];
+		for (x=0;x < left.length;++x){
+			rightPart = right[x];
 			if (rightPart === undefined) {
 				 retVal = 0;
 				continue; 
-				rightPart="";
 			}
-			var leftPart = left[x];
+			leftPart = left[x];
 			if (leftPart === undefined) {
 				 retVal = 0;
 				continue; 
-				leftPath="";
 			}
 			
 			retVal=compare(leftPart,rightPart);
-			if (retVal != 0) break;
+			if (retVal !== 0) {break;}
 		}
-		if (retVal == 0) retVal =compare(String(a),String(b))
+		if (retVal === 0) {retVal =compare(String(a),String(b));}
 		//print("returning " + retVal)
 		return retVal;
-	}
+	};
 /* Function: compareNaturalReverse
 	A descending version of <compareNatural>.
 	
@@ -208,7 +217,7 @@
 	*/
 	String.compareNaturalReverse = function(a,b) {
 		return String.compareNatural(b,a);
-	}
+	};
 /* Function: compareNumeric
 	A static sort function that will compare two strings by lexigraphical order.
 	
@@ -227,14 +236,16 @@
 	*/
 	String.compareNumeric = function(a,b) {
 		a = parseFloat(a);
-		b = parseFloat(b)
-		if(a > b)
+		b = parseFloat(b);
+		if(a > b){
 			return 1;
-		if(a < b)
+		}
+		if(a < b){
 			return -1;
+		}
 		return 0;
 
-	}
+	};
 /* Function: compareNumericReverse
 	A descending version of <compareNumeric>.
 	
@@ -252,7 +263,7 @@
 	*/
 	String.compareNumericReverse = function(a,b) {
 		return String.compareNumeric(b,a);
-	}
+	};
 /* Function: escapeHtml 
 	replaces common symbols with their HTML entity equivalents  
 	 
@@ -285,18 +296,23 @@
 		<$req.data>,<$req.rawData>,<unEscapeHtml> 
 	*/
 	String.prototype.escapeHtml=function(string){
-		var new_string = ""
-		for (var x=0; x < this.length; ++x){
-			var c= this.charAt(x);
-			var escapeIndex =String.htmlEscapeChars.indexOf(c);
-			if (escapeIndex != -1){
+		var 
+			new_string = "",
+			c,
+			x,
+			escapeIndex
+		;
+		for (x=0; x < this.length; ++x){
+			c= this.charAt(x);
+			escapeIndex =String.htmlEscapeChars.indexOf(c);
+			if (escapeIndex !== -1){
 				new_string+=String.charToHtmlEntity(c);
 			} else {
 				new_string+=c;
 			}
 		}
 		return new_string;
-	}
+	};
 /* Function: escapeRegex 
 	returns string with symbols that might be interpreted as regex escaped   
 	 
@@ -310,12 +326,12 @@
 	*/
 	String.prototype.escapeRegex=function(string){
 		return Array.parse(this).map(function(c){
-			if (String.regexEscapeChars.indexOf(c) != -1){
+			if (String.regexEscapeChars.indexOf(c) !== -1){
 				return "\\" + c;
 			} else {
 				return c;
 			}
-		}).join("")
+		}).join("");
 		
 		/* var new_string = ""
 		this.length.times(function(x){
@@ -328,7 +344,7 @@
 			}		
 		})
 		return new_string; */
-	}
+	};
 
 
 
@@ -341,7 +357,7 @@
 	String.htmlEntityToChar = function(e){
 		var code =e.match(/^&#(\d+);$/);
 		return String.fromCharCode(code[1]);
-	}
+	};
 
 
 /* Function: left 
@@ -358,7 +374,7 @@
 	*/
 	String.prototype.left=function(count){
 		return this.substr(0,count);
-	}
+	};
 /* Function: listAppend 
 	returns new list (string) with value appended (does not modify original string). 
 	 
@@ -378,20 +394,20 @@
 	 
 	*/
 	String.prototype.listAppend=function(val, delimiter,qualifier){
-		if (!delimiter) delimiter =",";
-		if (!qualifier) qualifier ="";
+		if (!delimiter) {delimiter =",";}
+		if (!qualifier) {qualifier ="";}
 		val = String(val);
-		var result =new String(this);
-		if (delimiter.length && result.length && result.right(delimiter.length) != delimiter){
+		var result =String(this);
+		if (delimiter.length && result.length && result.right(delimiter.length) !== delimiter){
 			result += delimiter;
 		}
-		if (qualifier.length && val.charAt(0) != qualifier){
+		if (qualifier.length && val.charAt(0) !== qualifier){
 			result += qualifier + val + qualifier;	
 		} else {
 			result += val;
 		}
 		return result;	
-	}
+	};
 
 /* Function: listAppendUnique 
 	returns new list (string) with value appended, if not already in list 
@@ -413,11 +429,11 @@
 	*/
 	String.prototype.listAppendUnique=function(val, delimiter,qualifier){
 		if (this.listContains(val, delimiter,qualifier)){
-			return new String(this);
+			return  String(this);
 		} else {
 			return this.listAppend(val, delimiter,qualifier);	
 		}
-	}
+	};
 	
 
 
@@ -440,11 +456,11 @@
 	*/
 	String.prototype.listAppendUniqueNoCase=function(val, delimiter,qualifier){
 		if (this.listContainsNoCase(val, delimiter,qualifier)){
-			return new String(this)
+			return  String(this);
 		} else {
-			return this.listAppendUnique(val, delimiter,qualifier)	
+			return this.listAppendUnique(val, delimiter,qualifier);
 		}
-	}
+	};
 /* Function: listAfter 
 	returns this list minus the first element.
 	 
@@ -456,7 +472,7 @@
 	 
 	*/
 	String.prototype.listAfter=function(delimiter,qualifier){
-		if (delimiter === undefined) delimiter=",";
+		if (delimiter === undefined) {delimiter=",";}
 		var a = this.listToArray(delimiter);
 		if (a.length) {
 			a.shift();
@@ -464,7 +480,7 @@
 		} else {
 			return "";
 		}
-	}
+	};
 /* Function: listBefore 
 	returns this list minus the last element.
 	 
@@ -475,7 +491,7 @@
 	 
 	*/
 	String.prototype.listBefore=function(delimiter){
-		if (delimiter === undefined) delimiter=",";
+		if (delimiter === undefined) {delimiter=",";}
 		var a = this.listToArray(delimiter);
 		if (a.length) {
 			a.pop();
@@ -483,7 +499,7 @@
 		} else {
 			return "";
 		}
-	}
+	};
 /* Function: listContains 
 	returns true if list contains the value. 
 	 
@@ -503,11 +519,11 @@
 			var $this = this;
 			return String(val).listToArray(delimiter,qualifier).every(function(val){
 				return $this.listFind(val,0,delimiter,qualifier) > -1;
-			})
+			});
 		} else {
 			return this.listFind(val,0,delimiter,qualifier) > -1;
 		}
-	}
+	};
 /* Function: listContainsNoCase
 	returns true if list contains the value, ignoring case. 
 	 
@@ -528,11 +544,11 @@
 			var $this = this;
 			return String(val).listToArray(delimiter,qualifier).every(function(val){
 				return $this.listFindNoCase(val,0,delimiter,qualifier) > -1;
-			})
+			});
 		} else {
 			return this.listFindNoCase(val,0,delimiter,qualifier) > -1;
 		}
-	}
+	};
 
 /* Function: listFind 
 	returns the index of a value in a list 
@@ -554,20 +570,28 @@
 	 
 	*/
 	String.prototype.listFind=function(val,startFrom,delimiter,qualifier){
-		if (startFrom == undefined ) startFrom = 0;
-		if (!delimiter) delimiter =",";
-		if (!qualifier) qualifier ="";
+		var 
+			arr,
+			x
+		;
+		
 		val = String(val);
-		if (qualifier.length && val.charAt(0) != qualifier){
+		if (startFrom === undefined ) {startFrom = 0;}
+		if (!delimiter) {delimiter =",";}
+		if (!qualifier) {qualifier ="";}
+		
+		if (qualifier && qualifier.length && val.charAt(0) != qualifier){
+			qualifier =String(qualifier);
 			val = qualifier+val+qualifier;	
 		} 	
 		
-		var arr =this.listToArray(delimiter)
-		for (var x=startFrom; x < arr.length; ++x){
-			if (val == arr[x]) return x;
+		arr =this.listToArray(delimiter);
+		for (x=startFrom; x < arr.length; ++x){
+			if (val == arr[x]) {return x;}
+			//else Myna.println(val +"!="+arr[x])
 		}
 		return -1;
-	}
+	};
 /* Function: listFindNoCase 
 	returns the index of a value in a list, ignoring case
 	 
@@ -588,8 +612,8 @@
 	 
 	*/
 	String.prototype.listFindNoCase=function(val,startFrom,delimiter,qualifier){
-		return this.toLowerCase().listFind(String(val).toLowerCase(),startFrom,delimiter,qualifier)
-	}
+		return this.toLowerCase().listFind(String(val).toLowerCase(),startFrom,delimiter,qualifier);
+	};
 
 /* Function: listFirst 
 	returns the first value of a list.
@@ -606,8 +630,8 @@
 	 
 	*/
 	String.prototype.listFirst=function(delimiter,qualifier){
-		if (delimiter === undefined) delimiter=",";
-		if (qualifier === undefined) qualifier="";
+		if (delimiter === undefined) {delimiter=",";}
+		if (qualifier === undefined) {qualifier="";}
 		var a = this.listToArray(delimiter);
 		
 		if (a.length) {
@@ -615,7 +639,7 @@
 		} else {
 			return "";
 		}
-	}
+	};
 /* Function: listLast 
 	returns the last value of a list.
 	 
@@ -630,15 +654,15 @@
 	 
 	*/
 	String.prototype.listLast=function(delimiter,qualifier){
-		if (delimiter === undefined) delimiter=",";
-		if (qualifier === undefined) qualifier="";
+		if (delimiter === undefined) {delimiter=",";}
+		if (qualifier === undefined) {qualifier="";}
 		var a = this.listToArray(delimiter);
 		if (a.length) {
 			return a.pop().match(new RegExp(qualifier+"(.*)" + qualifier))[1];
 		} else {
 			return "";
 		}
-	}
+	};
 /* Function: listLen 
 	returns the length of a list
 	 
@@ -652,9 +676,9 @@
 	 
 	*/
 	String.prototype.listLen=function(delimiter){
-		if (!delimiter) delimiter =",";
+		if (!delimiter) {delimiter =",";}
 		return this.listToArray(delimiter).length;
-	}
+	};
 /* Function: listMakeUnique 
 	returns new list (string) with each item represented only once 
 	 
@@ -668,14 +692,14 @@
 	*/
 	String.prototype.listMakeUnique=function( delimiter){
 		var newList = "";
-		if (!delimiter) delimiter=",";
+		if (!delimiter) {delimiter=",";}
 		
 		this.listToArray(delimiter).forEach(function(item){
 			newList = newList.listAppendUnique(item,delimiter);
 		});
 		
 		return newList;
-	}
+	};
 /* Function: listMakeUniqueNoCase 
 	returns new list (string) with each item represented only once, regardless 
 	of case. If an item appears more than once in different upper/lower case, 
@@ -691,13 +715,13 @@
 	*/
 	String.prototype.listMakeUniqueNoCase=function(delimiter){
 		var newList = "";
-		if (delimiter) delimiter=",";
+		if (delimiter) {delimiter=",";}
 		
 		this.listToArray(delimiter).forEach(function(item){
 			newList = newList.listAppendUniqueNoCase(item, delimiter);
 		});
 		return newList;
-	}
+	};
 /* Function: listSame 
 	returns true if the provided list contains the smae elements as this list
 	regardless of order. Both lists must use the same qualifier and delimiter
@@ -709,11 +733,12 @@
 		
 	*/
 	String.prototype.listSame=function(list,delimiter){
-		if (!delimiter) delimiter =",";
+		list=String(list);
+		if (!delimiter) {delimiter =",";}
 		
 		return this.listToArray(delimiter).sort().join(delimiter) 
-			== list.split(delimiter).sort().join(delimiter)
-	}
+			=== list.split(delimiter).sort().join(delimiter);
+	};
 
 /* Function: listSameNoCase
 	returns true if the provided list contains the smae elements as this list
@@ -726,11 +751,11 @@
 		
 	*/
 	String.prototype.listSameNoCase=function(list,delimiter){
-		if (!delimiter) delimiter =",";
+		if (!delimiter) {delimiter =",";}
 		
 		return this.toLowerCase().split(delimiter).sort().join(delimiter) 
-			== list.toLowerCase().split(delimiter).sort().join(delimiter)
-	}
+			=== list.toLowerCase().split(delimiter).sort().join(delimiter);
+	};
 /* Function: listSort
 	returns a copy of this list sorted by the supplied sort function
 	 
@@ -762,8 +787,8 @@
 		*	<String.compareNaturalReverse>
 	*/
 	String.prototype.listSort=function(sortFunc,delimiter,qualifier){
-		if (!delimiter) delimiter =",";
-		if (!qualifier) qualifier ="";
+		if (!delimiter) {delimiter =",";}
+		if (!qualifier) {qualifier ="";}
 		
 		var array =this.listToArray(delimiter,qualifier);
 		
@@ -771,11 +796,11 @@
 		
 		if (qualifier.length){
 			array = array.map(function(item){
-				return qualifier+item+qualifier
-			})
+				return qualifier+item+qualifier;
+			});
 		}
 		return array.join(delimiter);
-	}
+	};
 /* Function: listToArray
 	returns an array of the items in this list
 	 
@@ -786,28 +811,35 @@
 						String remove from both sides of each item
 	*/
 	String.prototype.listToArray=function(delimiter,qualifier){
-		if (!delimiter) delimiter =",";
-		if (!qualifier) qualifier ="";
-		if (typeof delimiter == "string"){
+		var 
+			array,
+			matches,
+			s
+		;
+		if (!delimiter) {delimiter =",";}
+		if (!qualifier) {qualifier ="";}
+		if (typeof delimiter === "string"){
 			delimiter = delimiter.escapeRegex();
 		}
 		
-		var array =this.split(new RegExp(delimiter)).filter(function(item){
+		array =this.split(new RegExp(delimiter)).filter(function(item){
 			return item && item.length;
-		})
+		});
 		
-		var s = this;
+		s = this;
 		if (qualifier && qualifier.length){
 			array = array.map(function(item){
-				var matches=item.match(new RegExp(qualifier +"(.*?)"+qualifier));
-				if (matches && matches.length ==2){
-					return matches[1]
-				} else throw new Error("This list "+ s.left(15) +"... does not contain the supplied qualifier: " + qualifier)
+				matches=item.match(new RegExp(qualifier +"(.*?)"+qualifier));
+				if (matches && matches.length ===2){
+					return matches[1];
+				} else {
+					throw new Error("This list "+ s.left(15) +"... does not contain the supplied qualifier: " + qualifier);
+				}
 				
-			})
+			});
 		}
 		return array;
-	}
+	};
 
 /* Function: parseJson 
 	Converts a JSON (http://www.json.org) string into an object 
@@ -833,8 +865,11 @@
 		(end code)
 	*/
 	String.prototype.parseJson=function(){
-		var j;
-		var string = new String(this);
+		var 
+			j,
+			cleanText,
+			string = String(this)
+		;
 		// Parsing happens in three stages. In the first stage, we run the text against
 		// a regular expression which looks for non-JSON characters. We are especially
 		// concerned with '()' and 'new' because they can cause invocation, and '='
@@ -846,7 +881,7 @@
 		// backslash pairs with '@' (a non-JSON character). Second we delete all of
 		// the string literals. Third, we look to see if only JSON characters
 		// remain. If so, then the text is safe for eval.
-		var cleanText = string.replace(/\\./g, '@').replace(/\"[^\"\\\n\r]*\"/g, '');
+		cleanText = string.replace(/\\./g,'@').replace(/\"[^\"\\\n\r]*\"/g, '');
 		if (/^[,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t]*$/.test(cleanText)) {
 		
 			// In the second stage we use the eval function to compile the text into a
@@ -864,7 +899,7 @@
 		// If the text is not JSON parseable, then a SyntaxError is thrown.
 		
 		throw new SyntaxError('Invalid JSON string: '+ cleanText);
-	}
+	};
 /* Function: right 
 	returns the right side of a string
 	 
@@ -877,7 +912,7 @@
 	*/
 	String.prototype.right=function(count){
 		return this.substring(this.length-count);
-	}
+	};
 /* Function: repeat 
 	returns a copy of this string repeated _count_ times 
 	 
@@ -891,17 +926,21 @@
 		
 	*/
 	String.prototype.repeat=function(count,delimiter,qualifier){
-		if (!delimiter) delimiter ="";
-		if (!qualifier) qualifier ="";
-		var result ="";
-		for (var x=0; x< count; ++x){
+		var
+			result,
+			x
+		;
+		if (!delimiter) {delimiter ="";}
+		if (!qualifier) {qualifier ="";}
+		result ="";
+		for (x=0; x< count; ++x){
 			result += qualifier + String(this) + qualifier;
 			if (delimiter.length && x < count-1){
 				result += delimiter;
 			}	
 		}
 		return result;
-	}
+	};
 /* Function: titleCap 
 	Capitalizes the first letter of every word in string
 	
@@ -918,13 +957,13 @@
 			}
 			return text;
 		}).join(" ");
-	}
+	};
 /* Function: trim 
 	returns a new string with beginning and trailing whitespace removed
 	*/
 	String.prototype.trim=function(){
-		return new String(this).replace(/^\s+|\s+$/g,"");
-	}	
+		return  String(this).replace(/^\s+|\s+$/g,"");
+	};	
 /* Function: unEscapeHtml 
 	reverses the replacements in <escapeHtml>  
 	 
@@ -940,6 +979,11 @@
 		<$req.data>,<$req.rawData>,<escapeHtml> 
 	*/
 	String.prototype.unEscapeHtml=function(chars){
+		var 
+			e,
+			regex,
+			character
+		;
 		if (!chars){ 
 			chars = String.htmlEscapeChars;
 		} else {
@@ -947,13 +991,13 @@
 		}
 		
 		return chars.reduce(function(string,c,index,list){
-			var e = String.charToHtmlEntity(c);
-			var regex = new RegExp(e,"g");
-			var character = String.htmlEntityToChar(e);
+			e = String.charToHtmlEntity(c);
+			regex = new RegExp(e,"g");
+			character = String.htmlEntityToChar(e);
 			
 			return string.replace(regex,character);
-		},this)
-	}
+		},this);
+	};
 /* ======================= Myna-only functions ============================== */
 if ("$server_gateway" in this){
 	/* Function: hashEquals 
@@ -980,10 +1024,12 @@ if ("$server_gateway" in this){
 	 
 	*/
 	String.prototype.hashEquals=function(hash){
-		var plainPassword = this;
-		var cryptTool = new Packages.org.jasypt.util.password.BasicPasswordEncryptor()
+		var 
+			plainPassword = this,
+			cryptTool = new Packages.org.jasypt.util.password.BasicPasswordEncryptor()
+		;
 		return cryptTool.checkPassword(plainPassword,hash);
-	}
+	};
 /* Function: toHash 
 	Returns a copy of this string encrypted with a strong one-way hash. 
 	 
@@ -1030,10 +1076,12 @@ if ("$server_gateway" in this){
 	 
 	*/
 	String.prototype.toHash=function(){
-		var password = this;
-		var cryptTool = new Packages.org.jasypt.util.password.BasicPasswordEncryptor()
+		var 
+			password = this,
+			cryptTool = new Packages.org.jasypt.util.password.BasicPasswordEncryptor()
+		;
 		return cryptTool.encryptPassword(password);
-	}
+	};
 /* Function: decrypt 
 	Returns the unencrypted string contained in this string
 	 
@@ -1051,11 +1099,13 @@ if ("$server_gateway" in this){
 	
 	*/
 	String.prototype.decrypt=function(password){
-			var encryptedString = this;
-			var cryptTool = new Packages.org.jasypt.util.text.BasicTextEncryptor()
+			var 
+				encryptedString = this,
+				cryptTool = new Packages.org.jasypt.util.text.BasicTextEncryptor()
+			;
 			cryptTool.setPassword(password);
 			return cryptTool.decrypt(encryptedString);
-	}
+	};
 /* Function: encrypt 
 	Encrypts this using a password.  
 	 
@@ -1090,11 +1140,13 @@ if ("$server_gateway" in this){
 	 
 	*/
 	String.prototype.encrypt=function(password){
-		var string = this;
-		var cryptTool = new Packages.org.jasypt.util.text.BasicTextEncryptor()
+		var 
+			string = this,
+			cryptTool = new Packages.org.jasypt.util.text.BasicTextEncryptor()
+		;
 		cryptTool.setPassword(password);
 		return cryptTool.encrypt(string);
-	}
+	};
 
 /* Function: toXml 
 	returns an E4X XML object from this string, or throws an exception if not 
@@ -1108,8 +1160,8 @@ if ("$server_gateway" in this){
 	String.prototype.toXml=function(){
 		return new XML(String(this)
 		.replace(/^<\?xml\s+version\s*=\s*(["'])[^\1]+\1[^?]*\?>/, "") /* mozilla bug 336551*/
-		.trim())
-	}
+		.trim());
+	};
 /* Function: escapeUrl 
 	returns a URL encoded version of this string 
 	 
@@ -1118,5 +1170,5 @@ if ("$server_gateway" in this){
 	*/
 	String.prototype.escapeUrl=function(){
 		return String(java.net.URLEncoder.encode(this,"UTF-8"));
-	}		
+	};		
 }
