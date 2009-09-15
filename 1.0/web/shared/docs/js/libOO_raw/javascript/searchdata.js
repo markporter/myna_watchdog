@@ -60,7 +60,7 @@ var indexSectionsWithContent = {
       "Z": false
       },
    "Functions": {
-      "Symbols": false,
+      "Symbols": true,
       "Numbers": false,
       "A": true,
       "B": true,
@@ -150,7 +150,7 @@ var indexSectionsWithContent = {
       "Z": false
       },
    "Properties": {
-      "Symbols": false,
+      "Symbols": true,
       "Numbers": false,
       "A": true,
       "B": false,
