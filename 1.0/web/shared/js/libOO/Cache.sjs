@@ -63,38 +63,49 @@ if (!Myna) var Myna={}
 		options		-	an object representing cache options. See below.
 		
 	Options Object:
-		code					-		A function to cache. All parameters used by the 
-										function will need to be passed in because _code_
-										will be executed in a separate thread.
-		name					-		*Optional, default code.toSource()*
-										A name to associate with all the caches for this 
-										cache object. Used to find this cache object from 
-										other threads.
-		tags					-		*Optional, default null*
-										an array or a comma separated list of strings to 
-										associate with this cache object. Used to find 
-										multiple cache objects from other threads. If 
-										$application.appName is defined, it is 
-										automatically added as a tag. 
+		code				-		A function to cache. All parameters used by the 
+									function will need to be passed in because _code_
+									will be executed in a separate thread.
+									
+		name				-		*Optional, default code.toSource()*
+									A name to associate with all the caches for this 
+									cache object. Used to find this cache object from 
+									other threads, and to index cached values.
+									
+		tags				-		*Optional, default null*
+									an array or a comma separated list of strings to 
+									associate with this cache object. Used to find 
+									multiple cache objects from other threads. If 
+									$application.appName is defined, it is 
+									automatically added as a tag.
+									
 		refreshInterval		-		*Optional, default 1 hour*
-										Cache values older than this interval will be 
-										refreshed when accessed. See <Date.getInterval>. 
-										A value of -1 will disable refreshing. 
+									Cache values older than this interval will be 
+									refreshed when accessed. See <Date.getInterval>. 
+									A value of -1 will disable refreshing.
+									
 		maxIdleInterval		-		*Optional, default 24 hours* 
-										Interval that a cached object can be 
-										idle (not accessed) before being deleted. See 
-										<Date.getInterval>. A value of -1 means the cache 
-										never expires, it is only refreshed. Note that if 
-										_maxIdleInterval_ is less than _interval_, it 
-										will effectively become the refresh interval 
-										during periods of infrequent access 
+									Interval that a cached object can be 
+									idle (not accessed) before being deleted. See 
+									<Date.getInterval>. A value of -1 means the cache 
+									never expires, it is only refreshed. Note that if 
+									_maxIdleInterval_ is less than _interval_, it 
+									will effectively become the refresh interval 
+									during periods of infrequent access
+									
 		allowBackgroundRefresh	-	*Optional, default true*
-											if true, and a cached value is available, then 
-											cache refreshes happen in a background thread 
-											and the current cached value is returned. Note 
-											that if _maxIdleInterval_ is set, background 
-											refreshes will only happen if _interval_ has 
-											been exceeded but _maxIdleInterval_ has not.
+									if true, and a cached value is available, then 
+									cache refreshes happen in a background thread 
+									and the current cached value is returned. Note 
+									that if _maxIdleInterval_ is set, background 
+									refreshes will only happen if _interval_ has 
+									been exceeded but _maxIdleInterval_ has not.
+		ignoreArguments			-	*Optional, default undefined*
+									Normally a seperate cached value is created 
+									for each unique set of arguments. If this is 
+									set to "true" then _name_ is assumed to be 
+									unique and only one cached value will ever 
+									be created for this _name_ 
 	*/
 	Myna.Cache = function CacheConstructor(options){
 		var $this = this;
@@ -150,7 +161,7 @@ if (!Myna) var Myna={}
 		var $this = this;
 		var c = org.apache.jcs.JCS.getInstance("value");
 		var key = $this.name+ ":" +new java.lang.String(
-			args.toJson()
+			(this.ignoreArguments||args.toJson())
 		).hashCode();
 		
 		var time;
@@ -201,7 +212,7 @@ if (!Myna) var Myna={}
 		var $this = this;
 		var c = org.apache.jcs.JCS.getInstance("value");
 		var key =$this.name+ ":" + new java.lang.String(
-			args.toJson()
+			(this.ignoreArguments||args.toJson())
 		).hashCode();
 		
 		var result = this.backgroundRefresh(args).join();
@@ -234,9 +245,9 @@ if (!Myna) var Myna={}
 		var c = org.apache.jcs.JCS.getInstance("value");
 		var args = Array.parse(arguments); 
 		var storeEntry  = $server.get("MYNA:cacheStore").findFirst("name",this.name);
-		
+	
 		var key = $this.name+ ":" +new java.lang.String(
-			args.toJson()
+			(this.ignoreArguments||args.toJson())
 		).hashCode();
 		$this.cacheKeys[key] = true;
 		//make sure that only one thread checks the cache at a time
@@ -244,7 +255,7 @@ if (!Myna) var Myna={}
 		
 		
 		if (cacheObj) {
-			if ("refreshInterval" in $this){
+			if ("refreshInterval" in $this && this.refreshInterval != -1){
 				var att = c.getElementAttributes(key)
 				var time = att.getCreateTime();
 				storeEntry.lastAccessed =new Date( att.getLastAccessTime()); 
@@ -395,7 +406,10 @@ if (!Myna) var Myna={}
 	Myna.Cache.clearByTags=function Cache_clearByTags(tags){
 		var $this = this;
 		var c = org.apache.jcs.JCS.getInstance("value");
-		Myna.Cache.getByTags(tags).forEach(function(obj){
-			obj.clear()
-		})
+		var tagArray =Myna.Cache.getByTags(tags)
+		if (tagArray){
+			tagArray.forEach(function(obj){
+				obj.clear()
+			})
+		}
 	}

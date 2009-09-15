@@ -1174,10 +1174,11 @@ if (!Myna) var Myna={}
 				
 		
 		if (!label) label= "[ no label ]";
-			if (!type) throw new Error("Type Required")
-			if (!detail) detail = " ";
-		
-		
+		if (!type) throw new Error("Type Required")
+		if (!detail) detail = " ";
+		if (String(type).toLowerCase() == "error"){
+			java.lang.System.err.println("Error: " + label);
+		}
 		if (typeof $server != "undefined" && !$server.isThread){
 			var reqId = $req.id;
 			//String(java.lang.Thread.currentThread().getName().hashCode());

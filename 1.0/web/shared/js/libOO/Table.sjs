@@ -27,6 +27,7 @@ Myna.Table = function (db,tableName){
 		this.sqlTableName = this.tableName;		
 	}
 	
+	
 }
 /* Property: sqlTableName 
 	name of this table including schema name that should be used in sql queries
@@ -110,6 +111,13 @@ Myna.Table.prototype.init = function(){
 			break;
 		}  
 	}
+	this.mdArgs = {
+		md:md,
+		cat:db.catalog,
+		schema:table.schema,
+		tableName:table.tableName
+	}
+	
 }
 
 /* Property: columns 
@@ -159,21 +167,24 @@ Myna.Table.prototype.init = function(){
 							DISTINCT or user-generated REF) 
 */
 Myna.Table.prototype.__defineGetter__("columns", function() {
+	var table = this;
 	if (this.exists){
-		var rsColumns =this.db.md.getColumns(
-			this.db.catalog,
-			this.schema,
-			this.tableName,
-			'%'
-		)
-		var columns = new Myna.Query(rsColumns);
-		
-		rsColumns.close();
-		var result={}
-		columns.data.forEach(function(row,index){
-			result[row.column_name.toLowerCase()] = row;
-		})
-		return result;
+		return this._getCache("columns",function(t){
+			var rsColumns =t.md.getColumns(
+				t.cat,
+				t.schema,
+				t.tableName,
+				'%'
+			)
+			var columns = new Myna.Query(rsColumns);
+			
+			rsColumns.close();
+			var result={}
+			columns.data.forEach(function(row,index){
+				result[row.column_name.toLowerCase()] = row;
+			})
+			return result;
+		});
 	} else {
 		return [];
 	}
@@ -197,18 +208,19 @@ Myna.Table.prototype.__defineGetter__("columnNames", function() {
 	true, if this table exists 
 	*/
 Myna.Table.prototype.__defineGetter__("exists", function() {
-	var table= this;
-	var rsTables= table.db.md.getTables(
-		table.db.catalog,
-		table.schema||table.db.defaultSchema,
-		table.tableName,
-		null
-	)
-	var qry = new Myna.Query(rsTables)
-	rsTables.close();
-	//if (qry.data.length) return true;
-	
-	return qry.data.length > 0
+	return this._getCache("exists",function(t){
+		var rsTables= t.md.getTables(
+			t.cat,
+			t.schema,
+			t.tableName,
+			null
+		)
+		var qry = new Myna.Query(rsTables)
+		rsTables.close();
+		//if (qry.data.length) return true;
+		
+		return qry.data.length > 0
+	})
 })
 
 /* Property: primaryKeys 
@@ -216,21 +228,23 @@ Myna.Table.prototype.__defineGetter__("exists", function() {
 */
 Myna.Table.prototype.__defineGetter__("primaryKeys", function() {
 	if (this.exists){
-		//some "table" types aren't really tables (views,synonyms,etc)
-		try {
-			var rsTemp =this.db.md.getPrimaryKeys(
-				null,
-				this.schema,
-				this.tableName
-			);
-			var result =new Myna.Query(rsTemp).data.valueArray("column_name").map(function(element){
-				return String(element.toLowerCase())
-			});
-			rsTemp.close();
-			return result;
-		}catch(e){
-			return [];
-		}
+		return this._getCache("primaryKeys",function(t){
+			//some "table" types aren't really tables (views,synonyms,etc)
+			try {
+				var rsTemp =t.md.getPrimaryKeys(
+					null,
+					t.schema,
+					t.tableName
+				);
+				var result =new Myna.Query(rsTemp).data.valueArray("column_name").map(function(element){
+					return String(element.toLowerCase())
+				});
+				rsTemp.close();
+				return result;
+			}catch(e){
+				return [];
+			}
+		});
 	} else {
 		return [];
 	}
@@ -251,20 +265,22 @@ Myna.Table.prototype.__defineGetter__("primaryKeys", function() {
 */
 Myna.Table.prototype.__defineGetter__("primaryKeyInfo", function() {
 	if (this.exists){
-		//some "table" types aren't really tables (views,synonyms,etc)
-		try {
-			var rsTemp =this.db.md.getPrimaryKeys(
-				null,
-				this.schema,
-				this.tableName
-			);
-			var data =new Myna.Query(rsTemp).data
-			rsTemp.close();
-			return data;
-		} catch(e) {
-			return [];
-		}
-		
+		return this._getCache("primaryKeyInfo",function(t){
+			//some "table" types aren't really tables (views,synonyms,etc)
+			try {
+				var rsTemp =this.db.md.getPrimaryKeys(
+					null,
+					this.schema,
+					this.tableName
+				);
+				var data =new Myna.Query(rsTemp).data
+				rsTemp.close();
+				this._primaryKeyInfo = data;
+				return data;
+			} catch(e) {
+				return [];
+			}
+		})
 	} else {
 		return [];
 	}
@@ -325,19 +341,22 @@ Myna.Table.prototype.__defineGetter__("primaryKeyInfo", function() {
 */
 Myna.Table.prototype.__defineGetter__("foreignKeys", function() {
 	if (this.exists){
-		//some "table" types aren't really tables (views,synonyms,etc)
-		try {
-			var rsTemp = this.db.md.getImportedKeys(
-				null,
-				this.schema,
-				this.tableName
-			)
-			var data =new Myna.Query(rsTemp).data
-			rsTemp.close();
-			return data;
-		} catch(e) {
-			return [];
-		}
+		return this._getCache("foreignKeys",function(t){
+			//some "table" types aren't really tables (views,synonyms,etc)
+			try {
+				var rsTemp = this.db.md.getImportedKeys(
+					null,
+					this.schema,
+					this.tableName
+				)
+				var data =new Myna.Query(rsTemp).data
+				rsTemp.close();
+				this._foreignKeys = data;
+				return data;
+			} catch(e) {
+				return [];
+			}
+		})
 	} else {
 		return [];
 	}
@@ -391,19 +410,21 @@ Myna.Table.prototype.__defineGetter__("foreignKeys", function() {
 */
 Myna.Table.prototype.__defineGetter__("exportedKeys", function() {
 	if (this.exists){
-		//some "table" types aren't really tables (views,synonyms,etc)
-		try {
-			var rsTemp =this.db.md.getExportedKeys(
-				null,
-				this.schema,
-				this.tableName
-			)
-			var data =new Myna.Query(rsTemp).data
-			rsTemp.close();
-			return data;
-		} catch(e) {
-			return [];
-		}
+		return this._getCache("exportedKeys",function(t){
+			//some "table" types aren't really tables (views,synonyms,etc)
+			try {
+				var rsTemp =this.db.md.getExportedKeys(
+					null,
+					this.schema,
+					this.tableName
+				)
+				var data =new Myna.Query(rsTemp).data
+				rsTemp.close();
+				return data;
+			} catch(e) {
+				return [];
+			}
+		});
 	} else {
 		return []	
 	}
@@ -452,36 +473,38 @@ Myna.Table.prototype.__defineGetter__("exportedKeys", function() {
 */
 Myna.Table.prototype.__defineGetter__("indexInfo", function() {
 	if (this.exists){
-		//some "table" types aren't really tables (views,synonyms,etc)
-		try {
-			var rsTemp = this.db.md.getIndexInfo(
-				null,
-				this.schema,
-				this.tableName,
-				false,
-				false
-			)
-			var indexInfo=[];
-			var localIndexes={};
-			new Myna.Query(rsTemp).data.forEach(function(row){
-				var curIndex;
-				if (localIndexes[row.index_name]){
-					curIndex = localIndexes[row.index_name];
-				} else {
-					curIndex=localIndexes[row.index_name] ={
-						name:row.index_name,
-						unique:!row.non_unique,
-						columns:[]
+		return this._getCache("indexInfo",function(t){
+			//some "table" types aren't really tables (views,synonyms,etc)
+			try {
+				var rsTemp = this.db.md.getIndexInfo(
+					null,
+					this.schema,
+					this.tableName,
+					false,
+					false
+				)
+				var indexInfo=[];
+				var localIndexes={};
+				new Myna.Query(rsTemp).data.forEach(function(row){
+					var curIndex;
+					if (localIndexes[row.index_name]){
+						curIndex = localIndexes[row.index_name];
+					} else {
+						curIndex=localIndexes[row.index_name] ={
+							name:row.index_name,
+							unique:!row.non_unique,
+							columns:[]
+						}
+						indexInfo.push(curIndex)
 					}
-					indexInfo.push(curIndex)
-				}
-				curIndex.columns[row.ordinal_position-1] = row.column_name;
-			}); 
-			rsTemp.close();
-			return indexInfo;
-		} catch(e) {
-			return [];
-		}
+					curIndex.columns[row.ordinal_position-1] = row.column_name;
+				}); 
+				rsTemp.close();
+				return indexInfo;
+			} catch(e) {
+				return [];
+			}
+		});
 	} else {
 		return []	
 	}
@@ -638,6 +661,7 @@ Myna.Table.prototype.addColumn = function(options){
 	})
 	
 	table.init();
+	table.clearMetadataCache()
 }
 
 /* Function: modifyColumn
@@ -944,6 +968,7 @@ Myna.Table.prototype.addForeignKey = function(options){
 			
 	
 	table.init();
+	table.clearMetadataCache()
 }
 
 /* Function: addPrimaryKey
@@ -991,6 +1016,7 @@ Myna.Table.prototype.addPrimaryKey = function(options){
 			
 	
 	table.init();
+	table.clearMetadataCache()
 }
 
 /* Function: addIndex
@@ -1037,6 +1063,7 @@ Myna.Table.prototype.addIndex = function(options){
 		sql:table.getTemplate("createIndex").apply(options)
 	})
 	table.init()
+	table.clearMetadataCache()
 }
 
 /* Function: getTemplate
@@ -1176,6 +1203,8 @@ Myna.Table.prototype.create = function(options){
 		})
 	})   
 	table.init();
+	table.clearMetadataCache()
+	
 }
 
 
@@ -1209,7 +1238,7 @@ Myna.Table.prototype.drop = function(){
 	/* } catch(e) {
 	} */
 	table.init();
-	
+	table.clearMetadataCache()
 	return deleted;
 }
 
@@ -1251,5 +1280,47 @@ Myna.Table.prototype.dropColumn = function(name){
 	})
 	
 	table.init();
+	table.clearMetadataCache()
 }
 
+/* Property: _cacheKey
+	(private) cache key base for internal metadata caching 
+*/
+/* Function: _getCache
+	(private) internal function for caching metadata
+	
+
+*/
+Myna.Table.prototype._getCache = function(type,f){
+	var mdArgs = {
+		md:this.db.md,
+		cat:this.db.catalog,
+		schema:this.schema,
+		tableName:this.tableName
+	}
+	this._cacheKey ="MynaTableMetadata_" + this.db.ds+"_"+this.sqlTableName;
+	return new Myna.Cache({
+		name:this._cacheKey +"_"+type,
+		tags:this._cacheKey,
+		refreshInterval:-1,//cache cleared manually from update functions
+		maxIdleInterval:Date.getInterval("h",1),
+		ignoreArguments:true,
+		code:f
+	}).call(mdArgs);
+}
+/* Function: clearMetadataCache
+	clears metadata cache for this table
+	
+	Detail:
+		to improve performance, table metadata is cached between new Myna.Table 
+		calls. After making changes to a table, a call to this function is
+		necessary to refresh metadata. This function is called automatically by 
+		all the Myna.Table functions that modify the table, so calling this 
+		should only be necessary if the table is modified outside of Myna.table
+		or another Myna instance
+		
+*/
+Myna.Table.prototype.clearMetadataCache = function(){
+	Myna.Cache.clearByTags(this._cacheKey)
+	
+}

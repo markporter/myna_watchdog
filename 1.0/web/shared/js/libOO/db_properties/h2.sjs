@@ -103,6 +103,7 @@ var functions={
 		return defaultSchema;
 	},
 	getSchemas:function(db){
+		
 		var rsSchemas = db.md.getSchemas();
 		var schemas = new Myna.Query(rsSchemas).valueArray("schema_name");
 		schemas.push("");

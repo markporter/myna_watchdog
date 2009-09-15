@@ -85,7 +85,7 @@ var $server={
 	*/
 	get remoteAddr(){
 		if ($server.isThread) return "localhost/Thread";
-		
+		if (!("request" in $server) || !$server.request) return "unknown";		
 		var ip =String($server.request.getRemoteAddr());
 		if ("X-Forwarded-For" in $req.headers){
 			ip = String($req.headers["X-Forwarded-For"][0])

@@ -96,7 +96,10 @@ Myna.Database.prototype.init = function(){
 	
 	*/
 	Myna.Database.prototype.__defineGetter__("schemas", function() {
-		return this.functions.getSchemas(this);
+		return this._getCache("schemas",function(db){
+			
+			return db.functions.getSchemas(db);
+		});
 		
 	});
 /* Property: defaultSchema
@@ -104,7 +107,10 @@ Myna.Database.prototype.init = function(){
 		 
 	*/
 	Myna.Database.prototype.__defineGetter__("defaultSchema", function() {
-		return this.functions.getDefaultSchema(this);
+		var result = this.functions.getDefaultSchema(this);
+		if (!result) return "";
+		
+		return result;
 	})
 	
 /* Property: tables
@@ -131,7 +137,7 @@ Myna.Database.prototype.init = function(){
 		Some databases may not return information for all tables. 
 	*/
 	Myna.Database.prototype.__defineGetter__("tables", function() {
-		return  this.getTablesBySchema(this.defaultSchema);
+		return  this.getTablesBySchema(db.defaultSchema);
 	});
 /*	Function: getTable
 	returns a <Myna.Table> object representing the named table. 
@@ -233,5 +239,43 @@ Myna.Database.dbTypeToJs = function(sourceType){
 		Some databases may not return information for all tables. 
 	*/
 Myna.Database.prototype.getTablesBySchema = function(schema){
-	return this.functions.getTables(this,schema);
+	return this._getCache("getTablesBySchema",function(db){
+		return this.functions.getTables(db,schema);
+	});
+}
+
+/* Property: _cacheKey
+	(private) cache key base for internal metadata caching 
+*/
+/* Function: _getCache
+	(private) internal function for caching metadata
+	
+*/
+Myna.Database.prototype._getCache = function(type,f){
+	this._cacheKey ="MynaDbMetadata_" + this.ds;
+	//return f(this);
+	return new Myna.Cache({
+		name:this._cacheKey +"_"+type,
+		tags:this._cacheKey,
+		refreshInterval:-1,//cache cleared manually from update functions
+		maxIdleInterval:Date.getInterval("h",1),
+		ignoreArguments:true,
+		code:f
+	}).call(this);
+}
+/* Function: clearMetadataCache
+	clears metadata cache for this table
+	
+	Detail:
+		to improve performance, table metadata is cached between new Myna.Table 
+		calls. After making changes to a table, a call to this function is
+		necessary to refresh metadata. This function is called automatically by 
+		all the Myna.Table functions that modify the table, so calling this 
+		should only be necessary if the table is modified outside of Myna.table
+		or another Myna instance
+		
+*/
+Myna.Database.prototype.clearMetadataCache = function(){
+	Myna.Cache.clearByTags(this._cacheKey)
+	
 }
