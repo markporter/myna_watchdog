@@ -240,7 +240,7 @@ Myna.Database.dbTypeToJs = function(sourceType){
 	*/
 Myna.Database.prototype.getTablesBySchema = function(schema){
 	return this._getCache("getTablesBySchema",function(db){
-		return this.functions.getTables(db,schema);
+		return db.functions.getTables(db,schema);
 	});
 }
 

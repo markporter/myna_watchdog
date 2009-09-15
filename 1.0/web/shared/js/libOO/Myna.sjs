@@ -1177,7 +1177,7 @@ if (!Myna) var Myna={}
 		if (!type) throw new Error("Type Required")
 		if (!detail) detail = " ";
 		if (String(type).toLowerCase() == "error"){
-			java.lang.System.err.println("Error: " + label);
+			java.lang.System.err.println("Error: " + label );
 		}
 		if (typeof $server != "undefined" && !$server.isThread){
 			var reqId = $req.id;
@@ -1200,8 +1200,10 @@ if (!Myna) var Myna={}
 						type:type 
 					})
 				} catch(e){
-					java.lang.System.err.println("Error writing log: " + e.message);
-					java.lang.System.err.println(label);
+					if (!/isAlive/.test(e.message)){
+						java.lang.System.err.println("Error writing log: " + e.message);
+						java.lang.System.err.println("log Label: " +label);
+					}
 				}
 			}
 			new Myna.Thread(logFunction,[reqId,type,label,detail,app_name,log_elapsed,req_elapsed,now],-.9);

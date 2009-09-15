@@ -27,7 +27,7 @@ Myna.Table = function (db,tableName){
 		this.sqlTableName = this.tableName;		
 	}
 	
-	
+	this.clearMetadataCache();
 }
 /* Property: sqlTableName 
 	name of this table including schema name that should be used in sql queries
@@ -198,7 +198,15 @@ Myna.Table.prototype.__defineGetter__("columnNames", function() {
 		var table =this;
 		return this.columns.getKeys().filter(function(name){
 			return "column_name" in table.columns[name];	
-		}); 
+		}).sort(function(a,b){
+			  if (table.columns[a].ordinal_position > table.columns[b].ordinal_position){
+				  return 1;
+			  } else if (table.columns[a].ordinal_position < table.columns[b].ordinal_position){
+				  return -1;
+			  } else{
+				  return 0;
+			  }
+		  });
 	} else {
 		return []	
 	}
@@ -1298,15 +1306,15 @@ Myna.Table.prototype._getCache = function(type,f){
 		schema:this.schema,
 		tableName:this.tableName
 	}
-	this._cacheKey ="MynaTableMetadata_" + this.db.ds+"_"+this.sqlTableName;
-	return new Myna.Cache({
-		name:this._cacheKey +"_"+type,
-		tags:this._cacheKey,
-		refreshInterval:-1,//cache cleared manually from update functions
-		maxIdleInterval:Date.getInterval("h",1),
-		ignoreArguments:true,
-		code:f
-	}).call(mdArgs);
+	if (!("cache" in this)){
+		this.clearMetadataCache();		
+	}
+	if (!(type in this.cache)){
+		this.cache[type] = f(mdArgs);
+		
+	}
+	return this.cache[type]	
+	
 }
 /* Function: clearMetadataCache
 	clears metadata cache for this table
@@ -1321,6 +1329,5 @@ Myna.Table.prototype._getCache = function(type,f){
 		
 */
 Myna.Table.prototype.clearMetadataCache = function(){
-	Myna.Cache.clearByTags(this._cacheKey)
-	
+	this.cache={}
 }

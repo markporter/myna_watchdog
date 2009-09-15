@@ -85,7 +85,6 @@ var fusebox={
 			return schemas;
 		} else if (data.node.split(":")[0]=="schema"){
 			var table_types = "";
-			Myna.log("debug","before for each",Myna.dump($req.data));
 			db.getTablesBySchema(data.node.split(":")[1])
 			.filter(function(t){
 				if (/^BIN\$.*/.test(t.table_name)){
@@ -104,7 +103,7 @@ var fusebox={
 			.forEach(function(t){
 				table_types = table_types.listAppendUniqueNoCase(t.table_type);
 			})
-			Myna.log("debug","after for each",Myna.dump($req.data));
+			
 			if (table_types.trim().length){
 				return table_types.split(/,/).sort(String.compareNatural).map(function(t){
 					return {
