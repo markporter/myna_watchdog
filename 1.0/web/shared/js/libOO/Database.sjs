@@ -137,7 +137,7 @@ Myna.Database.prototype.init = function(){
 		Some databases may not return information for all tables. 
 	*/
 	Myna.Database.prototype.__defineGetter__("tables", function() {
-		return  this.getTablesBySchema(db.defaultSchema);
+		return  this.getTablesBySchema(this.defaultSchema);
 	});
 /*	Function: getTable
 	returns a <Myna.Table> object representing the named table. 
@@ -252,16 +252,13 @@ Myna.Database.prototype.getTablesBySchema = function(schema){
 	
 */
 Myna.Database.prototype._getCache = function(type,f){
-	this._cacheKey ="MynaDbMetadata_" + this.ds;
-	//return f(this);
-	return new Myna.Cache({
-		name:this._cacheKey +"_"+type,
-		tags:this._cacheKey,
-		refreshInterval:-1,//cache cleared manually from update functions
-		maxIdleInterval:Date.getInterval("h",1),
-		ignoreArguments:true,
-		code:f
-	}).call(this);
+	if (!("cache" in this)){
+		this.clearMetadataCache();		
+	}
+	if (!(type in this.cache)){
+		this.cache[type] = f(this);
+	}
+	return this.cache[type]	
 }
 /* Function: clearMetadataCache
 	clears metadata cache for this table
@@ -276,6 +273,6 @@ Myna.Database.prototype._getCache = function(type,f){
 		
 */
 Myna.Database.prototype.clearMetadataCache = function(){
-	Myna.Cache.clearByTags(this._cacheKey)
+	this.cache={}
 	
 }

@@ -100,16 +100,11 @@ var functions={
 			'%',
 			null
 		); 
-		/* var rsTables = this.md.getTables(
-			null,
-			null,
-			null,
-			null
-		); */
-		
 		var data =new Myna.Query(rsTables).data;
 		rsTables.close();
-		return data
+		return data.filter(function(row){
+			return !/(\$|PLAN_TABLE)/.test(row.table_name)
+		})
 	},
 	setClob:function(con,st,index,value){
 		var clob = Packages.oracle.sql.CLOB.createTemporary(con, false,Packages.oracle.sql.CLOB.DURATION_SESSION);

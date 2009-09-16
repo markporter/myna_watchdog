@@ -171,7 +171,7 @@ var $res = {
 			$res.redirect("http://example.com/page.html");
 	*/
 	redirect:function(url){
-		$server.response.sendRedirect(url);
+		if ($server.response) $server.response.sendRedirect(url);
 		Myna.abort();		
 	},
 	

@@ -276,14 +276,13 @@ Myna.Table.prototype.__defineGetter__("primaryKeyInfo", function() {
 		return this._getCache("primaryKeyInfo",function(t){
 			//some "table" types aren't really tables (views,synonyms,etc)
 			try {
-				var rsTemp =this.db.md.getPrimaryKeys(
+				var rsTemp =t.md.getPrimaryKeys(
 					null,
-					this.schema,
-					this.tableName
+					t.schema,
+					t.tableName
 				);
 				var data =new Myna.Query(rsTemp).data
 				rsTemp.close();
-				this._primaryKeyInfo = data;
 				return data;
 			} catch(e) {
 				return [];
@@ -352,16 +351,16 @@ Myna.Table.prototype.__defineGetter__("foreignKeys", function() {
 		return this._getCache("foreignKeys",function(t){
 			//some "table" types aren't really tables (views,synonyms,etc)
 			try {
-				var rsTemp = this.db.md.getImportedKeys(
+				var rsTemp = t.md.getImportedKeys(
 					null,
-					this.schema,
-					this.tableName
+					t.schema,
+					t.tableName
 				)
 				var data =new Myna.Query(rsTemp).data
 				rsTemp.close();
-				this._foreignKeys = data;
 				return data;
 			} catch(e) {
+				
 				return [];
 			}
 		})
@@ -421,10 +420,10 @@ Myna.Table.prototype.__defineGetter__("exportedKeys", function() {
 		return this._getCache("exportedKeys",function(t){
 			//some "table" types aren't really tables (views,synonyms,etc)
 			try {
-				var rsTemp =this.db.md.getExportedKeys(
+				var rsTemp =t.md.getExportedKeys(
 					null,
-					this.schema,
-					this.tableName
+					t.schema,
+					t.tableName
 				)
 				var data =new Myna.Query(rsTemp).data
 				rsTemp.close();
@@ -484,10 +483,10 @@ Myna.Table.prototype.__defineGetter__("indexInfo", function() {
 		return this._getCache("indexInfo",function(t){
 			//some "table" types aren't really tables (views,synonyms,etc)
 			try {
-				var rsTemp = this.db.md.getIndexInfo(
+				var rsTemp = t.md.getIndexInfo(
 					null,
-					this.schema,
-					this.tableName,
+					t.schema,
+					t.tableName,
 					false,
 					false
 				)
