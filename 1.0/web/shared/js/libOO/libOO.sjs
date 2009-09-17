@@ -31,7 +31,7 @@
 	
 		$server_gateway.includeOnce(path);
 	} catch(e){
-		java.lang.System.out.println(e)
+		java.lang.System.out.println("libOO.sjs Error: " +e)
 		$server_gateway.log("ERROR",String(e).left(100),Myna?Myna.formatError(e):String(e))
 	}
 });

@@ -497,7 +497,7 @@ var $application={
 	*/
 	onRequestEnd:function(){},
 	_onError:function(exception){
-		if (exception === "___MYNA_ABORT___"){
+		if ("message" in exception && exception.message === "___MYNA_ABORT___"){
 			return;
 		}
 		var formattedError = Myna.formatError(exception)
