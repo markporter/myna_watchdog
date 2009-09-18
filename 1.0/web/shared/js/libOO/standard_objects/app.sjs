@@ -497,20 +497,30 @@ var $application={
 	*/
 	onRequestEnd:function(){},
 	_onError:function(exception){
-		if ("message" in exception && exception.message === "___MYNA_ABORT___"){
+		var 
+			isString=(typeof exception === "string"),
+			formattedError,
+			message
+		;
+			
+		if (!isString && "message" in exception && exception.message === "___MYNA_ABORT___"){
 			return;
 		}
-		var formattedError = Myna.formatError(exception)
-		var message ="Error"
-		try {
-			if (exception.sourceName){
-				message = e.rhinoException.details() || message; 	
-			} else {
-				message = exception.message || message;
+		if (isString){
+			message = formattedError = "Thrown Error: '" +exception + "' Use throw new Error('"+exception+"') for more detailed error messages.";	
+		} else {
+			formattedError = Myna.formatError(exception)
+			message ="Error"
+			try {
+				if (exception.sourceName){
+					message = e.rhinoException.details() || message; 	
+				} else {
+					message = exception.message || message;
+				}
+			} catch(e){
+			} finally {
+				Myna.log("ERROR",message,formattedError);
 			}
-		} catch(e){
-		} finally {
-			Myna.log("ERROR",message,formattedError);
 		}
 		try{
 			var shouldEmail = parseInt($server_gateway
