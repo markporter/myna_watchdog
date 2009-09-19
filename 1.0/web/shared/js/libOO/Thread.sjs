@@ -27,28 +27,82 @@ if (!Myna) var Myna={}
 		functions running in parallel, or to execute non-interactive code in the 
 		background.
 		
+		Each Thread runs in a seperate Myna request with it's own global ($) 
+		variables. Because the script path is copied from the parent thread, 
+		$application will be created the same as the parent thread and 
+		$application.onRequestStart() .onError() etc. will be fired at the 
+		appropriate times. This means that you should never call Myna.Thread from
+		an application.sjs file, or your code will create an infinite thread spawning 
+		loop, and will error out after 5 levels.
+		
+		You can pass variables from the current thread into Myna.Thread and the 
+		sub-thread will have access to them even after the parent thread exits
+		
+		The parent thread can access the return value from _f_ via 
+		<Myna.Thread.getReturnValue> or from <Myna.Thread.join>
+		
+		The parent thread can access the generated output of _f_ via 
+		<Myna.Thread.getContent>
+		
+		
 	Warning:
-		Threads cannot be created recursively. If a Thread attempts to call the same
-		function as the body of any parent Thread, executions is silently 
-		terminated. This prevents infinite Thread spawning.   
+		Threads can themselves call Threads to a maximum depth of 5 levels. This 
+		prevents infinite Thread spawning.   
 		
 	Returns:
 		Reference to Thread instance
+		
+	Example:
+	
+	(code)
+	//send an email in the background with  a very low priority
+	var t= new Myna.Thread(function(data){
+		new Myna.Mail({
+			to:data.toAddress,
+			from:data.fromAddress,
+			...
+		}).send()
+	},[$req.data],-90)
+	
+	
+	//run all your queries at once
+	new Myna.Thread(function(){
+		return new Myna.Query({
+			ds:"some ds",
+			sql:"..."
+		}).data
+	}])
+	
+	new Myna.Thread(function(){
+		return new Myna.Query({
+			ds:"some other ds",
+			sql:"..."
+		}).data
+	})
+	
+	// a destructuring assignment takes each row from the array returned from 
+	// joinAll and assigns them to the variables in the assignment array
+	var [ qryData1, qryData2] = Myna.Thread.joinAll();
+	
+	(end)
 */
 Myna.Thread=function(f,args,priority){
 	
-	if (!("__MYNA_THREADS__" in $req)) $req.__MYNA_THREADS__=[];
 	
 	
+	if (!args) args = [];
 	
 	var parent = this;
-	this.functionSource = f.toSource();
-	
+	/* this.functionSource = f.toSource();
+	$server_gateway.environment.put("threadSource", this.functionSource); */
 	
 	/* Property: javaThread
 		a local instance of java.lang.Thread
 	*/
-	this.javaThread=$server_gateway.spawn(f,args);
+	
+	var source = f.toSource().replace(/^\((.*)\)$/,"$1");
+	//java.lang.System.err.println("calling " + source)
+	this.javaThread=$server_gateway.spawn(source,args);
 	if (this.javaThread){
 		var p = java.lang.Thread.NORM_PRIORITY;
 		if (priority > 0){
@@ -57,7 +111,7 @@ Myna.Thread=function(f,args,priority){
 			p += (priority/100) * (p - java.lang.Thread.MIN_PRIORITY);
 		}
 		this.javaThread.setPriority(p)
-		$req.__MYNA_THREADS__.push(this);
+		Myna.Thread.getThreadArray().push(this);
 	}
 	 
 }
@@ -88,15 +142,8 @@ Myna.Thread.prototype.join=function(timeout,throwOnTimeout){
 				Myna.log("error","Thread ("+this.javaThread.toString()+") Timeout detail", this.functionSource);
 				throw new Error("Thread ("+this.javaThread.toString()+") still running after "+timeout+" miliseconds. See log for thread detail.")	
 			} else return undefined 
-		} else return threadValue();
-	} else return threadValue();
-	
-	function threadValue(){
-		var threadId = $this.javaThread.getName();
-		var subThread = $server_gateway.environment.get("subthread_" + threadId);
-		var result = subThread.environment.get("threadReturn");
-		return result
-	}
+		} else return this.getReturnValue();
+	} else return this.getReturnValue();
 }
 
 
@@ -123,7 +170,7 @@ Myna.Thread.prototype.getContent=function(){
 	
 	Don't expect to see anything while <isRunning> returns true
 */
-Myna.Thread.prototype.getContent=function(){
+Myna.Thread.prototype.getReturnValue=function(){
 	var threadId = this.javaThread.getName();
 	var subThread = $server_gateway.environment.get("subthread_" + threadId);
 	var result = subThread.environment.get("threadReturn");
@@ -159,7 +206,16 @@ Myna.Thread.prototype.kill=function(){
 	(end)
 */
 Myna.Thread.joinAll = function(){
-	return $req.__MYNA_THREADS__.map(function(t){
+	return Myna.Thread.getThreadArray().map(function(t){
 		return t.join();
 	})	
+}
+
+/* Function: getThreadArray 
+	Static function that returns an array of all the threads spawned in the 
+	current thread
+*/
+Myna.Thread.getThreadArray = function(){
+	if (!("__MYNA_THREADS__" in $req)) $req.__MYNA_THREADS__=[];
+	return $req.__MYNA_THREADS__
 }

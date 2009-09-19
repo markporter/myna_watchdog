@@ -8,9 +8,9 @@ try{
 		if ($server_gateway.isInitThread){
 			/* This is now handled in the JSServlet init */
 		}
-		if ($server_gateway.environment.get("threadFunction")){
+		if ($server_gateway.environment.get("threadFunctionSource")){
 			try { 
-				var f=$server_gateway.environment.get("threadFunction");
+				var f =eval(String($server_gateway.environment.get("threadFunctionSource")));
 				var args = $server_gateway.environment.get("threadFunctionArguments");
 				args = Array.prototype.slice.call(args,0);
 				var result = f.apply($server.globalScope,args||[])

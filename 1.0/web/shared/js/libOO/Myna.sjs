@@ -1150,6 +1150,24 @@ if (!Myna) var Myna={}
 		datasource. If you run multiple instances of Myna, it may be helpful to 
 		point the myna_log datasource of each instance to the same database. You
 		Can view the logs through the Myna Adminstrator
+		
+		Normally <Myna.log> attempts to perform logging in a low priority 
+		asynchronous thread. If <Myna.log> is called from within a <Myna.Thread>
+		instance, however, it will not spawn a separate thread for logging. This 
+		prevents recursive thread spawning for logging. For example if you need 
+		to call <Myna.dump> on a large object, you may get better performance by
+		dumping in a separate thread:
+		
+		(code)
+			//slow way: 
+			Myna.log("debug","Dump of myHugeQuery",Myna.dump(myHugeQuery));
+			
+			//faster way (releases the current thread immediately)
+			new Myna.Thread(function(myHugeQuery){
+				Myna.log("debug","Dump of myHugeQuery",Myna.dump(myHugeQuery));
+			},[myHugeQuery],-90)
+		(end)
+		
 	 
 	*/
 	Myna.log=function Myna_log(type,label,detail,app_name){
@@ -1206,7 +1224,7 @@ if (!Myna) var Myna={}
 					}
 				}
 			}
-			new Myna.Thread(logFunction,[reqId,type,label,detail,app_name,log_elapsed,req_elapsed,now],-.9);
+			new Myna.Thread(logFunction,[reqId,type,label,detail,app_name,log_elapsed,req_elapsed,now],-90);
 		 
 		} else {
 			$server_gateway.writeLog(
@@ -1223,6 +1241,13 @@ if (!Myna) var Myna={}
 			
 				
 	}
+/* Function: logSync
+	A single threaded synchronous version of Myna.log
+	
+	Detail:
+	Normally <Myna.log> attempts to perform logging in a low_priority 
+	asynchronous thread. 
+*/	
 /* Function: mapToObject 
 	returns a Java Map as a JavaScript Object
 	 

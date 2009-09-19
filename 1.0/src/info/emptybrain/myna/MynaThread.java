@@ -578,7 +578,7 @@ public class MynaThread {
 		} */
 	}
 	
-	public void callFunction (MynaThread parentThread, Function f,Object[] args) throws Exception{
+	public void callFunction (MynaThread parentThread, String f,Object[] args) throws Exception{
 		runningThreads.add(this);
 		runtimeStats.put("threadId",this.toString());
 		runtimeStats.put("started",this.started);
@@ -593,15 +593,17 @@ public class MynaThread {
 		
 		
 		
-		this.environment.put("threadFunction",f);
+		this.environment.put("threadFunctionSource",f);
 		this.environment.put("threadFunctionArguments",args);
 		
 	 	class LocalContextAction implements ContextAction {
 			private MynaThread mt;
-			private Function f;
+			private MynaThread pt;
+			private String f;
 			private Object[] args;
-			public LocalContextAction (MynaThread mt,Function f,Object[] args){
+			public LocalContextAction (MynaThread pt,MynaThread mt,String f,Object[] args){
 				this.mt = mt;
+				this.pt = pt;
 				this.f = f;
 				this.args = args;
 			}
@@ -615,12 +617,14 @@ public class MynaThread {
 					ScriptableObject scope = threadScope = (ScriptableObject) cx.newObject(sharedScope);
 					scope.setPrototype(sharedScope);
 					scope.setParentScope(null);
-					f.setParentScope(scope);
+					//f.setParentScope(scope);
+					//f.setParentScope(null);
+					//f.setParentScope(pt.threadScope);
 					isWaiting=false;
 					try{
 						Object server_gateway = Context.javaToJS(this.mt,scope);
 						ScriptableObject.putProperty(scope, "$server_gateway", server_gateway);
-						ScriptableObject.putProperty(f.getParentScope(), "$server_gateway", server_gateway);
+						//ScriptableObject.putProperty(f.getParentScope(), "$server_gateway", server_gateway);
 						URI sharedPath = new URI(rootDir).resolve("shared/js/");
 						//execute script file
 						try{
@@ -654,8 +658,8 @@ public class MynaThread {
 				}
 			}
 		}
-		
-		new CustomContextFactory().call(new LocalContextAction(this,f,args));  
+		//System.out.println(Thread.currentThread().getId()+":"+this.hashCode());
+		new CustomContextFactory().call(new LocalContextAction(parentThread,this,f,args));  
 	}
 	/**
 	* handles errors during JS execution
@@ -1433,21 +1437,21 @@ public class MynaThread {
 		return script.toString();
 	}
 	
-	public Object spawn(Function funObj, Object[] args) throws Exception{
-		Context cx = this.threadContext;
-		Scriptable scope = this.threadScope;
+	public Object spawn(String func, Object[] args) throws Exception{
 		Runner runner;
-		runner = new Runner(scope, funObj, args);
+		runner = new Runner(func, args);
 		
 		runner.parentThread = this;
-		Function f = (Function) this.environment.get("threadFunction");
-		if (f != null && this.threadChain.contains(f)){
+		String f = (String) this.environment.get("threadFunctionSource");
+		/* if ( this.threadChain.contains(func)){
+			log("ERROR","A thread cannot call itself","Thread Function:<br><textarea rows=10 cols=70>" +f + "</textarea>");
+			System.err.println("A thread cannot call itself: \n" + f);
 			return null;
-			//throw new Exception("A thread cannot call itself.");
-		} 
+		} */
 		if (this.threadChain.size() > 5){
-			throw new Exception("thread calls cannot descend more than 5 levels.");
-		}
+			log("ERROR","thread chains cannot descend more than 5 levels.","Thread Chain:<br> " +this.threadChain);
+			throw new Exception("thread chains cannot descend more than 5 levels.");
+		} //else {System.err.println("\n\nthis.threadChain="+this.threadChain);}
 		
 		Thread thread = new Thread(runner);
 		thread.start();
@@ -1455,8 +1459,7 @@ public class MynaThread {
   }
 	
 	class Runner implements Runnable {
-			Runner(Scriptable scope, Function func, Object[] args) {
-					this.scope = scope;
+			Runner( String func, Object[] args) {
 					f = func;
 					this.args = args;
 			}
@@ -1464,9 +1467,10 @@ public class MynaThread {
 			{
 				try {
 					currentThread = new MynaThread();
-					currentThread.environment.put("threadFunction", f);
-					currentThread.threadChain = new Vector(currentThread.threadChain);
+					currentThread.environment.put("threadFunctionSource", f);
+					currentThread.threadChain = new Vector(parentThread.threadChain);
 					currentThread.threadChain.add(f);
+					//java.lang.System.out.println("adding: "+ f.hashCode());
 					currentThread.callFunction(parentThread,f,args);
 					
 					String threadId = java.lang.Thread.currentThread().getName();
@@ -1484,13 +1488,10 @@ public class MynaThread {
 				
 			}
 	
-			private Scriptable scope;
-			private Function f;
-			private Script s;
+			private String f;
 			private MynaThread parentThread;
 			private Object[] args;
 			public MynaThread currentThread;
-			public Thread javaThread;
 	}
 		
 }

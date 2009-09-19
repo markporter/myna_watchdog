@@ -259,6 +259,7 @@ var fusebox={
 		} else $res.print("Null Value")
 	},
 	execute_query:function(data){
+		$req.timeout = 5*60;
 		data.checkRequired(["sql","ds"]);
 		data.setDefaultProperties({
 			page:1,
