@@ -469,16 +469,18 @@ Array.parse = function ParseArray(obj,accessFunction,lengthFunction){
 
 
 if ("$server_gateway" in this){
-  var hide = function (o, p) {
-	 java.lang.Class.forName ("org.mozilla.javascript.ScriptableObject")
-		.getMethod("setAttributes", java.lang.String, java.lang.Integer.TYPE)
-		.invoke(o, p, new java.lang.Integer( 
-		   org.mozilla.javascript.ScriptableObject.DONTENUM
-		)
-	 );
-  }
-  
-  for (var p in Array.prototype) hide(Array.prototype, p)
-  delete p;
-  delete hide;
+	(function(){
+		var hide = function (o, p) {
+		 java.lang.Class.forName ("org.mozilla.javascript.ScriptableObject")
+			.getMethod("setAttributes", java.lang.String, java.lang.Integer.TYPE)
+			.invoke(o, p, new java.lang.Integer( 
+				org.mozilla.javascript.ScriptableObject.DONTENUM
+			)
+		 );
+		}
+		
+		for (var p in Array.prototype) hide(Array.prototype, p)
+		delete p;
+		delete hide;
+	})()
 }

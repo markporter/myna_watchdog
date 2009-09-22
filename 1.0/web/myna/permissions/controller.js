@@ -81,7 +81,7 @@ var C ={
 		})
 		
 		Ext.Ajax.request({
-			url:'permissions.sjs?json-myna&method=has_active_session&appname=' + appname,
+			url:'permissions.ws?json-myna&method=has_active_session&appname=' + appname,
 			
 			waitMsg:"Authorizing...",
 			callback:C.cbHandler(function(result){
@@ -171,7 +171,7 @@ var C ={
 			
 			EX:
 			Ext.Ajax.request({
-				url:"permissions.sjs?json-myna&method=save",
+				url:"permissions.ws?json-myna&method=save",
 				callback=C.cbHandler(function(result,options,success,response){
 					if (result instanceof Array){
 						
@@ -386,7 +386,7 @@ var C ={
 						store:new Ext.data.Store({
 							storeId:o.search +"_lookup" + o.name +o.tabId,
 							proxy: new Ext.data.HttpProxy({
-								url: 'permissions.sjs?json-myna&method=qry_' +o.search 
+								url: 'permissions.ws?json-myna&method=qry_' +o.search 
 							}),
 						
 							reader: new Ext.data.JsonReader({
@@ -498,7 +498,7 @@ var C ={
 						xtype:"combo",
 						store: new Ext.data.Store({
 							proxy: new Ext.data.HttpProxy({
-								url: 'permissions.sjs?json-myna&method=qry_rights&appname=' + appname
+								url: 'permissions.ws?json-myna&method=qry_rights&appname=' + appname
 							}),
 							reader: new Ext.data.JsonReader({
 								root: 'data',
@@ -567,7 +567,7 @@ var C ={
 						xtype:"combo",
 						store: new Ext.data.Store({
 							proxy: new Ext.data.HttpProxy({
-								url: 'permissions.sjs?json-myna&method=qry_users&show_inactive=0'
+								url: 'permissions.ws?json-myna&method=qry_users&show_inactive=0'
 							}),
 							reader: new Ext.data.JsonReader({
 								root: 'data',
@@ -651,7 +651,7 @@ var C ={
 								xtype:"combo",
 								store: new Ext.data.Store({
 									proxy: new Ext.data.HttpProxy({
-										url: 'index_admin.cfmpermissions.sjs?json-myna&method=qry_users&show_inactive=0'
+										url: 'index_admin.cfmpermissions.ws?json-myna&method=qry_users&show_inactive=0'
 									}),
 									reader: new Ext.data.JsonReader({
 										root: 'rows',
@@ -749,7 +749,7 @@ var C ={
 									beforerender:function(grid){
 										if (value && String(value).length){
 											Ext.Ajax.request({
-												url:"permissions.sjs?json-myna&method=qry_userids",
+												url:"permissions.ws?json-myna&method=qry_userids",
 												params:{
 													userid_list:value	
 												},
@@ -818,7 +818,7 @@ var C ={
 					key: [10,13],
 					fn:submit=function(){
 						Ext.Ajax.request({
-							url:'permissions.sjs?json-myna&method=auth',
+							url:'permissions.ws?json-myna&method=auth',
 							params:{
 								appname:appname,
 								username:Ext.getCmp("username").getValue(),
@@ -931,7 +931,7 @@ var C ={
 						text:"logout",
 						handler:function(){
 							Ext.Ajax.request({
-								url:'permissions.sjs?json-myna&method=logout',
+								url:'permissions.ws?json-myna&method=logout',
 								waitMsg:"Logging out...",
 								callback:function(){
 									location.href=location.href;
@@ -972,7 +972,7 @@ var C ={
 					ds:new Ext.data.Store({
 						storeId:"manage_users_grid",
 						proxy: new Ext.data.HttpProxy({
-							url: "permissions.sjs?json-myna&method=qry_users"
+							url: "permissions.ws?json-myna&method=qry_users"
 						}),
 					
 						reader: new Ext.data.JsonReader({
@@ -1113,7 +1113,7 @@ var C ={
 					functions:{
 						loadForm:function(user_id){
 							Ext.Ajax.request({
-								url:"permissions.sjs?json-myna&method=get_user_data",
+								url:"permissions.ws?json-myna&method=get_user_data",
 								params:{user_id:user_id||0},
 								waitMsg:"Loading...",
 								callback:C.cbHandler(function(result){
@@ -1137,7 +1137,7 @@ var C ={
 								/* delete data.created;
 								delete data.created; */
 								Ext.Ajax.request({
-									url:"permissions.sjs?json-myna&method=save_user_data",
+									url:"permissions.ws?json-myna&method=save_user_data",
 									params:data,
 									waitMsg:"Saving...",
 									callback:C.cbHandler(function(result){
@@ -1159,7 +1159,7 @@ var C ={
 									
 									var data = form.getValues();
 									Ext.Ajax.request({
-										url:"permissions.sjs?json-myna&method=delete_user",
+										url:"permissions.ws?json-myna&method=delete_user",
 										params:{
 											user_id:data.user_id											},
 										waitMsg:"Removing...",
@@ -1280,7 +1280,7 @@ var C ={
 					ds:new Ext.data.Store({
 						storeId:"manage_user_logins_grid",
 						proxy: new Ext.data.HttpProxy({
-							url: "permissions.sjs?json-myna&method=qry_user_logins&user_id=" + user_id
+							url: "permissions.ws?json-myna&method=qry_user_logins&user_id=" + user_id
 						}),
 						reader: new Ext.data.JsonReader({
 							root: "data",            
@@ -1391,7 +1391,7 @@ var C ={
 					functions:{
 						loadForm:function(user_login_id){
 							Ext.Ajax.request({
-								url:"permissions.sjs?json-myna&method=get_user_login_data",
+								url:"permissions.ws?json-myna&method=get_user_login_data",
 								params:{user_login_id:user_login_id||0},
 								waitMsg:"Loading...",
 								callback:C.cbHandler(function(result){
@@ -1420,7 +1420,7 @@ var C ={
 							if (form.isValid()){
 								var data = form.getValues();
 								Ext.Ajax.request({
-									url:"permissions.sjs?json-myna&method=save_user_login_data",
+									url:"permissions.ws?json-myna&method=save_user_login_data",
 									params:data,
 									waitMsg:"Saving...",
 									callback:C.cbHandler(function(result){
@@ -1441,7 +1441,7 @@ var C ={
 									
 									var data = form.getValues();
 									Ext.Ajax.request({
-										url:"permissions.sjs?json-myna&method=delete_user_login",
+										url:"permissions.ws?json-myna&method=delete_user_login",
 										params:{
 											user_login_id:data.user_login_id											},
 										waitMsg:"Removing...",
@@ -1571,7 +1571,7 @@ var C ={
 					ds:new Ext.data.Store({
 						storeId:"manage_user_groups_grid",
 						proxy: new Ext.data.HttpProxy({
-							url: "permissions.sjs?json-myna&method=qry_user_groups&appname=" + appname
+							url: "permissions.ws?json-myna&method=qry_user_groups&appname=" + appname
 						}),
 					
 						reader: new Ext.data.JsonReader({
@@ -1701,7 +1701,7 @@ var C ={
 							functions:{
 								loadForm:function(user_group_id){
 									Ext.Ajax.request({
-										url:"permissions.sjs?json-myna&method=get_user_group_data&appname=" + appname,
+										url:"permissions.ws?json-myna&method=get_user_group_data&appname=" + appname,
 										params:{user_group_id:user_group_id||0},
 										waitMsg:"Loading...",
 										callback:C.cbHandler(function(result){
@@ -1733,7 +1733,7 @@ var C ={
 									if (form.isValid()){
 										var data = form.getValues();
 										Ext.Ajax.request({
-											url:"permissions.sjs?json-myna&method=save_user_group_data",
+											url:"permissions.ws?json-myna&method=save_user_group_data",
 											params:data,
 											
 											callback:C.cbHandler(function(result){
@@ -1757,7 +1757,7 @@ var C ={
 											
 											var data = form.getValues();
 											Ext.Ajax.request({
-												url:"permissions.sjs?json-myna&method=delete_user_group",
+												url:"permissions.ws?json-myna&method=delete_user_group",
 												params:{
 													user_group_id:data.user_group_id											},
 												waitMsg:"Removing...",
@@ -1828,7 +1828,7 @@ var C ={
 								add:function(user_id){
 									var form = Ext.getCmp("form" + tabId).form;
 									Ext.Ajax.request({
-										url:"permissions.sjs?json-myna&method=add_user_group_member&appname=" + appname,
+										url:"permissions.ws?json-myna&method=add_user_group_member&appname=" + appname,
 										params:{
 											user_id:user_id,
 											user_group_id:form.findField("user_group_id").getValue()
@@ -1848,7 +1848,7 @@ var C ={
 										if (btn == 'yes') {
 											C.body.mask("working...");
 											Ext.Ajax.request({
-												url:'permissions.sjs?json-myna&method=delete_user_group_member',
+												url:'permissions.ws?json-myna&method=delete_user_group_member',
 												params:{
 													user_group_member_id:record.id
 												},
@@ -1877,7 +1877,7 @@ var C ={
 							ds:new Ext.data.Store({
 								storeId:"manage_user_group_members_grid",
 								proxy: new Ext.data.HttpProxy({
-									url: "permissions.sjs?json-myna&method=qry_user_group_members" 
+									url: "permissions.ws?json-myna&method=qry_user_group_members" 
 								}),
 							
 								reader: new Ext.data.JsonReader({
@@ -2008,7 +2008,7 @@ var C ={
 								add:function(right_id){
 									var form = Ext.getCmp("form" + tabId).form;
 									Ext.Ajax.request({
-										url:"permissions.sjs?json-myna&method=add_assigned_right&appname=" + appname,
+										url:"permissions.ws?json-myna&method=add_assigned_right&appname=" + appname,
 										params:{
 											right_id:right_id,
 											user_group_id:form.findField("user_group_id").getValue()
@@ -2028,7 +2028,7 @@ var C ={
 										if (btn == 'yes') {
 											C.body.mask("working...");
 											Ext.Ajax.request({
-												url:'permissions.sjs?json-myna&method=delete_assigned_right',
+												url:'permissions.ws?json-myna&method=delete_assigned_right',
 												params:{
 													assigned_right_id:record.id
 												},
@@ -2049,7 +2049,7 @@ var C ={
 							ds:new Ext.data.Store({
 								storeId:"manage_assigned_rights_grid",
 								proxy: new Ext.data.HttpProxy({
-									url: "permissions.sjs?json-myna&method=qry_assigned_rights"
+									url: "permissions.ws?json-myna&method=qry_assigned_rights"
 								}),
 							
 								reader: new Ext.data.JsonReader({
@@ -2210,7 +2210,7 @@ var C ={
 					ds:new Ext.data.Store({
 						storeId:"manage_rights_grid",
 						proxy: new Ext.data.HttpProxy({
-							url: "permissions.sjs?json-myna&method=qry_rights"
+							url: "permissions.ws?json-myna&method=qry_rights"
 						}),
 					
 						reader: new Ext.data.JsonReader({
@@ -2319,7 +2319,7 @@ var C ={
 					functions:{
 						loadForm:function(right_id){
 							Ext.Ajax.request({
-								url:"permissions.sjs?json-myna&method=get_right_data&appname=" + appname,
+								url:"permissions.ws?json-myna&method=get_right_data&appname=" + appname,
 								params:{right_id:right_id||0},
 								waitMsg:"Loading...",
 								callback:C.cbHandler(function(result){
@@ -2341,7 +2341,7 @@ var C ={
 							if (form.isValid()){
 								var data = form.getValues();
 								Ext.Ajax.request({
-									url:"permissions.sjs?json-myna&method=save_right_data",
+									url:"permissions.ws?json-myna&method=save_right_data",
 									params:data,
 									waitMsg:"Saving...",
 									callback:C.cbHandler(function(result){
@@ -2364,7 +2364,7 @@ var C ={
 									
 									var data = form.getValues();
 									Ext.Ajax.request({
-										url:"permissions.sjs?json-myna&method=delete_right",
+										url:"permissions.ws?json-myna&method=delete_right",
 										params:{
 											right_id:data.right_id											},
 										waitMsg:"Removing...",

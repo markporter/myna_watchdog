@@ -42,73 +42,77 @@ if (!Myna) var Myna={}
       (end)
    
 	Parameters:
-		spec		-	object that describes a web service - see below
+		spec		-	object that describes a web service, or a MynaPath to a file 
+						that contains the WebService spec, or a <Myna.File> object 
+						that points to a file that contains the WebService spec. See 
+						below for _spec_ object definition
 		
 	Spec Definition:
-	name				-	A name for this set of services. Like a class name
-	desc				-	A string describing this service set
-   authFunction		-	*Optional default null*
-                     Function that handles authentication before each 
-                     function request. This function will be called with a 
-                     single parameter, an object with these properties: 
-                     *	username 		   - 	supplied username
-                     *	password			- 	supplied password
-                     *	user				-	<Myna.Permissions.User> object 
-														associated with this cookie. To 
-														associate a user with this call 
-														<$cookie.setAuthUserId>
-                     *	functionName		- 	name of function called
-                     *	functionDef		- 	reference to the function 
-                                       		definition called
-                     Returning false from this function will request an HTTP 
-                     basic auth request. Returning true will allow the 
-                     request to continue. Throwing an exception will return
-                     an error to the client.
-	beforeHandler	-	*Optional default null*
-                     A function to execute after _authFunction_ but before 
-							processing the function handler. This function is called 
-							with three parameters: 
-							
-							* *name* 		- 	the name of the function handler
-							* *def*		- 	a reference to the function definition
-							* *params*	- 	an object of the function parameters to 
-							           		request.
-						
-	afterHandler		-	*Optional default null*
-							A function to execute after processing the function
-							handler. This function is called with four parameters:
-							
-							* *name*	 	- the name of the function handler
-							* *def*		- a reference to the function definition
-							* *params*	- an object of the function parameters to 
-											  request.
-							* *retval*	- the return value from the request										  
-						
-	functions		-	An object where each property is a function name and the 
-						value is an object representing a function definition as
-						described below
+		name				-	A name for this set of services. Like a class name
+		desc				-	A string describing this service set
+		authFunction		-	*Optional default null*
+								Function that handles authentication before each 
+								function request. This function will be called with a 
+								single parameter, an object with these properties: 
+								*	username 		   - 	supplied username
+								*	password			- 	supplied password
+								*	user				-	<Myna.Permissions.User> object 
+															associated with this cookie. To 
+															associate a user with this call 
+															<$cookie.setAuthUserId>
+								*	functionName		- 	name of function called
+								*	functionDef		- 	reference to the function 
+																definition called
+								Returning false from this function will request an HTTP 
+								basic auth request. Returning true will allow the 
+								request to continue. Throwing an exception will return
+								an error to the client. The "this" scope is this 
+								WeService instance
+		beforeHandler	-	*Optional default null*
+								A function to execute after _authFunction_ but before 
+								processing the function handler. This function is called 
+								with three parameters: 
+								
+								* *name* 		- 	the name of the function handler
+								* *def*		- 	a reference to the function definition
+								* *params*	- 	an object of the function parameters to 
+													request.
+								The "this" scope is this WeService instance
+		afterHandler		-	*Optional default null*
+								A function to execute after processing the function
+								handler. This function is called with four parameters:
+								
+								* *name*	 	- the name of the function handler
+								* *def*		- a reference to the function definition
+								* *params*	- an object of the function parameters to 
+												  request.
+								* *retval*	- the return value from the request										  
+								The "this" scope is this WeService instance
+		functions		-	An object where each property is a function name and the 
+							value is an object representing a function definition as
+							described below
 					
 	Function Definition:
-	desc			-	*Optional default null*
-						A string describing this function
-	params			-	An array of Parameter Definitions. See below 
-	handler		-	Function to execute. 
-	scope			-	*Optional default: Spec Definition object*
-						Object to use as "this" when executing the _handler_. 
-	returns		-	A representation of the type of data to return. If this is a
-						string, it should be one of these type names:
-						"string,numeric,date,date_time". If this is an array object, 
-						then the first item should be either a string type name, 
-						another array, or an object. If this is an object, each 
-						property should be set equal to either a string type name, 
-						another object, or an array.
+		desc			-	*Optional default null*
+							A string describing this function
+		params			-	An array of Parameter Definitions. See below 
+		handler		-	Function to execute. 
+		scope			-	*Optional default: WebService instance*
+							Object to use as "this" when executing the _handler_. 
+		returns		-	A representation of the type of data to return. If this is a
+							string, it should be one of these type names:
+							"string,numeric,date,date_time". If this is an array object, 
+							then the first item should be either a string type name, 
+							another array, or an object. If this is an object, each 
+							property should be set equal to either a string type name, 
+							another object, or an array.
 					
 	Parameter Definition:
-	name			-	name of the parameter
-	type			-	Type of the parameter. Currently, the only available types 
-						are "string,numeric,date,date_time"
-	desc			-	*Optional default null*
-						description of the parameter	
+		name			-	name of the parameter
+		type			-	Type of the parameter. Currently, the only available types 
+							are "string,numeric,date,date_time"
+		desc			-	*Optional default null*
+							description of the parameter	
 	Returns:
 		Reference to WebService instance
 		
@@ -221,6 +225,20 @@ if (!Myna) var Myna={}
 	}
 	*/
 	Myna.WebService = function(spec){
+		/* see if "spec" is a file path */
+		if (typeof spec ==="string"){
+			spec = new Myna.File(spec);
+		}
+		if (spec instanceof Myna.File){
+			spec =$server_gateway.threadContext.evaluateString(
+			  this,
+			  "(" +spec.readString() +")",
+			  spec.toString(),
+			  1,
+			  null
+			);	
+		}
+		
 		this.spec =spec
 		this.mynasoap 	= new Namespace("mynasoap","http://myna.emptybrain.info/xml-soap");
 		this.mynarpc 	= new Namespace("mynarpc","http://rpc.xml.myna");
@@ -232,6 +250,30 @@ if (!Myna) var Myna={}
 		this.xsd 		= new Namespace("xsd","http://www.w3.org/2001/XMLSchema");
 		this.xsi		= new Namespace("xsi","http://www.w3.org/2001/XMLSchema-instance");
 		this.authData={}
+		
+		/*
+		TODO: map functions so that they can be directly called against this object
+		*/
+		this.functions={};
+		var $this=this;
+		spec.functions.forEach(function(node,fname){
+			$this.functions[fname] = function(params){
+				return $this.executeFunctionHandler(
+					fname,
+					$this.spec.functions[fname],
+					$this.spec.functions[fname].params.map(
+						function(pnode){
+							if (pnode.name in params) {
+								return params[pnode.name];
+							} else {
+								return null;	
+							}
+						}
+					)
+				)
+			}
+		})
+		
 	}
 	
 	/* Function: generateQueryType
@@ -428,7 +470,7 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 			paramArray		-	array of parameters to the method
 	*/
    Myna.WebService.prototype.executeFunctionHandler=function(functionName,functionDef,paramArray){
-      $profiler.mark("begin executeFunctionHandler");
+      $profiler.mark("begin executeFunctionHandler for '" + this.spec.name +"."+functionName +"'");
       var ws = this;
       this.authData={
          username:$req.authUser,
@@ -447,7 +489,7 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
          if (user_id){
             ws.setAuthUserId(user_id);
          }
-         authSuccess = ws.spec.authFunction.call(ws.spec,authData);
+         authSuccess = ws.spec.authFunction.call(ws,authData);
          
          if (!authSuccess) {
             $res.requestBasicAuth(ws.spec.name)
@@ -472,21 +514,21 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
       }
       try{
          if (ws.spec.beforeHandler){
-            ws.spec.beforeHandler.call(ws.spec,functionName,functionDef,paramObject)
+            ws.spec.beforeHandler.call(ws,functionName,functionDef,paramObject)
          }
-         if (!functionDef.scope) functionDef.scope = ws.spec;
+         if (!functionDef.scope) functionDef.scope = ws;
          
-         var result = functionDef.handler.call(functionDef.scope,paramObject,ws.spec,functionName,functionDef)
-      } catch(exception){
+         var result = functionDef.handler.call(functionDef.scope,paramObject,ws,functionName,functionDef)
+     /*  } catch(exception){
          if (__exception__) exception =__exception__;
          var formattedError = Myna.formatError(exception) 
          var message = exception.message || exception.getMessage();
          Myna.log("ERROR","Error in "+ this.spec.name +":" +message,formattedError);
-         throw exception;
+         throw exception; */
       } finally {
          try {
             if (ws.spec.afterHandler){
-               ws.spec.afterHandler.call(ws.spec,functionName,functionDef,paramObject,result);
+               ws.spec.afterHandler.call(ws,functionName,functionDef,paramObject,result);
             }
          } catch(exception){
             if (__exception__) exception =__exception__;
@@ -565,7 +607,7 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 						<a href="http://www.mynajs.org/shared/docs/js/libOO/files/WebService-sjs.html" 
 							target="docs_ws">JSON-MYNA</a><br>
 						<i>Service URL:</i> 
-							<%=serviceUrl+"?json-myna&method=<method name>&amp;param=value..."%><br>
+							<%=serviceUrl+"?json-myna&method=&lt;method name&gt;&amp;param=value..."%><br>
 					</li>
 				</ul>
 				<p>
@@ -1279,7 +1321,7 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 			
 			var result = <impl:result xmlns:impl={impl}/>
 			var parseResultPart = function(tagName,xmlPart, specPart, valuePart){
-				var args = Array.prototype.slice.call(arguments,0)
+				var args = Array.parse(arguments);//prototype.slice.call(arguments,0)
 				args[1] = args[1].toXMLString().escapeHtml(); 
 				/* string */
 					if (typeof specPart == "string"){

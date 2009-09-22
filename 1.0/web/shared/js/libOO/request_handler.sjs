@@ -10,32 +10,36 @@ try{
 		}
 		if ($server_gateway.environment.get("threadFunctionSource")){
 			try { 
-				var f =eval(String($server_gateway.environment.get("threadFunctionSource")));
-				var args = $server_gateway.environment.get("threadFunctionArguments");
-				args = Array.prototype.slice.call(args,0);
-				var result = f.apply($server.globalScope,args||[])
-				$server_gateway.environment.put("threadReturn",result);
-				$server_gateway.environment.put("threadComplete",true);
+				(function(){
+					var f =eval(String($server_gateway.environment.get("threadFunctionSource")));
+					var args = $server_gateway.environment.get("threadFunctionArguments");
+					args = Array.prototype.slice.call(args,0);
+					var result = f.apply($server.globalScope,args||[])
+					$server_gateway.environment.put("threadReturn",result);
+					$server_gateway.environment.put("threadComplete",true);
+				})()
+					
 			} catch(e){
 				$server_gateway.log("ERROR","ThreadError: " + String(e.message),Myna.formatError(__exception__));
 			} 
 		} else if (/\.ws$/.test($server.requestScriptName)){ //web service calls
-			var file = new Myna.File($server.requestDir + $server.requestScriptName)
-			var config =$server_gateway.threadContext.evaluateString(
-			  this,
-			  "(" +file.readString() +")",
-			  file.toString(),
-			  1,
-			  null
-			);
-			new Myna.WebService(config).handleRequest($req);
+			(function(){
+				var file = new Myna.File($server.requestDir + $server.requestScriptName)
+				var config =$server_gateway.threadContext.evaluateString(
+				  this,
+				  "(" +$server_gateway.translateString(file.readString(),file.toString()) +")",
+				  file.toString(),
+				  1,
+				  null
+				);
+				new Myna.WebService(config).handleRequest($req);
+			})()
 		} else if (/\application.sjs$/.test($server.requestScriptName)){
 			$res.setStatus(500);
 			Myna.print("application.sjs files cannot be accessed remotely")
 		} else {
 			//request script
-			var rs = new Myna.File($server.requestDir + $server.requestScriptName); 
-			if (rs.exists()){
+			if (new Myna.File($server.requestDir + $server.requestScriptName).exists()){
 				Myna.includeOnce($server.requestDir + $server.requestScriptName)
 			} else {
 				$application._onError404();

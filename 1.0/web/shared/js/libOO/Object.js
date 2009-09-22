@@ -113,6 +113,7 @@
 	Object.prototype.applyTo=function(target,shouldOverwrite){
 		return ObjectLib.applyTo(this,target,shouldOverwrite);
 	}
+
 /* Function: getKeys 
 	returns an alphabetized list of non-function properties in this object
 	
@@ -269,17 +270,19 @@
 	}
 
 if ("$server_gateway" in this){
-  var hide = function (o, p) {
-	 java.lang.Class.forName ("org.mozilla.javascript.ScriptableObject")
-		.getMethod("setAttributes", java.lang.String, java.lang.Integer.TYPE)
-		.invoke(o, p, new java.lang.Integer( 
-		   org.mozilla.javascript.ScriptableObject.DONTENUM
-		)
-	 );
-  }
-  
-  for (var p in Object.prototype) hide(Object.prototype, p)
-  delete p;
-  delete hide;
+	(function(){
+		var hide = function (o, p) {
+		 java.lang.Class.forName ("org.mozilla.javascript.ScriptableObject")
+			.getMethod("setAttributes", java.lang.String, java.lang.Integer.TYPE)
+			.invoke(o, p, new java.lang.Integer( 
+				org.mozilla.javascript.ScriptableObject.DONTENUM
+			)
+		 );
+		}
+		
+		for (var p in Object.prototype) hide(Object.prototype, p)
+		delete p;
+		delete hide;
+	})()
 }
 

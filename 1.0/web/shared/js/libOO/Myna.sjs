@@ -888,23 +888,22 @@ if (!Myna) var Myna={}
 	executes a .js, .sjs, or .ejs file in the current thread
 	 
 	Parameters: 
-		path	-	<MynaPath> repesenting location of file 
-		scope 	-	*Optional, default <$server.globalScope>* This is the 
-					object that will be passed as the "this" object to the 
-					script. Set this to null to force code files to treated as text
+		path	-	<MynaPath> representing location of file 
+		scope 	-	*Optional, default {}* 
+					This is the object that will be passed as the "this" object to 
+					the script. any "global" variables created in the script will be
+					created on _scope_ object instead.
  
 	Returns: 
-		void
+		_scope_ after execution
 		
 	Detail:
-		If the file extention is one of js, sjs, or ejs:
+		If the file extension is one of js, sjs, or ejs:
 		
 		This function executes the the script at _path_ against the supplied _scope_.
 		This behavior is similar to the JavaScript "apply" function. The code in the file will be 
 		treated like the body of a function on _scope_.
-		
-		
-		
+						
 	See:
 		* http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Global_Objects:Function:apply
 		* <Myna.includeOnce>
@@ -928,10 +927,12 @@ if (!Myna) var Myna={}
 		if (scope){
 			$server_gateway.executeJsString(scope,content,path);
 		} else {
-			$server_gateway.executeJsString($server_gateway.threadScope,content,path);
+			scope=$server_gateway.threadScope
+			$server_gateway.executeJsString(scope,content,path);
 		} 
 		
 		if (typeof $profiler !== "undefined") $profiler.end("Include " + path);
+		return scope;
 	}
 /* Function: includeText 
 	Includes a text file in the current thread
@@ -982,7 +983,7 @@ if (!Myna) var Myna={}
 					script
  
 	Returns: 
-		void
+		_scope_ after execution
 		
 	Detail:
 		This function will call <include> for this path only once in this request.
@@ -994,7 +995,7 @@ if (!Myna) var Myna={}
 	Myna.includeOnce=function Myna_includeOnce(path,scope){
 		var file =new Myna.File(path); 
 		if ($server_gateway.uniqueIncludes_.add(file.toString())){
-			Myna.include(path,scope);
+			return Myna.include(path,scope);
 		}
 	}
 /* Function: includeContent   
@@ -1095,9 +1096,9 @@ if (!Myna) var Myna={}
 		If more than one thread calls getLock() near the same time, the first call 
 		will get access and the other call will be placed in a FIFO queue until 
 		the first thread calls release() on the returned lock object. For this 
-		reason it is best to call release as soon as possible. If you do not call 
-		release, Myna will attempt to release all outstanding locks at the end of 
-		the thread.   
+		reason it is best to "return" from _+func_ as soon as possible. If your 
+		function throws an exceptiion, its lock will be released. If _timeout_ is 
+		exceeded while waiting for a lock, then <Myna.lock> will return false
 	 
 	*/
 	Myna.lock=function Myna_getLock(name, timeout, func){

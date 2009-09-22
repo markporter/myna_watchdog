@@ -22,7 +22,7 @@
 	<@if $req.data.authTypes>
 		var authTypes = <%=$req.data.authTypes.split(/,/).toJson()%>
 	<@else>
-		var authTypes = <%=Myna.Permissions.getAuthTypes().toJson()%>
+		var authTypes = <%=Myna.Permissions.getAuthTypes().concat(["openid"]).toJson()%>
 	</@if>
 	var auth_token = null
 	
