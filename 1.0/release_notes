@@ -1,3 +1,15 @@
+Release Name: 1.0_alpha_17
+Notes:
+
+This release sees improvements in the threading API and the completion of fragment and query caching
+
+New in this release:
+--------------------
+
+
+
+----------------------------------------------------------
+
 Release Name: 1.0_alpha_16
 Notes:
 

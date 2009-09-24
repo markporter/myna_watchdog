@@ -6,13 +6,13 @@ var $server={
 /* property: isThread
 	true if this is an independent thread with no access to session or servlet 
 	*/
-	get isThread(){return !!$server_gateway.environment.get("threadFunction") },
+	get isThread(){return !!$server_gateway.environment.get("threadFunctionSource") },
 
-/* property: threadFunction
-	the function that the current subthread is executing, or null if 
-	this is not a subthread 
+/* property: threadFunctionSource
+	the source of the function that the current subthread is executing, or null 
+	if this is not a subthread 
 	*/
-	get threadFunction(){return $server_gateway.environment.get("threadFunction") },
+	get threadFunctionSource(){return $server_gateway.environment.get("threadFunctionSource") },
 	
 	
 	//isThread:false,
@@ -119,6 +119,24 @@ var $server={
 			if (cPath.charAt(cPath.length-1) == "/") return cPath;
 			return String(cPath.substring(0, cPath.length - $server.requestScriptName.length))
 	  },
+/* property: resolveUrl
+			takes a url path relative to the request directory and returns an 
+			absolute URL, including the server part.
+		  
+			Partameters:
+				path					-	a url path relative to the request directory
+				 
+			Example:
+			> var linkUrl = $server.resolveUrl($server.requestScriptName);
+	  */
+	  resolveUrl:function(path){
+			if (!path) throw new Error("'path' is required");
+			return new java.net.URI(
+				$server.serverUrl +
+				$server.requestUrl +
+				path
+			).normalize().toString();
+	  },
 /* 	property: rootDir
 	<MynaPath> representing the Myna root directory.
 	
@@ -145,7 +163,7 @@ var $server={
 	URL Path representing the directory of the currently executing script
 	
 	Example:
-	> /myna/administrator/views/
+	> /<context root>/myna/administrator/views/
 	*/
 	get currentUrl(){ 
 		var cPath = $server.currentDir;

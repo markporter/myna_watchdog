@@ -42,7 +42,6 @@ $application.appendFunction("onRequestStart",function(){
 	//is the user authenticated?
 	if (this.noAuthFuses.indexOf($req.data.fuseaction.toLowerCase()) != -1) return;	
 	if ( !$cookie.getAuthUserId() ){
-		
 			/* 	if the fuseaction requires authentication, 
 				but the user is not authenticated, then set
 				the fuseaction to the default (login)

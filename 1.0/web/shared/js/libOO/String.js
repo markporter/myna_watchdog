@@ -1000,28 +1000,41 @@
 	};
 /* ======================= Myna-only functions ============================== */
 if ("$server_gateway" in this){
+	/* Function: hashCode
+		returns java.lang.String.hasCode() for this string
+		
+		Detail:
+			The Java String object provides a method for quickly creating 
+			a unique numeric hash value. This is useful for creating hash keys for 
+			lookup or equality comparisons or any other non-cryptographic uses.
+			
+		for cryptographic uses see <toHash>
+	*/
+	String.prototype.hashCode=function(){
+		return new java.lang.String(this).hashCode();	
+	}
 	/* Function: hashEquals 
-	Returns true if the plaintext password matches the encrypted password 
+		Returns true if the plaintext password matches the encrypted password 
+		 
+		Parameters: 
+			hash	-	hash previously created with <String.hash>
 	 
-	Parameters: 
-		hash	-	hash previously created with <String.hash>
- 
-	Returns: 
-		true if this string matches _hash_
+		Returns: 
+			true if this string matches _hash_
+			
+		Detail:
+			One way hashes like those created by <String.hash> cannot be decrypted. However, 
+			you can encrypt a possible match and compare the hashes. Because of the salt in the hashes 
+			produced by <String.hash>, equivalent hashes won't look the same, but this 
+			function can compare them.
+			
 		
-	Detail:
-		One way hashes like those created by <String.hash> cannot be decrypted. However, 
-		you can encrypt a possible match and compare the hashes. Because of the salt in the hashes 
-		produced by <String.hash>, equivalent hashes won't look the same, but this 
-		function can compare them.
-		
-	
-	See:
-	*	<String.toHash>
-	* 	<String.encrypt>
-	*	<String.decrypt>
-	*	http://www.jasypt.org/
-	 
+		See:
+		*	<String.toHash>
+		* 	<String.encrypt>
+		*	<String.decrypt>
+		*	http://www.jasypt.org/
+		 
 	*/
 	String.prototype.hashEquals=function(hash){
 		var 

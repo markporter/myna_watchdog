@@ -548,7 +548,7 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 	Myna.WebService.prototype.printHelp=function(){
 		var ws = this;
 		var spec = ws.spec;
-		var serviceUrl = $server.requestServerUrl + $server.requestUrl + $server.requestScriptName;
+		var serviceUrl = $server.serverUrl + $server.requestUrl + $server.requestScriptName;
 		var methods = spec.functions.getKeys().sort().map(function(name){
 			var obj = spec.functions[name]
 			obj.setDefaultProperties({
@@ -658,6 +658,7 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 			</body>
 		</html>
 		</ejs>);	
+		
 	}
 		
 /* Function: printWsdl
@@ -808,7 +809,7 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 			>
 				<wsdl:documentation>{ws.desc}</wsdl:documentation>
 				<wsdl:port binding={"impl:"+ws.spec.name+".soapBinding"} name={ws.spec.name}>
-				<wsdlsoap:address location={$server.requestServerUrl+$server.requestUrl+$server.scriptName+"?soap"}/>
+				<wsdlsoap:address location={$server.serverUrl+$server.requestUrl+$server.scriptName+"?soap"}/>
 				</wsdl:port>
 			</wsdl:service>	
 		);
@@ -902,7 +903,7 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 	Myna.WebService.prototype.printExtApi=function(req){
 		var f = this.spec.functions;
 		var API ={
-			url:$server.requestServerUrl+$server.currentUrl+$server.scriptName +"?ext-route",
+			url:$server.serverUrl+$server.currentUrl+$server.scriptName +"?ext-route",
 			type:"remoting",
 			actions:{}
 		}
@@ -963,7 +964,7 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 			if (!req.method){
 				throw new Error("Please supply a method to invoke")
 			}
-			var requestPath = 	$server.requestServerUrl
+			var requestPath = 	$server.serverUrl
 								+$server.requestUrl
 								+$server.requestScriptName;
 			

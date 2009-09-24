@@ -1,10 +1,15 @@
-if (!$req.authPassword.length){
-   $res.requestBasicAuth("Enter Admin and the administrator password");
-   Myna.abort();
-}
+
 
 $application.after("onRequestStart",function(){
-		
+	if (!$cookie.getAuthUserId() || 
+		!$cookie.getAuthUser().hasRight("myna_admin","full_admin_access")	
+	){
+		$res.redirectLogin({
+			callbackUrl:$server.requestScriptName,
+			title:"Myna Administrator Login"
+		})
+	}
+	
 	if ("view_source" in $req.data){
 		var path = ($server.requestDir+$server.requestScriptName).replace(/\.\./g,"FAIL");
 		var content =new Myna.File(path)

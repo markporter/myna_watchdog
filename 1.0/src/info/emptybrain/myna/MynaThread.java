@@ -105,6 +105,7 @@ public class MynaThread {
          // Make Rhino runtime to call observeInstructionCount
          // each 10000 bytecode instructions
          cx.setInstructionObserverThreshold(10000);
+				 cx.getWrapFactory().setJavaPrimitiveWrap(false);
          return cx;
      }
 

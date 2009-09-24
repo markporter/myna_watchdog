@@ -100,6 +100,7 @@ var $res = {
 		
 	*/
 	requestBasicAuth:function(realm, message){
+		if (!$server.response) return;
 		$res.setHeader("WWW-Authenticate",'Basic realm="' 
 			+ (realm||"Myna Application Server") + '"');
 		$res.setStatusCode(401,message||"")
@@ -133,6 +134,7 @@ var $res = {
 			$res.metaRedirect("some_other_page.ejs");
 	*/
 	setStatusCode:function(code,msg){
+		if (!$server.response) return;
 		if (msg){
 			$server.response.sendError(code,msg);	
 		} else {
@@ -165,16 +167,75 @@ var $res = {
 			this function
 		
 		Parameters: 
-			url - absolute url to redirect to
+			url - absolute url (including server) to redirect to. See 
+					<$server.resolveUrl> for converting relative URLs to absolute 
+					URLs 
 		
-		Example:
+		Examples:
+		(code)	
 			$res.redirect("http://example.com/page.html");
+			$res.redirect($server.resolveUrl("fusebox.sjs?fuseaction=main"));
+		(end)
 	*/
 	redirect:function(url){
 		if ($server.response) $server.response.sendRedirect(url);
 		Myna.abort();		
 	},
-	
+/* 	Function: redirectLogin
+		Redirect this page to the central login page 
+		
+		
+		Parameters: 
+			options		-	options object, see below
+			
+		Options:
+			callbackUrl		-	URL relative to the current directory that the user
+									should return to after login.
+			title				-	*Optional, default "Login"*
+									Window title for login page
+			providers			-	*Optional, default <Myna.Permissions.getAuthTypes> + "openid"*
+									An array or comma separated list of auth_types to 
+									include in the login window.
+			loginPage			-	*Optional, default $server.rootUrl+"myna/auth/auth.sjs?fuseaction=login"*
+									If you want to provide a customized login page, 
+									indicate the URL here. Be sure that your page posts 
+									to auth.sjs in the same way that dsp_login.ejs does. 
+			message			-	*Optional, default ""*
+									A short one-line message to display above the login 
+									area 
+		
+		Detail:
+			Myna provides a centralized authentication application that can 
+			authenticate a users against any defined auth type, including OpenId. 
+			Calling this function will send an HTTP redirect to the browser to send 
+			the user to Myna's authentication page. Once the user is authenticated
+			he/she will be redirected back to _callbackUrl_ and an authentication 
+			cookie for your application will be generated. You can examine the 
+			logged in user by calling <$cookie.getAuthUser>. Authorization can then 
+			be performed via <Myna.Permissions.User.hasRight>
+									
+		Note:
+			This function called <Myna.abort>, so no further processing will be 
+			done after a call to this function
+	*/
+	redirectLogin:function(options){
+		options.setDefaultProperties({
+			providers:["openid"].concat(Myna.Permissions.getAuthTypes()),
+			title:"Login",
+			loginPage:$server.rootUrl+"myna/auth/auth.sjs?fuseaction=login",
+			message:""
+		})
+		options.checkRequired(["callbackUrl"]);
+		var url = options.loginPage + 
+			(/\?/.test(options.loginPage)?"&":"?") + "providers=" +
+			(typeof options.providers ==="string"?options.providers.split(/,/):options.providers) +
+			"&title=" + options.title +
+			"&callback=" + $server.resolveUrl(options.callbackUrl)+
+			"&message=" + options.message
+		$res.metaRedirect(url);
+		Myna.print("<a href ='" + url +"'>"+options.title+"</a>");
+		Myna.abort();
+	},	
 /* 	Function: setHeader
 		sets a header to return to the browser
 		

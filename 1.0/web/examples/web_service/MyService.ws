@@ -71,7 +71,7 @@
 			  params:[],
 			  handler:function(){
 				  //you can access the spec as "this"
-				  return this.toJson()
+				  return this.spec.toJson()
 			  }
 		 },
 		 get_bob:{

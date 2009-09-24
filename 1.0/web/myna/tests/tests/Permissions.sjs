@@ -280,7 +280,6 @@
 	function User_General(name){ TestCase.call( this, name );}
 	User_General.prototype = new TestCase();
 	User_General.prototype.setUp = function(){
-		
 		this.user = Myna.Permissions.addUser({
 			first_name:"Test",
 			middle_name:"A.",
@@ -331,10 +330,10 @@
 	};
 	/* ------ main ----------------------------------------------------------- */
 		User_General.prototype.test_main=function(){
-			this.user.setLogin({type:"local",login:"tuser",password:"test"})
+			this.user.setLogin({type:"myna",login:"tuser",password:"test"})
 			
 			this.assertTrue("logins do not contain 'tuser'",
-				this.user.getLoginList().listContains("local:tuser")
+				this.user.getLoginList().listContains("myna:tuser")
 			);
 			this.assertTrue("password is wrong",
 				this.user.isCorrectPassword("tuser","test")
@@ -349,7 +348,7 @@
 				title:"Mr"
 			});
 			var login = Myna.createUuid();
-			user.setLogin({type:"local",login:login,password:"bob"});
+			user.setLogin({type:"myna",login:login,password:"bob"});
 			this.assertTrue(user.isCorrectPassword(login,"bob"),"Test");
 		}
 	/* ------ inactivate ---------------------------------------------- */

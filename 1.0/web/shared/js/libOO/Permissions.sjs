@@ -490,7 +490,7 @@ if (!Myna) var Myna={}
 				return null;	
 			}
 		},
-	 /* Function: getUserById
+	/* Function: getUserById
 			returns the User object that matches the supplied id or null
 			
 			Parameters:
@@ -747,6 +747,13 @@ if (!Myna) var Myna={}
 	 */
 		Myna.Permissions.User.prototype.hasRight = function(appname,rightName){
 			var ug = this;
+			//the admin user has all rights to the myna_admin application even 
+			//if the database is broken
+			if (
+				this.user_id == "myna_admin" &&
+				appname == "myna_admin"
+			) {return true;}
+			
 			return new Myna.Query({
 				ds:ug.ds,
 				sql:<ejs>

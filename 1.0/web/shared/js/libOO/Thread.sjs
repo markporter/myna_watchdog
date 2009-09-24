@@ -27,7 +27,7 @@ if (!Myna) var Myna={}
 		functions running in parallel, or to execute non-interactive code in the 
 		background.
 		
-		Each Thread runs in a seperate Myna request with it's own global ($) 
+		Each Thread runs in a separate Myna request with it's own global ($) 
 		variables. Because the script path is copied from the parent thread, 
 		$application will be created the same as the parent thread and 
 		$application.onRequestStart() .onError() etc. will be fired at the 
@@ -89,7 +89,6 @@ if (!Myna) var Myna={}
 Myna.Thread=function(f,args,priority){
 	
 	
-	
 	if (!args) args = [];
 	
 	var parent = this;
@@ -102,6 +101,10 @@ Myna.Thread=function(f,args,priority){
 	
 	var source = f.toSource().replace(/^\((.*)\)$/,"$1");
 	//java.lang.System.err.println("calling " + source)
+	if ($server_gateway.threadChain.size() > 5){
+		Myna.logSync("ERROR","thread chains cannot descend more than 5 levels.",Myna.dump($server_gateway.threadChain,"Thread Chain") + Myna.dump($server,"$server")+ Myna.dump($req.data,"$req.data"));
+		throw new Error("thread chains cannot descend more than 5 levels.");
+	}
 	this.javaThread=$server_gateway.spawn(source,args);
 	if (this.javaThread){
 		var p = java.lang.Thread.NORM_PRIORITY;
