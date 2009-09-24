@@ -590,7 +590,9 @@ if (!Myna) var Myna={}
 		
 		//write the script to the temp file
 		scriptFile.writeString(script);
-		
+		result.file=scriptFile.toString();
+		result.script=script;
+		result.shellCommand=shellCommand;
 		process = runtime.exec(shellCommand + " " + systemPath,null,scriptFile.javaFile.getParentFile());
 		
 		if (waitForOutput){
@@ -609,7 +611,26 @@ if (!Myna) var Myna={}
 			process.waitFor();
 			result.exitCode = process.exitValue();
 		}
-		scriptFile.forceDelete();
+		if (result.exitCode ==0 && String(result.errors).length ==0){
+			scriptFile.forceDelete();
+		} else {
+			Myna.log("Error","Error in Myna.executeShell",<ejs>
+				<b>Shell Command:</b><br>
+				<pre><%=shellCommand%></pre><p>
+				
+				<b>Script:</b><br>
+				<pre><%=script%></pre><p>
+				
+				<b>Errors:</b><br>
+				<pre><%=result.errors%></pre><p>
+				
+				<b>Output:</b><br>
+				<pre><%=result.output%></pre><p>
+				
+				<b>ScriptPath:</b><br>
+				<pre><%=result.file%></pre><p>
+			</ejs>);	
+		}
 		return result;
 		
 	}
@@ -921,7 +942,7 @@ if (!Myna) var Myna={}
 			content = "try{" + content 
 				+"\n} catch(e) {if (__exception__ && !e.rhinoException) e.rhinoException=__exception__; if($application && $application._onError) {$application._onError(e)} else{throw(e)}}";
 		} else {
-			throw new Error("include can only be called with .js .sjs or .ejs files")	
+			throw new Error("Cannot include '"+path+"'. include() can only be called with .js .sjs or .ejs files")	
 		}
 		content +="\n";
 		if (scope){
@@ -996,7 +1017,7 @@ if (!Myna) var Myna={}
 		var file =new Myna.File(path); 
 		if ($server_gateway.uniqueIncludes_.add(file.toString())){
 			return Myna.include(path,scope);
-		}
+		} else return scope;
 	}
 /* Function: includeContent   
 	Includes a text file or executes a .js, .sjs, or .ejs file in the current thread, and returns the output instead of printing 

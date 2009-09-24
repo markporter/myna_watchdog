@@ -55,13 +55,22 @@ New in this release:
 [1]:http://openid.net/
 
 
-* Created 'version_list.properties in WEB-INF/classes to store the list of jars
-	provided with Myna and their versions. Also renamed all existing jars to their 
-	generic names, not including version information. This will prevent old 
-	version of jars from lingering after upgrades. **Myna 1.0 Alpha17 should be 
-	installed fresh** to remove old libraries. Future versions should not have the 
-	orphaned library problem
+* **Fixed orphaned libraries**
+
+   Created 'version_list.properties in WEB-INF/classes to store the list of jars
+	 provided with Myna and their versions. Also renamed all existing jars to their 
+	 generic names, not including version information. This will prevent old 
+	 version of jars from lingering after upgrades. **Myna 1.0 Alpha17 should be 
+	 installed fresh** to remove old libraries. Future versions should not have the 
+	 orphaned library problem.
 	
+*  **Myna datasources are now also Java DataSource objects**
+
+   Internally, Myna now stores datasources as Java DataSource objects. 
+	 Myna.Query, Myna.DataManager, and Myna.Database can now accept a Java 
+	 DataSource instance as well as a Myna datasource name. this means that you 
+	 can use these utilities with Java datasources accessed through JNDI or even 
+	 DS's created at runtime usch as a poi DataSource .  
 Other changes:
 --------------------
 * String.listContains and listContainsNoCase now accept a list as an argument. 

@@ -169,7 +169,7 @@ function searchUsers(search){
 				 }
 			})
 			if (result.login.length) return result
-					
+			else return undefined
 		}),
 		columns:"login,first_name,last_name,middle_name,title"
 	})

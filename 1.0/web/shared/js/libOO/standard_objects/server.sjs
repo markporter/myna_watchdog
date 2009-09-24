@@ -15,7 +15,6 @@ var $server={
 	get threadFunctionSource(){return $server_gateway.environment.get("threadFunctionSource") },
 	
 	
-	//isThread:false,
 /* property: instance_id 
 	an identifier for this server instance 
 	*/
