@@ -78,6 +78,7 @@ var dsInfo={
 	driver:"",
 	url:""
 }
+var connectionTestSql="select 1";
 var functions={
 	getDefaultSchema:function(db){
 		var schemas = db.schemas;

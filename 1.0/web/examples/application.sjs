@@ -6,7 +6,9 @@ $application.after("onRequestStart",function(){
 	){
 		$res.redirectLogin({
 			callbackUrl:$server.requestScriptName,
-			title:"Myna Administrator Login"
+			title:"Myna Administrator Login",
+			message:"You must Myna Administrator access to view examples."
+			
 		})
 	}
 	

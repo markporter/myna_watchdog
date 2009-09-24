@@ -74,6 +74,7 @@ var dsInfo={
 	driver:"net.sourceforge.jtds.jdbc.Driver",
 	url:"jdbc:jtds:sqlserver://{server}:{port}/{db}"
 }
+var connectionTestSql="select 1";
 var functions={
 	setClob:function(con,st,index,value){
 		st.setObject(index+1,value,java.sql.Types.VARCHAR);

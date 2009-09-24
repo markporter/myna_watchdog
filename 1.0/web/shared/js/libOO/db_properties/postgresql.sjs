@@ -81,6 +81,7 @@ var dsInfo={
 	driver:"org.postgresql.Driver",
 	url:"jdbc:postgresql://{server}:{port}/{db}"
 }
+var connectionTestSql="select 1";
 var functions={
 	getDefaultSchema:function(db){
 		var schemas = db.schemas;

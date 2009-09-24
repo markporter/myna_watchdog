@@ -86,6 +86,7 @@ var dsInfo={
 	driver:"com.mysql.jdbc.Driver",
 	url:"jdbc:mysql://{server}:{port}/{db}"
 }
+var connectionTestSql="select 1";
 var functions={
 	getDefaultSchema:function(db){
 		var schemas = db.schemas;

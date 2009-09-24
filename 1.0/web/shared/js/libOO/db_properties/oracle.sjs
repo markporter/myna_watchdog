@@ -83,6 +83,7 @@ var dsInfo={
 	driver:"oracle.jdbc.OracleDriver",
 	url:"jdbc:oracle:thin:@{server}:{port}:{db}"
 }
+var connectionTestSql="select 1 from dual";
 var functions={
 	getDefaultSchema:function(db){
 		return String(db.md.getUserName());

@@ -952,6 +952,12 @@ public class MynaThread {
 			bds.setUsername(ds.getProperty("username"));
 			bds.setPassword(ds.getProperty("password"));
 			bds.setUrl(ds.getProperty("url"));
+			bds.setTestOnBorrow(true);
+			if (ds.getProperty("type").equals("oracle")){
+					bds.setValidationQuery("select 1 from dual");
+			} else {
+				bds.setValidationQuery("select 1");
+			}
 
 			this.javaDataSources.put(dsName,bds);
 

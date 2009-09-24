@@ -89,6 +89,7 @@ var dsInfo={
 	url:"jdbc:h2:tcp://{server}:{port}/{db}",
 	file_url:"jdbc:h2:file:{file};FILE_LOCK=SOCKET"
 }
+var connectionTestSql="select 1";
 var functions={
 	getDefaultSchema:function(db){
 		var schemas = db.schemas;
