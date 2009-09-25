@@ -850,8 +850,8 @@ if (!Myna) var Myna={}
 			}
 			var existing =user_logins.find({
 				user_id:options.user_id,
-				type:options.type,
-				login:options.login
+				type:String(options.type),
+				login:String(options.login)
 			})
 				
 			if (existing.length){

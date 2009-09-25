@@ -569,8 +569,22 @@ if (!Myna) var Myna={}
 		This function attempts to execute the supplied script in the supplied shell. 
 		This is obviously platform dependent, so you may want to consult <$server.osName>. 
 		It saves _script_ to a tempfile and then executes _shellCommand_ with the temp file 
-		name as the last parameter 
-	 
+		name as the last parameter
+		
+	Example:
+	(code)
+	var result =Myna.executeShell("bash",<ejs>
+			echo "began script at `date`"
+			du -sh "<%=new Myna.File("/").javaFile.getAbsolutePath()%>"
+			echo "finished script at `date`"
+	</ejs>)
+	if (result.exitCode == 0){
+			Myna.print("<pre>" +result.output + "</pre>");
+	} else {
+			Myna.print("<pre>" +result.errors + "</pre>");
+	}	
+	(end)
+	
 	*/
 	Myna.executeShell=function Myna_executeShell(shellCommand,script,waitForOutput){
 		var

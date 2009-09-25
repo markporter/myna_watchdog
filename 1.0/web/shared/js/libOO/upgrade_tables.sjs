@@ -433,8 +433,8 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 			})
 		}
         
-    dm = new Myna.DataManager("myna_permissions");
-    /* check for Myna Admin rights */
+   dm = new Myna.DataManager("myna_permissions");
+   /* check for Myna Admin rights */
         var installed_rights = new Myna.Query({
             ds:"myna_permissions",
             sql:<ejs>
@@ -449,7 +449,7 @@ Myna.include("/myna/administrator/myna_admin.sjs");
                 name:"full_admin_access"
             })  
         }
-    /* check for myna_admin user */
+   /* check for myna_admin user */
         var users = dm.getManager("users");
         if (!users.find("myna_admin").length){
             users.create({
@@ -463,7 +463,7 @@ Myna.include("/myna/administrator/myna_admin.sjs");
             Myna.Permissions.getUserById("myna_admin")
             .setLogin({type:"server_admin",login:"Admin"})
         }
-    /* check for "Myna Administrators" user group */
+   /* check for "Myna Administrators" user group */
         var user_groups = dm.getManager("user_groups");
         if (!user_groups.find({name:"Myna Administrators",appname:"myna_admin"}).length){
             var group = Myna.Permissions.addUserGroup({

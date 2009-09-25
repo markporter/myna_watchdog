@@ -149,7 +149,7 @@ var fusebox={
 		// extract the receiving URL from the HTTP request
 		var receivingURL = httpReq.getRequestURL();
 		var queryString = httpReq.getQueryString();
-		if (queryString != null && queryString.length() > 0)
+		if (queryString != null && queryString.length > 0)
 			 receivingURL.append("?").append(httpReq.getQueryString());
 	
 		// verify the response; ConsumerManager needs to be the same
@@ -211,11 +211,10 @@ var fusebox={
 			}
 			auth_data.user = user;
 			var discovered = $session.get("__MYNA_OPENID_DISCOVERED__")
-			Myna.log("debug","disc",Myna.dump(Myna.JavaUtils.beanToObject(discovered)));
 			if (discovered.getClaimedIdentifier()){
 				user.setLogin({
 					type:"openid",
-					login:discovered.getClaimedIdentifier()
+					login:String(discovered.getClaimedIdentifier())
 				})
 			}
 			user.setLogin({
