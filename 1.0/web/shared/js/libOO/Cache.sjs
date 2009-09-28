@@ -280,7 +280,7 @@ if (!Myna) var Myna={}
 		}
 		//try to free memory in the background
 			new Myna.Thread(function(){
-				Myna.lock("MYNA:cacheFree",0,function(){
+				Myna.lock("MYNA:cacheFree",0,function(c){
 					while (true){
 						if (
 							($server.memAvailable/$server.memMax) > .2
@@ -291,7 +291,7 @@ if (!Myna) var Myna={}
 						})	
 					}
 				})
-			},[])
+			},[c])
 		if (!cacheObj) {
 			throw new Error("Unable to create or retrieve cache value for cache '" +this.name+ "'");
 		}

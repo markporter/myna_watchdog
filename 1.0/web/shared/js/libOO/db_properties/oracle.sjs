@@ -108,11 +108,13 @@ var functions={
 		})
 	},
 	setClob:function(con,st,index,value){
+		con = st.getInnermostDelegate().getConnection();
 		var clob = Packages.oracle.sql.CLOB.createTemporary(con, false,Packages.oracle.sql.CLOB.DURATION_SESSION);
 		clob.putString(1,value);
 		st.setClob(index+1, clob);
 	},
 	setBlob:function(con,st,index,value){
+		con = st.getInnermostDelegate().getConnection();
 		var blob = Packages.oracle.sql.BLOB.createTemporary(con, false,Packages.oracle.sql.BLOB.DURATION_SESSION);
 		blob.putBytes(1,value);
 		st.setBlob(index+1, blob);

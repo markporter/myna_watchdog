@@ -649,9 +649,9 @@ Myna.Query.prototype={
 						try {
 							
 							if (element.type == java.sql.Types.CLOB && db.functions.setClob){	
-								db.functions.setClob(con.getInnermostDelegate(),st.getInnermostDelegate(),index,element.value)
+								db.functions.setClob(con,st,index,element.value)
 							} else if (element.type == java.sql.Types.BLOB && db.functions.setBlob){	
-								db.functions.setBlob(con.getInnermostDelegate(),st.getInnermostDelegate(),index,element.value)
+								db.functions.setBlob(con,st,index,element.value)
 							} else {
 								if (String(element.value).length == 0){//empty strings are considered NULL
 									st.setNull(index+1,element.type);

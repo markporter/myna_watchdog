@@ -391,7 +391,7 @@ var fusebox={
 		//this.main({});
 	},
 /* search_general_log */
-	search_general_log:function(data){
+	search_general_log:function(data,rawData){
 		data.setDefaultProperties({
 			start:0,
 			limit:25,
@@ -446,25 +446,25 @@ var fusebox={
 					and upper(type) = <%=p.addValue(data.type)%>
 				</@if>
 				<@if data.log_id.length>
-					and log_id >= <%=p.addValue(data.log_id.unEscapeHtml())%>
+					and log_id >= <%=p.addValue(rawData.log_id)%>
 				</@if>
 				<@if data.request_id.length>
-					and request_id = <%=p.addValue(data.request_id.unEscapeHtml())%>
+					and request_id = <%=p.addValue(rawData.request_id)%>
 				</@if>
 				<@if data.instance_id.length>
-					and instance_id = <%=p.addValue(data.instance_id.unEscapeHtml().toLowerCase())%>
+					and lower(instance_id) = <%=p.addValue(rawData.instance_id.toLowerCase())%>
 				</@if>
 				<@if data.hostname.length>
-					and hostname like <%=p.addValue(data.hostname.unEscapeHtml().toLowerCase())%>
+					and lower(hostname) like <%=p.addValue(rawData.hostname.toLowerCase())%>
 				</@if>
 				<@if data.app_name.length>
-					and lower(app_name) = <%=p.addValue(data.app_name)%>
+					and lower(app_name) = <%=p.addValue(data.app_name.toLowerCase())%>
 				</@if>
 				<@if data.purpose.length>
-					and upper(purpose) = <%=p.addValue(data.purpose)%>
+					and upper(purpose) = <%=p.addValue(data.purpose.toUpperCase())%>
 				</@if>
 				<@if data.label_contains.length gt 2 >
-					and lower(label) like <%=p.addValue(data.label_contains)%>
+					and lower(label) like <%=p.addValue(data.label_contains.toLowerCase())%>
 				</@if>
 				<@if data.label_not_contains.length>
 					<@loop array="data.label_not_contains.split(/,/)" element="string" index="index">

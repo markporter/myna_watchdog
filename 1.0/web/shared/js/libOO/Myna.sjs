@@ -610,17 +610,8 @@ if (!Myna) var Myna={}
 		process = runtime.exec(shellCommand + " " + systemPath,null,scriptFile.javaFile.getParentFile());
 		
 		if (waitForOutput){
-			reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()));
-			
-			while ((curLine = reader.readLine())){
-				result.output += curLine + "\n";
-			}
-			
-			reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getErrorStream()));
-			
-			while ((curLine = reader.readLine())){
-				result.errors += curLine + "\n";
-			}
+			result.output = Myna.JavaUtils.streamToString(process.getInputStream());
+			result.errors = Myna.JavaUtils.streamToString(process.getErrorStream());
 			
 			process.waitFor();
 			result.exitCode = process.exitValue();
