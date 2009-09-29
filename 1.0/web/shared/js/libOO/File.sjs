@@ -358,7 +358,7 @@ if (!Myna) var Myna={}
 		var iterator = FileUtils.iterateFiles(this.javaFile,extensions,recursive);
 		var result=new Myna.DataSet({
 			data:[],
-			columns:"directoryPath,fileName,type,size,lastModified,"
+			columns:"directoryPath,fileName,type,size,lastModified"
 		});
 		while (iterator.hasNext()){
 			result.push(new Myna.File(iterator.next().toURI()));

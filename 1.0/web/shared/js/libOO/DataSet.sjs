@@ -227,13 +227,14 @@ if (!Myna) var Myna={}
 		bds.setDriverClassName("org.h2.Driver");
 		bds.setUrl("jdbc:h2:mem:" + Myna.createUuid());
 		var db = new Myna.Database(bds);
+		var $this = this;
 		db.getTable("data").create({
 			columns:[{
 				name:"dataset_row_number",
 				type:"BIGINT",
 				isPrimaryKey:true
 			}].concat(
-				qry.data.columns.map(function(colname){
+				$this.columns.map(function(colname){
 					return {
 						name:colname,
 						type:"VARCHAR", 
@@ -243,10 +244,10 @@ if (!Myna) var Myna={}
 			)
 		})
 		var sql=<ejs>
-			insert into data(dataset_row_number,<%=qry.data.columns.join()%>) 
+			insert into data(dataset_row_number,<%=$this.columns.join()%>) 
 			values ({dataset_row_number:BIGINT},
 			<% 
-				qry.data.columns.forEach(function(colName,index, columnArray){
+				$this.columns.forEach(function(colName,index, columnArray){
 					Myna.print("{" +colName+":VARCHAR}")
 					if (index < columnArray.length -1) Myna.print(",")
 				});
@@ -255,7 +256,7 @@ if (!Myna) var Myna={}
 			)
 		
 		</ejs>
-		qry.data.forEach(function(row,index){
+		$this.forEach(function(row,index){
 			row.dataset_row_number = index;
 			new Myna.Query({
 				ds:bds,

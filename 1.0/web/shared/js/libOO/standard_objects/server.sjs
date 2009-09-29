@@ -95,7 +95,7 @@ var $server={
 		*DEPRECATED* see  <$server.serverUrl>
 	*/	
 	get requestServerUrl(){
-		Myna.log("WARNING","Deprecated property 'requestServerUrl' called.",Myna.dump($req.data));
+		//Myna.log("WARNING","Deprecated property 'requestServerUrl' called.",Myna.dump($req.data));
 		return $server.serverUrl
 	},
 /* 	property: requestDir
