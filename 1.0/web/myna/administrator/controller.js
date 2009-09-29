@@ -1451,7 +1451,6 @@ var C ={
 						click_type:function(type){
 							var form = Ext.getCmp("general_log_search_form").form;
 							form.findField("type").setValue(type);
-							alert(type)
 							this.search();
 						},
 						search:search=function(){
