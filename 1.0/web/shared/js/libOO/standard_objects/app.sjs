@@ -218,7 +218,8 @@ var $application={
 						})
 					}
 				//get array of merged GET and POST parameters as key, value pairs
-				var keyValueArray = $server.request.getParameterMap().entrySet().toArray();
+				var params = Myna.JavaUtils.mapToObject($server.request.getParameterMap())
+									
 				var val; 		// value of $req.data.<parameter_name>
 				var curVal;		// temp val
 				var curObj;		// temp JSON object
@@ -228,9 +229,124 @@ var $application={
 				var valId;		// counter for looping over the list of values for a specific key
 				
 				
-				for (keyId=0; keyId < keyValueArray.length; ++keyId){
-					valArray = keyValueArray[keyId].getValue();
-					key =keyValueArray[keyId].getKey()
+				//process uploads if necessary
+					$server_gateway.runtimeStats.put("currentTask","processUploads");
+					
+					var fileupload =Packages.org.apache.commons.fileupload; 
+					if (fileupload.servlet.ServletFileUpload.isMultipartContent($server.request)){
+						$session.set("$uploadProgress",{
+								fileNumber:"N/A",
+								bytesRead:-1,
+								totalBytes:0,
+								percentComplete:0,
+								kps:0,
+								message:"Preparing Upload"
+						});
+						var start = new Date().getTime()
+						var oldTimeout = $server_gateway.requestTimeout 
+						$server_gateway.requestTimeout = 0; // disable timeout while uploading
+						
+						
+						// Create a factory for disk-based file items
+						var diskItemFactory = new fileupload.disk.DiskFileItemFactory(
+							1024*1024*500, //limit to no more than 500 megabytes
+							new Myna.File($server.tempDir).javaFile
+						);
+						
+						//make sure all files no matter how small are written to disk
+						diskItemFactory.setSizeThreshold(0);
+						// Create a new file upload handler
+						var upload = new fileupload.servlet.ServletFileUpload(diskItemFactory);
+						var lastBytesRead=0;
+						var lastTick = new Date().getTime();
+						var listener =new fileupload.ProgressListener(){
+							update:function(pBytesRead, pContentLength, pItems){
+								var my = arguments.callee;
+								
+								var elapsedKbytes = (pBytesRead- lastBytesRead)/1024;
+								//if (elapsedKbytes < 2) return;
+								var currentTick = new Date().getTime();
+								var elapsed_seconds = (currentTick - lastTick)/1000;
+								if (elapsed_seconds < 1) return;
+								
+								
+								if (!my.progress || my.progress.bytesRead != pBytesRead){
+									
+									if (!pItems) pItems=1;
+									my.progress={
+										fileNumber:pItems,
+										bytesRead:pBytesRead,
+										totalBytes:pContentLength,
+										percentComplete:(pBytesRead/pContentLength),
+										kps:elapsedKbytes/elapsed_seconds
+									}
+									
+									
+									if (pBytesRead == pContentLength){
+										my.progress.message="File upload complete";
+									} else {
+										my.progress.message="Uploading file #" + pItems+", " 
+										+ Math.floor(my.progress.percentComplete*100) 
+										+ "% complete (" + my.progress.kps.toFixed() +" KBps)";  	
+									}
+									//calculate upload rate
+									
+									
+									
+									lastBytesRead=pBytesRead;
+									lastTick = currentTick;
+									$session.set("$uploadProgress",my.progress);
+								}
+							}
+						};
+						upload.setProgressListener(listener);
+						
+						// Parse the request
+						var items = upload.parseRequest($server.request);
+						$session.set("$uploadProgress",{
+								fileNumber:"N/A",
+								bytesRead:0,
+								totalBytes:0,
+								percentComplete:1,
+								kps:0,
+								message:"File Upload Complete",
+								elapsedSeconds: (new Date().getTime() -start)/1000
+						});
+						items.toArray().forEach(function(item,index){
+							if (item.isFormField()){
+								params[item.getFieldName()] = [item.getString()];
+							}else {
+								var f = String(item.getFieldName());
+								if (f.charAt(0) == "/"){
+									f = f.listLast("/");
+								} else {
+									f = f.listLast("\\");
+								}
+								var obj = {
+									diskItem:item,
+									stats:{
+										fieldName:f,
+										fileName:String(item.getName()),
+										contentType:String(item.getContentType()),
+										isInMemory:item.isInMemory(),
+										sizeInBytes:item.getSize(),
+										diskLocation:String(item.getStoreLocation().toURI())
+									}
+								}
+								$req.data[item.getFieldName()] =obj;
+								if (!$req.data[item.getFieldName() +"$array"]){
+									$req.data[item.getFieldName() +"$array"]=[];	
+								}
+								$req.data[item.getFieldName() +"$array"][index] =obj;
+							}
+						})
+						
+						$server_gateway.requestTimeout = oldTimeout + parseInt((new Date().getTime() - start)/1000); // reEnable  timeout after uploading
+					}
+				params.forEach(function(valArray,key){
+					//for (keyId=0; keyId < keyValueArray.length; ++keyId){
+					//valArray = keyValueArray[keyId].getValue();
+					//key =keyValueArray[keyId].getKey()
 					
 					$req.paramNames.push(String(key));	
 					//check for null value, ie "&somevar="
@@ -260,7 +376,7 @@ var $application={
 							}
 						}
 					}
-				} 
+				} )
 				//escapeHtml
 				$req.rawData={}
 				$req.data.applyTo($req.rawData)
@@ -286,118 +402,7 @@ var $application={
 					$res.metaRedirect($server.requestUrl+$server.requestScriptName + queryVars)
 					$req.handled = true;
 				}
-			//process uploads if necessary
-				$server_gateway.runtimeStats.put("currentTask","processUploads");
-				
-				var fileupload =Packages.org.apache.commons.fileupload; 
-				if (fileupload.servlet.ServletFileUpload.isMultipartContent($server.request)){
-					$session.set("$uploadProgress",{
-							fileNumber:"N/A",
-							bytesRead:-1,
-							totalBytes:0,
-							percentComplete:0,
-							kps:0,
-							message:"Preparing Upload"
-					});
-					var start = new Date().getTime()
-					var oldTimeout = $server_gateway.requestTimeout 
-					$server_gateway.requestTimeout = 0; // disable timeout while uploading
-					
-					
-					// Create a factory for disk-based file items
-					var diskItemFactory = new fileupload.disk.DiskFileItemFactory(
-						1024*1024*500, //limit to no more than 500 megabytes
-						new Myna.File($server.tempDir).javaFile
-					);
-					
-					//make sure all files no matter how small are written to disk
-					diskItemFactory.setSizeThreshold(0);
-					// Create a new file upload handler
-					var upload = new fileupload.servlet.ServletFileUpload(diskItemFactory);
-					var lastBytesRead=0;
-					var lastTick = new Date().getTime();
-					var listener =new fileupload.ProgressListener(){
-						update:function(pBytesRead, pContentLength, pItems){
-							var my = arguments.callee;
-							
-							var elapsedKbytes = (pBytesRead- lastBytesRead)/1024;
-							//if (elapsedKbytes < 2) return;
-							var currentTick = new Date().getTime();
-							var elapsed_seconds = (currentTick - lastTick)/1000;
-							if (elapsed_seconds < 1) return;
-							
-							
-							if (!my.progress || my.progress.bytesRead != pBytesRead){
-								
-								if (!pItems) pItems=1;
-								my.progress={
-									fileNumber:pItems,
-									bytesRead:pBytesRead,
-									totalBytes:pContentLength,
-									percentComplete:(pBytesRead/pContentLength),
-									kps:elapsedKbytes/elapsed_seconds
-								}
-								
-								
-								if (pBytesRead == pContentLength){
-									my.progress.message="File upload complete";
-								} else {
-									my.progress.message="Uploading file #" + pItems+", " 
-									+ Math.floor(my.progress.percentComplete*100) 
-									+ "% complete (" + my.progress.kps.toFixed() +" KBps)";  	
-								}
-								//calculate upload rate
-								
-								
-								
-								lastBytesRead=pBytesRead;
-								lastTick = currentTick;
-								$session.set("$uploadProgress",my.progress);
-							}
-						}
-					};
-					upload.setProgressListener(listener);
-					
-					// Parse the request
-					var items = upload.parseRequest($server.request);
-					$session.set("$uploadProgress",{
-							fileNumber:"N/A",
-							bytesRead:0,
-							totalBytes:0,
-							percentComplete:1,
-							kps:0,
-							message:"File Upload Complete",
-							elapsedSeconds: (new Date().getTime() -start)/1000
-					});
-					items.toArray().forEach(function(item,index){
-						if (!item.isFormField()){
-							var f = String(item.getFieldName());
-							if (f.charAt(0) == "/"){
-								f = f.listLast("/");
-							} else {
-								f = f.listLast("\\");
-							}
-							var obj = {
-								diskItem:item,
-								stats:{
-									fieldName:f,
-									fileName:String(item.getName()),
-									contentType:String(item.getContentType()),
-									isInMemory:item.isInMemory(),
-									sizeInBytes:item.getSize(),
-									diskLocation:String(item.getStoreLocation().toURI())
-								}
-							}
-							$req.data[item.getFieldName()] =obj;
-							if (!$req.data[item.getFieldName() +"$array"]){
-								$req.data[item.getFieldName() +"$array"]=[];	
-							}
-							$req.data[item.getFieldName() +"$array"][index] =obj;
-						}
-					})
-					
-					$server_gateway.requestTimeout = oldTimeout + parseInt((new Date().getTime() - start)/1000); // reEnable  timeout after uploading
-				}
+			
 			
 		}
 	},
