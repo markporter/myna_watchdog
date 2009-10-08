@@ -1171,9 +1171,11 @@ if ("$server_gateway" in this){
 	
 	*/
 	String.prototype.toXml=function(){
-		return new XML(String(this)
-		.replace(/^<\?xml\s+version\s*=\s*(["'])[^\1]+\1[^?]*\?>/, "") /* mozilla bug 336551*/
-		.trim());
+		var xml = String(this);
+		for (var i=0; !/<[^\?!]/.test(xml.substr(i,2)) ;++i){}
+		if (i) xml = xml.substr(i);
+		
+		return new XML(xml);
 	};
 /* Function: escapeUrl 
 	returns a URL encoded version of this string 
