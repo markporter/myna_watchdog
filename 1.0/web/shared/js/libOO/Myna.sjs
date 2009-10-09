@@ -335,7 +335,7 @@ if (!Myna) var Myna={}
 				
 			
 			
-			if (!maxDepth) return "[ max recusion ]";
+			if (!maxDepth) return "[ max recursion ]";
 			 
 			if (!my["max_r"]) my.max_r=1;
 			
@@ -509,6 +509,16 @@ if (!Myna) var Myna={}
 						'<table border="0">',
 							'<caption>' + obj.getClass() + '</caption>',
 							'<tr><td>' + obj.toString()  + '</td></tr>',
+						'</table>',
+					].join('\n')
+				break;
+				
+				
+				case "xml":
+					result +=[
+						'<table border="0">',
+							'<caption>XML Object</caption>',
+							'<tr><td>' + d(Myna.xmlToObject(obj),maxDepth)  + '</td></tr>',
 						'</table>',
 					].join('\n')
 				break;
@@ -1541,4 +1551,92 @@ if (!Myna) var Myna={}
 		
 		java.lang.Thread.sleep(time);
 	}	
+/* Function: xmlToObject 
+	returns an XML object as a plain JavaScript Object
+	 
+	Parameters: 
+		xml - XML object 
  
+			
+	Detail: 
+		This function recursively loops through all of the nodes in _xml_ and
+		returns an Object representing its structure. Since this removes all the 
+		advantages of XML objects, it is best used only for debugging.
+		
+	Example:
+	(code)
+	var xml = 
+		<topnode>
+			<list>
+				<thing type="color">
+					red
+				</thing>
+				<thing type="emotion">
+					twiterpated
+				</thing>
+			</list>
+		</topnode>;
+	Myna.println(
+		Myna.xmlToObject(
+			xml
+		).toJson()
+	)
+	//prints:
+	{
+		"attributes":{},
+		"children":[{
+			"attributes":{},
+			"children":[{
+				"attributes":{
+					"type":"color"
+				},
+				"children":[],
+				"name":"thing",
+				"url":"",
+				"value":"red"
+			},{
+				"attributes":{
+					"type":"emotion"
+				},
+				"children":[],
+				"name":"thing",
+				"url":"",
+				"value":"twiterpated"
+			}],
+			"name":"list",
+			"url":"",
+			"value":null
+		}],
+		"name":"topnode",
+		"url":"",
+		"value":null
+	}
+	(end)
+	 
+	*/
+	Myna.xmlToObject=function xmlToObject(xml){
+		if (xml instanceof XMLList){
+			var nodeArray = [];
+			for each (node in xml){
+				nodeArray.push(xmlToObject(node))
+			}
+			return nodeArray;
+		} else if (xml.nodeKind() == "element") {
+			var node = {
+				name:xml.name().localName,
+				namespace:xml.name().uri,
+				attributes:{},
+				children:[],
+				value:null
+			}
+			for each (attribute in xml.attributes()){
+				node.attributes[attribute.name()] = String(attribute)
+			}
+			if (xml.children().length()==1 && xml.children()[0].nodeKind() =="text"){
+				node.value = String(xml.children()[0]);
+			} else {
+				node.children=xmlToObject(xml.children());
+			}
+			return node;
+		} else return "["+xml.nodeKind()+"]"
+	} 
