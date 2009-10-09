@@ -1592,7 +1592,7 @@ if (!Myna) var Myna={}
 				},
 				"children":[],
 				"name":"thing",
-				"url":"",
+				"namespace":"",
 				"value":"red"
 			},{
 				"attributes":{
@@ -1600,15 +1600,15 @@ if (!Myna) var Myna={}
 				},
 				"children":[],
 				"name":"thing",
-				"url":"",
+				"namespace":"",
 				"value":"twiterpated"
 			}],
 			"name":"list",
-			"url":"",
+			"namespace":"",
 			"value":null
 		}],
 		"name":"topnode",
-		"url":"",
+		"namespace":"",
 		"value":null
 	}
 	(end)
