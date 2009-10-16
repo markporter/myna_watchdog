@@ -3,32 +3,32 @@
 
 */
 if (!Myna) var Myna={}
-/* 	Constructor: Myna.Table 
+/* Constructor: Myna.Table 
 	Construct a Query object. This should normally be called indirectly 
 	via <Myna.Database.getTable>
 	
-*/
-Myna.Table = function (db,tableName){
-	var table = this;
-	if (tableName.listLen(".")==2){
-		this.schema = String(tableName.listFirst("."));
-		this.tableName = String(tableName).listLast(".");
-	} else {
-		this.tableName = tableName;
-		this.schema = String(db.defaultSchema);
+	*/
+	Myna.Table = function (db,tableName){
+		var table = this;
+		if (tableName.listLen(".")==2){
+			this.schema = String(tableName.listFirst("."));
+			this.tableName = String(tableName).listLast(".");
+		} else {
+			this.tableName = tableName;
+			this.schema = String(db.defaultSchema);
+		}
+		table.db = db;
+		
+		
+		table.init();
+		if (this.schema && this.schema.trim().length){
+			this.sqlTableName = '"' + this.schema + '"."' + this.tableName +'"';
+		} else{
+			this.sqlTableName = this.tableName;		
+		}
+		
+		this.clearMetadataCache();
 	}
-	table.db = db;
-	
-	
-	table.init();
-	if (this.schema && this.schema.trim().length){
-		this.sqlTableName = '"' + this.schema + '"."' + this.tableName +'"';
-	} else{
-		this.sqlTableName = this.tableName;		
-	}
-	
-	this.clearMetadataCache();
-}
 /* Property: sqlTableName 
 	name of this table including schema name that should be used in sql queries
 	*/
@@ -43,82 +43,40 @@ Myna.Table = function (db,tableName){
 
 
 
-/* Property: indexInfo
-	An array of index info. 
-	Each entry contains:
-	
-	table_cat 			-	string table catalog/db name (may be null)
-	table_schem			-	string table schema/username  (may be null)
-	table_name			-	string table name
-	non_unique			-	boolean can index values be non-unique. 
-							false when type is tableIndexStatistic
-	index_qualifier		-	string index catalog (may be null); null 
-							when type is tableIndexStatistic
-	index_name			-	string index name; null when type is 
-							tableIndexStatistic
-	type				-	short index type:
-		* java.sql.DatabaseMetaData.tableIndexStatistic 
-			= this identifies table statistics that are returned in 
-			  conjuction with a table's index descriptions
-		* java.sql.DatabaseMetaData.tableIndexClustered 
-			= this is a clustered index
-		* java.sql.DatabaseMetaData.tableIndexHashed 
-			= this is a hashed index
-		* java.sql.DatabaseMetaData.tableIndexOther 
-			= this is some other style of index 
-	ordinal_position	-	short column sequence number within index; 
-							zero when type is tableIndexStatistic
-	column_name			-	string column name; null when type is 
-							tableindexstatistic
-	asc_or_desc			-	string => column sort sequence, 
-							"a" => ascending, "d" descending, may be 
-							null if sort sequence is not supported; 
-							null when type is tableIndexStatistic
-	cardinality			-	int when type is tableIndexStatistic, then 
-							this is the number of rows in the table; 
-							otherwise, it is the number of unique values 
-							in the index.
-	pages				-	int when type is tableindexstatisic then 
-							this is the number of pages used for the 
-							table, otherwise it is the number of pages
-							used for the current index.
-	filter_condition	-	string filter condition, if any.(may be null) 
-*/
-
-/* 	Function: init 
+/* Function: init 
 	(re)loads table metadata
 	
-*/
-Myna.Table.prototype.init = function(){
-	var table = this;
-	var db = this.db; //My database 
-	var md = this.db.md; //My database metadata
-	
-	db.init();
-	
-	var rsTables = table.db.md.getTables(
-		table.db.catalog,
-		table.schema||table.db.defaultSchema,
-		"%",
-		null
-	)
-	var tables = new Myna.Query(rsTables).data
-	rsTables.close();
-	
-	for (var x =0; x<tables.length; ++x){
-		if (tables[x].table_name.toLowerCase() == this.tableName.toLowerCase()){
-			this.tableName = tables[x].table_name;
-			break;
-		}  
+	*/
+	Myna.Table.prototype.init = function(){
+		var table = this;
+		var db = this.db; //My database 
+		var md = this.db.md; //My database metadata
+		
+		db.init();
+		
+		var rsTables = table.db.md.getTables(
+			table.db.catalog,
+			table.schema||table.db.defaultSchema,
+			"%",
+			null
+		)
+		var tables = new Myna.Query(rsTables).data
+		rsTables.close();
+		
+		for (var x =0; x<tables.length; ++x){
+			if (tables[x].table_name.toLowerCase() == this.tableName.toLowerCase()){
+				this.tableName = tables[x].table_name;
+				break;
+			}  
+		}
+		this.mdArgs = {
+			md:md,
+			cat:db.catalog,
+			schema:table.schema,
+			tableName:table.tableName
+		}
+		
 	}
-	this.mdArgs = {
-		md:md,
-		cat:db.catalog,
-		schema:table.schema,
-		tableName:table.tableName
-	}
-	
-}
 
 /* Property: columns 
 	Structure representing the defined columns in this table, keyed by
@@ -165,98 +123,98 @@ Myna.Table.prototype.init = function(){
 							user-generated Ref type, SQL type from 
 							java.sql.Types (null if DATA_TYPE isn't 
 							DISTINCT or user-generated REF) 
-*/
-Myna.Table.prototype.__defineGetter__("columns", function() {
-	var table = this;
-	if (this.exists){
-		return this._getCache("columns",function(t){
-			var rsColumns =t.md.getColumns(
-				t.cat,
-				t.schema,
-				t.tableName,
-				'%'
-			)
-			var columns = new Myna.Query(rsColumns);
-			
-			rsColumns.close();
-			var result={}
-			columns.data.forEach(function(row,index){
-				result[row.column_name.toLowerCase()] = row;
-			})
-			return result;
-		});
-	} else {
-		return [];
-	}
-})
+	*/
+	Myna.Table.prototype.__defineGetter__("columns", function() {
+		var table = this;
+		if (this.exists){
+			return this._getCache("columns",function(t){
+				var rsColumns =t.md.getColumns(
+					t.cat,
+					t.schema,
+					t.tableName,
+					'%'
+				)
+				var columns = new Myna.Query(rsColumns);
+				
+				rsColumns.close();
+				var result={}
+				columns.data.forEach(function(row,index){
+					result[row.column_name.toLowerCase()] = row;
+				})
+				return result;
+			});
+		} else {
+			return [];
+		}
+	})
 
 /* Property: columnNames 
 	An array of lowercase column names, in the order they appear in the table 
-*/
-Myna.Table.prototype.__defineGetter__("columnNames", function() {
-	if (this.exists){
-		var table =this;
-		return this.columns.getKeys().filter(function(name){
-			return "column_name" in table.columns[name];	
-		}).sort(function(a,b){
-			  if (table.columns[a].ordinal_position > table.columns[b].ordinal_position){
-				  return 1;
-			  } else if (table.columns[a].ordinal_position < table.columns[b].ordinal_position){
-				  return -1;
-			  } else{
-				  return 0;
-			  }
-		  });
-	} else {
-		return []	
-	}
-})
+	*/
+	Myna.Table.prototype.__defineGetter__("columnNames", function() {
+		if (this.exists){
+			var table =this;
+			return this.columns.getKeys().filter(function(name){
+				return "column_name" in table.columns[name];	
+			}).sort(function(a,b){
+				  if (table.columns[a].ordinal_position > table.columns[b].ordinal_position){
+					  return 1;
+				  } else if (table.columns[a].ordinal_position < table.columns[b].ordinal_position){
+					  return -1;
+				  } else{
+					  return 0;
+				  }
+			  });
+		} else {
+			return []	
+		}
+	})
 
 /* Property: exists 
 	true, if this table exists 
 	*/
-Myna.Table.prototype.__defineGetter__("exists", function() {
-	return this._getCache("exists",function(t){
-		var rsTables= t.md.getTables(
-			t.cat,
-			t.schema,
-			t.tableName,
-			null
-		)
-		var qry = new Myna.Query(rsTables)
-		rsTables.close();
-		//if (qry.data.length) return true;
-		
-		return qry.data.length > 0
+	Myna.Table.prototype.__defineGetter__("exists", function() {
+		return this._getCache("exists",function(t){
+			var rsTables= t.md.getTables(
+				t.cat,
+				t.schema,
+				t.tableName,
+				null
+			)
+			var qry = new Myna.Query(rsTables)
+			rsTables.close();
+			//if (qry.data.length) return true;
+			
+			return qry.data.length > 0
+		})
 	})
-})
 
 /* Property: primaryKeys 
 	An array of lowercase  column names that make up the primary key 
-*/
-Myna.Table.prototype.__defineGetter__("primaryKeys", function() {
-	if (this.exists){
-		return this._getCache("primaryKeys",function(t){
-			//some "table" types aren't really tables (views,synonyms,etc)
-			try {
-				var rsTemp =t.md.getPrimaryKeys(
-					null,
-					t.schema,
-					t.tableName
-				);
-				var result =new Myna.Query(rsTemp).data.valueArray("column_name").map(function(element){
-					return String(element.toLowerCase())
-				});
-				rsTemp.close();
-				return result;
-			}catch(e){
-				return [];
-			}
-		});
-	} else {
-		return [];
-	}
-})
+	*/
+	Myna.Table.prototype.__defineGetter__("primaryKeys", function() {
+		if (this.exists){
+			return this._getCache("primaryKeys",function(t){
+				//some "table" types aren't really tables (views,synonyms,etc)
+				try {
+					var rsTemp =t.md.getPrimaryKeys(
+						null,
+						t.schema,
+						t.tableName
+					);
+					var result =new Myna.Query(rsTemp).data.valueArray("column_name").map(function(element){
+						return String(element.toLowerCase())
+					});
+					rsTemp.close();
+					return result;
+				}catch(e){
+					return [];
+				}
+			});
+		} else {
+			return [];
+		}
+	})
 
 
 /* Property: primaryKeyInfo 
@@ -270,28 +228,28 @@ Myna.Table.prototype.__defineGetter__("primaryKeys", function() {
    key_seq		-	sequence number within primary key
    pk_name		-	primary key name (may be null) 
 
-*/
-Myna.Table.prototype.__defineGetter__("primaryKeyInfo", function() {
-	if (this.exists){
-		return this._getCache("primaryKeyInfo",function(t){
-			//some "table" types aren't really tables (views,synonyms,etc)
-			try {
-				var rsTemp =t.md.getPrimaryKeys(
-					null,
-					t.schema,
-					t.tableName
-				);
-				var data =new Myna.Query(rsTemp).data
-				rsTemp.close();
-				return data;
-			} catch(e) {
-				return [];
-			}
-		})
-	} else {
-		return [];
-	}
-})
+	*/
+	Myna.Table.prototype.__defineGetter__("primaryKeyInfo", function() {
+		if (this.exists){
+			return this._getCache("primaryKeyInfo",function(t){
+				//some "table" types aren't really tables (views,synonyms,etc)
+				try {
+					var rsTemp =t.md.getPrimaryKeys(
+						null,
+						t.schema,
+						t.tableName
+					);
+					var data =new Myna.Query(rsTemp).data
+					rsTemp.close();
+					return data;
+				} catch(e) {
+					return [];
+				}
+			})
+		} else {
+			return [];
+		}
+	})
 
 /* Property: foreignKeys 
 	An array of foreign(imported) key information. 
@@ -345,29 +303,29 @@ Myna.Table.prototype.__defineGetter__("primaryKeyInfo", function() {
 		* java.sql.DatabaseMetaData.importedKeyNotDeferrable 		
 			= see sql92 for definition 
 
-*/
-Myna.Table.prototype.__defineGetter__("foreignKeys", function() {
-	if (this.exists){
-		return this._getCache("foreignKeys",function(t){
-			//some "table" types aren't really tables (views,synonyms,etc)
-			try {
-				var rsTemp = t.md.getImportedKeys(
-					null,
-					t.schema,
-					t.tableName
-				)
-				var data =new Myna.Query(rsTemp).data
-				rsTemp.close();
-				return data;
-			} catch(e) {
-				
-				return [];
-			}
-		})
-	} else {
-		return [];
-	}
-})
+	*/
+	Myna.Table.prototype.__defineGetter__("foreignKeys", function() {
+		if (this.exists){
+			return this._getCache("foreignKeys",function(t){
+				//some "table" types aren't really tables (views,synonyms,etc)
+				try {
+					var rsTemp = t.md.getImportedKeys(
+						null,
+						t.schema,
+						t.tableName
+					)
+					var data =new Myna.Query(rsTemp).data
+					rsTemp.close();
+					return data;
+				} catch(e) {
+					
+					return [];
+				}
+			})
+		} else {
+			return [];
+		}
+	})
 
 /* Property: exportedKeys 
 	An array of exported key information. 
@@ -414,108 +372,77 @@ Myna.Table.prototype.__defineGetter__("foreignKeys", function() {
 		* java.sql.DatabaseMetaData.importedKeyNotDeferrable 
 			= see sql92 for definition 
 
-*/
-Myna.Table.prototype.__defineGetter__("exportedKeys", function() {
-	if (this.exists){
-		return this._getCache("exportedKeys",function(t){
-			//some "table" types aren't really tables (views,synonyms,etc)
-			try {
-				var rsTemp =t.md.getExportedKeys(
-					null,
-					t.schema,
-					t.tableName
-				)
-				var data =new Myna.Query(rsTemp).data
-				rsTemp.close();
-				return data;
-			} catch(e) {
-				return [];
-			}
-		});
-	} else {
-		return []	
-	}
-})
+	*/
+	Myna.Table.prototype.__defineGetter__("exportedKeys", function() {
+		if (this.exists){
+			return this._getCache("exportedKeys",function(t){
+				//some "table" types aren't really tables (views,synonyms,etc)
+				try {
+					var rsTemp =t.md.getExportedKeys(
+						null,
+						t.schema,
+						t.tableName
+					)
+					var data =new Myna.Query(rsTemp).data
+					rsTemp.close();
+					return data;
+				} catch(e) {
+					return [];
+				}
+			});
+		} else {
+			return []	
+		}
+	})
 
 /* Property: indexInfo
 	An array of index info. 
 	Each entry contains:
 	
-	table_cat 			-	string table catalog/db name (may be null)
-	table_schem			-	string table schema/username  (may be null)
-	table_name			-	string table name
-	non_unique			-	boolean can index values be non-unique. 
-							false when type is tableIndexStatistic
-	index_qualifier		-	string index catalog (may be null); null 
-							when type is tableIndexStatistic
-	index_name			-	string index name; null when type is 
-							tableIndexStatistic
-	type				-	short index type:
-		* java.sql.DatabaseMetaData.tableIndexStatistic 
-			= this identifies table statistics that are returned in 
-			  conjuction with a table's index descriptions
-		* java.sql.DatabaseMetaData.tableIndexClustered 
-			= this is a clustered index
-		* java.sql.DatabaseMetaData.tableIndexHashed 
-			= this is a hashed index
-		* java.sql.DatabaseMetaData.tableIndexOther 
-			= this is some other style of index 
-	ordinal_position	-	short column sequence number within index; 
-							zero when type is tableIndexStatistic
-	column_name			-	string column name; null when type is 
-							tableindexstatistic
-	asc_or_desc			-	string => column sort sequence, 
-							"a" => ascending, "d" descending, may be 
-							null if sort sequence is not supported; 
-							null when type is tableIndexStatistic
-	cardinality			-	int when type is tableIndexStatistic, then 
-							this is the number of rows in the table; 
-							otherwise, it is the number of unique values 
-							in the index.
-	pages				-	int when type is tableindexstatisic then 
-							this is the number of pages used for the 
-							table, otherwise it is the number of pages
-							used for the current index.
-	filter_condition	-	string filter condition, if any.(may be null) 
-*/
-Myna.Table.prototype.__defineGetter__("indexInfo", function() {
-	if (this.exists){
-		return this._getCache("indexInfo",function(t){
-			//some "table" types aren't really tables (views,synonyms,etc)
-			try {
-				var rsTemp = t.md.getIndexInfo(
-					null,
-					t.schema,
-					t.tableName,
-					false,
-					false
-				)
-				var indexInfo=[];
-				var localIndexes={};
-				new Myna.Query(rsTemp).data.forEach(function(row){
-					var curIndex;
-					if (localIndexes[row.index_name]){
-						curIndex = localIndexes[row.index_name];
-					} else {
-						curIndex=localIndexes[row.index_name] ={
-							name:row.index_name,
-							unique:!row.non_unique,
-							columns:[]
+	name 			-	index name
+	unique			-	boolean, true if this is a unique index
+	columns			-	an array of the lowercase column names that make of the index
+	*/
+	Myna.Table.prototype.__defineGetter__("indexInfo", function() {
+		if (this.exists){
+			return this._getCache("indexInfo",function(t){
+				//some "table" types aren't really tables (views,synonyms,etc)
+				try {
+					var rsTemp = t.md.getIndexInfo(
+						null,
+						t.schema,
+						t.tableName,
+						false,
+						false
+					)
+					var indexInfo=[];
+					var localIndexes={};
+					new Myna.Query(rsTemp).data.forEach(function(row){
+						if (!row.index_name || !row.column_name) return;
+						var curIndex;
+						if (localIndexes[row.index_name]){
+							curIndex = localIndexes[row.index_name];
+						} else {
+							curIndex=localIndexes[row.index_name] ={
+								name:row.index_name,
+								unique:!row.non_unique,
+								columns:[]
+							}
+							indexInfo.push(curIndex)
 						}
-						indexInfo.push(curIndex)
-					}
-					curIndex.columns[row.ordinal_position-1] = row.column_name;
-				}); 
-				rsTemp.close();
-				return indexInfo;
-			} catch(e) {
-				return [];
-			}
-		});
-	} else {
-		return []	
-	}
-})
+						curIndex.columns[row.ordinal_position-1] = row.column_name.toLowerCase();
+					}); 
+					rsTemp.close();
+					return indexInfo;
+				} catch(e) {
+					Myna.println(Myna.formatError(e))
+					return [];
+				}
+			});
+		} else {
+			return []	
+		}
+	})
 
 
 /* Function: addColumn
@@ -570,106 +497,107 @@ Myna.Table.prototype.__defineGetter__("indexInfo", function() {
 		})
 	(end)
 
-*/
-Myna.Table.prototype.addColumn = function(options){
-	var table = this;
-	options.checkRequired(["name"]);
-	options.name = options.name.toUpperCase();
-	options.setDefaultProperties({
-		defaultValue:"",
-		decimalDigits:"",
-		maxLength:"",
-		constraints:""
-	})
-	if (!table.exists){
-		throw new Error("Table.addColumn(): Table '" + table.tableName+ "' does not exist.");
-	}
-	
-	if (table.columnNames.indexOf(options.name.toLowerCase()) != -1){
-		throw new Error("Table.addColumn(): Column '" + options.name+ "' already exists.");
-	}
-	
-	if (options.isPrimaryKey && table.primaryKeys.length){
-		throw new Error("Table.addColumn(): Can't set '" + options.name
-			+ "' as primary key. '" 
-			+ table.columns[table.primaryKeys[0]].column_name 
-			+"' is already a primary key.");
-	}
-	
-	var text = table.db.types[options.type.toUpperCase()];
-	if (!text) text = options.type.toUpperCase();
-	options.type = new Myna.XTemplate(text).apply(options) ;
-	if ((options.allowNull != undefined && !options.allowNull) || options.primaryKey){
-		options.constraints += 	" " + table.getTemplate("notNullConstraint").apply(options) + " ";
-	}
-	
-	var qry =new Myna.Query({
-		dataSource:table.db.ds,
-		sql:table.getTemplate("addColumn").apply({
-			tableName:table.sqlTableName,
-			columnDef:table.getTemplate("createColumn").apply(options)
+	*/
+	Myna.Table.prototype.addColumn = function(options){
+		options = new Object().setDefaultProperties(options);
+		var table = this;
+		options.checkRequired(["name"]);
+		options.name = options.name.toUpperCase();
+		options.setDefaultProperties({
+			defaultValue:"",
+			decimalDigits:"",
+			maxLength:"",
+			constraints:""
 		})
-	}) 
-	
-	options.getKeys().forEach(function(key){
-		var text;
-		var qry;
-		switch(key){
-			case "isUnique":
-				if (options.isUnique){
-					qry =new Myna.Query({
-						dataSource:table.db.ds,
-						sql:table.getTemplate("addConstraint").apply({
-							tableName:table.sqlTableName,
-							constraint:table.getTemplate("uniqueConstraint").apply(options),
-							name:options.name.toUpperCase(),
-							id:table.tableName.left(9)+"_"
-								+options.name.left(9)+"_uniq_"
-								+String(new Date().getTime()).right(5)
-						})
-					}) 
-				}
-			break;
-			
-			case "isPrimaryKey":
-				if (options.isPrimaryKey){
-					qry =new Myna.Query({
-						dataSource:table.db.ds,
-						sql:table.getTemplate("addConstraint").apply({
-							tableName:table.sqlTableName,
-							constraint:table.getTemplate("primaryKeyConstraint").apply(options),
-							name:options.name.toUpperCase(),
-							id:table.tableName.left(9)+"_"
-								+options.name.left(9)+"_pkey_"
-								+String(new Date().getTime()).right(5)
-						})
-					}) 
-				}
-			break;
-			
-			case "references":
-				options.references.checkRequired(["table","column"]);
-				options.setDefaultProperties({
-					onUpdate:"",
-					onDelete:""
-				})
-				options.tableName = table.tableName;
-				options.id=table.tableName.left(9)+"_"
-					+options.name.left(9)+"_fkey_"
-					+String(new Date().getTime()).right(5)
-					
-				qry =new Myna.Query({
-					dataSource:table.db.ds,
-					sql:table.getTemplate("addForeignKeyConstraint").apply(options)
-				})
-			break;
-			
+		if (!table.exists){
+			throw new Error("Table.addColumn(): Table '" + table.tableName+ "' does not exist.");
 		}
-	})
-	
-	table.init();
-	table.clearMetadataCache()
-}
+		
+		if (table.columnNames.indexOf(options.name.toLowerCase()) != -1){
+			throw new Error("Table.addColumn(): Column '" + options.name+ "' already exists.");
+		}
+		
+		if (options.isPrimaryKey && table.primaryKeys.length){
+			throw new Error("Table.addColumn(): Can't set '" + options.name
+				+ "' as primary key. '" 
+				+ table.columns[table.primaryKeys[0]].column_name 
+				+"' is already a primary key.");
+		}
+		
+		var text = table.db.types[options.type.toUpperCase()];
+		if (!text) text = options.type.toUpperCase();
+		options.type = new Myna.XTemplate(text).apply(options) ;
+		if ((options.allowNull != undefined && !options.allowNull) || options.primaryKey){
+			options.constraints += 	" " + table.getTemplate("notNullConstraint").apply(options) + " ";
+		}
+		
+		var qry =new Myna.Query({
+			dataSource:table.db.ds,
+			sql:table.getTemplate("addColumn").apply({
+				tableName:table.sqlTableName,
+				columnDef:table.getTemplate("createColumn").apply(options)
+			})
+		}) 
+		
+		options.getKeys().forEach(function(key){
+			var text;
+			var qry;
+			switch(key){
+				case "isUnique":
+					if (options.isUnique){
+						qry =new Myna.Query({
+							dataSource:table.db.ds,
+							sql:table.getTemplate("addConstraint").apply({
+								tableName:table.sqlTableName,
+								constraint:table.getTemplate("uniqueConstraint").apply(options),
+								name:options.name.toUpperCase(),
+								id:table.tableName.left(9)+"_"
+									+options.name.left(9)+"_uniq_"
+									+String(new Date().getTime()).right(5)
+							})
+						}) 
+					}
+				break;
+				
+				case "isPrimaryKey":
+					if (options.isPrimaryKey){
+						qry =new Myna.Query({
+							dataSource:table.db.ds,
+							sql:table.getTemplate("addConstraint").apply({
+								tableName:table.sqlTableName,
+								constraint:table.getTemplate("primaryKeyConstraint").apply(options),
+								name:options.name.toUpperCase(),
+								id:table.tableName.left(9)+"_"
+									+options.name.left(9)+"_pkey_"
+									+String(new Date().getTime()).right(5)
+							})
+						}) 
+					}
+				break;
+				
+				case "references":
+					options.references.checkRequired(["table","column"]);
+					options.setDefaultProperties({
+						onUpdate:"",
+						onDelete:""
+					})
+					options.tableName = table.tableName;
+					options.id=table.tableName.left(9)+"_"
+						+options.name.left(9)+"_fkey_"
+						+String(new Date().getTime()).right(5)
+						
+					qry =new Myna.Query({
+						dataSource:table.db.ds,
+						sql:table.getTemplate("addForeignKeyConstraint").apply(options)
+					})
+				break;
+				
+			}
+		})
+		
+		table.init();
+		table.clearMetadataCache()
+	}
 
 /* Function: modifyColumn
 	Modifies an existing column 
@@ -739,179 +667,159 @@ Myna.Table.prototype.addColumn = function(options){
 		})
 	(end)
 
-*/
-Myna.Table.prototype.modifyColumn = function(name,options){
-	var table = this;
-	var col_info = table.columns[name.toLowerCase()];
-	
-	if (!table.exists){
-		throw new Error("Table.modifyColumn(): Table '" + table.tableName+ "' does not exist.");
-	}
-	
-	var normalizedName ="";
-	var keys =table.columns.getKeys();
-	for (var x=0; x< keys.length;++x){
-		if (table.columns[keys[x]].column_name.toLowerCase() == name.toLowerCase()){
-			normalizedName = table.columns[keys[x]].column_name; 
-		} 
-	}
-	
-	
-	if (!normalizedName.length){
-		throw new Error("Table.modifyColumn(): Column '" + name+ "' does not exist.");
-	}
-	
-	var isRenamed = options.hasOwnProperty("name");
-	var new_col_name = "MYNA_TEMP";
-	
-	if (isRenamed) {
-		new_col_name = options.name.toUpperCase();		
-	} else {
-		new_col_name +=Myna.createUuid().right(30-new_col_name.length);
-	}
-	
-	
-	//copy defaults from current column
-	options.setDefaultProperties({
-		name:new_col_name,
-		type:col_info.type_name,
-		maxLength:col_info.column_size,
-		decimalDigits:col_info.decimal_digits,
-		allowNull:col_info.is_nullable.toLowerCase() == 'no',
-		defaultValue:col_info.column_def
-	})
-	
-	/* clip out any contraints */
-		var constraints=[];
-		if ("allowNull" in options){
-			if (!options.allowNull){
-				constraints.push({
-					type:"notNull"
-				})	
-			}
-			delete options.allowNull
-		}
-		if (options.isUnique){
-			constraints.push({
-				type:"isUnique"
-			})	
-			delete options.isUnique
-		}
-		if ("references" in options){
-			constraints.push({
-				type:"references",
-				references:options.references
-			})	
-			delete options.references
-		} else { /* check for existing foreign key */
-			table.foreignKeys.forEach(function(fkey){
-				if (fkey.fkcolumn_name.toLowerCase() == name.toLowerCase()){
-					var getType = function(type){
-						var T =java.sql.DatabaseMetaData;
-						if (type == T.importedKeyCascade) return "CASCADE";
-						if (type == T.importedKeySetNull) return "SET NULL";
-						if (type == T.importedKeySetDefault) return "SET DEFAULT";
-						return "NO ACTION";
-					}
-					constraints.push({
-						type:"references",
-						references:{
-							table:fkey.pktable_name,
-							column:fkey.pkcolumn_name,
-							onDelete:getType(fkey.delete_rule), 
-							onUpdate:getType(fkey.update_rule) 
+	*/
+	Myna.Table.prototype.modifyColumn = function(name,options){
+		var table = this;
+		name= name.toLowerCase();
+		var 
+			originalCol = this.columns[name],
+			currentCol = new Object().setDefaultProperties(options),
+			tempName,
+			isRename = options.name&& options.name.toLowerCase() != name
+		;
+		//check if existing column matches new column
+		if (isRename) {
+			isSame=false;
+		} else {
+			currentCol.name = tempName= "temp_" + Myna.createUuid().replace(/\W/g,"").left(25);
+			
+			//check for redundant modification
+			options.forEach(function(v,k){
+				if (!isSame) return;
+				switch(k){
+					case "type":
+						if (v.toUpperCase() in table.db.types){
+							v = table.db.types[v.toUpperCase()].match(/^(\w+)/)[1] 	
 						}
-					})
+						if (v.toUpperCase().match(/^(\w+)/)[1] != originalCol.type_name.toUpperCase()){
+							isSame=false;
+						}
+					break;
+					case "maxLength":
+						if (v != originalCol.column_size){
+							isSame=false;
+						}
+					break;
+					case "decimalDigits":
+						if (v != originalCol.decimalDigits){
+							isSame=false;
+						}
+					break;
+					case "allowNull":
+						if (v != originalCol.nullable){
+							isSame=false;
+						}
+					break;
+					case "defaultValue":
+						if (v && String(v).trim() != String(originalCol.column_def).trim()){
+							isSame=false;
+						}
+					break;
+				}
+			})	
+			if (isSame) {
+				return;//don't bother if this is the same as existing
+			}
+		}
+		function fkType(t){
+			switch(t){
+				case java.sql.DatabaseMetaData.importedKeyCascade:
+					return "CASCADE"
+				break;
+				case java.sql.DatabaseMetaData.importedKeySetNull:
+					return "SET NULL"
+				break;
+				case java.sql.DatabaseMetaData.importedKeySetDefault:
+					return "SET DEFAULT"
+				break;
+				case java.sql.DatabaseMetaData.importedKeyNoAction:
+					return "SET DEFAULT"
+				break;
+				default:
+					return undefined
+				break;
+			}
+		}	
+		//gather and drop refs
+			originalCol.foreignKeys= this.foreignKeys
+				.filter(function(row){
+					return row.fkcolumn_name.toLowerCase() == name
+				})
+				.map(function(row){
+					table.dropConstraint(row.fk_name);
+					return {
+						id:row.fk_name,
+						localTable:this.sqlTableName,
+						localColumn:name,
+						foreignColumn:row.pkcolumn_name,
+						foreignTable:row.pktable_name,
+						onUpdate:fkType(row.update_rule),
+						onDelete:fkType(row.delete_rule)
+					}
+				})
+				
+			
+			originalCol.exportedKeys= this.exportedKeys
+				.filter(function(row){
+					return row.pkcolumn_name.toLowerCase() == name
+				})
+				.map(function(row,index,array){
+					table.db.getTable(row.fktable_name).dropConstraint(row.fk_name);
+					return {
+						id:row.fk_name,
+						localTable:row.fktable_name,
+						localColumn:options.name,
+						foreignColumn:row.pkcolumn_name,
+						foreignTable:row.pktable_name,
+						onUpdate:fkType(row.update_rule),
+						onDelete:fkType(row.delete_rule)
+					}
+				})
+			originalCol.exportedKeys.columns = originalCol.foreignKeys.columns = [
+				"id",
+				"localTable",
+				"localColumn",
+				"foreignColumn",
+				"foreignTable",
+				"onUpdate",
+				"onDelete"
+			]
+			table.primaryKeyInfo.forEach(function(row,index){
+				if (row.column_name.toLowerCase() == name && index==0){
+					originalCol.primaryKey=true;
+					table.dropConstraint(row.pk_name)
 				}
 			})
-		}
-	
-	/* add new column */
-		table.addColumn(options);
-	
-	/* copy old data to new column */
+		
+		
+		table.addColumn(currentCol)
+		//copy data from old_colum
 		new Myna.Query({
 			dataSource:table.db.ds,
 			sql:<ejs>
 				update <%=table.sqlTableName%> set
-				<%=options.name.toUpperCase()%> = <%=normalizedName%>
+				<%=currentCol.name%> = <%=originalCol.column_name%>
 			</ejs>
 		})
-	
-	
-	/* remove any foreign key constraints on this column */
-		table.foreignKeys.forEach(function(fkey){
-			if (fkey.fkcolumn_name.toLowerCase() == name.toLowerCase()){
-				new Myna.Query({
-					dataSource:table.db.ds,
-					sql:table.getTemplate("dropConstraint").apply({
-						id:fkey.fk_name,
-						tableName:table.sqlTableName
-					})
-				}) 	
-			}
-		})
-	//drop orginal column
-		table.dropColumn(normalizedName)
-	/* re-apply constraints */
-		constraints.forEach(function(c){
-			switch(c.type){
-				case "isUnique":
-					new Myna.Query({
-						dataSource:table.db.ds,
-						sql:table.getTemplate("addConstraint").apply({
-							tableName:table.sqlTableName,
-							constraint:table.getTemplate("uniqueConstraint").apply(options),
-							name:options.name.toUpperCase(),
-							id:table.tableName.left(9)+"_"
-								+options.name.left(9)+"_uniq_"
-								+String(new Date().getTime()).right(5)
-						})
-					}) 
-				break;
-				
-				/* case "isPrimaryKey":
-					if (options.isPrimaryKey){
-						qry =new Myna.Query({
-							dataSource:table.db.ds,
-							sql:table.getTemplate("addConstraint").apply({
-								tableName:table.sqlTableName,
-								constraint:table.getTemplate("primaryKeyConstraint").apply(options),
-								name:options.name.toUpperCase(),
-								id:table.tableName.left(9)+"_"
-									+options.name.left(9)+"_pkey_"
-									+String(new Date().getTime()).right(5)
-							})
-						}) 
-					}
-				break; */
-				
-				case "references":
-					c.references.checkRequired(["table","column"]);
-					c.references.setDefaultProperties({
-						onUpdate:"",
-						onDelete:""
-					})
-					c.setDefaultProperties(options)
-					c.tableName = table.tableName;
-					c.id=table.tableName.left(9)+"_"
-						+c.name.left(9)+"_fkey_"
-						+String(new Date().getTime()).right(5)
-						
-					
-					new Myna.Query({
-						dataSource:table.db.ds,
-						sql:table.getTemplate("addForeignKeyConstraint").apply(c)
-					})
-				break;
-				
-			}
-		})
-	//if this column was not renamed, copy back to original name
-	if (!isRenamed){
-		table.modifyColumn(new_col_name,{name:normalizedName})
+		
+		if (!isRename){
+			table.dropColumn(originalCol.column_name);
+			
+			currentCol.name = originalCol.column_name;
+			table.modifyColumn(tempName,currentCol)
+			table.dropColumn(tempName);
+		}
+		//apply old references
+			originalCol.foreignKeys.forEach(function fkeys(o){
+				table.addForeignKey(o);
+			})
+			/* originalCol.indexes.forEach(function indexes(o){
+				table.addIndex(o);
+			}) */
+			originalCol.exportedKeys.forEach(function exportedKeys(o){
+				table.db.getTable(o.localTable).addForeignKey(o);
+			})	
 	}
-}
 
 /* Function: addForeignKey
 	Adds a foreign key to this table
@@ -940,43 +848,47 @@ Myna.Table.prototype.modifyColumn = function(name,options){
 		t.addForeignKey({
 			id:"fk_orders_customer_id",
 			localColumn:"customer_id",
-			table:"customers",
-			column:"customer_id",
+			foreignTable:"customers",
+			foreignColumn:"customer_id",
 			onDelete:"cascade",
 			onUpdate:"cascade" 
 		})
 	(end)
 
-*/
-Myna.Table.prototype.addForeignKey = function(options){
-	var table = this;
-	if (!table.exists){
-		throw new Error("Table.addForeignKey(): Table '" + table.tableName+ "' does not exist.");
-	}
-	options = {
-		references:options
-	}
-	options.references.checkRequired(["foreignTable","foreignColumn","localColumn"]);
-	options.setDefaultProperties({
-		onUpdate:"",
-		onDelete:""
-	})
-	options.tableName = table.tableName;
-	if (!("id" in options)) {
-		options.id=table.tableName.left(9)+"_"
-			+options.references.localColumn.left(9)+"_fkey_"
-			+String(new Date().getTime()).right(5)
-	}
-		
-	qry =new Myna.Query({
-		dataSource:table.db.ds,
-		sql:table.getTemplate("addForeignKeyConstraint").apply(options)
-	})
+	*/
+	Myna.Table.prototype.addForeignKey = function(options){
+		options.checkRequired(["foreignTable","foreignColumn","localColumn"]);
+		var table = this;
+		if (!table.exists){
+			throw new Error("Table.addForeignKey(): Table '" + table.tableName+ "' does not exist.");
+		}
+		if (!("id" in options)) {
+			options.id=table.tableName.left(9)+"_"
+				+options.localColumn.left(9)+"_fkey_"
+				+String(new Date().getTime()).right(5)
+		}
+		options.setDefaultProperties({
+			table:options.foreignTable,
+			column:options.foreignColumn,
+			onUpdate:"",
+			onDelete:""
+		})
+		options = {
+			tableName:table.sqlTableName,
+			id:options.id,
+			name:options.localColumn,
+			references:options
+		}
 			
-	
-	table.init();
-	table.clearMetadataCache()
-}
+		qry =new Myna.Query({
+			dataSource:table.db.ds,
+			sql:table.getTemplate("addForeignKeyConstraint").apply(options)
+		})
+				
+		
+		table.init();
+		table.clearMetadataCache()
+	}
 
 /* Function: addPrimaryKey
 	Adds a primary key to this table
@@ -1001,30 +913,30 @@ Myna.Table.prototype.addForeignKey = function(options){
 		})
 	(end)
 
-*/
-Myna.Table.prototype.addPrimaryKey = function(options){
-	var table = this;
-	if (!table.exists){
-		throw new Error("Table.addPrimaryKey(): Table '" + table.tableName+ "' does not exist.");
-	}
-	options.tableName = table.tableName;
-	options.name = options.column
-	options.constraint = table.getTemplate("primaryKeyConstraint").apply({}) 
-	if (!("id" in options)) {
-		options.id=table.tableName.left(9)+"_"
-				+options.name.left(9)+"_pkey_"
-				+String(new Date().getTime()).right(5)
-	}
-		
-	qry =new Myna.Query({
-		dataSource:table.db.ds,
-		sql:table.getTemplate("addConstraint").apply(options)
-	}) 
+	*/
+	Myna.Table.prototype.addPrimaryKey = function(options){
+		var table = this;
+		if (!table.exists){
+			throw new Error("Table.addPrimaryKey(): Table '" + table.tableName+ "' does not exist.");
+		}
+		options.tableName = table.tableName;
+		options.name = options.column
+		options.constraint = table.getTemplate("primaryKeyConstraint").apply({}) 
+		if (!("id" in options)) {
+			options.id=table.tableName.left(9)+"_"
+					+options.name.left(9)+"_pkey_"
+					+String(new Date().getTime()).right(5)
+		}
 			
-	
-	table.init();
-	table.clearMetadataCache()
-}
+		qry =new Myna.Query({
+			dataSource:table.db.ds,
+			sql:table.getTemplate("addConstraint").apply(options)
+		}) 
+				
+		
+		table.init();
+		table.clearMetadataCache()
+	}
 
 /* Function: addIndex
 	Adds an index to an existing table
@@ -1049,29 +961,29 @@ Myna.Table.prototype.addPrimaryKey = function(options){
 		})
 	(end)
 
-*/
-Myna.Table.prototype.addIndex = function(options){
-	var table= this;
-	
-	if (!table.exists){
-		throw new Error("Table.addColumn(): Table '" + table.tableName+ "' does not exist.");
+	*/
+	Myna.Table.prototype.addIndex = function(options){
+		var table= this;
+		
+		if (!table.exists){
+			throw new Error("Table.addColumn(): Table '" + table.tableName+ "' does not exist.");
+		}
+		options.checkRequired(["columns"]);
+		options.setDefaultProperties({
+			unique:"",
+			tableName:table.tableName,
+			id:table.tableName.left(9)+"_"
+				+options.columns[0].left(9)+"_idx_"
+				+String(new Date().getTime()).right(5)
+		})
+		
+		var qry =new Myna.Query({
+			dataSource:table.db.ds,
+			sql:table.getTemplate("createIndex").apply(options)
+		})
+		table.init()
+		table.clearMetadataCache()
 	}
-	options.checkRequired(["columns"]);
-	options.setDefaultProperties({
-		unique:"",
-		tableName:table.tableName,
-		id:table.tableName.left(9)+"_"
-			+options.columns[0].left(9)+"_idx_"
-			+String(new Date().getTime()).right(5)
-	})
-	
-	var qry =new Myna.Query({
-		dataSource:table.db.ds,
-		sql:table.getTemplate("createIndex").apply(options)
-	})
-	table.init()
-	table.clearMetadataCache()
-}
 
 /* Function: getTemplate
 	Retrieves the template associated with the supplied type.
@@ -1079,10 +991,10 @@ Myna.Table.prototype.addIndex = function(options){
 	Parameters:
 		type		-	template key to retrieve 
 
-*/
-Myna.Table.prototype.getTemplate = function(type){
-	return new Myna.XTemplate(this.db.templates[type])	
-}
+	*/
+	Myna.Table.prototype.getTemplate = function(type){
+		return new Myna.XTemplate(this.db.templates[type])	
+	}
 
 /* Function: create
 	Create this table.
@@ -1126,93 +1038,93 @@ Myna.Table.prototype.getTemplate = function(type){
 		
 	(end)
 
-*/
-Myna.Table.prototype.create = function(options){
-	var table= this;
-	this.db.init();
-	this.init();
-	
-	if(options.recreate){
-		this.drop();
-	} else {
-		if (table.exists){
-			throw new Error("Table.create(): Table '" + table.tableName+ "' already exists. Use the"
-				+ " 'recreate' parameter to override.");
+	*/
+	Myna.Table.prototype.create = function(options){
+		var table= this;
+		this.db.init();
+		this.init();
+		
+		if(options.recreate){
+			this.drop();
+		} else {
+			if (table.exists){
+				throw new Error("Table.create(): Table '" + table.tableName+ "' already exists. Use the"
+					+ " 'recreate' parameter to override.");
+			}
 		}
-	}
-	options.setDefaultProperties({columns:[]});
-	
-	var qry =new Myna.Query({
-		dataSource:table.db.ds,
-		sql:table.getTemplate("createTable").apply({
-			tableName:table.tableName,
-			columns:options.columns.map(function(col){
-				col.checkRequired(["name","type"]);
-				col.name=col.name.toUpperCase();
-				col.setDefaultProperties({
-					defaultValue:"",
-					decimalDigits:"",
-					maxLength:"",
-					constraints:""
+		options.setDefaultProperties({columns:[]});
+		
+		var qry =new Myna.Query({
+			dataSource:table.db.ds,
+			sql:table.getTemplate("createTable").apply({
+				tableName:table.tableName,
+				columns:options.columns.map(function(col){
+					col.checkRequired(["name","type"]);
+					col.name=col.name.toUpperCase();
+					col.setDefaultProperties({
+						defaultValue:"",
+						decimalDigits:"",
+						maxLength:"",
+						constraints:""
+					})
+					col.getKeys().forEach(function(key){
+						var text;
+						switch(key){
+							case "type":
+								text = table.db.types[col.type.toUpperCase()];
+								if (!text) text = col.type.toUpperCase();
+								col.type = new Myna.XTemplate(text).apply(col) ;
+							break;
+							
+							case "allowNull":
+								if (!col.allowNull){
+									text = table.getTemplate("notNullConstraint").apply(col);
+									col.constraints += " " + text + " ";
+								}
+							break;
+							
+							case "isUnique":
+								if (col.isUnique){
+									text = table.getTemplate("uniqueConstraint").apply(col);
+									col.constraints += " " + text + " ";
+								}
+							break;
+							
+							case "isPrimaryKey":
+								if (col.isPrimaryKey){
+									text = table.getTemplate("primaryKeyConstraint").apply(col);
+									col.constraints += " " + text + " ";
+								}
+							break;
+							
+							case "references":
+								col.references.checkRequired(["table","column"]);
+								col.setDefaultProperties({
+									onUpdate:"",
+									onDelete:"",
+									id:"fk_" + table.tableName.left(9)+"_"
+									+col.name.left(9)+"_"
+									+String(new Date().getTime()).right(5)
+								})
+								
+								
+								
+								text = table.getTemplate("referencesConstraint").apply(col);
+								col.constraints += " " + text + " ";
+							break;
+							
+							
+							default: col[key] = col[key]
+						}
+					})
+					return table.getTemplate("createColumn").apply(col);
 				})
-				col.getKeys().forEach(function(key){
-					var text;
-					switch(key){
-						case "type":
-							text = table.db.types[col.type.toUpperCase()];
-							if (!text) text = col.type.toUpperCase();
-							col.type = new Myna.XTemplate(text).apply(col) ;
-						break;
-						
-						case "allowNull":
-							if (!col.allowNull){
-								text = table.getTemplate("notNullConstraint").apply(col);
-								col.constraints += " " + text + " ";
-							}
-						break;
-						
-						case "isUnique":
-							if (col.isUnique){
-								text = table.getTemplate("uniqueConstraint").apply(col);
-								col.constraints += " " + text + " ";
-							}
-						break;
-						
-						case "isPrimaryKey":
-							if (col.isPrimaryKey){
-								text = table.getTemplate("primaryKeyConstraint").apply(col);
-								col.constraints += " " + text + " ";
-							}
-						break;
-						
-						case "references":
-							col.references.checkRequired(["table","column"]);
-							col.setDefaultProperties({
-								onUpdate:"",
-								onDelete:"",
-								id:"fk_" + table.tableName.left(9)+"_"
-								+col.name.left(9)+"_"
-								+String(new Date().getTime()).right(5)
-							})
-							
-							
-							
-							text = table.getTemplate("referencesConstraint").apply(col);
-							col.constraints += " " + text + " ";
-						break;
-						
-						
-						default: col[key] = col[key]
-					}
-				})
-				return table.getTemplate("createColumn").apply(col);
 			})
-		})
-	})   
-	table.init();
-	table.clearMetadataCache()
-	
-}
+		})   
+		table.init();
+		table.clearMetadataCache()
+		
+	}
 
 
 /* Function: drop
@@ -1228,26 +1140,26 @@ Myna.Table.prototype.create = function(options){
 		
 	(end)
 
-*/
-Myna.Table.prototype.drop = function(){
-	var table = this;
-	var deleted = false;
-	/* try { */
-		if (table.exists){
-			new Myna.Query({
-				dataSource:table.db.ds,
-				sql:table.getTemplate("dropTable").apply({
-					tableName:table.sqlTableName
+	*/
+	Myna.Table.prototype.drop = function(){
+		var table = this;
+		var deleted = false;
+		/* try { */
+			if (table.exists){
+				new Myna.Query({
+					dataSource:table.db.ds,
+					sql:table.getTemplate("dropTable").apply({
+						tableName:table.sqlTableName
+					})
 				})
-			})
-			deleted=true;
-		}
-	/* } catch(e) {
-	} */
-	table.init();
-	table.clearMetadataCache()
-	return deleted;
-}
+				deleted=true;
+			}
+		/* } catch(e) {
+		} */
+		table.init();
+		table.clearMetadataCache()
+		return deleted;
+	}
 
 /* Function: dropColumn
 	Drop (delete) this table.
@@ -1264,57 +1176,132 @@ Myna.Table.prototype.drop = function(){
 		
 	(end)
 
-*/
-Myna.Table.prototype.dropColumn = function(name){
-	var table = this;
-	table.init();
-	name = name.toUpperCase();
-
-	if (!table.exists){
-		throw new Error("Table.dropColumn(): Table '" + table.tableName+ "' does not exist.");
-	}
+	*/
+	Myna.Table.prototype.dropColumn = function(name){
+		var table = this;
+		table.init();
+		name = name.toUpperCase();
 	
-	if (!table.columnNames.join(",").listContainsNoCase(name) ){
-		return;
-	}
-	
-	new Myna.Query({
-		dataSource:table.db.ds,
-		sql:table.getTemplate("dropColumn").apply({
-			tableName:table.sqlTableName,
-			name:name
+		if (!table.exists){
+			throw new Error("Table.dropColumn(): Table '" + table.tableName+ "' does not exist.");
+		}
+		
+		if (!table.columnNames.join(",").listContainsNoCase(name) ){
+			return;
+		}
+		
+		new Myna.Query({
+			dataSource:table.db.ds,
+			sql:table.getTemplate("dropColumn").apply({
+				tableName:table.sqlTableName,
+				name:name
+			})
 		})
-	})
+		
+		table.init();
+		table.clearMetadataCache()
+	}
+/* Function: dropConstraint
+	Drop (delete) a table constraint such as a foreign or primary key.
 	
-	table.init();
-	table.clearMetadataCache()
-}
+	Paramaters:
+		name		-	name of constraint to remove
+	
+	Example:
+	(code)
+		var db = new Database("example")
+		
+		var t = db.getTable("customers");
+		t.dropConstraint("pkey_customers");
+		
+	(end)
 
+	*/
+	Myna.Table.prototype.dropConstraint = function(name){
+		var table = this;
+		table.init();
+		name = name;
+	
+		if (!table.exists){
+			throw new Error("Table.dropConstraint(): Table '" + table.tableName+ "' does not exist.");
+		}
+		
+		
+		
+		new Myna.Query({
+			dataSource:table.db.ds,
+			sql:table.getTemplate("dropConstraint").apply({
+				tableName:table.sqlTableName,
+				id:name
+			})
+		})
+		
+		table.init();
+		table.clearMetadataCache()
+	}
+/* Function: dropIndex
+	Drop (delete) a table constraint such as a foreign or primary key.
+	
+	Paramaters:
+		name		-	name of constraint to remove
+	
+	Example:
+	(code)
+		var db = new Database("example")
+		
+		var t = db.getTable("customers");
+		t.dropConstraint("pkey_customers");
+		
+	(end)
+
+	*/
+	Myna.Table.prototype.dropIndex = function(name){
+		var table = this;
+		table.init();
+		name = name;
+	
+		if (!table.exists){
+			throw new Error("Table.dropIndex(): Table '" + table.tableName+ "' does not exist.");
+		}
+		
+		
+		
+		new Myna.Query({
+			dataSource:table.db.ds,
+			sql:table.getTemplate("dropIndex").apply({
+				tableName:table.sqlTableName,
+				name:name
+			})
+		})
+		
+		table.init();
+		table.clearMetadataCache()
+	}
 /* Property: _cacheKey
 	(private) cache key base for internal metadata caching 
-*/
+	*/
 /* Function: _getCache
 	(private) internal function for caching metadata
 	
 
-*/
-Myna.Table.prototype._getCache = function(type,f){
-	var mdArgs = {
-		md:this.db.md,
-		cat:this.db.catalog,
-		schema:this.schema,
-		tableName:this.tableName
-	}
-	if (!("cache" in this)){
-		this.clearMetadataCache();		
-	}
-	if (!(type in this.cache)){
-		this.cache[type] = f(mdArgs);
+	*/
+	Myna.Table.prototype._getCache = function(type,f){
+		var mdArgs = {
+			md:this.db.md,
+			cat:this.db.catalog,
+			schema:this.schema,
+			tableName:this.tableName
+		}
+		if (!("cache" in this)){
+			this.clearMetadataCache();		
+		}
+		if (!(type in this.cache)){
+			this.cache[type] = f(mdArgs);
+			
+		}
+		return this.cache[type]	
 		
 	}
-	return this.cache[type]	
-	
-}
 /* Function: clearMetadataCache
 	clears metadata cache for this table
 	
@@ -1326,7 +1313,7 @@ Myna.Table.prototype._getCache = function(type,f){
 		should only be necessary if the table is modified outside of Myna.table
 		or another Myna instance
 		
-*/
-Myna.Table.prototype.clearMetadataCache = function(){
-	this.cache={}
-}
+	*/
+	Myna.Table.prototype.clearMetadataCache = function(){
+		this.cache={}
+	}

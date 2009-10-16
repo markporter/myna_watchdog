@@ -22,6 +22,9 @@ var templates = {
 	dropPrimaryKey:[
 		'ALTER TABLE {tableName} DROP CONSTRAINT {id}'
 	],
+	dropIndex:[
+		'DROP INDEX {name}'
+	],
 	dropColumn:[
 		"ALTER TABLE {tableName} DROP COLUMN {name}"
 	],
@@ -39,7 +42,7 @@ var templates = {
 		'{constraints} '
 	],
 	createIndex:[
-		'CREATE <tpl if="unique.length"> UNIQUE </tpl>  INDEX {id} ',
+		'CREATE <tpl if="unique"> UNIQUE </tpl>  INDEX {id} ',
 		'ON {tableName} ({columns})'
 	],
 	dropTable:[
@@ -68,7 +71,7 @@ var templates = {
 	], */
 }
 var types={
-	BIGINT:"NUMBER(10)",
+	BIGINT:"NUMBER(22)",
 	BLOB:"BLOB",
 	CLOB:"CLOB",
 	INTEGER:"INT",

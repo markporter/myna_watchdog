@@ -22,6 +22,9 @@ var templates = {
 	dropPrimaryKey:[
 		'ALTER TABLE {tableName} DROP CONSTRAINT {id}'
 	],
+	dropIndex:[
+		'DROP INDEX {name} on {tableName}'
+	],
 	addNullConstraint:[
 		"ALTER TABLE {tableName} ADD CONSTRAINT {id} CHECK ({name} IS NOT NULL)"
 	],
@@ -39,7 +42,7 @@ var templates = {
 		'{constraints} '
 	],
 	createIndex:[
-		'CREATE <tpl if="unique.length"> UNIQUE </tpl>  INDEX {id} ',
+		'CREATE <tpl if="unique"> UNIQUE </tpl>  INDEX {id} ',
 		'ON {tableName} ({columns})'
 	],
 	dropTable:[
