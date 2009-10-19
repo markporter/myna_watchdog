@@ -72,7 +72,7 @@ var types={
 	CLOB:"CLOB",
 	DATE:"DATE",
 	INTEGER:"INT",
-	NUMERIC:'NUMERIC({maxLength}<tpl if="decimalDigits.length">, {decimalDigits}</tpl>)',
+	NUMERIC:'NUMERIC({maxLength}<tpl if="decimalDigits">, {decimalDigits}</tpl>)',
 	TIMESTAMP:"TIMESTAMP",
 	VARBINARY:"VARBINARY({maxLength})",
 	VARCHAR:"VARCHAR({maxLength})"

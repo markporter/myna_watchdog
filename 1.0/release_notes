@@ -8,9 +8,10 @@ New in this release:
 
 * **Centralized Login page with OpenID support**
   
-   Applications can redirect a user to the central login application at 
-	 /myna/auth/auth.sjs?fuseaction=login by calling $res.redirectLogin(). Here is 
-	 an example from the applciation.sjs file in /examples:
+   Applications can redirect a user to the central login application 
+	 at /myna/auth/auth.sjs?fuseaction=login by calling 
+	 $res.redirectLogin(). Here is an example from the applciation.sjs 
+	 file in /examples:
 
         $application.after("onRequestStart",function(){
           if (!$cookie.getAuthUserId() || 
@@ -24,99 +25,106 @@ New in this release:
           }
         }) 
 
-   This code checks on every request for a valid authentication cookie and if 
-	 available, the current user's access to the Myna Administrator. If either 
-	 test fails then the user is redirected to the centralized authentication 
-	 application. After authentication the user is sent back to the page they were 
-	 originally requesting. If the auth tests pass this time, the request is 
-	 processed as normal. 
-
-   By default, the login page authenticates via "openid" + 
-	 Myna.Permissions.getAuthTypes(). If you are not familiar with [OpenID][1], it 
-	 is an open standard for allowing a web applications to authenticate users 
-	 against third-party providers. All a user needs is their OpenID URL. Myna 
-	 makes this even easier by generating OpenID URLs for popular providers such 
-	 as Google, Yahoo, and AOL. Once a user authenticates with their provider, 
-	 Myna automatically creates a local user with the supplied OpenID URL as one 
-	 of the logins. If the user's OpenID provider supports registration, then 
-	 information about the user such as name, nickname, date of birth, etc is 
+   This code checks on every request for a valid authentication cookie 
+	 and if available, the current user's access to the Myna 
+	 Administrator. If either test fails then the user is redirected to 
+	 the centralized authentication application. After authentication 
+	 the user is sent back to the page they were originally requesting.
+	 If the auth tests pass this time, the request is processed as 
+	 normal. By default, the login page authenticates via "openid" + 	 
+	 Myna.Permissions.getAuthTypes(). If you are not familiar with 
+	 [OpenID][1], it is an open standard for allowing a web applications
+	 to authenticate users against third-party providers. All a user needs
+	 is their OpenID URL. Myna makes this even easier by generating OpenID
+	 URLs for popular providers such as Google, Yahoo, and AOL. Once a 
+	 user authenticates with their provider,  Myna automatically creates a 
+	 local user with the supplied OpenID URL as one of the logins. If the 
+	 user's OpenID provider supports registration, then information about 
+	 the user such as name, nickname, date of birth, etc is 
 	 stored as well and is available in the user object.     
 	 
-	 The centralized authentication can easily be customized to show only certain
-	 auth_types, or to use your own login page. 
+	 The centralized authentication can easily be customized to show only 
+	 certain auth_types, or to use your own login page. 
 	 
-	 The username/password auth types implement a progressive timeout. Each 
-   failed attempt incurs an extra 5 seconds of sleep time, e.g. first failure=5 
-	 seconds, second failure=10 seconds, etc. This makes brute-force password 
-	 attacks impractical. Furthermore, authentication is  forced single-threaded 
-	 via an exclusive memory lock so that this timeout can not be bypassed by 
-	 executing many concurrent requests. 
+	 The username/password auth types implement a progressive timeout. 
+	 Each failed attempt incurs an extra 5 seconds of sleep time, e.g. 
+	 first failure=5 seconds, second failure=10 seconds, etc. This makes 
+	 brute-force password attacks impractical. Furthermore, authentication 
+	 is  forced single-threaded via an exclusive memory lock so that this 
+	 timeout can not be bypassed by executing many concurrent requests. 
 	 
 [1]:http://openid.net/
 
 
 * **Fixed orphaned libraries**
 
-   Created 'version_list.properties in WEB-INF/classes to store the list of jars
-	 provided with Myna and their versions. Also renamed all existing jars to their 
-	 generic names, not including version information. This will prevent old 
-	 version of jars from lingering after upgrades. **Myna 1.0 Alpha17 should be 
-	 installed fresh** to remove old libraries. Future versions should not have the 
-	 orphaned library problem.
+   Created 'version_list.properties in WEB-INF/classes to store the list 
+	 of jars provided with Myna and their versions. Also renamed all 
+	 existing jars to their generic names, not including version 
+	 information. This will prevent old version of jars from lingering 
+	 after upgrades. **Myna 1.0 Alpha17 should be installed fresh** to 
+	 remove old libraries. Future versions should not have the orphaned 
+	 library problem.
 	
 *  **Myna datasources are now also Java DataSource objects**
 
    Internally, Myna now stores datasources as Java DataSource objects. 
 	 Myna.Query, Myna.DataManager, and Myna.Database can now accept a Java 
-	 DataSource instance as well as a Myna datasource name. this means that you 
-	 can use these utilities with Java datasources accessed through JNDI or even 
-	 DS's created at runtime. This functionality is used in Myna.DataSet to allow
-	 DataSets to be queried as if they were a database with a table called "data"
+	 DataSource instance as well as a Myna datasource name. this means 
+	 that you can use these utilities with Java datasources accessed 
+	 through JNDI or even DS's created at runtime. This functionality is 
+	 used in Myna.DataSet to allow DataSets to be queried as if they were 
+	 a database with a table called "data"
 	 
 * **Myna.Thread Changes**
 
   Another major update to thread handling. There has been a problem with 
-  sub-threads randomly linking to the parent thread and then writing to the 
-  wrong thread buffer and/or losing global objects. Myna.Thread now calls 
-  toSource() on the supplied function and only transmits the source code to the 
-  subthread. 
+  sub-threads randomly linking to the parent thread and then writing to 
+	the wrong thread buffer and/or losing global objects. Myna.Thread now 
+	calls toSource() on the supplied function and only transmits the 
+	source code to the subthread. 
   
-	The "thread cannot call itself" restriction has been removed, but the maximum 
-  thread chain depth is still 5 levels to prevent infinite thread recursion  
+	The "thread cannot call itself" restriction has been removed, but the 
+	maximum thread chain depth is still 5 levels to prevent infinite 
+	thread recursion  
 
-  Also added Myna.Thread.getThreadArray(), a static function that returns an 
-	array of the threads spawned in this thread.
+  Also added Myna.Thread.getThreadArray(), a static function that 
+	returns an array of the threads spawned in this thread.
 	
 	
 Other changes:
 --------------------
-* String.listContains and listContainsNoCase now accept a list as an argument. 
-  If provided, every element in the search list must be in this list.  
-* Updated the Administrator, Permissions, and DB manager apps to use centralized 
-  login
-* Added `/shared/reset_default.css`. This file allows arbitrary elements to have 
-  "normal" styles if they have a class of "reset_default". This is useful if the 
-  default styles have been removed by Ext or similar frameworks
+* String.listContains and listContainsNoCase now accept a list as an 
+  argument. If provided, every element in the search list must be in 
+	this list.  
+* Updated the Administrator, Permissions, and DB manager apps to use 
+  centralized login
+* Added `/shared/reset_default.css`. This file allows arbitrary elements 
+  to have "normal" styles if they have a class of "reset_default". This 
+	is useful if the default styles have been removed by Ext or similar 
+	frameworks
 * Added openid-selector for selecting OpenID's
-* Added timeout option for HttpConnection. If the connection fails to connect or
-  receive data for timeout milliseconds, an exception is thrown
+* Added timeout option for HttpConnection. If the connection fails to 
+  connect or receive data for timeout milliseconds, an exception is 
+	thrown
 * DataManager bugfixes
 * deprecated $server.requestServerUrl in favor of serverUrl
 * added $res.redirect(url). This is a classic server-side 302 redirect
-* $cookie now keeps track of pending cookies not yet sent to the browser. This 
-  means a call to get() immediately after a call to set() will now return the 
-  new value.
-* Automatic `auth_token` processing: If a `auth_token` parameter is passed in a 
-  request, Myna will now automatically consume the token, set 
-  $cookie.setAuthUserId() and redirect the request to the original page minus 
-  the auth_token parameter. This simplifies inter-application authentication
-* added new properties to users to match OpenID's simple registration: country,
-  dob, email, gender, language, `last_name`, `middle_name`, nickname, postcode,
-  timezone
-* Added "prettyName" and "desc" properties to auth_types. These are utilized by
-  the centralized authenticator
-* Added global 404 handling. This is for both Myna and non-myna missing pages. 
-  Handling is set via $application.onError404().
+* $cookie now keeps track of pending cookies not yet sent to the 
+  browser. This means a call to get() immediately after a call to set() 
+	will now return the new value.
+* Automatic `auth_token` processing: If a `auth_token` parameter is 
+  passed in a request, Myna will now automatically consume the token, 
+	set $cookie.setAuthUserId() and redirect the request to the original 
+	page minus the auth_token parameter. This simplifies inter-application 
+	authentication
+* added new properties to users to match OpenID's simple registration: 
+  country, dob, email, gender, language, `last_name`, `middle_name`, 
+	nickname, postcode, timezone
+* Added "prettyName" and "desc" properties to auth_types. These are 
+  utilized by the centralized authenticator
+* Added global 404 handling. This is for both Myna and non-myna missing 
+  pages. Handling is set via $application.onError404().
 * Added $server.remoteAddr property
 * All class properties hidden for Array and Myna.DataSet
 * All class properties hidden for DataManager beans
@@ -128,32 +136,37 @@ Other changes:
   application.sjs file
 * added javaDataSources property to MynaThread. This is contains java 
   DataSources by ds name
-* added enhanced stack traces and some $server details to Myna.formatError
+* added enhanced stack traces and some $server details to 
+  Myna.formatError
 * fixed ClassCast exception when throwing string errors
 * Fixed bugs in getThreadValue and getContent so that they actually work
 * modified Myna.log to run in a very low priority thread (-90%)
 * added "openid" as a login type to the permissions application
-* removed several leaked global variables from request_handler.sjs and from 
-  the property hiding routines in Array, Object and DataSet
-* Myna.include and includeOnce now return the supplied scope after execution    
-* Myna.WebService can be called with an Myna.File or a MynaPath to a spec file 
-  instead of a spec object
+* removed several leaked global variables from request_handler.sjs and 
+  from the property hiding routines in Array, Object and DataSet
+* Myna.include and includeOnce now return the supplied scope after 
+  execution    
+* Myna.WebService can be called with an Myna.File or a MynaPath to a 
+  spec file instead of a spec object
 * Myna.WebService functions can be called directly by calling 
-  <ws instance>.functions.<function name>(params). This will also execute 
-	authFunction, beforeHandle and afterHandler, so be sure to call 
-	<ws instance>.setAuthUserId() before directly calling functions
-* Myna.WebService now uses the web service instance instead of the spec object 
-  as the "this" scope for functions. The spec can still be accessed via 
-	"this.spec"  	
-* the permissions application has been converted to use the new .ws extension
-* Modifed Rhino context settings to automatically convert Java native types 
-  returned from Java functions into JavaScript native types. This means you
-	should no longer need to write code like this: String(someObj.toString())
-* added String.hashCode function. This is the same as Java's String.hashCode 
-  function; it creates a fast numeric hash of the string. This does not replace 
-	the cryptographic String.toHash function
-* Added $server.resolveUrl(path) function. This converts a URL path relative to 
-  the current directory into an absolute URL, including the server part. 
+  <ws instance>.functions.<function name>(params). This will also 
+	execute authFunction, beforeHandle and afterHandler, so be sure to 
+	call <ws instance>.setAuthUserId() before directly calling functions
+* Myna.WebService now uses the web service instance instead of the spec 
+  object as the "this" scope for functions. The spec can still be 
+	accessed via "this.spec"  	
+* the permissions application has been converted to use the new .ws 
+	extension
+* Modifed Rhino context settings to automatically convert Java native 
+	types returned from Java functions into JavaScript native types. This 
+	means you should no longer need to write code like this: 
+	String(someObj.toString())
+* added String.hashCode function. This is the same as Java's 
+  String.hashCode function; it creates a fast numeric hash of the 
+	string. This does not replace the cryptographic String.toHash function
+* Added $server.resolveUrl(path) function. This converts a URL path 
+  relative to the current directory into an absolute URL, including the 
+	server part. 
 * Added logging for Myna.executeShell when the result contains errors	
 
 ----------------------------------------------------------

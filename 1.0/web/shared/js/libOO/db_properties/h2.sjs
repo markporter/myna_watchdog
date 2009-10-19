@@ -80,7 +80,7 @@ var types={
 	CLOB:"VARCHAR",
 	DATE:"DATE",
 	INTEGER:"INT",
-	NUMERIC:'NUMERIC({maxLength}<tpl if="decimalDigits.length">, {decimalDigits}</tpl>)',
+	NUMERIC:'NUMERIC({maxLength}<tpl if="decimalDigits">, {decimalDigits}</tpl>)',
 	TEXT:"VARCHAR", //this type should be whatever is best for large amounts 
 					//of text that can fit in server memory
 	TIMESTAMP:"TIMESTAMP",

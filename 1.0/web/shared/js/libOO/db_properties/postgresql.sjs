@@ -74,7 +74,7 @@ var types={
 	INTEGER:"INT",
 	TEXT:"TEXT", //this type should be whatever is best for large amounts 
 				//of text that can fit in server memory
-	NUMERIC:'NUMERIC({maxLength}<tpl if="decimalDigits.length">, {decimalDigits}</tpl>)',
+	NUMERIC:'NUMERIC({maxLength}<tpl if="decimalDigits">, {decimalDigits}</tpl>)',
 	TIMESTAMP:"TIMESTAMP",
 	VARBINARY:"BYTEA",
 	VARCHAR:"VARCHAR({maxLength})"

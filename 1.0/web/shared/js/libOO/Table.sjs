@@ -23,12 +23,29 @@ if (!Myna) var Myna={}
 		table.init();
 		if (this.schema && this.schema.trim().length){
 			this.sqlTableName = '"' + this.schema + '"."' + this.tableName +'"';
-		} else{
+		} else {
 			this.sqlTableName = this.tableName;		
 		}
 		
+		this.deferExec=false;
+		this.sql=""
 		this.clearMetadataCache();
 	}
+/* Property: deferExec 
+	if this is set to true, all functions that modify the database will instead 
+	append their SQL to <Table.sql>
+	
+	See:
+		* <Table.sql>
+		* <Table.applyChanges>
+	*/
+/* Property: sql
+	Stores SQL from database altering functions when <Table.deferExec> is true
+	
+	See:
+		* <Table.applyChanges>
+		* <Table.deferExec>
+	*/
 /* Property: sqlTableName 
 	name of this table including schema name that should be used in sql queries
 	*/
@@ -435,7 +452,6 @@ if (!Myna) var Myna={}
 					rsTemp.close();
 					return indexInfo;
 				} catch(e) {
-					Myna.println(Myna.formatError(e))
 					return [];
 				}
 			});
@@ -509,19 +525,21 @@ if (!Myna) var Myna={}
 			maxLength:"",
 			constraints:""
 		})
-		if (!table.exists){
-			throw new Error("Table.addColumn(): Table '" + table.tableName+ "' does not exist.");
-		}
-		
-		if (table.columnNames.indexOf(options.name.toLowerCase()) != -1){
-			throw new Error("Table.addColumn(): Column '" + options.name+ "' already exists.");
-		}
-		
-		if (options.isPrimaryKey && table.primaryKeys.length){
-			throw new Error("Table.addColumn(): Can't set '" + options.name
-				+ "' as primary key. '" 
-				+ table.columns[table.primaryKeys[0]].column_name 
-				+"' is already a primary key.");
+		if (!this.deferExec){
+			if (!table.exists){
+				throw new Error("Table.addColumn(): Table '" + table.tableName+ "' does not exist.");
+			}
+			
+			if (table.columnNames.indexOf(options.name.toLowerCase()) != -1){
+				throw new Error("Table.addColumn(): Column '" + options.name+ "' already exists.");
+			}
+			
+			if (options.isPrimaryKey && table.primaryKeys.length){
+				throw new Error("Table.addColumn(): Can't set '" + options.name
+					+ "' as primary key. '" 
+					+ table.columns[table.primaryKeys[0]].column_name 
+					+"' is already a primary key.");
+			}
 		}
 		
 		var text = table.db.types[options.type.toUpperCase()];
@@ -536,9 +554,10 @@ if (!Myna) var Myna={}
 			sql:table.getTemplate("addColumn").apply({
 				tableName:table.sqlTableName,
 				columnDef:table.getTemplate("createColumn").apply(options)
-			})
+			}),
+			deferExec:this.deferExec
 		}) 
-		
+		if (this.deferExec && qry.sql.trim().length) this.sql+=qry.sql.trim()+";\n\n";
 		options.getKeys().forEach(function(key){
 			var text;
 			var qry;
@@ -554,8 +573,11 @@ if (!Myna) var Myna={}
 								id:table.tableName.left(9)+"_"
 									+options.name.left(9)+"_uniq_"
 									+String(new Date().getTime()).right(5)
-							})
+							}),
+							deferExec:this.deferExec
 						}) 
+						if (this.deferExec && qry.sql.trim().length) this.sql+=qry.sql.trim()+";\n\n";
+						
 					}
 				break;
 				
@@ -570,8 +592,10 @@ if (!Myna) var Myna={}
 								id:table.tableName.left(9)+"_"
 									+options.name.left(9)+"_pkey_"
 									+String(new Date().getTime()).right(5)
-							})
+							}),
+							deferExec:this.deferExec
 						}) 
+						if (this.deferExec && qry.sql.trim().length) this.sql+=qry.sql.trim()+";\n\n";
 					}
 				break;
 				
@@ -581,15 +605,17 @@ if (!Myna) var Myna={}
 						onUpdate:"",
 						onDelete:""
 					})
-					options.tableName = table.tableName;
+					options.tableName = table.sqlTableName;
 					options.id=table.tableName.left(9)+"_"
 						+options.name.left(9)+"_fkey_"
 						+String(new Date().getTime()).right(5)
 						
 					qry =new Myna.Query({
 						dataSource:table.db.ds,
-						sql:table.getTemplate("addForeignKeyConstraint").apply(options)
-					})
+						sql:table.getTemplate("addForeignKeyConstraint").apply(options),
+						deferExec:this.deferExec
+					}) 
+					if (this.deferExec && qry.sql.trim().length) this.sql+=qry.sql.trim()+";\n\n";
 				break;
 				
 			}
@@ -665,6 +691,18 @@ if (!Myna) var Myna={}
 				onUpdate:"cascade" 
 			}
 		})
+	(end),
+				column:"customer_id",
+				onDelete:"cascade", 
+				onUpdate:"cascade" 
+			}
+		})
+	(end),
+				column:"customer_id",
+				onDelete:"cascade", 
+				onUpdate:"cascade" 
+			}
+		})
 	(end)
 
 	*/
@@ -675,6 +713,7 @@ if (!Myna) var Myna={}
 			originalCol = this.columns[name],
 			currentCol = new Object().setDefaultProperties(options),
 			tempName,
+			isSame=true,
 			isRename = options.name&& options.name.toLowerCase() != name
 		;
 		//check if existing column matches new column
@@ -764,11 +803,14 @@ if (!Myna) var Myna={}
 					return row.pkcolumn_name.toLowerCase() == name
 				})
 				.map(function(row,index,array){
-					table.db.getTable(row.fktable_name).dropConstraint(row.fk_name);
+					var ftable =table.db.getTable(row.fktable_name)
+					ftable.deferExec = table.deferExec
+					ftable.dropConstraint(row.fk_name);
+					if (table.deferExec) table.sql+=ftable.sql;
 					return {
 						id:row.fk_name,
 						localTable:row.fktable_name,
-						localColumn:options.name,
+						localColumn:row.fkcolumn_name,
 						foreignColumn:row.pkcolumn_name,
 						foreignTable:row.pktable_name,
 						onUpdate:fkType(row.update_rule),
@@ -791,25 +833,39 @@ if (!Myna) var Myna={}
 				}
 			})
 		
-		
 		table.addColumn(currentCol)
-		//copy data from old_colum
-		new Myna.Query({
+		//copy data from old_column
+		var qry =new Myna.Query({
 			dataSource:table.db.ds,
 			sql:<ejs>
 				update <%=table.sqlTableName%> set
 				<%=currentCol.name%> = <%=originalCol.column_name%>
-			</ejs>
-		})
+			</ejs>,
+			deferExec:this.deferExec
+		}) 
+		if (this.deferExec && qry.sql.trim().length) this.sql+=qry.sql.trim()+";\n\n";
 		
 		if (!isRename){
 			table.dropColumn(originalCol.column_name);
 			
 			currentCol.name = originalCol.column_name;
-			table.modifyColumn(tempName,currentCol)
+			table.addColumn(currentCol);
+			//copy data from temp_column
+			var qry =new Myna.Query({
+				dataSource:table.db.ds,
+				sql:<ejs>
+					update <%=table.sqlTableName%> set
+					<%=originalCol.column_name%> = <%=tempName%> 
+				</ejs>,
+				deferExec:this.deferExec
+			}) 
+			if (this.deferExec && qry.sql.trim().length) this.sql+=qry.sql.trim()+";\n\n";
 			table.dropColumn(tempName);
 		}
 		//apply old references
+			if (originalCol.primaryKey){
+				table.addPrimaryKey({column:originalCol.column_name});
+			}
 			originalCol.foreignKeys.forEach(function fkeys(o){
 				table.addForeignKey(o);
 			})
@@ -817,7 +873,10 @@ if (!Myna) var Myna={}
 				table.addIndex(o);
 			}) */
 			originalCol.exportedKeys.forEach(function exportedKeys(o){
-				table.db.getTable(o.localTable).addForeignKey(o);
+				var ftable =table.db.getTable(o.localTable)
+				ftable.deferExec = table.deferExec
+				ftable.addForeignKey(o);
+				if (table.deferExec) table.sql+=ftable.sql.trim();
 			})	
 	}
 
@@ -879,11 +938,12 @@ if (!Myna) var Myna={}
 			name:options.localColumn,
 			references:options
 		}
-			
 		qry =new Myna.Query({
 			dataSource:table.db.ds,
-			sql:table.getTemplate("addForeignKeyConstraint").apply(options)
-		})
+			sql:table.getTemplate("addForeignKeyConstraint").apply(options),
+			deferExec:this.deferExec
+		}) 
+		if (this.deferExec && qry.sql.trim().length) this.sql+=qry.sql.trim()+";\n\n";
 				
 		
 		table.init();
@@ -919,7 +979,7 @@ if (!Myna) var Myna={}
 		if (!table.exists){
 			throw new Error("Table.addPrimaryKey(): Table '" + table.tableName+ "' does not exist.");
 		}
-		options.tableName = table.tableName;
+		options.tableName = table.sqlTableName;
 		options.name = options.column
 		options.constraint = table.getTemplate("primaryKeyConstraint").apply({}) 
 		if (!("id" in options)) {
@@ -930,8 +990,10 @@ if (!Myna) var Myna={}
 			
 		qry =new Myna.Query({
 			dataSource:table.db.ds,
-			sql:table.getTemplate("addConstraint").apply(options)
+			sql:table.getTemplate("addConstraint").apply(options),
+			deferExec:this.deferExec
 		}) 
+		if (this.deferExec && qry.sql.trim().length) this.sql+=qry.sql.trim()+";\n\n";
 				
 		
 		table.init();
@@ -979,8 +1041,10 @@ if (!Myna) var Myna={}
 		
 		var qry =new Myna.Query({
 			dataSource:table.db.ds,
-			sql:table.getTemplate("createIndex").apply(options)
-		})
+			sql:table.getTemplate("createIndex").apply(options),
+			deferExec:this.deferExec
+		}) 
+		if (this.deferExec && qry.sql.trim().length) this.sql+=qry.sql.trim()+";\n\n";
 		table.init()
 		table.clearMetadataCache()
 	}
@@ -1119,8 +1183,10 @@ if (!Myna) var Myna={}
 					})
 					return table.getTemplate("createColumn").apply(col);
 				})
-			})
-		})   
+			}),
+			deferExec:this.deferExec
+		}) 
+		if (this.deferExec && qry.sql.trim().length) this.sql+=qry.sql.trim()+";\n\n";
 		table.init();
 		table.clearMetadataCache()
 		
@@ -1146,12 +1212,14 @@ if (!Myna) var Myna={}
 		var deleted = false;
 		/* try { */
 			if (table.exists){
-				new Myna.Query({
+				var qry =new Myna.Query({
 					dataSource:table.db.ds,
 					sql:table.getTemplate("dropTable").apply({
 						tableName:table.sqlTableName
-					})
-				})
+					}),
+					deferExec:this.deferExec
+				}) 
+				if (this.deferExec && qry.sql.trim().length) this.sql+=qry.sql.trim()+";\n\n";
 				deleted=true;
 			}
 		/* } catch(e) {
@@ -1182,21 +1250,25 @@ if (!Myna) var Myna={}
 		table.init();
 		name = name.toUpperCase();
 	
-		if (!table.exists){
-			throw new Error("Table.dropColumn(): Table '" + table.tableName+ "' does not exist.");
+		if (!this.deferExec){
+			if (!table.exists){
+				throw new Error("Table.dropColumn(): Table '" + table.tableName+ "' does not exist.");
+			}
+			
+			if (!table.columnNames.join(",").listContainsNoCase(name) ){
+				return;
+			}
 		}
 		
-		if (!table.columnNames.join(",").listContainsNoCase(name) ){
-			return;
-		}
-		
-		new Myna.Query({
+		var qry =new Myna.Query({
 			dataSource:table.db.ds,
 			sql:table.getTemplate("dropColumn").apply({
 				tableName:table.sqlTableName,
 				name:name
-			})
-		})
+			}),
+			deferExec:this.deferExec
+		}) 
+		if (this.deferExec && qry.sql.trim().length) this.sql+=qry.sql.trim()+";\n\n";
 		
 		table.init();
 		table.clearMetadataCache()
@@ -1222,19 +1294,21 @@ if (!Myna) var Myna={}
 		table.init();
 		name = name;
 	
-		if (!table.exists){
-			throw new Error("Table.dropConstraint(): Table '" + table.tableName+ "' does not exist.");
+		if (!this.defereExec){
+			if (!table.exists){
+				throw new Error("Table.dropConstraint(): Table '" + table.tableName+ "' does not exist.");
+			}
 		}
 		
-		
-		
-		new Myna.Query({
+		var qry =new Myna.Query({
 			dataSource:table.db.ds,
 			sql:table.getTemplate("dropConstraint").apply({
 				tableName:table.sqlTableName,
 				id:name
-			})
-		})
+			}),
+			deferExec:this.deferExec
+		}) 
+		if (this.deferExec && qry.sql.trim().length) this.sql+=qry.sql.trim()+";\n\n";
 		
 		table.init();
 		table.clearMetadataCache()
@@ -1266,13 +1340,15 @@ if (!Myna) var Myna={}
 		
 		
 		
-		new Myna.Query({
+		var qry =new Myna.Query({
 			dataSource:table.db.ds,
 			sql:table.getTemplate("dropIndex").apply({
 				tableName:table.sqlTableName,
 				name:name
-			})
-		})
+			}),
+			deferExec:this.deferExec
+		}) 
+		if (this.deferExec && qry.sql.trim().length) this.sql+=qry.sql.trim()+";\n\n";
 		
 		table.init();
 		table.clearMetadataCache()
@@ -1316,4 +1392,24 @@ if (!Myna) var Myna={}
 	*/
 	Myna.Table.prototype.clearMetadataCache = function(){
 		this.cache={}
+	}
+/* Function: applyChanges
+	Applies the contents of <Table.sql> to this Table's datasource.
+	
+	See:
+		* <Table.deferExec>
+		* <Table.sql>
+
+	*/
+	Myna.Table.prototype.applyChanges = function(){
+		var table = this;
+		this.sql.split(";").forEach(function(sql){
+			if (sql.trim().length){
+				new Myna.Query({
+					ds:table.db.ds,
+					sql:sql
+				}) 
+			}
+		})	
+		this.sql="";
 	}

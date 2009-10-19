@@ -920,7 +920,7 @@ public class MynaThread {
 				&& !new File(ds.getProperty("file")).exists()
 			){
 			 	String newPath = getNormalizedPath(ds.getProperty("file"))
-				.replaceAll("file:","").replaceAll("//","/");
+				.replaceAll("file:","").replaceAll("//","/").replaceAll("%20"," ");
 				ds.setProperty("url",
 					ds.getProperty("url").replaceAll(
 						ds.getProperty("file"),
