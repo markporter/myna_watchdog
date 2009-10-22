@@ -47,7 +47,7 @@
 			if (user_id == "myna_admin"){
 				return true;
 			} else {
-				var user = Myna.Permissions.getUserById(this.authUserId);
+				var user = Myna.Permissions.getUserById(user_id);
 				if (user == null) {
 					return false
 				} else {

@@ -24,7 +24,7 @@ import org.openid4java.consumer.ConsumerManager;
 */
 public class MynaThread {
 	//static public Log logger = LogFactory.getLog(MynaThread.class);
-	static public String version="1.0_alpha_17-1";
+	static public String version="1.0_alpha_17-2";
 	static public FIFOSemaphore threadPermit;
 	static public FIFOSemaphore manageLocksPermit;
 	static public volatile CopyOnWriteArrayList runningThreads 	= new CopyOnWriteArrayList();
