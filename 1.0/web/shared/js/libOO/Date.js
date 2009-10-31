@@ -1,14 +1,28 @@
 /*
-	 Ext JS Library 1.1.1
-	 Copyright(c) 2006-2007, Ext JS, LLC.
-	 licensing@extjs.com
-	 
-	 http://www.extjs.com/license
- */
+ * Copyright (C) 2004 Baron Schwartz <baron at sequent dot org>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+*/
 
 
 /* Class: Date
-	This date class was originally adapted from the EXT js library http://www.extjs.com. 	
+	This date class adapted from http://code.google.com/p/flexible-js-formatting/. 	
 
 	The date parsing and format syntax is a subset of
 	PHP's date(http://www.php.net/date) function, and the formats that are
@@ -87,59 +101,21 @@ Myna.println(dt.format(Date.patterns.ShortDate));
  (end)
  */
 
-/*
-	 Most of the date-formatting functions below are the excellent work of Baron Schwartz.
-	 They generate precompiled functions from date formats instead of parsing and
-	 processing the pattern every time you format a date.  These functions are available
-	 on every Date object (any javascript function).
-	
-	 The original article and download are here:
-	 http://www.xaprb.com/blog/2005/12/12/javascript-closures-for-runtime-efficiency/
-	
- */
-// private escape function for Ext
-var escape = function(string) {
-	return string.replace(/('|\\)/g, "\\$1");
-}
-var leftPad = function (val,size, ch) {
-	var result = new String(val);
-	if(ch === null || ch === undefined || ch === '') {
-		ch = " ";
-	}
-	while (result.length < size) {
-		result = ch + result;
-	}
-	return result;
-}
-Date.patterns = {
-    ISO8601Long:"Y-m-d\\TH:i:s",
-    ISO8601Short:"Y-m-d",
-    ShortDate: "n/j/Y",
-    LongDate: "l, F d, Y",
-    FullDateTime: "l, F d, Y g:i:s A",
-    MonthDay: "F d",
-    ShortTime: "g:i A",
-    LongTime: "g:i:s A",
-    SortableDateTime: "Y-m-d\\TH:i:s",
-    UniversalSortableDateTime: "Y-m-d H:i:sO",
-    YearMonth: "F, Y"
-}
-// private
 Date.parseFunctions = {count:0};
-// private
 Date.parseRegexes = [];
-// private
 Date.formatFunctions = {count:0};
 
-// private
-Date.prototype.dateFormat = function(format) {
-    if (Date.prototype["formatFunction"+format] == null) {
+Date.prototype.dateFormat = function(format, ignore_offset) {
+    if (Date.formatFunctions[format] == null) {
         Date.createNewFormat(format);
     }
-    return this["formatFunction"+format]();
+    var func = Date.formatFunctions[format];
+    if (ignore_offset || ! this.offset) {
+      return this[func]();
+    } else {
+      return (new Date(this.valueOf() - this.offset))[func]();
+    }
 };
-
-
 /* Function: format
 	 Formats a date given the supplied format string
 	 format - {String}The format string
@@ -148,19 +124,12 @@ Returns:
  {String} The formatted date
 	 @method
  */
-Date.prototype.format = Date.prototype.dateFormat;
+Date.prototype.format =Date.prototype.dateFormat  
 
-// private
 Date.createNewFormat = function(format) {
-	var formatFunction;
-	Date.prototype["formatFunction"+format] =formatFunction= function(){
-		var my = arguments.callee;
-		var theDate = this;
-		return my.formatters.reduce(function(result, formatter){
-			return result + formatter.apply(theDate);
-		},"")
-	}
-	formatFunction.formatters=[];
+    var funcName = "format" + Date.formatFunctions.count++;
+    Date.formatFunctions[format] = funcName;
+    var code = "Date.prototype." + funcName + " = function(){return ";
     var special = false;
     var ch = '';
     for (var i = 0; i < format.length; ++i) {
@@ -168,86 +137,75 @@ Date.createNewFormat = function(format) {
         if (!special && ch == "\\") {
             special = true;
         }
-        else if (!special){
-			special = false;
-			
-            formatFunction.formatters.push(Date.getFormatCode(ch));
+        else if (special) {
+            special = false;
+            code += "'" + Date.escape(ch) + "' + ";
         }
-		else {
-			special = false;
-			var c = ch;
-			formatFunction.formatters.push(function(){return c});
-		}
+        else {
+            code += Date.getFormatCode(ch);
+        }
     }
-    //eval(code.substring(0, code.length - 3) + ";}");
+    eval(code.substring(0, code.length - 3) + ";}");
 };
 
-// private
 Date.getFormatCode = function(character) {
     switch (character) {
     case "d":
-	return function(){return leftPad(this.getDate(), 2, '0')};
+        return "Date.leftPad(this.getDate(), 2, '0') + ";
     case "D":
-        return function(){ return Date.dayNames[this.getDay()].substring(0, 3) };
+        return "Date.dayNames[this.getDay()].substring(0, 3) + ";
     case "j":
-        return function(){ return this.getDate() };
+        return "this.getDate() + ";
     case "l":
-        return function(){ return Date.dayNames[this.getDay()] };
+        return "Date.dayNames[this.getDay()] + ";
     case "S":
-	
-        return function(){ return this.getSuffix() };
+        return "this.getSuffix() + ";
     case "w":
-        return function(){ return this.getDay() };
+        return "this.getDay() + ";
     case "z":
-        return function(){ return this.getDayOfYear() };
+        return "this.getDayOfYear() + ";
     case "W":
-        return function(){ return this.getWeekOfYear() };
+        return "this.getWeekOfYear() + ";
     case "F":
-        return function(){ return Date.monthNames[this.getMonth()] };
+        return "Date.monthNames[this.getMonth()] + ";
     case "m":
-        return function(){ return leftPad(this.getMonth() + 1, 2, '0') };
+        return "Date.leftPad(this.getMonth() + 1, 2, '0') + ";
     case "M":
-        return function(){ return Date.monthNames[this.getMonth()].substring(0, 3) };
+        return "Date.monthNames[this.getMonth()].substring(0, 3) + ";
     case "n":
-        return function(){ return (this.getMonth() + 1) };
+        return "(this.getMonth() + 1) + ";
     case "t":
-        return function(){ return this.getDaysInMonth() };
+        return "this.getDaysInMonth() + ";
     case "L":
-        return function(){ return (this.isLeapYear() ? 1 : 0) };
+        return "(this.isLeapYear() ? 1 : 0) + ";
     case "Y":
-        return function(){ return this.getFullYear() };
+        return "this.getFullYear() + ";
     case "y":
-        return function(){ return ('' + this.getFullYear()).substring(2, 4) };
+        return "('' + this.getFullYear()).substring(2, 4) + ";
     case "a":
-        return function(){ return (this.getHours() < 12 ? 'am' : 'pm') };
+        return "(this.getHours() < 12 ? 'am' : 'pm') + ";
     case "A":
-        return function(){ return (this.getHours() < 12 ? 'AM' : 'PM') };
+        return "(this.getHours() < 12 ? 'AM' : 'PM') + ";
     case "g":
-        return function(){ return ((this.getHours() % 12) ? this.getHours() % 12 : 12) };
+        return "((this.getHours() %12) ? this.getHours() % 12 : 12) + ";
     case "G":
-        return function(){ return this.getHours() };
+        return "this.getHours() + ";
     case "h":
-        return function(){ return leftPad((this.getHours() % 12) ? this.getHours() % 12 : 12, 2, '0') };
+        return "Date.leftPad((this.getHours() %12) ? this.getHours() % 12 : 12, 2, '0') + ";
     case "H":
-        return function(){ return leftPad(this.getHours(), 2, '0') };
+        return "Date.leftPad(this.getHours(), 2, '0') + ";
     case "i":
-        return function(){ return leftPad(this.getMinutes(), 2, '0') };
+        return "Date.leftPad(this.getMinutes(), 2, '0') + ";
     case "s":
-        return function(){ return leftPad(this.getSeconds(), 2, '0') };
-	case "u":
-        return function(){ return leftPad(this.getMilliseconds(), 3, '0') };	
-    case "o":
-        return function(){ var o = String(this.getGMTOffset()); return o.left(3)+":" +o.right(2)};
-	case "O":
-        return function(){ return this.getGMTOffset() };
+        return "Date.leftPad(this.getSeconds(), 2, '0') + ";
+    case "O":
+        return "this.getGMTOffset() + ";
     case "T":
-        return function(){ return this.getTimezone() };
+        return "this.getTimezone() + ";
     case "Z":
-        return function(){ return (this.getTimezoneOffset()	 -60) };
+        return "(this.getTimezoneOffset() * -60) + ";
     default:
-		var f = function(){ return arguments.callee.charVal };
-		f.charVal=escape(character);
-        return f
+        return "'" + Date.escape(character) + "' + ";
     }
 };
 
@@ -282,72 +240,26 @@ Date.parseDate = function(input, format) {
     if (Date.parseFunctions[format] == null) {
         Date.createParser(format);
     }
-    return Date.parseFunctions[format](input);
+    var func = Date.parseFunctions[format];
+    return Date[func](input);
 };
 
-// private
 Date.createParser = function(format) {
-   	var parser;
-    Date.parseFunctions[format] = parser =function(input){
-		var my = arguments.callee;
-		var v = new Date();
-        var dateVars ={
-			y:v.getFullYear(), 
-			m:v.getMonth(), 
-			d:v.getDate(), 
-			h: 0, 
-			i: 0, 
-			ms:0,
-			s: 0, 
-			o:null, 
-			z:null
-		};
-       
-        var results = input.match(my.regex);
-		
-        if (results && results.length) {
-			results.forEach(function(match,index){
-				if (index == 0) return; //skip the zero match
-				my.matchFunctions[index-1](match,dateVars);
-			})
-			for (var key in dateVars){
-				switch(key){
-					case 'y':
-						if (dateVars[key] >= 0) v.setFullYear(dateVars[key]);
-						break;
-					case 'm':
-						if (dateVars[key] >= 0) v.setMonth(dateVars[key]);
-						break;
-					case 'd':
-						if (dateVars[key] >= 0) v.setDate(dateVars[key]);
-						break;
-					case 'h':
-						if (dateVars[key] >= 0) v.setHours(dateVars[key]);
-						break;
-					case 'i':
-						if (dateVars[key] >= 0) v.setMinutes(dateVars[key]);
-						break;
-					case 's':
-						if (dateVars[key] >= 0) v.setSeconds(dateVars[key]);
-						break;
-					case 'ms':
-						if (dateVars[key] >= 0) v.setMilliseconds(dateVars[key]);
-						break;
-				}
-			}
-			return (v && (dateVars.z || dateVars.o))? // favour UTC offset over GMT offset
-				((dateVars.z)? v.add(Date.SECOND, (v.getTimezoneOffset() * 60) + (dateVars.z*1)) : // reset to UTC, then add offset
-					v.add(Date.HOUR, (v.getGMTOffset() / 100) + (dateVars.o / -100))) : v // reset to GMT, then add offset
-			;
-		} else{
-			throw new SyntaxError("Pattern '" + my.format +"' does not match '" + input +"'")
-		}
-		
-	};
-   
-    parser.regex = "";
-	parser.matchFunctions = [];
-	parser.format = format;
+    var funcName = "parse" + Date.parseFunctions.count++;
+    var regexNum = Date.parseRegexes.length;
+    var currentGroup = 1;
+    Date.parseFunctions[format] = funcName;
+
+    var code = "Date." + funcName + " = function(input){\n"
+        + "var y = -1, m = -1, d = -1, h = -1, i = -1, s = -1, z = 0;\n"
+        + "var d = new Date();\n"
+        + "y = d.getFullYear();\n"
+        + "m = d.getMonth();\n"
+        + "d = d.getDate();\n"
+        + "var results = input.match(Date.parseRegexes[" + regexNum + "]);\n"
+        + "if (results && results.length > 0) {" ;
+    var regex = "";
+
     var special = false;
     var ch = '';
     for (var i = 0; i < format.length; ++i) {
@@ -357,176 +269,163 @@ Date.createParser = function(format) {
         }
         else if (special) {
             special = false;
-            parser.regex += escape(ch);
+            regex += Date.escape(ch);
         }
         else {
-            var obj = Date.formatCodeToRegex(ch);
-            parser.regex += obj.s;
-            if (obj.g && obj.f) {
-				parser.matchFunctions.push(obj.f);
+            obj = Date.formatCodeToRegex(ch, currentGroup);
+            currentGroup += obj.g;
+            regex += obj.s;
+            if (obj.g && obj.c) {
+                code += obj.c;
             }
         }
     }
 
+    code += "if (y > 0 && m >= 0 && d > 0 && h >= 0 && i >= 0 && s >= 0)\n"
+        + "{return new Date(y, m, d, h, i, s).applyOffset(z);}\n"
+        + "else if (y > 0 && m >= 0 && d > 0 && h >= 0 && i >= 0)\n"
+        + "{return new Date(y, m, d, h, i).applyOffset(z);}\n"
+        + "else if (y > 0 && m >= 0 && d > 0 && h >= 0)\n"
+        + "{return new Date(y, m, d, h).applyOffset(z);}\n"
+        + "else if (y > 0 && m >= 0 && d > 0)\n"
+        + "{return new Date(y, m, d).applyOffset(z);}\n"
+        + "else if (y > 0 && m >= 0)\n"
+        + "{return new Date(y, m).applyOffset(z);}\n"
+        + "else if (y > 0)\n"
+        + "{return new Date(y).applyOffset(z);}\n"
+        + "}return null;}";
+
+    Date.parseRegexes[regexNum] = new RegExp("^" + regex + "$");
+    eval(code);
 };
 
-// private
-Date.formatCodeToRegex = function(character) {
+Date.formatCodeToRegex = function(character, currentGroup) {
     switch (character) {
     case "D":
         return {g:0,
-		f:null,
+        c:null,
         s:"(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat)"};
     case "j":
-        return {g:1,
-			f:function(match,dateVars){dateVars.d = parseInt(match, 10)},
-            s:"(\\d{1,2})"}; // day of month without leading zeroes
     case "d":
         return {g:1,
-			f:function(match,dateVars){dateVars.d = parseInt(match, 10)},
-            s:"(\\d{2})"}; // day of month with leading zeroes
+            c:"d = parseInt(results[" + currentGroup + "], 10);\n",
+            s:"(\\d{1,2})"};
     case "l":
         return {g:0,
-			f:null,
+            c:null,
             s:"(?:" + Date.dayNames.join("|") + ")"};
     case "S":
         return {g:0,
-			f:null,
+            c:null,
             s:"(?:st|nd|rd|th)"};
     case "w":
         return {g:0,
-			f:null,
+            c:null,
             s:"\\d"};
     case "z":
         return {g:0,
-			f:null,
+            c:null,
             s:"(?:\\d{1,3})"};
     case "W":
         return {g:0,
-			f:null,
+            c:null,
             s:"(?:\\d{2})"};
     case "F":
         return {g:1,
-			f:function(match,dateVars){dateVars.m = parseInt(Date.monthNumbers[match.substring(0, 3)], 10)},
+            c:"m = parseInt(Date.monthNumbers[results[" + currentGroup + "].substring(0, 3)], 10);\n",
             s:"(" + Date.monthNames.join("|") + ")"};
     case "M":
         return {g:1,
-			f:function(match,dateVars){dateVars.m = parseInt(Date.monthNumbers[match], 10)},
+            c:"m = parseInt(Date.monthNumbers[results[" + currentGroup + "]], 10);\n",
             s:"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"};
     case "n":
-        return {g:1,
-			f:function(match,dateVars){dateVars.m = parseInt(match, 10)-1},
-            s:"(\\d{1,2})"}; // Numeric representation of a month, without leading zeros
     case "m":
         return {g:1,
-			f:function(match,dateVars){dateVars.m = parseInt(match, 10)-1},
-            s:"(\\d{2})"}; // Numeric representation of a month, with leading zeros
+            c:"m = parseInt(results[" + currentGroup + "], 10) - 1;\n",
+            s:"(\\d{1,2})"};
     case "t":
         return {g:0,
-			f:null,
+            c:null,
             s:"\\d{1,2}"};
     case "L":
         return {g:0,
-			f:null,
+            c:null,
             s:"(?:1|0)"};
     case "Y":
         return {g:1,
-			f:function(match,dateVars){dateVars.y = parseInt(match, 10)},
+            c:"y = parseInt(results[" + currentGroup + "], 10);\n",
             s:"(\\d{4})"};
     case "y":
         return {g:1,
-			f:function(match,dateVars){
-				var ty = parseInt(match, 10);
-                dateVars.y = ty > Date.y2kYear ? 1900 + ty : 2000 + ty;
-			},
+            c:"var ty = parseInt(results[" + currentGroup + "], 10);\n"
+                + "y = ty > Date.y2kYear ? 1900 + ty : 2000 + ty;\n",
             s:"(\\d{1,2})"};
     case "a":
         return {g:1,
-			f:function(match,dateVars){
-				if (match == 'am') {
-					if (dateVars.h == 12) { 
-						dateVars.h = 0; 
-					} else if (dateVars.h < 12) { 
-						dateVars.h += 12; 
-					}
-				}
-			},
+            c:"if (results[" + currentGroup + "] == 'am') {\n"
+                + "if (h == 12) { h = 0; }\n"
+                + "} else { if (h < 12) { h += 12; }}",
             s:"(am|pm)"};
     case "A":
         return {g:1,
-			f:function(match,dateVars){
-				if (match == 'AM') {
-					if (dateVars.h == 12) { 
-						dateVars.h = 0; 
-					} else if (dateVars.h < 12) { 
-						dateVars.h += 12; 
-					}
-				}
-			},
+            c:"if (results[" + currentGroup + "] == 'AM') {\n"
+                + "if (h == 12) { h = 0; }\n"
+                + "} else { if (h < 12) { h += 12; }}",
             s:"(AM|PM)"};
     case "g":
     case "G":
-        return {g:1,
-			f:function(match,dateVars){ dateVars.h = parseInt(match,10);},
-            s:"(\\d{1,2})"}; // 12/24-hr format  format of an hour without leading zeroes
     case "h":
     case "H":
         return {g:1,
-			f:function(match,dateVars){ dateVars.h = parseInt(match,10);},
-            s:"(\\d{2})"}; //  12/24-hr format  format of an hour with leading zeroes
+            c:"h = parseInt(results[" + currentGroup + "], 10);\n",
+            s:"(\\d{1,2})"};
     case "i":
         return {g:1,
-			f:function(match,dateVars){ dateVars.i = parseInt(match,10);},
+            c:"i = parseInt(results[" + currentGroup + "], 10);\n",
             s:"(\\d{2})"};
     case "s":
         return {g:1,
-			f:function(match,dateVars){ dateVars.s = parseInt(match,10);},
+            c:"s = parseInt(results[" + currentGroup + "], 10);\n",
             s:"(\\d{2})"};
-	case "u":
-        return {g:1,
-			f:function(match,dateVars){ dateVars.ms = parseInt(match,10);},
-            s:"(\\d{3})"};
     case "O":
+    case "P":
         return {g:1,
-			f:function(match,dateVars){
-				dateVars.o = match;
-			},
-            s:"([+\-]\\d{4})"};
-	case "o":
-        return {g:1,
-			f:function(match,dateVars){
-				dateVars.o = match;
-				var o = dateVars.o;
-				var sn;
-				var hr;
-				var mn;
-				if (match == "Z"){
-					dateVars.o="0000"
-					
-				} else {
-					sn = o.substring(0,1); // get + / - sign
-					hr = o.substring(1,3)*1 + Math.floor(o.substring(4,6) / 60); // get hours (performs minutes-to-hour conversion also)
-					mn = o.substring(4,6) % 60; // get minutes
-				}
-			},
-		s:"([+\-]\\d{2}:\\d{2}|Z)"};
+            c:"z = Date.parseOffset(results[" + currentGroup + "], 10);\n",
+            s:"(Z|[+-]\\d{2}:?\\d{2})"}; // "Z", "+05:00", "+0500" all acceptable.
     case "T":
         return {g:0,
-			f:null,
-            s:"[A-Z]{1,4}"}; // timezone abbrev. may be between 1 - 4 chars
+            c:null,
+            s:"[A-Z]{3}"};
     case "Z":
         return {g:1,
-			f:function(match,dateVars){
-				dateVars.z = (-43200 <= match*1 && match*1 <= 50400)? match : null;
-			},
-            s:"([+\-]?\\d{1,5})"}; // leading '+' sign is optional for UTC offset
+            c:"s = parseInt(results[" + currentGroup + "], 10);\n",
+            s:"([+-]\\d{1,5})"};
     default:
         return {g:0,
-			f:null,
-            s:escape(character)};
+            c:null,
+            s:Date.escape(character)};
     }
 };
 
+
+Date.parseOffset = function(str) {
+  if (str == "Z") { return 0 ; } // UTC, no offset.
+  var seconds ;
+  seconds = parseInt(str[0] + str[1] + str[2]) * 3600 ; // e.g., "+05" or "-08"
+  if (str[3] == ":") {            // "+HH:MM" is preferred iso8601 format ("O")
+    seconds += parseInt(str[4] + str[5]) * 60;
+  } else {                      // "+HHMM" is frequently used, though. ("P")
+    seconds += parseInt(str[3] + str[4]) * 60;
+  }
+  return seconds ;
+};
+
+// convert the parsed date into UTC, but store the offset so we can optionally use it in dateFormat()
+Date.prototype.applyOffset = function(offset_seconds) {
+  this.offset = offset_seconds * 1000 ;
+  this.setTime(this.valueOf() + this.offset);
+  return this ;
+};
 /* function: getTimezone
 	 Get the timezone abbreviation of the current date (equivalent to the format specifier 'T').
 	 
@@ -534,7 +433,10 @@ Returns:
  {String} The abbreviated timezone name (e.g. 'CST')
  */
 Date.prototype.getTimezone = function() {
-    return this.toString().replace(/^.*? ([A-Z]{1,4})[\-+][0-9]{4} .*$/, "$1");
+    return this.toString().replace(
+        /^.*? ([A-Z]{3}) [0-9]{4}.*$/, "$1").replace(
+        /^.*?\(([A-Z])[a-z]+ ([A-Z])[a-z]+ ([A-Z])[a-z]+\)$/, "$1$2$3").replace(
+        /^.*?[0-9]{4} \(([A-Z]{3})\)/, "$1");
 };
 
 /* Function: getGMTOffset
@@ -545,8 +447,8 @@ Returns:
  */
 Date.prototype.getGMTOffset = function() {
     return (this.getTimezoneOffset() > 0 ? "-" : "+")
-        + leftPad(Math.abs(Math.floor(this.getTimezoneOffset() / 60)), 2, "0")
-        + leftPad(this.getTimezoneOffset() % 60, 2, "0");
+        + Date.leftPad(Math.floor(this.getTimezoneOffset() / 60), 2, "0")
+        + Date.leftPad(this.getTimezoneOffset() % 60, 2, "0");
 };
 
 /* Function: getDayOfYear
@@ -555,6 +457,7 @@ Date.prototype.getGMTOffset = function() {
 Returns: 
  {Number} 0 through 364 (365 in leap years)
  */
+
 Date.prototype.getDayOfYear = function() {
     var num = 0;
     Date.daysInMonth[1] = this.isLeapYear() ? 29 : 28;
@@ -577,7 +480,8 @@ Date.prototype.getWeekOfYear = function() {
     // Find the first Thursday of the year
     var jan1 = new Date(this.getFullYear(), 0, 1);
     var then = (7 - jan1.getDay() + 4);
-    return leftPad(((now - then) / 7) + 1, 2, "0");
+    document.write(then);
+    return Date.leftPad(((now - then) / 7) + 1, 2, "0");
 };
 
 /* Function: 
@@ -627,26 +531,6 @@ Date.prototype.getLastDayOfMonth = function() {
     return (day < 0) ? (day + 7) : day;
 };
 
-
-/* Function: getFirstDateOfMonth
-	 Get the first date of this date's month
-	 
-Returns: 
- {Date}
- */
-Date.prototype.getFirstDateOfMonth = function() {
-    return new Date(this.getFullYear(), this.getMonth(), 1);
-};
-
-/* Function: getLastDateOfMonth
-	 Get the last date of this date's month
-	 
-Returns: 
- {Date}
- */
-Date.prototype.getLastDateOfMonth = function() {
-    return new Date(this.getFullYear(), this.getMonth(), this.getDaysInMonth());
-};
 /* Function: getDaysInMonth
 	 Get the number of days in the current month, adjusted for leap year.
 	 
@@ -681,16 +565,22 @@ Date.prototype.getSuffix = function() {
     }
 };
 
-// private
-Date.daysInMonth = [31,28,31,30,31,30,31,31,30,31,30,31];
+Date.escape = function(string) {
+    return string.replace(/('|\\)/g, "\\$1");
+};
 
-/*  
-	 An array of textual month names.
-	 Override these values for international dates, for example...
-	 Date.monthNames = ['JanInYourLang', 'FebInYourLang', ...];
-	 @type Array
-	 @static
- */
+Date.leftPad = function (val, size, ch) {
+    var result = new String(val);
+    if (ch == null) {
+        ch = " ";
+    }
+    while (result.length < size) {
+        result = ch + result;
+    }
+    return result;
+};
+
+Date.daysInMonth = [31,28,31,30,31,30,31,31,30,31,30,31];
 Date.monthNames =
    ["January",
     "February",
@@ -704,14 +594,6 @@ Date.monthNames =
     "October",
     "November",
     "December"];
-
-/*  
-	 An array of textual day names.
-	 Override these values for international dates, for example...
-	 Date.dayNames = ['SundayInYourLang', 'MondayInYourLang', ...];
-	 @type Array
-	 @static
- */
 Date.dayNames =
    ["Sunday",
     "Monday",
@@ -720,10 +602,7 @@ Date.dayNames =
     "Thursday",
     "Friday",
     "Saturday"];
-
-// private
 Date.y2kYear = 50;
-// private
 Date.monthNumbers = {
     Jan:0,
     Feb:1,
@@ -737,6 +616,18 @@ Date.monthNumbers = {
     Oct:9,
     Nov:10,
     Dec:11};
+Date.patterns = {
+    ISO8601LongPattern: "Y\\-m\\-d\\TH\\:i\\:sO",
+    ISO8601ShortPattern: "Y\\-m\\-d",
+    ShortDatePattern: "n/j/Y",
+    LongDatePattern: "l, F d, Y",
+    FullDateTimePattern: "l, F d, Y g:i:s A",
+    MonthDayPattern: "F d",
+    ShortTimePattern: "g:i A",
+    LongTimePattern: "g:i:s A",
+    SortableDateTimePattern: "Y-m-d\\TH:i:s",
+    UniversalSortableDateTimePattern: "Y-m-d H:i:sO",
+    YearMonthPattern: "F, Y"};
 
 /* Function: clone
 	 Creates and returns a new Date instance with the exact same date value as the called instance.
@@ -891,6 +782,31 @@ Date.prototype.add = function(interval, value){
   }
   return d;
 };
+	 
+/*
+ * Copyright (C) 2009 Mark Porter <mark@porterpeople.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+*/
+
+
+
 /* Function: getInterval
 	 returns a time interval in milliseconds. This can be used with <Date.add>
 	 instead of specifying the type and length

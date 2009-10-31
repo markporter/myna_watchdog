@@ -440,59 +440,61 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 					maxLength:255,
 					defaultValue:"'jasypt-basic'"
 				})	
-			} */
-      /* modify existing columns */
+			}  */
+		/* modify existing columns */
 			/* if (table.columns.key.column_size < 2000){
 				table.modifyColumn("key",{
 					type:"VARCHAR",
 					maxLength:2000
 					
 				})
-			} else {Myna.log("debug","colsize for key =" +  table.columns.key.column_size,Myna.dump(table));} */
+			} else {Myna.log("debug","colsize for key =" +table.columns.key.column_size,Myna.dump(table));} */
 		
-   dm = new Myna.DataManager("myna_permissions");
-   /* check for Myna Admin rights */
-        var installed_rights = new Myna.Query({
-            ds:"myna_permissions",
-            sql:<ejs>
-                select name from rights
-                where appname='myna_admin'
-            </ejs>
-        }).valueArray("name").join()
-        if (!installed_rights.listContains("full_admin_access")){
-            Myna.Permissions.addRight({
-                appname:"myna_admin",
-                description:"Full access to all parts of the application",
-                name:"full_admin_access"
-            })  
-        }
-   /* check for myna_admin user */
-        var users = dm.getManager("users");
-        if (!users.find("myna_admin").length){
-            users.create({
-                user_id:"myna_admin",
-                first_name:"Myna",
-                middle_name:"",
-                last_name:"Administrator",
-                title:"",
-                created:new Date()
-            })
-            Myna.Permissions.getUserById("myna_admin")
-            .setLogin({type:"server_admin",login:"Admin"})
-        }
-   /* check for "Myna Administrators" user group */
-        var user_groups = dm.getManager("user_groups");
-        if (!user_groups.find({name:"Myna Administrators",appname:"myna_admin"}).length){
-            var group = Myna.Permissions.addUserGroup({
-                name:"Myna Administrators",
-                appname:"myna_admin",
-                description:"Users with full access to Myna's administrative tools"
-            })
-            group.addUsers("myna_admin");
-            group.addRights(
-                Myna.Permissions.getRightsByAppname("myna_admin")
-                    .valueArray("right_id")
-            );
-        }
-    
+	dm = new Myna.DataManager("myna_permissions");
+	/* check for Myna Admin rights */
+		var installed_rights = new Myna.Query({
+				ds:"myna_permissions",
+				sql:<ejs>
+					 select name from rights
+					 where appname='myna_admin'
+				</ejs>
+		}).valueArray("name").join()
+		if (!installed_rights.listContains("full_admin_access")){
+				Myna.Permissions.addRight({
+					 appname:"myna_admin",
+					 description:"Full access to all parts of the application",
+					 name:"full_admin_access"
+				})
+		}
+	/* check for myna_admin user */
+		var users = dm.getManager("users");
+		if (!users.find("myna_admin").length){
+				users.create({
+					 user_id:"myna_admin",
+					 first_name:"Myna",
+					 middle_name:"",
+					 last_name:"Administrator",
+					 title:"",
+					 created:new Date()
+				})
+				Myna.Permissions.getUserById("myna_admin")
+				.setLogin({type:"server_admin",login:"Admin"})
+		}
+	/* check for "Myna Administrators" user group */
+		var user_groups = dm.getManager("user_groups");
+		var admin_group = user_groups.find({name:"Myna Administrators",appname:"myna_admin"});
+		if (!admin_group.length){
+			var group = Myna.Permissions.addUserGroup({
+				 name:"Myna Administrators",
+				 appname:"myna_admin",
+				 description:"Users with full access to Myna's administrative tools"
+			})
+		} else {
+			group=Myna.Permissions.getUserGroupById(admin_group[0])
+		}
+		group.addUsers("myna_admin");
+		group.addRights(
+			 Myna.Permissions.getRightsByAppname("myna_admin")
+				.valueArray("right_id")
+		);
 $server_gateway.loadDataSources();

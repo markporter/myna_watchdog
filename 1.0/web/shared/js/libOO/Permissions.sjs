@@ -457,6 +457,7 @@ if (!Myna) var Myna={}
 			.findBeans({appname:appname}).map(function(bean){
 				return new Myna.Permissions.Right(bean)
 			})
+			return beans;
 		},
 	/* Function: getUserGroupsByAppname
 		returns a <Myna.DataSet> of all the user groups associated with the 

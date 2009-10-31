@@ -156,6 +156,14 @@ if (!Myna) var Myna={}
 				rsColumns.close();
 				var result={}
 				columns.data.forEach(function(row,index){
+						//hack for H2 support
+						if (
+								!("column_size" in row) 
+								&& "character_maximum_length" in row
+							){
+							row.column_size = row.character_maximum_length;
+						}
+					
 					result[row.column_name.toLowerCase()] = row;
 				})
 				return result;

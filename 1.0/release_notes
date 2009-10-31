@@ -1,3 +1,23 @@
+Release Name: 1.0_alpha_17-3
+Notes:
+
+Bug-fix release
+
+changes:
+--------------------
+
+* fixed bugs in DataSet and File.listFiles
+* fixed bug that prevented parsing of multipart/form-data requests
+* performance enhancement to String.toXml()
+* added Myna.xmlToObject() and Myna.dump() support for XML objects
+* Fixed defect 1 http://code.google.com/p/myna/issues/detail?id=1
+* fixed bug with "decimal digits" in Table.create()
+* modified Table to allow deferred database updates
+* Changed how Table.modifyColumn works
+* fixed bug in permissions app that prevented login
+
+----------------------------------------------------------
+
 Release Name: 1.0_alpha_17
 Notes:
 
