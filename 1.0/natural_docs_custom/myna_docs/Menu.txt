@@ -56,7 +56,6 @@ File: Myna.DataManager  (DataManager.sjs)
 File: Myna.DataSet  (DataSet.sjs)
 File: Myna.File  (File.sjs)
 File: Myna.HttpConnection  (HttpConnection.sjs)
-File: Myna.HttpConnection  (Crypto.sjs)
 File: Myna.JavaUtils  (JavaUtils.sjs)
 
 Group: Auth_adapters  {

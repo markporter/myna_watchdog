@@ -185,7 +185,7 @@ if (!Myna) var Myna={}
 */
 	Myna.DataManager.prototype.getManager=function(tableName){
 		$profiler.begin("manager.getManager for " + tableName)
-		$this = this;
+		var $this = this;
 		var manager={};
 		var subClassName = tableName+"Manager";
 		
@@ -331,6 +331,7 @@ Myna.DataManager.beanTemplate ={
 				</ejs>
 			});
 		} catch (e){
+			Myna.log("error",e.message,Myna.formatError(e));
 			result.addError(e.message,fieldName);
 		}
 		return result;
@@ -544,6 +545,7 @@ Myna.DataManager.managerTemplate ={
 				//ignore columns that don't exist
 				return manager.columns[colName];
 			}); 
+			//Myna.printDump(columnArray)
 			var fieldArray = columnArray.map(function(colName){
 				return  '"' + manager.columns[colName].column_name + '"';
 			});
@@ -560,7 +562,7 @@ Myna.DataManager.managerTemplate ={
 							var value = requiredFields[colName];
 							var type = manager.columns[colName].data_type;
 							var isNull = (value === null);
-							//Myna.print(p.addValue(value,type,isNull))
+							Myna.print(p.addValue(value,type,isNull))
 							if (index < columnArray.length -1) Myna.print(",")
 						});
 						
@@ -623,13 +625,7 @@ Myna.DataManager.managerTemplate ={
 			var pkey =this.columns[this.primaryKey].column_name;
 			
 			
-			if (typeof pattern == "string"){
-				criteria.push({
-					column:pkey,
-					op:/%/.test(pattern)?" like " :" = ",
-					pattern:pattern
-				})
-			} else if (typeof pattern == "object"){
+			if (typeof pattern == "object"){
 				var myColumnList = this.columnNames.join()
 				pattern.getKeys().filter(function(colname){
 					return myColumnList.listContains(colname.toLowerCase())
@@ -641,9 +637,14 @@ Myna.DataManager.managerTemplate ={
 						pattern:caseSensitive?pattern[colName]:pattern[colName].toLowerCase()
 					})
 					
-				})	
-			} else {
-				throw new Error("Myna.DataManager.managerTemplate.find: Pattern must be a string or an object")	
+				})
+			} else{
+				criteria.push({
+					column:pkey,
+					op:/%/.test(String(pattern))?" like " :" = ",
+					pattern:pattern
+				})
+				
 			}
 			var p = new Myna.QueryParams();
 			var qry = new Myna.Query({
@@ -924,5 +925,3 @@ Myna.DataManager.managerTemplate ={
 			return bean;
 		},
 }
-	
-
