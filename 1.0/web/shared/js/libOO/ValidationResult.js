@@ -12,11 +12,11 @@ if (!Myna) var Myna={}
 			information to the browser regarding the status of an AJAX call, and 
 			ValidationResult.toJson() will return an appropriate JSON string for
 			an Ext form submit action. ValidationResult objects are also 
-			returned by <Myna.DataManager.prototype.BeanBase> "set" functions
+			returned by <Myna.DataManager.beanTemplate> "set" functions
 			
 		Example:
 		(code)
-		Myna.DataManager.prototype.BeanBase.prototype.setFields=function(fields){
+		Myna.DataManager.beanTemplate.setFields=function(fields){
 			var bean = this;
 			var result = new Myna.ValidationResult();
 				fields.getKeys().forEach(function(name){

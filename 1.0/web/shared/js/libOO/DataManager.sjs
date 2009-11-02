@@ -107,22 +107,22 @@ if (!Myna) var Myna={}
 		tableName		- lowercase name of the table
 		
 	Detail:
-		Creates table manager  (<Myna.DataManager.prototype.ManagerBase>) for 
+		Creates table manager  (<Myna.DataManager.managerTemplate>) for 
 		the supplied table. If 	<Myna.DataManager.subClasses> contains an object 
 		named <tablename>Manager, that object is used instead, and any missing 
-		functions are copied from <Myna.DataManager.prototype.ManagerBase>. The 
+		functions are copied from <Myna.DataManager.managerTemplate>. The 
 		subClasses contructor is called with a reference to the data manager 
 		instance.
 		
-		Examples of extending ManagerBase:
+		Examples of extending managerTemplate:
 		
 		(code)
 		var dm = new Myna.DataManager("hr_datasource");
 		
-		dm.subClasses.employeesManager = function(Myna.DataManager){}
+		dm.subClasses.employeesManager = {}
 		
 		//new function, returns an array of employee objects
-		dm.subClasses.employeesManager.prototype.getByManagerId = function(manager_id){
+		dm.subClasses.employeesManager.getByManagerId = function(manager_id){
 			var p = new Myna.QueryParams();
 			var qry = new Myna.Query({
 				dataSource:this.ds,
@@ -185,19 +185,30 @@ if (!Myna) var Myna={}
 */
 	Myna.DataManager.prototype.getManager=function(tableName){
 		$profiler.begin("manager.getManager for " + tableName)
-		var manager;
+		$this = this;
+		var manager={};
 		var subClassName = tableName+"Manager";
 		
 		
 		if (subClassName in this.subClasses){
-			Myna.println("'" + subClassName +"'")
-			manager = ({}).setDefaultProperties( 
+			//Myna.println("'" + subClassName +"'")
+			/* manager = ({}).setDefaultProperties( 
 				this.subClasses[subClassName]
-			)
+			) */
+			
 			manager.baseManager = ({}).setDefaultProperties( 
 				this.managerTemplate
 			)
+			
 			manager.setDefaultProperties(manager.baseManager);
+			this.subClasses[subClassName].getProperties().forEach(function(k){
+				var v =$this.subClasses[subClassName][k]; 
+				if (typeof v == "function"){
+					manager.before(k,v);
+				} else {
+					manager[k]=v;	
+				}
+			})
 		} else {
 			
 			manager= ({}).setDefaultProperties( 
@@ -210,9 +221,13 @@ if (!Myna) var Myna={}
 		manager.beanTemplate =({}).setDefaultProperties( 
 			this.beanTemplate
 		)
-		manager.subClasses = ({}).setDefaultProperties( 
-			this.subClasses
-		)
+		manager.subClasses = {}
+		 
+		this.subClasses.getProperties().forEach(function(k){
+			var v = $this.subClasses[k];
+			manager.subClasses[k] = v;
+		})
+		
 		
 		manager.table =this.db.getTable(tableName);
 		$profiler.end("manager.getManager for " + tableName)
@@ -545,7 +560,7 @@ Myna.DataManager.managerTemplate ={
 							var value = requiredFields[colName];
 							var type = manager.columns[colName].data_type;
 							var isNull = (value === null);
-							Myna.print(p.addValue(value,type,isNull))
+							//Myna.print(p.addValue(value,type,isNull))
 							if (index < columnArray.length -1) Myna.print(",")
 						});
 						
@@ -628,7 +643,7 @@ Myna.DataManager.managerTemplate ={
 					
 				})	
 			} else {
-				throw new Error("Myna.DataManager.prototype.ManagerBase.prototype.find: Pattern must be a string or an object")	
+				throw new Error("Myna.DataManager.managerTemplate.find: Pattern must be a string or an object")	
 			}
 			var p = new Myna.QueryParams();
 			var qry = new Myna.Query({
@@ -716,7 +731,7 @@ Myna.DataManager.managerTemplate ={
 			This function can be replaced globally on a data manager instance:
 			(code)
 				var dm = new Myna.DataManager("some datasource");
-			    dm.ManagerBase.prototype.genKey=function(){<your code here>}
+			    dm.managerTemplate.genKey=function(){<your code here>}
 			(end)
 			
 			This function can be replaced in a table manager subclass: 
@@ -834,12 +849,7 @@ Myna.DataManager.managerTemplate ={
 				throw new Error("Unable to find '" + this.sqlTableName + "' by id '" + id +"'.");
 			}
 				
-			var subClassName = manager.sqlTableName.replace(/\./g,"_")+"Bean";
-			if (subClassName in this.subClasses){
-				bean = ({}).setDefaultProperties( 
-					this.subClasses[subClassName]
-				)
-			} 
+			 
 			
 			
 			bean.baseBean = ({}).setDefaultProperties( 
@@ -892,6 +902,24 @@ Myna.DataManager.managerTemplate ={
 			
 			bean.setDefaultProperties(this);
 			//for (var p in this) bean.hideProperty(p);
+			
+			var subClassName = manager.tableName.replace(/\./g,"_")+"Bean";
+			//Myna.println(subClassName);
+			//Myna.printDump(manager.subClasses.getProperties())
+			if (subClassName in manager.subClasses){
+				//Myna.printDump(manager.subClasses[subClassName].getProperties())
+				manager.subClasses[subClassName].getProperties().forEach(function(k){
+					var v =manager.subClasses[subClassName][k]; 
+					if (typeof v == "function"){
+						//Myna.println("before =" +k)
+						bean.before(k,v);
+					} else {
+						//Myna.println(k + "=" +typeof k)
+						bean[k]=v;	
+					}
+				})
+			}
+			
 			bean.init();
 			return bean;
 		},

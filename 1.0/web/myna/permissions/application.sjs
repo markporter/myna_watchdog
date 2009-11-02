@@ -12,7 +12,7 @@ var ds = $application.ds;
 var db = new Myna.Database(ds);
 $application.dm = new Myna.DataManager($application.ds);
 var dm = $application.dm;
-dm.ManagerBase.prototype.genKey= function(){
+dm.managerTemplate.genKey= function(){
 	return Myna.createUuid();
 }
 
