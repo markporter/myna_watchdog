@@ -28,11 +28,21 @@ var ObjectLib = {}
 	
 	*/
 	ObjectLib.before=function( obj, functionName, functionObj){
-		if (!(functionName in obj)){
+		var oldFunction = obj[functionName] || function(){}
+		var $this = obj
+		var newFunction = functionObj;
+		obj[functionName] =function(){
+			var args = Array.parse(arguments);
+			if (newFunction.apply(this,args) === false){
+				return undefined;	
+			}
+			return oldFunction.apply(this,args);
+		}
+		/* if (!(functionName in obj)){
 			obj[functionName] = functionObj;
 		} else {
 			obj[functionName] = obj[functionName].createInterceptor(functionObj,obj);
-		}
+		} */
 	}	
 /* Function: after
 	Appends supplied function to the event chain of an object.
@@ -56,11 +66,21 @@ var ObjectLib = {}
 	
 	*/
 	ObjectLib.after=function( obj, functionName, functionObj){
-		if (!(functionName in obj)){
+		var oldFunction = obj[functionName] || function(){}
+		var $this = obj
+		var newFunction = functionObj;
+		obj[functionName] =function(){
+			var args = Array.parse(arguments);
+			
+			var retval = oldFunction.apply(this,args);
+			newFunction.apply(this,args);
+			return retval;
+		}
+		/* if (!(functionName in obj)){
 			obj[functionName] = functionObj;
 		} else {
 			obj[functionName] = obj[functionName].createSequence(functionObj,obj);
-		}
+		} */
 	}	
 /* Function: appendFunction
 	alias for <after>

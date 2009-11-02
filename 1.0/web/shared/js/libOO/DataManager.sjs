@@ -1,14 +1,13 @@
 if (!Myna) var Myna={}
 
-/* 
-	Class: Myna.DataManager
+/* Class: Myna.DataManager
 		Creates Objects for reading from and writing to database tables 
 
-		DataManager is a dynamic Object-Relational Mapping (ORM) tool to 
+		Myna.DataManager is a dynamic Object-Relational Mapping (ORM) tool to 
 		simplify basic Create, Read, Update and Delete (CRUD) operations on 
 		database tables.
    		
-		The basic concept is that for a given table DataManager can generate a
+		The basic concept is that for a given table Myna.DataManager can generate a
 		manager object that represents that table and knows how to create and 
 		delete rows. That manager can then generate a bean object that 
 		represents a specific row in the table that knows how to read and write 
@@ -28,7 +27,7 @@ if (!Myna) var Myna={}
 				|	hire_date	date				|
 				+- - - - - - - - - - - - - - - - - -+
 
-			var dm = new DataManager("hr_datasource");
+			var dm = new Myna.DataManager("hr_datasource");
 			
 			var empManager = dm.getManager("employees");
 			
@@ -68,9 +67,8 @@ if (!Myna) var Myna={}
 		table, such as name, default value, size, type, nullable, precision and 
 		more.
 	*/
-/* 	
-	Constructor: DataManager
-		Contructs a DataManager Object for the supplied dataSource
+/* Constructor: Myna.DataManager
+		Contructs a Myna.DataManager Object for the supplied dataSource
 		
 		Parameters:
 			dataSource	-	Datasource Name
@@ -79,7 +77,7 @@ if (!Myna) var Myna={}
 	*/
 	Myna.DataManager = function (dataSource){ 
 		/* Property: ds
-			Datasource associated with this DataManager 
+			Datasource associated with this Myna.DataManager 
 		*/
 		this.ds = dataSource;
 		/* Property: db
@@ -93,6 +91,14 @@ if (!Myna) var Myna={}
 			
 		*/
 		this.subClasses={}
+		this.managerTemplate = ({}).setDefaultProperties( 
+			Myna.DataManager.managerTemplate
+		)
+		this.beanTemplate =({}).setDefaultProperties( 
+			Myna.DataManager.beanTemplate
+		)
+	 
+	
 	}
 /* Function: getManager
 	Contructs a manager object for the supplied table.
@@ -111,9 +117,9 @@ if (!Myna) var Myna={}
 		Examples of extending ManagerBase:
 		
 		(code)
-		var dm = new DataManager("hr_datasource");
+		var dm = new Myna.DataManager("hr_datasource");
 		
-		dm.subClasses.employeesManager = function(dataManager){}
+		dm.subClasses.employeesManager = function(Myna.DataManager){}
 		
 		//new function, returns an array of employee objects
 		dm.subClasses.employeesManager.prototype.getByManagerId = function(manager_id){
@@ -149,16 +155,16 @@ if (!Myna) var Myna={}
 		
 		Using includes to define subclasses:
 		(code)
-			var dm = new DataManager("hr_datasource");
+			var dm = new Myna.DataManager("hr_datasource");
 			Myna.includeOnce('employeesManager.sjs',dm.subClasses)
 		(end)
 		
 		employeesManager.sjs:
 		(code)
-			function employeesManager(dataManager){
+			function employeesManager(Myna.DataManager){
 				this.genKey=function(){
 					return new Myna.Query({
-						dataSource:dataManager.ds,
+						dataSource:Myna.DataManager.ds,
 						sql:"select NEXTVAL('seq_employees') as id"
 					}).data[0].id;
 				}
@@ -182,89 +188,227 @@ if (!Myna) var Myna={}
 		var manager;
 		var subClassName = tableName+"Manager";
 		
-		if (this.subClasses.hasOwnProperty(subClassName)){
-			manager = new this.subClasses[subClassName](this);
-			manager.baseManager = new this.ManagerBase();
+		
+		if (subClassName in this.subClasses){
+			Myna.println("'" + subClassName +"'")
+			manager = ({}).setDefaultProperties( 
+				this.subClasses[subClassName]
+			)
+			manager.baseManager = ({}).setDefaultProperties( 
+				this.managerTemplate
+			)
 			manager.setDefaultProperties(manager.baseManager);
 		} else {
-			manager= new this.ManagerBase();
+			
+			manager= ({}).setDefaultProperties( 
+				this.managerTemplate
+			)
 		}
 		manager.ds = this.ds;
 		manager.db = this.db;
 		manager.dm = this
-		
+		manager.beanTemplate =({}).setDefaultProperties( 
+			this.beanTemplate
+		)
+		manager.subClasses = ({}).setDefaultProperties( 
+			this.subClasses
+		)
 		
 		manager.table =this.db.getTable(tableName);
 		$profiler.end("manager.getManager for " + tableName)
 		manager.loadTableData(tableName);
-		
+		manager.init();
 		return manager;
 		
 	}
 
-/* Class: Myna.DataManager.prototype.ManagerBase 
-	base class for all table managers
+
+	
+/* Class: Myna.DataManager.beanTemplate
+	template for "bean" objects
+	
+	Detail: 
+		Used by <Myna.DataManager.managerTemplate.getById> to create a 
+		Bean instance
+*/
+Myna.DataManager.beanTemplate ={
+	init:function(){},
+	/* Function: get_<columnName>
+		gets a value for <columnName>
+		
+		Detail:
+			This function is generated for every column in the 
+			associated table.
+	*/
+	/* Function: set_<columnName>
+		sets a value for <columnName>
+		
+		Parameters:
+			newval		-	new value for the column
+		
+		Returns:
+			<Myna.ValidationResult> object representing the result of the set.
+			
+		Detail:
+			This function is generated for every column in the 
+			associated table, except for the primary key.
+	*/
+	
+	
+	/* Function: setFields
+		Sets multiple fields at once
+		
+		Parameters:	
+			fields	-	an object of column names and their values 
+		
+		Returns:
+			<Myna.ValidationResult> representing the result of this action.
+			
+		Detail:
+			This function will examine each non-function property of fields and
+			call the corosponding "set" function, if available. Properties that do 
+			not match a "set" function are ignored 
+	*/
+	setFields:function(fields){
+		var bean = this;
+		var result = new Myna.ValidationResult();
+			fields.getKeys().forEach(function(name){
+				if (bean["set_"+name]){
+					result.merge(bean["set_"+name](fields[name]));
+				} 
+			})
+		
+		return result;
+	},
+	/* Function: saveField
+		Persists a value to its underlying row
+		
+		Parameters:	
+			fieldName	-	A column name in the row to savee a value to
+			newval		-	The value to save
+			
+		Returns:
+			<Myna.ValidationResult> representing the result of this action.		
+		
+		Detail:
+			This function is normally called from the "set" function, but may be
+			useful when overriding the generated "set" function.
+	*/
+	saveField:function(fieldName,newval){
+		var result = new Myna.ValidationResult();
+		var bean = this;
+		try {
+			var columnName = this.columns[fieldName].column_name;
+			var p =new Myna.QueryParams();
+			var value = newval;
+			var type = this.columns[fieldName].data_type;
+			var isNull = (value === null);
+			
+			var qry = new Myna.Query({
+				dataSource:this.manager.ds,
+				parameters:p,
+				sql:<ejs>
+					UPDATE <%=this.sqlTableName%>
+					SET
+						"<%=columnName%>" = <%=p.addValue(value,type,isNull)%>
+					WHERE
+						"<%=this.columns[this.primaryKey].column_name%>" = <%=p.addValue(bean.id,this.columns[this.primaryKey].data_type)%>
+				</ejs>
+			});
+		} catch (e){
+			result.addError(e.message,fieldName);
+		}
+		return result;
+	},
+	/* Function: getData
+		return a structure of this bean's data
+		
+		Detail: 
+		This is a copy of the data, so it will not change when 
+		the object is modified
+	*/
+	getData:function(){
+		var result ={}
+		result.setDefaultProperties(this.data)
+		return result;
+	},
+	/* Function: getParent
+		return a bean representing this bean's parent record
+		
+		Parameters:
+			column		-	*Optional, default: first foreign key*
+							column name in this table to dereference. Must be a 
+							properly defined foreign key in the database 
+		
+		Example:
+		(code)
+			var orderBean = new Myna.DataManager("myapp")
+								.getManager("orders")
+								.getById(curOrderId);
+			var customerBean = orderBean.getParent("customer_id");
+			Myna.print(customerBean.last_name);
+		(end)
+	*/
+	getParent:function(column){
+		var fkrow;
+		
+		if (!column) {
+			fkrow = this.manager.table.foreignKeys.findFirst("pkcolumn_name",/\w+/)
+			if (!fkrow) throw new SyntaxError("No foreign keys in table '" + this.manager.table.sqlTableName +"'")
+			column = fkrow.fkcolumn_name;	
+		} else {
+			fkrow = this.manager.table.foreignKeys.findFirst("fkcolumn_name",new RegExp("^"+column+"$","i"));
+		}
+		if (!fkrow) throw new SyntaxError("No foreign key '"+column+"' in table '" + this.manager.table.sqlTableName +"'")
+		return this.manager.dm.getManager(fkrow.pktable_name).getById(this[column.toLowerCase()])
+	},
+	/* Function: getChildren
+		return a <Myna.DataSet> of beans representing this bean's child records
+		
+		Parameters:
+			table		-	name of child table to check for matching rows
+			column		-	*Optional, default: first exported key to child table*
+							column_name to match in child table. This is only 
+							necessary if the child table declares more than one foreign 
+							key to this table 
+		
+		Example:
+		(code)
+			var customerBean = new Myna.DataManager("myapp")
+								.getManager("customers")
+								.getById(curCustomerId);
+			var orders = customerBean.getChildren("orders");
+			Myna.print("Orders Total: " +orders.sumByCol("order_total"));
+		(end)
+	*/
+	getChildren:function(table,column){
+		var fkrow;
+		if (!table) throw new SyntaxError("parameter 'table' is required.")
+		fkrow = 	this.manager.table.exportedKeys.findAll("fktable_name",new RegExp("^"+table+"$","i"))
+		if (!fkrow.length) throw new SyntaxError("No child relationships with table '"+table+"' found.")
+		if (column && fkrow.length >1){
+			fkrow = fkrow.findFirst(fkcolumn_name,new RegExp("^"+column+"$","i"));
+			if (!fkrow) throw new SyntaxError("No foreign key '"+column+"' in table '" + table +"' to this table")
+		} else {
+			fkrow = fkrow[0];
+		}
+		var search={}
+		search[fkrow.fkcolumn_name.toLowerCase()] = this.id;
+		return this.manager.dm.getManager(fkrow.fktable_name).findBeans(search)
+	},
+}
+/* Class: Myna.DataManager.managerTemplate 
+	template for table managers
 	
 	Detail: 
 		Used by <Myna.DataManager.getManager> to create a manager instance.   
 */
-	Myna.DataManager.prototype.ManagerBase=function(){}
-	/* Property: ds
-		dataSource associated with this table manager instance
-	*/
-	/* Property: table
-		<Myna.Table> object that represents the manages table 
-	*/
-	
-	/* Property: dm
-			<Myna.DataManager> associated with this table manager instance
-		*/
-	/* Property: columns
-			Object of column info by lowercase column name. 
-			From the Java Documentation:
-			  -  TABLE_CAT String => table catalog (may be null)
-			  -  TABLE_SCHEM String => table schema (may be null)
-			  -  TABLE_NAME String => table name
-			  -  COLUMN_NAME String => column name
-			  -  DATA_TYPE int => SQL type from java.sql.Types
-			  -  TYPE_NAME String => Data source dependent type name, for a UDT the type name is fully qualified
-			  -  COLUMN_SIZE int => column size. For char or date types this is the maximum number of characters, for numeric or decimal types this is precision.
-			  -  BUFFER_LENGTH is not used.
-			  -  DECIMAL_DIGITS int => the number of fractional digits
-			  -  NUM_PREC_RADIX int => Radix (typically either 10 or 2)
-			  -  NULLABLE int => is NULL allowed.
-			  -  REMARKS String => comment describing column (may be null)
-			  -  COLUMN_DEF String => default value (may be null)
-			  -  SQL_DATA_TYPE int => unused
-			  -  SQL_DATETIME_SUB int => unused
-			  -  CHAR_OCTET_LENGTH int => for char types the maximum number of bytes in the column
-			  -  ORDINAL_POSITION int => index of column in table (starting at 1)
-			  -  IS_NULLABLE String => "NO" means column definitely does not allow NULL values; "YES" means the column might allow NULL values. An empty string means nobody knows.
-			  -  SCOPE_CATLOG String => catalog of table that is the scope of a reference attribute (null if DATA_TYPE isn't REF)
-			  -  SCOPE_SCHEMA String => schema of table that is the scope of a reference attribute (null if the DATA_TYPE isn't REF)
-			  -  SCOPE_TABLE String => table name that this the scope of a reference attribure (null if the DATA_TYPE isn't REF)
-			  -  SOURCE_DATA_TYPE short => source type of a distinct type or user-generated Ref type, SQL type from java.sql.Types (null if DATA_TYPE isn't DISTINCT or user-generated REF) 
-			
-			
-			for more detail see 
-			http://java.sun.com/j2se/1.4.2/docs/api/java/sql/DatabaseMetaData.html
-		*/
-	/* Property: columnNames
-		array of lowercase column names in the order they appear in the table 
-	*/
-	/* Property: tableName
-		name of the managed table as reported by the datasource
-	*/
-	/* Property: primaryKey
-		name of the primaryKey for this table. 
-		
-		Datamanager can only work with tables that have a single primary key
-	*/
-	
+Myna.DataManager.managerTemplate ={
+	init:function(){},
 	/* Function: loadTableData
 		internal function to load table data into the manager
 	*/
-		Myna.DataManager.prototype.ManagerBase.prototype.loadTableData=function(tableName){
+		loadTableData:function(tableName){
 			var manager = this;
 			var con = manager.db.con;
 			//var tables = manager.db.tables;
@@ -291,14 +435,14 @@ if (!Myna) var Myna={}
 				manager.primaryKey=null;
 			}
 			return manager;
-		}
+		},
 	/* Function: remove
 		Removes a row from the managed table matching the supplied primary key
 		
 		Parameters:
 			id	-	primary key value of the row to remove 
 	*/
-		Myna.DataManager.prototype.ManagerBase.prototype.remove=function(id){
+		remove:function(id){
 			var manager = this;
 			var p = new Myna.QueryParams();
 			var qry = new Myna.Query({
@@ -310,7 +454,7 @@ if (!Myna) var Myna={}
 				</ejs>,
 				parameters:p
 			});
-		}
+		},
 	/* Function: create 
 		Creates a record in the database, optionally generating a primary key
 		
@@ -342,7 +486,7 @@ if (!Myna) var Myna={}
 					|	hire_date	date				|
 					+- - - - - - - - - - - - - - - - - -+
 	
-				var dm = new DataManager("hr_datasource");
+				var dm = new Myna.DataManager("hr_datasource");
 				
 				var empManager = dm.getManager("employees");
 				
@@ -354,7 +498,7 @@ if (!Myna) var Myna={}
 				
 				(end)
 	*/
-		Myna.DataManager.prototype.ManagerBase.prototype.create=function(requiredFields){
+		create:function(requiredFields){
 			var manager = this;
 			if (!requiredFields) requiredFields={}
 			if (this.primaryKey	 && !requiredFields[this.primaryKey]){
@@ -371,6 +515,15 @@ if (!Myna) var Myna={}
 						&& colName != manager.primaryKey);
 				
 			}))
+			
+			//update if exists instead of creating
+			if (this.primaryKey){
+				var exists =this.findBeans(requiredFields[this.primaryKey]);
+				if (exists.length) {
+					exists[0].setFields(requiredFields);
+					return exists[0];
+				}
+			}
 			
 			var columnArray = requiredFields.getKeys().filter(function(colName){
 				//ignore columns that don't exist
@@ -408,7 +561,7 @@ if (!Myna) var Myna={}
 				 requiredFields[this.primaryKey] = qry.generatedKey
 			}
 			return this.getById(requiredFields[this.primaryKey]);
-		}
+		},
 	/* Function: find
 		returns an array of primaryKey values that match a search
 		
@@ -450,7 +603,7 @@ if (!Myna) var Myna={}
 		See:
 			<findBeans>
 	*/
-		Myna.DataManager.prototype.ManagerBase.prototype.find=function(pattern,caseSensitive){
+		find:function(pattern,caseSensitive){
 			var criteria=[];
 			var pkey =this.columns[this.primaryKey].column_name;
 			
@@ -491,7 +644,7 @@ if (!Myna) var Myna={}
 				</ejs>
 			})
 			return qry.valueArray(pkey.toLowerCase());
-		}
+		},
 	/* Function: findBeans
 		returns a <Myna.DataSet> of bean objects that match a search
 		
@@ -543,7 +696,7 @@ if (!Myna) var Myna={}
 			See:
 				<find>
 	*/
-		Myna.DataManager.prototype.ManagerBase.prototype.findBeans=function(pattern,caseSensitive){
+		findBeans:function(pattern,caseSensitive){
 			var $this = this;
 			return new Myna.DataSet({
 				columns:$this.columnNames,
@@ -551,7 +704,7 @@ if (!Myna) var Myna={}
 					return $this.getById(id);
 				})
 			})
-		}
+		},
 	/* Function: genKey
 		generates a primary key value
 		
@@ -585,7 +738,7 @@ if (!Myna) var Myna={}
 			
 			
 	*/
-		Myna.DataManager.prototype.ManagerBase.prototype.genKey=function(){
+		genKey:function(){
 			var maxId =new Myna.Query({
 				dataSource:this.ds,
 				sql:'select max(' + this.columns[this.primaryKey].column_name+ ') as id from ' + this.sqlTableName 
@@ -595,7 +748,7 @@ if (!Myna) var Myna={}
 			} else {
 				return maxId +1;
 			}
-		}
+		},
 	/* Function: getById
 		Returns a bean instance representing the row identified by the supplied primary key 
 		
@@ -620,7 +773,7 @@ if (!Myna) var Myna={}
 		Examples of extending BeanBase:
 		
 		(code)
-		var dm = new DataManager("hr_datasource");
+		var dm = new Myna.DataManager("hr_datasource");
 		
 		// adding extra information during construction
 		dm.subClasses.employeesBean = function(dm,manager,data){
@@ -657,8 +810,8 @@ if (!Myna) var Myna={}
 			return result;
 		}
 		(end)
-	*/
-		Myna.DataManager.prototype.ManagerBase.prototype.getById=function(id){
+		*/
+		getById:function(id){
 			var manager = this;
 			var bean={};
 			var p = new Myna.QueryParams();
@@ -682,12 +835,19 @@ if (!Myna) var Myna={}
 			}
 				
 			var subClassName = manager.sqlTableName.replace(/\./g,"_")+"Bean";
-			if (this.dm.subClasses.hasOwnProperty(subClassName)){
-				bean = new this.dm.subClasses[subClassName](this.dm,this,qry.data);
+			if (subClassName in this.subClasses){
+				bean = ({}).setDefaultProperties( 
+					this.subClasses[subClassName]
+				)
 			} 
 			
 			
-			bean.baseBean = new this.dm.BeanBase(this);
+			bean.baseBean = ({}).setDefaultProperties( 
+				this.beanTemplate
+			)
+			bean.manager=manager;
+			bean.dm = manager.dm;
+			bean.ds = manager.ds;
 			bean.data=qry.data[0];
 			bean.id=id;
 			
@@ -732,191 +892,9 @@ if (!Myna) var Myna={}
 			
 			bean.setDefaultProperties(this);
 			//for (var p in this) bean.hideProperty(p);
-			
+			bean.init();
 			return bean;
-		}
-/* Class: Myna.DataManager.prototype.BeanBase
-	base class for "bean" objects
+		},
+}
 	
-	Detail: 
-		Used by <Myna.DataManager.prototype.ManangerBase.getById> to create a 
-		Bean instance
-*/
-	Myna.DataManager.prototype.BeanBase=function(manager){
-		/* Property: manager
-			a reference to this bean's table manager instance
-		*/
-		this.manager=manager;
-		/* Property: dm
-			a reference to this bean's <Myna.DataManager> instance
-		*/
-		this.dm = manager.dm;
-		/* Property: ds
-			a reference to this bean's dataSource
-		*/
-		this.ds = manager.ds;
-	}
-	
-	/* Function: get_<columnName>
-		gets a value for <columnName>
-		
-		Detail:
-			This function is generated for every column in the 
-			associated table.
-	*/
-	/* Function: set_<columnName>
-		sets a value for <columnName>
-		
-		Parameters:
-			newval		-	new value for the column
-		
-		Returns:
-			<Myna.ValidationResult> object representing the result of the set.
-			
-		Detail:
-			This function is generated for every column in the 
-			associated table, except for the primary key.
-	*/
-	
-	
-	/* Function: setFields
-		Sets multiple fields at once
-		
-		Parameters:	
-			fields	-	an object of column names and their values 
-		
-		Returns:
-			<Myna.ValidationResult> representing the result of this action.
-			
-		Detail:
-			This function will examine each non-function property of fields and
-			call the corosponding "set" function, if available. Properties that do 
-			not match a "set" function are ignored 
-	*/
-	Myna.DataManager.prototype.BeanBase.prototype.setFields=function(fields){
-		var bean = this;
-		var result = new Myna.ValidationResult();
-			fields.getKeys().forEach(function(name){
-				if (bean["set_"+name]){
-					result.merge(bean["set_"+name](fields[name]));
-				} 
-			})
-		
-		return result;
-	}
-	/* Function: saveField
-		Persists a value to its underlying row
-		
-		Parameters:	
-			fieldName	-	A column name in the row to savee a value to
-			newval		-	The value to save
-			
-		Returns:
-			<Myna.ValidationResult> representing the result of this action.		
-		
-		Detail:
-			This function is normally called from the "set" function, but may be
-			useful when overriding the generated "set" function.
-	*/
-	Myna.DataManager.prototype.BeanBase.prototype.saveField=function(fieldName,newval){
-		var result = new Myna.ValidationResult();
-		var bean = this;
-		try {
-			var columnName = this.columns[fieldName].column_name;
-			var p =new Myna.QueryParams();
-			var value = newval;
-			var type = this.columns[fieldName].data_type;
-			var isNull = (value === null);
-			
-			var qry = new Myna.Query({
-				dataSource:this.manager.ds,
-				parameters:p,
-				sql:<ejs>
-					UPDATE <%=this.sqlTableName%>
-					SET
-						"<%=columnName%>" = <%=p.addValue(value,type,isNull)%>
-					WHERE
-						"<%=this.columns[this.primaryKey].column_name%>" = <%=p.addValue(bean.id,this.columns[this.primaryKey].data_type)%>
-				</ejs>
-			});
-		} catch (e){
-			result.addError(e.message,fieldName);
-		}
-		return result;
-	}
-	/* Function: getData
-		return a structure of this bean's data
-		
-		Detail: 
-		This is a copy of the data, so it will not change when 
-		the object is modified
-	*/
-	Myna.DataManager.prototype.BeanBase.prototype.getData=function(){
-		var result ={}
-		result.setDefaultProperties(this.data)
-		return result;
-	}
-	/* Function: getParent
-		return a bean representing this bean's parent record
-		
-		Parameters:
-			column		-	*Optional, default: first foreign key*
-							column name in this table to dereference. Must be a 
-							properly defined foreign key in the database 
-		
-		Example:
-		(code)
-			var orderBean = new Myna.DataManager("myapp")
-								.getManager("orders")
-								.getById(curOrderId);
-			var customerBean = orderBean.getParent("customer_id");
-			Myna.print(customerBean.last_name);
-		(end)
-	*/
-	Myna.DataManager.prototype.BeanBase.prototype.getParent=function(column){
-		var fkrow;
-		
-		if (!column) {
-			fkrow = this.manager.table.foreignKeys.findFirst("pkcolumn_name",/\w+/)
-			if (!fkrow) throw new SyntaxError("No foreign keys in table '" + this.manager.table.sqlTableName +"'")
-			column = fkrow.fkcolumn_name;	
-		} else {
-			fkrow = this.manager.table.foreignKeys.findFirst("fkcolumn_name",new RegExp("^"+column+"$","i"));
-		}
-		if (!fkrow) throw new SyntaxError("No foreign key '"+column+"' in table '" + this.manager.table.sqlTableName +"'")
-		return this.manager.dm.getManager(fkrow.pktable_name).getById(this[column.toLowerCase()])
-	}
-	/* Function: getChildren
-		return a <Myna.DataSet> of beans representing this bean's child records
-		
-		Parameters:
-			table		-	name of child table to check for matching rows
-			column		-	*Optional, default: first exported key to child table*
-							column_name to match in child table. This is only 
-							necessary if the child table declares more than one foreign 
-							key to this table 
-		
-		Example:
-		(code)
-			var customerBean = new Myna.DataManager("myapp")
-								.getManager("customers")
-								.getById(curCustomerId);
-			var orders = customerBean.getChildren("orders");
-			Myna.print("Orders Total: " +orders.sumByCol("order_total"));
-		(end)
-	*/
-	Myna.DataManager.prototype.BeanBase.prototype.getChildren=function(table,column){
-		var fkrow;
-		if (!table) throw new SyntaxError("parameter 'table' is required.")
-		fkrow = 	this.manager.table.exportedKeys.findAll("fktable_name",new RegExp("^"+table+"$","i"))
-		if (!fkrow.length) throw new SyntaxError("No child relationships with table '"+table+"' found.")
-		if (column && fkrow.length >1){
-			fkrow = fkrow.findFirst(fkcolumn_name,new RegExp("^"+column+"$","i"));
-			if (!fkrow) throw new SyntaxError("No foreign key '"+column+"' in table '" + table +"' to this table")
-		} else {
-			fkrow = fkrow[0];
-		}
-		var search={}
-		search[fkrow.fkcolumn_name.toLowerCase()] = this.id;
-		return this.manager.dm.getManager(fkrow.fktable_name).findBeans(search)
-	}
+

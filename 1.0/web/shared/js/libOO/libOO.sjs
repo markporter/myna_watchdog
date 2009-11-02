@@ -8,6 +8,7 @@
 	"Function.js",
 	"Template.sjs",
 	"Myna.sjs",
+	"KeyStore.sjs",
 	"DataSet.sjs",
 	"Cache.sjs",
 	"JavaUtils.sjs",

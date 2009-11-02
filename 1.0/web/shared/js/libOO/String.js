@@ -1120,11 +1120,16 @@ if ("$server_gateway" in this){
 			return cryptTool.decrypt(encryptedString);
 	};
 /* Function: encrypt 
-	Encrypts this using a password.  
+	Encrypts this string using a password.  
 	 
 	Parameters: 
 		password 	-	password to use for encryption.
  
+	Detail:
+		This function provides simple password-based encryption of string values.
+		For more secure encryption using rotating database-backed keys see 
+		<Myna.KeyStore>
+	
 	Returns: 
 		The encrypted string.
 		
@@ -1136,7 +1141,7 @@ if ("$server_gateway" in this){
 		<%="bob".encrypt("theSecretPassword")%><br>
 	(end)
 	
-	..prints
+	.. might print:
 	
 	(code)
 	xeM5n1ncfX2KNTLUEjZHeg==
@@ -1149,6 +1154,7 @@ if ("$server_gateway" in this){
 	*	<String.decrypt> 
 	*	<String.hashEquals> 
 	*	<String.toHash>
+	*	<Myna.KeyStore>
 	*	http://www.jasypt.org/
 	 
 	*/

@@ -56,7 +56,17 @@ File: Myna.DataManager  (DataManager.sjs)
 File: Myna.DataSet  (DataSet.sjs)
 File: Myna.File  (File.sjs)
 File: Myna.HttpConnection  (HttpConnection.sjs)
+File: Myna.HttpConnection  (Crypto.sjs)
 File: Myna.JavaUtils  (JavaUtils.sjs)
+
+Group: Auth_adapters  {
+
+   File: AuthAdapters  (auth_adapters/auth_adapters.txt)
+   File: LDAP Auth Adapter  (auth_adapters/ldap.sjs)
+   File: AuthAdapters  (auth_adapters/auth_adapters.txt)
+   }  # Group: Auth_adapters
+
+File: Myna.KeyStore  (KeyStore.sjs)
 File: Myna.Ldap  (Ldap.sjs)
 File: Myna.Mail  (Mail.sjs)
 File: Myna.Permissions  (Permissions.sjs)
@@ -85,13 +95,6 @@ File: Object  (Object.js)
 File: ObjectLib  (ObjectLib.js)
 File: String  (String.js)
 File: String  (String.sjs)
-
-Group: Auth_adapters  {
-
-   File: AuthAdapters  (auth_adapters/auth_adapters.txt)
-   File: LDAP Auth Adapter  (auth_adapters/ldap.sjs)
-   File: AuthAdapters  (auth_adapters/auth_adapters.txt)
-   }  # Group: Auth_adapters
 
 Group: Index  {
 
