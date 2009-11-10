@@ -325,7 +325,7 @@
 	
 	*/
 	String.prototype.escapeRegex=function(string){
-		return Array.parse(this).map(function(c){
+		return Array.parse(this,function(o,i){return o.charAt(i)}).map(function(c){
 			if (String.regexEscapeChars.indexOf(c) !== -1){
 				return "\\" + c;
 			} else {
