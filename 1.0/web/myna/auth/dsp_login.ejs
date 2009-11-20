@@ -83,11 +83,11 @@
 				if (tuple.listFirst("=").trim() == "MynaAuthDefaultTab"){
 					var defaultTab = tuple.listLast("=");
 					tp.items.each(function(item,index){
-						if (item.title == defaultTab) {
+						if (item.title == defaultTab || escape(item.title) == defaultTab) {
 							//alert("setting_active_tab" +index )
 							tp.setActiveTab(index);
 							
-						}
+						} 
 					})
 				} //else alert("'" + tuple.listFirst("=") + "'")
 			})

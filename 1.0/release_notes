@@ -1,3 +1,66 @@
+Release Name: 1.0_beta_1
+Notes:
+
+This marks the first release of the 1.0 beta cycle. This should be the last 
+release to make changes to Myna's API's that could result in existing code 
+breaking. Future releases in the Beta cycle will focus on bug fixes, performance
+improvements, documentation and optional features.
+
+
+Changes in this release:
+------------------------
+
+* **DataManager:** This is a re-write of the DataManager extension system to 
+  address a design flaw that resulted in extensions altering the behavior of the 
+  global DataManager object. **Any code that used the "subClasses", 
+  "ManagerBase" or "BeanBase" objects will need to be re-factored to work with 
+  this release.** The most likely consequence is in the genKey function used to 
+  generate unique primary key values. Here is an example of the old way and the 
+  new way:
+
+        var dm = new Datamanager(ds);
+        //Old way
+        dm.ManagerBase.prototype.genKey=function(){
+            return new Myna.Query({
+                ds:this.ds,
+                sql:"select main_sequence.nextval from dual"
+            }).data[0].nextval
+        }
+        //New way
+        dm.managerTemplate.genKey=function(){
+            return new Myna.Query({
+                ds:this.ds,
+                sql:"select main_sequence.nextval from dual"
+            }).data[0].nextval
+        }
+        
+ Essentially, prototype inheritance has been replaced with 
+ DataManager.managerTemplate and DataManager.beanTemplate. The "subClasses" 
+ structure has been dropped altogether. 
+
+ **Other DataManager Changes:**
+
+ - ManagerObject.create() will now check for an existing row if the primary key 
+   is provided and perform an update instead of an insert if the row already 
+	exists. This means that code that depends on a key violation to prevent 
+	duplications or overwrites needs to be re-factored to explicitly check for 
+	existence via ManagerObject.find()
+
+ - Improved documentation. The API documentation has been updated to reflect 
+   these changes, and more detail is provided on how to take adavantage of 
+   DataManager's extension system.
+
+
+* **Added Myna.KeyStore.** This is a front-end to Google KeyCzar project and 
+  provides a rotatating keyset for encrypting/decrypting or signing/verifying 
+  string or binary data using either symmetric or asymmetric (public and 
+  private) keys. It is possible to export/import public keys so that two or more 
+  Myna servers can securely communicate.
+	
+
+
+----------------------------------------------------------
+
 Release Name: 1.0_alpha_17-3
 Notes:
 

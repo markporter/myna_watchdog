@@ -11,7 +11,7 @@
 			window.onload =function(){
 				debug_window("WS via script include w/scriptvar=bob. Value of bob:")
 				debug_window(bob)
-			})
+			}
 		</script>
 		<%-- 
 			JSON-MYNA call via script include w/callback function. The callback 
@@ -31,21 +31,6 @@
 		<h1>Example JSON-MYNA web service caller</h1>
 		
 		View the auto generated MyService <a href="MyService.ws">documentation</a>.<p>
-		regular JSON-MYNA call:<p> 
-		<%
-			var con =new Myna.HttpConnection({
-				url:$server.serverUrl+$server.rootUrl+"/examples/web_service/MyService.ws",
-				parameters:{
-					"json-myna":"",
-					method:"get_bob"
-				},
-				//these are needed because we are running in the examples folder
-				username:$req.authUser,
-				password:$req.authPassword
-			})
-			con.connect();
-			Myna.print(con.getResponseText());
-		%>
 		
 	</body>
 </html>

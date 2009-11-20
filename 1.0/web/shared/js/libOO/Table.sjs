@@ -699,18 +699,6 @@ if (!Myna) var Myna={}
 				onUpdate:"cascade" 
 			}
 		})
-	(end),
-				column:"customer_id",
-				onDelete:"cascade", 
-				onUpdate:"cascade" 
-			}
-		})
-	(end),
-				column:"customer_id",
-				onDelete:"cascade", 
-				onUpdate:"cascade" 
-			}
-		})
 	(end)
 
 	*/
@@ -727,6 +715,13 @@ if (!Myna) var Myna={}
 		//check if existing column matches new column
 		if (isRename) {
 			isSame=false;
+			currentCol.setDefaultProperties({
+				type:originalCol.type_name.toUpperCase(),
+				allowNull:originalCol.nullable,
+			})
+			if (originalCol.column_size) currentCol.maxLength=originalCol.column_size;
+			if (originalCol.decimal_digits) currentCol.decimalDigits=originalCol.decimal_digits;
+			if (originalCol.column_def) currentCol.defaultValue=originalCol.column_def;
 		} else {
 			currentCol.name = tempName= "temp_" + Myna.createUuid().replace(/\W/g,"").left(25);
 			
@@ -742,6 +737,7 @@ if (!Myna) var Myna={}
 							isSame=false;
 						}
 					break;
+					
 					case "maxLength":
 						if (v != originalCol.column_size){
 							isSame=false;
@@ -766,8 +762,9 @@ if (!Myna) var Myna={}
 			})	
 			if (isSame) {
 				return;//don't bother if this is the same as existing
-			}
+			} 
 		}
+		
 		function fkType(t){
 			switch(t){
 				case java.sql.DatabaseMetaData.importedKeyCascade:
@@ -825,6 +822,7 @@ if (!Myna) var Myna={}
 						onDelete:fkType(row.delete_rule)
 					}
 				})
+			
 			originalCol.exportedKeys.columns = originalCol.foreignKeys.columns = [
 				"id",
 				"localTable",
@@ -840,8 +838,9 @@ if (!Myna) var Myna={}
 					table.dropConstraint(row.pk_name)
 				}
 			})
-		
+		//Myna.abort(Myna.dump(currentCol));
 		table.addColumn(currentCol)
+		
 		//copy data from old_column
 		var qry =new Myna.Query({
 			dataSource:table.db.ds,

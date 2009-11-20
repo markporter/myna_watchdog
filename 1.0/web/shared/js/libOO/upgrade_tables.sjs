@@ -433,22 +433,22 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 			})
 		}
 		/* add newer columns */
-			/* if (!("type" in table.columns)){
+			if (!("type" in table.columns)){
 				table.addColumn({
 					name:"type",
 					type:"VARCHAR",
 					maxLength:255,
 					defaultValue:"'jasypt-basic'"
 				})	
-			}  */
+			}
 		/* modify existing columns */
-			/* if (table.columns.key.column_size < 2000){
+			if (table.columns.key.column_size < 2000){
 				table.modifyColumn("key",{
 					type:"VARCHAR",
 					maxLength:2000
 					
 				})
-			} else {Myna.log("debug","colsize for key =" +table.columns.key.column_size,Myna.dump(table));} */
+			}
 		
 	dm = new Myna.DataManager("myna_permissions");
 	/* check for Myna Admin rights */

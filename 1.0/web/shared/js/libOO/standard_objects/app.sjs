@@ -389,7 +389,7 @@ var $application={
 			//import auth_token
 				if ("auth_token" in $req.data){
 					var user_id =Myna.Permissions.consumeAuthToken($req.rawData.auth_token)
-					$cookie.setAuthUserId(user_id)
+					if (user_id) $cookie.setAuthUserId(user_id)
 					var queryVars = $req.paramNames.filter(function(key){
 						return key != "auth_token"
 					}).map(function(key){
@@ -444,9 +444,9 @@ var $application={
 	_onRequestEnd:function(){
 	/* refresh myna_auth_cookie */
 		var user_id = $cookie.getAuthUserId();
-		if (user_id) {
+		/* if (user_id) {
 			$cookie.setAuthUserId(user_id)
-		}
+		} */
 	// close any open resources
 		$application.closeArray.forEach(function(element){
 			try{
@@ -461,6 +461,7 @@ var $application={
 				element.close();
 			} catch (e){}
 		}); */
+		
 	// save session
 		if ($server.request){
 			try{
@@ -468,6 +469,7 @@ var $application={
 				
 				if ($session.timeoutMinutes != undefined) {local_session.setMaxInactiveInterval($session.timeoutMinutes*60)}
 			} catch(e) {$server.request = null}
+			
 		}
 		
 		$application.onRequestEnd();
