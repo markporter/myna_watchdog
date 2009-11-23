@@ -326,10 +326,16 @@ if (!Myna) var Myna={}
 	See:
 		<Array.concat>
     */
-	Myna.DataSet.prototype.concat = function() {
-		var args = Array.prototype.slice.call(arguments,0);
+	Myna.DataSet.prototype.concat = function(otherArray) {
+		var data= []
+		this.forEach(function(row){
+			data.push(row)
+		})
+		otherArray.forEach(function(row){
+			data.push(row)
+		})
 		return new Myna.DataSet({
-			data:Array.prototype.concat.apply(this,args),
+			data:data,
 			columns:this.columns
 		})
 	}

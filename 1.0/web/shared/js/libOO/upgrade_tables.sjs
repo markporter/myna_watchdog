@@ -93,7 +93,29 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 		})
 	}
 	db = new Myna.Database(ds);
-		
+	/* apps table */
+		table = db.getTable("apps");
+		if (!table.exists){
+			table.create({
+				columns:[{
+					name:"appname",
+					type:"VARCHAR",
+					maxLength:255,
+					isPrimaryKey:true
+				},{
+					name:"display_name",
+					type:"VARCHAR",
+					maxLength:255
+				},{
+					name:"description",
+					type:"VARCHAR",
+					maxLength:2000
+				},{
+					name:"inactive_ts",
+					type:"TIMESTAMP"
+				}]
+			});
+		}
 	/* users table */
 		table = db.getTable("users");
 		if (!table.exists){

@@ -15,10 +15,15 @@ function searchUsers(search){
 			first_name:"Myna",
 			last_name:"Administrator",
 			middle_name:"",
+			email:"",
 			title:""
 		}
+	var data =[]
+	if (new RegExp(search).test(admin.login+admin.first_name+admin.last_name)){
+		data.push(admin)	
+	}
 	return new Myna.DataSet({
-		data:[admin],
+		data:data,
 		columns:admin
 	})
 }
@@ -30,6 +35,7 @@ function getUserByLogin(login){
 		first_name:"Myna",
 		last_name:"Administrator",
 		middle_name:"",
+		email:"",
 		title:""
 	}
 }

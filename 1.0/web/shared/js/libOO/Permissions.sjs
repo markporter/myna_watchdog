@@ -115,8 +115,55 @@
 if (!Myna) var Myna={}
 /* ============= Permissions Main  ========================================== */
 	Myna.Permissions ={
+	/* Function: addApp
+			Adds a new application, and returns an instance of 
+			<Myna.Permissions.App>. 
+			
+			Parameters:
+				options	-	An object containing the new application's information. 
+								See "options" below
+								
+			Options:
+				appname			-	appname of this application. Used programatically 
+										to refer to this applicaiton. Only lowercase 
+										letters, numbers, and "_" allowed.
+				display_name		-	*Optional, default _appname_ *
+										The name of the app as it should be displayed to 
+										to humans
+				description		-	*Optional, default ""*
+										A short description of this application
+										
+			Detail: 
+			Creates a new application entry. Also creates a UserGroup called 
+			"Administrators" containing a right called "edit_permissions" both 
+			associated with this appname. Any users in a group containing this 
+			app's "edit_permissions" right will be able to create groups and assign 
+			permissions for this app via the Myna permissions front-end. If the 
+			appname already exists it is updated with the _display_name_ and 
+			_description_.	
+		*/
+		addApp:function(options){
+			options.checkRequired(["appname"]);
+			var man = dm.getManager("apps")
+			options.inactive_ts=null;
+			man.create(options);
+			
+			var right_id=Myna.Permissions.addRight({
+				name:"edit_permissions",
+				appname:options.appname,
+				description:"Allows users to edit permissions for this application"
+			}).right_id;
+			
+			var group =Myna.Permissions.addUserGroup({
+				name:"Administrators",
+				appname:options.appname,
+				description:"Administrative users"
+			});
+			group.addRights(right_id);
+		},
+	
 	/* Function: addRight
-			adds a new right, and returns an instance of <Myna.Right>
+			adds a new right, and returns an instance of <Myna.Permissions.Right>
 		
 			Parameters:
 				options	-	An object containing the new right's information. See 
@@ -131,16 +178,27 @@ if (!Myna) var Myna={}
 		*/
 		addRight:function(options){
 			options.checkRequired(["name","appname"]);
-			var dm = new Myna.DataManager("myna_permissions");
-			
-			var right_manager = dm.getManager("rights");
-			
-			var right= new Myna.Permissions.Right(right_manager.create({
+			var 
+				bean,
+				dm = new Myna.DataManager("myna_permissions"),
+				right_manager = dm.getManager("rights"),
+				exists = right_manager.findBeans({
+					name:options.name,
+					appname:options.appname
+				})
+			;
+			 
+			if (exists.length) {
+				bean =exists[0];
+			} else {
+				bean = right_manager.create({
 					right_id:Myna.createUuid(),
 					name:options.name,
 					appname:options.appname,
 					description:options.description|| ""
-			}))
+				})
+			}
+			var right= new Myna.Permissions.Right(bean);
 			
 			return right;
 		},
@@ -186,14 +244,24 @@ if (!Myna) var Myna={}
 			var dm = new Myna.DataManager("myna_permissions");
 			
 			var user_group_manager = dm.getManager("user_groups");
+			var bean;
+			var exists =user_group_manager.findBeans({
+				name:options.name,
+				appname:options.appname
+			})
 			
-			
-			var user_group= new Myna.Permissions.UserGroup(user_group_manager.create({
+			if (exists.length){
+				bean=exists[0];
+			} else {
+				bean=user_group_manager.create({
 					user_group_id:Myna.createUuid(),
 					name:options.name,
 					appname:options.appname,
 					description:options.description|| ""
-			}))
+				})
+			}
+			
+			var user_group= new Myna.Permissions.UserGroup(bean);
 					
 			return user_group;
 		},
@@ -231,6 +299,8 @@ if (!Myna) var Myna={}
 									User's middle name
 				last_name		-	*Optional, default ""* 
 									User's last name
+				email			-	*Optional, default ""* 
+									User's email address
 				title			-	*Optional, default ""* 
 									User's title, e.g. Mr, Mrs, Sir, Dr
 		*/
@@ -239,7 +309,7 @@ if (!Myna) var Myna={}
 			
 			var manager = dm.getManager("users");
 			return new Myna.Permissions.User(manager.create({
-				user_id:Myna.createUuid(),
+				user_id:options.user_id||Myna.createUuid(),
 				first_name:options.first_name|| "",
 				middle_name:options.middle_name|| "",
 				last_name:options.last_name|| "",
@@ -444,7 +514,28 @@ if (!Myna) var Myna={}
 				return null;	
 			}
 		},
-		
+	/* Function: getRightByName
+			returns the right object that matches the supplied name and appname, or 
+			returns null
+			
+			Parameters:
+				name		-	right name
+				appname	-	right appname
+		*/
+		getRightByName:function(name,appname){
+			var dm = new Myna.DataManager("myna_permissions");
+			var manager = dm.getManager("rights"); 
+			var exists = manager.find({
+				name:name,
+				appname:appname	
+			});
+			
+			if (exists.length) {
+				return new Myna.Permissions.getRightById(exists[0]);
+			} else {
+				return null;	
+			}
+		},	
 	/* Function: getRightsByAppname
 		returns a <Myna.DataSet> of all the rights associated with the 
 		supplied appname

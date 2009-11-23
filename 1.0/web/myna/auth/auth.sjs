@@ -108,7 +108,7 @@ var fusebox={
 					 </ejs>)
 				}
 			} catch(e){
-				Myna.log("AUTH","Failed to negotiate OpenID '" + rawData.openid + "'" ,Myna.dump($req.data));
+				Myna.log("AUTH","Failed to negotiate OpenID '" + rawData.openid + "'" ,Myna.dump($req.data) + Myna.formatError(e));
 				data.message="Unable to locate your OpenId provider."
 				fusebox.login(data);
 			}

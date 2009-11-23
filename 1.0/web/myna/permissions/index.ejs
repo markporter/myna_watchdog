@@ -19,6 +19,7 @@
 	var prettyName = '<%=$application.prettyName%>';
 	var authenticated = <%=!!$session.get("authenticated")%>;
 	var appname = '<%=$req.data.appname||"myna_admin"%>'
+	var providers = '<%=$req.data.providers||""%>'
 	<@if $req.data.authTypes>
 		var authTypes = <%=$req.data.authTypes.split(/,/).toJson()%>
 	<@else>

@@ -440,8 +440,18 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 	throw new Error("WebService::makeCustomSoapType: Unknown type "+name +" = " + String(obj))
 }
 
+/* Function: getAuthUser
+		Attempts to find and return the Myna.Permissions.User record for the user 
+		indicated in <WebService.authUserId>
+		
+		
+	*/
+   Myna.WebService.prototype.getAuthUser=function(){
+      return Myna.Permissions.getUserById(this.authUserId);
+   }
+
 /* Function: setAuthUserId
-		sets WebService.authUserId and calls <$cookie.setAuthUserId>
+		sets <WebService.authUserId> and calls <$cookie.setAuthUserId>
 		
 		Parameters:
 			user_id	-	user_id of user to register

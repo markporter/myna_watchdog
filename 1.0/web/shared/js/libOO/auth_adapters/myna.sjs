@@ -17,16 +17,17 @@ function searchUsers(search){
 			select
 				login,
 				u.first_name,
-				u.middle_name,
 				u.last_name,
+				u.middle_name,
+				u.email,
 				u.title
 			from 
 				user_logins ul,
 				users u					
 			where u.user_id = ul.user_id
 			and type ='myna'
-			<@if data.search.length>
-				and lower(user_login_id || login  || u.user_id ) like {search}
+			<@if search.length>
+				and lower(user_login_id || login  || u.user_id || first_name || middle_name || last_name || email) like {search}
 			</@if>
 			order by last_name,first_name,login 
 		</ejs>,

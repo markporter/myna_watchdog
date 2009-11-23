@@ -6,7 +6,6 @@ var fusebox={
         var user = Myna.Permissions.getUserByAuth(data.username,data.password)
 		
 		if (user){
-            Myna.log("debug","user",Myna.dump(user));
 			$cookie.setAuthUserId(user.get_user_id());
             if (user.hasRight("myna_admin","full_admin_access")){
                 print({success:true,url:"?fuseaction="+$application.mainFuseAction}.toJson());
@@ -189,7 +188,6 @@ var fusebox={
 			.getTable(data.table_name.unEscapeHtml())
 		
 		var result =[];
-		Myna.log("debug","primary",Myna.dump(table.primaryKeyInfo[0]));
 		if (table.primaryKeys.length){
 			result.push({
 				key_name:table.primaryKeyInfo[0].pk_name,
@@ -202,7 +200,6 @@ var fusebox={
 		keyMap[parseInt(java.sql.DatabaseMetaData.importedKeyCascade)] ="CASCADE",
 		keyMap[parseInt(java.sql.DatabaseMetaData.importedKeySetNull)] ="SET NULL",
 		keyMap[parseInt(java.sql.DatabaseMetaData.importedKeySetDefault)] ="SET DEFAULT"
-		Myna.log("debug","foreign",Myna.dump(table.foreignKeys));
 		return result.concat(table.foreignKeys.map(function(key){
 			return {
 				key_name:key.fk_name,

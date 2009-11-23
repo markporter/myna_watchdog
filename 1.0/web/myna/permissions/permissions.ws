@@ -9,7 +9,15 @@
 		&lt;appname&gt;/edit_permissions right
    </ejs>,
 	no_auth_list:"logout,auth,auth_transfer,has_active_session",
-	admin_only_list:"save_user_data,save_user_login_data,save_right_data",
+	admin_only_list:[
+		"save_user_data",
+		"save_user_login_data",
+		"save_right_data",
+		"save_app_data",
+		"qry_apps",
+		"delete_app",
+		"get_app_data"
+	].join(),
 	beforeHandler:function(name,def,args){
 		if (this.spec.admin_only_list.listContains(name)){
 			hasAccess = this.spec.localFunctions.hasAccess(this.authUserId,"myna_admin");
@@ -19,7 +27,7 @@
 		} else if ("appname" in args && !this.spec.no_auth_list.listContains(name)){
 			var hasAccess = this.spec.localFunctions.hasAccess(this.authUserId,args.appname);
 			if (!hasAccess){
-				throw 	new Error("You do not have access to edit permissions for " + args.appname)
+				throw new Error("You do not have access to edit permissions for " + args.appname)
 			}
 		} 
 		
@@ -158,6 +166,144 @@
 				}
 			},
 		},
+	/* ========= App Functions ============================================= */
+		/* --------- qry_apps  ---------------------------------------------- */
+			qry_apps:{
+				desc:"Queries all apps, 25 rows at a time, optionally filtering by a search string",
+				params:[
+					{ name:"start", type:"string", defaultValue:0 },
+					{ name:"limit", type:"string", defaultValue:25 },
+					{ name:"sort", type:"string", defaultValue:'appname' },
+					{ name:"dir", type:"string", defaultValue:'asc' },
+					{ name:"search", type:"string", defaultValue:"" }
+				],
+				returns:Myna.WebService.generateQueryType({
+					appname:"string",
+					description:"string",
+					display_name:"string"
+				}),
+				handler:function(data){
+					var qry= new Myna.Query({
+						dataSource:"myna_permissions",
+						sql:<ejs>
+							select
+								appname,
+								description,
+								display_name,
+								inactive_ts
+							from apps					
+							where 1=1
+							<@if data.search.length>
+								and lower(appname  || description  ||display_name ) like {search}
+							</@if>
+							order by <%=data.sort%> <%=data.dir%> 
+						</ejs>,
+						values:{
+							search:"%" + data.search.toLowerCase() + "%"
+						},
+						startRow:parseInt(data.start)+1,
+						maxRows:data.limit,
+						rowHandler:function(row){
+							var obj = row.getRow();
+							obj.getKeys().forEach(function(key){
+								if (obj[key] instanceof Date){
+									obj[key] = obj[key].format("m/d/Y H:i:s");
+								}
+								if (obj[key] == null){
+									obj[key] = "";
+								}
+							})
+							return obj;
+						}
+					})
+					
+					return qry.result;
+				}		
+			},
+		/* --------- get_app_data  ------------------------------------------ */
+			get_app_data:{
+				desc:"returns app data for the supplied appname",
+				params:[
+					{ name:"appname", type:"string"},
+				],
+				returns:{
+					success:"numeric",
+					data:{
+						appname:"string",
+						description:"string",
+						display_name:"string"
+					}
+				},
+				handler:function(data){
+					var values= new Myna.Query({
+						dataSource:"myna_permissions",
+						sql:<ejs>
+							select
+								appname,
+								description,
+								display_name
+							from apps					
+							where appname = {appname}
+						</ejs>,
+						values:{
+							appname:data.appname||0
+						}
+					});
+					
+					if (values.data.length) {
+						values = values.data[0]	
+					} else  {
+						values ={
+							appname:"app_name_here",
+							description:"Enter a short description",
+							display_name:"Display Name Here"
+						}
+					}
+					
+					return {
+						success:1,
+						data:values	
+					}
+				}
+			},
+		/* --------- save_app_data  ----------------------------------------- */
+			save_app_data:{
+				desc:"saves app data",
+				params:[
+					{ name:"appname", type:"string"},
+					{ name:"description", type:"string"},
+					{ name:"display_name", type:"string"}
+				],
+				returns:{
+					success:"numeric",
+				},
+				handler:function(data){
+					Myna.Permissions.addApp(data);
+					return {success:1}
+				}
+			},
+		/* --------- delete_app  -------------------------------------------- */
+			delete_app:{
+				desc:"inactivates app data for the supplied appname",
+				params:[
+					{ name:"appname", type:"string" }
+				],
+				returns:{
+					success:"numeric",
+				},
+				handler:function(data){
+					var man = dm.getManager("apps")
+					var exists = man.findBeans(data.appname);
+					if (exists.length){
+						exists[0].set_inactive_ts(new Date());
+					} 
+					return {success:1}
+				}
+			},
+			
+		
+		
+	
 	/* ========= User Functions ============================================== */
 		/* --------- qry_users  ----------------------------------------------- */
 			qry_users:{
@@ -168,7 +314,8 @@
 					{ name:"sort", type:"string", defaultValue:'last_name' },
 					{ name:"dir", type:"string", defaultValue:'asc' },
 					{ name:"search", type:"string", defaultValue:"" },
-					{ name:"show_inactive", type:"numeric", defaultValue:1 }
+					{ name:"show_inactive", type:"numeric", defaultValue:1 },
+					{ name:"providers", type:"string", defaultValue:Myna.Permissions.getAuthTypes().join() }
 				],
 				returns:Myna.WebService.generateQueryType({
 					user_id:"string",
@@ -272,6 +419,9 @@
 							return obj;
 						}
 					})
+					
+					
+					
 					return qry.result;
 				}		
 			},
@@ -378,11 +528,11 @@
 			save_user_data:{
 				desc:"saves user data",
 				params:[
-					{ name:"user_id", type:"string" },
-					{ name:"last_name", type:"string"},
-					{ name:"first_name", type:"string"},
-					{ name:"middle_name", type:"string"},
-					{ name:"title", type:"string"},
+					{name:"user_id", type:"string" },
+					{name:"last_name", type:"string"},
+					{name:"first_name", type:"string"},
+					{name:"middle_name", type:"string"},
+					{name:"title", type:"string"},
 					{name:"country",type:"string"},
 					{name:"dob",type:"string"},
 					{name:"email",type:"string"},
@@ -420,9 +570,112 @@
 					return {success:1}
 				}
 			},
+		/* --------- search_users  ----------------------------------------------- */
+			search_users:{
+				desc:"Queries all users, 25 rows at a time, optionally filtering by a search string",
+				params:[
+					{ name:"start", type:"string", defaultValue:0 },
+					{ name:"limit", type:"string", defaultValue:25 },
+					{ name:"sort", type:"string", defaultValue:'last_name' },
+					{ name:"dir", type:"string", defaultValue:'asc' },
+					{ name:"search", type:"string", defaultValue:"" },
+					{ name:"show_inactive", type:"numeric", defaultValue:1 },
+					{ name:"providers", type:"string", defaultValue:Myna.Permissions.getAuthTypes().join() }
+				],
+				returns:{
+					totalRows:"numeric",
+					data:[{
+						user_id:"string",
+						last_name:"string",
+						first_name:"string",
+						middle_name:"string",
+						title:"string",
+						type:"string",
+						/* created:"string",
+						country:"string",
+						dob:"string",
+						email:"string",
+						gender:"string",
+						language:"string",
+						last_name:"string",
+						middle_name:"string",
+						nickname:"string",
+						postcode:"string",
+						timezone:"string",
+						inactive_ts:"string", */
+						login:"string"
+					}]
+				},
+				handler:function(data){	
+					var search = data.search;
+					var result=[]
+					if (search.length > 3){
+						data.providers.listToArray().forEach(function(type){
+							var p = Myna.Permissions.getAuthAdapter(type);
+							if ("searchUsers" in p){
+								p.searchUsers(search).forEach(function(user){
+									user.type = type;
+									result.push(user)
+								})	
+							} else Myna.log("debug","properties",Myna.dump(p.getProperties()));
+						})
+						new Myna.Query({
+							dataSource:"myna_permissions",
+							sql:<ejs>
+								select
+									login,
+									u.first_name,
+									u.last_name,
+									u.middle_name,
+									u.email,
+									'openid' as type,
+									u.title
+								from 
+									user_logins ul,
+									users u					
+								where u.user_id = ul.user_id
+								and type ='openid'
+								<@if search.length>
+									and (
+											lower(user_login_id ) like {search}
+											or lower(login  ) like {search}
+											or lower(u.user_id ) like {search}
+											or lower(first_name ) like {search}
+											or lower(middle_name ) like {search}
+											or lower(last_name ) like {search}
+											or lower(email) like {search}
+									)
+								</@if>
+								order by last_name,first_name,login 
+							</ejs>,
+							values:{
+								search:"%" + search.toLowerCase() + "%",
+							},
+							rowHandler:function(row){
+								var obj = row.getRow();
+								obj.getKeys().forEach(function(key){
+									if (obj[key] === null){
+										obj[key] = "";
+									}
+								})
+								return obj;
+							}
+						}).data.forEach(function(row){
+							result.push(row);
+						})
+					}
+					result.sort(function(a,b){
+						return String.compareAlpha(a.first_name+a.last_name, b.first_name+b.last_name)
+					})
+					return {
+						totalRows:result.length,
+						data:result
+					}
+				}
+			},
 		/* --------- delete_user  --------------------------------------------- */
 			delete_user:{
-				desc:"inactivtes the indicated user",
+				desc:"inactivates the indicated user",
 				params:[
 					{ name:"user_id", type:"string" }
 				],
@@ -463,8 +716,11 @@
 								user_login_id,
 								login,
 								password,
+								u.first_name,
+								u.middle_name,
+								u.last_name
 								type,
-								u.first_name || ' ' || u.middle_name || ' ' || u.last_name as user_name,
+								'' as user_name,
 								
 								u.user_id
 							from 
@@ -489,7 +745,11 @@
 								if (obj[key] instanceof Date){
 									obj[key] = obj[key].format("m/d/Y H:i:s");
 								}
+								if (obj[key] === null){
+									obj[key] = "";
+								}
 							})
+							obj.user_name = obj.first_name + ' ' + obj.middle_name + ' ' + obj.last_name
 							return obj;
 						}
 					})
@@ -785,9 +1045,11 @@
 					user_group_member_id:"string",
 					user_group_id:"string",
 					user_id:"string",
-					user_name:"string"
+					user_name:"string",
+					logins:"string"
 				}),
 				handler:function(data){
+					
 					var qry= new Myna.Query({
 						dataSource:"myna_permissions",
 						sql:<ejs>
@@ -795,7 +1057,11 @@
 								ugm.user_group_member_id,
 								ugm.user_group_id,
 								ugm.user_id,
-								u.first_name || ' ' || u.middle_name || ' ' || u.last_name as user_name
+								u.first_name,
+								u.middle_name,
+								u.last_name,
+								'' as user_name,
+								'' as logins
 							from user_group_members ugm,
 									users u					
 							where
@@ -811,7 +1077,31 @@
 							search:"%" + data.search.toLowerCase() + "%"
 						},
 						startRow:parseInt(data.start)+1,
-						maxRows:data.limit
+						maxRows:data.limit,
+						rowHandler:function(row){
+							var obj = row.getRow();
+							obj.getKeys().forEach(function(key){
+								if (obj[key] instanceof Date){
+									obj[key] = obj[key].format("m/d/Y H:i:s");
+								}
+								if (obj[key] === null){
+									obj[key] = "";
+								}
+							})
+							obj.user_name =obj.first_name + ' ' + obj.middle_name + ' ' + obj.last_name;
+							obj.logins = new Myna.Query({
+								dataSource:"myna_permissions",
+								sql:<ejs>
+									select type || '/' || login as login from user_logins
+									where user_id = {user_id}
+								</ejs>,
+								values:{
+									user_id:obj.user_id
+								}
+							
+							}).valueArray("login").join()
+							return obj;
+						}
 					})
 					
 					return qry.result;
@@ -821,7 +1111,13 @@
 			add_user_group_member:{
 				desc:"saves user_group_member data",
 				params:[
-					{ name:"user_id", type:"string"},
+					{ name:"type", type:"string"},
+					{ name:"login", type:"string"},
+					{ name:"first_name", type:"string"},
+					{ name:"last_name", type:"string"},
+					{ name:"middle_name", type:"string"},
+					{ name:"email", type:"string"},
+					{ name:"login", type:"string"},
 					{ name:"user_group_id", type:"string"},
 					{ name:"appname", type:"string", required:true},
 				],
@@ -829,8 +1125,17 @@
 					success:"numeric",
 				},
 				handler:function(data){
+					var user =Myna.Permissions.getUserByLogin(data.type,data.login)
+					if (!user){
+						user = Myna.Permissions.addUser(data)	
+						user.setLogin(data)
+					}
+					data.user_id=user.user_id;
 					var ug =dm.getManager("user_groups").getById(data.user_group_id); 
-					if (ug.get_appname() != data.appname && this.authUserId != "myna_admin"){
+					if (
+						ug.get_appname() != data.appname 
+						&& !this.getAuthUser().hasRight("myna_admin","full_admin_access")
+					){
 						throw new Error("User Group "+data.user_group_id+" does not match appname " + data.appname)
 					}
 					var man = dm.getManager("user_group_members")
@@ -929,7 +1234,10 @@
 				},
 				handler:function(data){
 					var ug =dm.getManager("user_groups").getById(data.user_group_id); 
-					if (ug.get_appname() != data.appname && this.authUserId != "myna_admin"){
+					if (
+						ug.get_appname() != data.appname 
+						&& !this.getAuthUser().hasRight("myna_admin","full_admin_access")
+					){
 						throw new Error("User Group "+data.user_group_id+" does not match appname " + data.appname)	
 					}
 					var man = dm.getManager("assigned_rights")

@@ -567,23 +567,23 @@ var C ={
 						xtype:"combo",
 						store: new Ext.data.Store({
 							proxy: new Ext.data.HttpProxy({
-								url: 'permissions.ws?json-myna&method=qry_users&show_inactive=0'
+								url: 'permissions.ws?json-myna&method=search_users'
 							}),
 							reader: new Ext.data.JsonReader({
-								root: 'data',
-								id: 'user_id',
+								root:"data",
 								totalProperty:'totalRows'
 							}, [
 								{name: 'first_name'},
 								{name: 'last_name'},
 								{name: 'middle_name'},
-								{name: 'logins'},
-								{name: 'user_id'}
+								{name: 'login'},
+								{name: 'email'},
+								{name: 'type'}
 							])
 						}),
 						fieldLabel:label,
 						displayField:'name',
-						valueField:'user_id', 
+						valueField:'login', 
 						hiddenName:name,
 						typeAhead: false,
 						loadingText: 'Searching...',
@@ -596,20 +596,40 @@ var C ={
 						itemSelector: 'tr.search-item',
 						tpl:new Ext.XTemplate(
 							'<table class="combo_table" width="100%" height="" cellspacing="0" celpadding="0" border="0">',
+								'<tr class="search-header">',
+									'<td>',
+									'Name',
+									'</td>',
+									'<td>',
+										'Type',
+									'</td>',
+									'<td>',
+										'Username',
+									'</td>',
+									'<td>',
+										'email',
+									'</td>',
+								'</tr>',
 								'<tpl for=".">',
 								'<tr class="search-item">',
 									'<td>',
 									'{first_name} {middle_name} {last_name}',
 									'</td>',
 									'<td>',
-										'{logins}',
+										'{type}',
+									'</td>',
+									'<td>',
+										'{login}',
+									'</td>',
+									'<td>',
+										'{email}',
 									'</td>',
 								'</tr>',
 								'</tpl>',
 							'</table>'
 						),
-						pageSize:15, 
-						listWidth:500,
+						/* pageSize:15, */ 
+						listWidth:800,
 						forceSelection:true,
 						allowBlank:true	,
 						listeners:{}
@@ -651,12 +671,10 @@ var C ={
 								xtype:"combo",
 								store: new Ext.data.Store({
 									proxy: new Ext.data.HttpProxy({
-										url: 'index_admin.cfmpermissions.ws?json-myna&method=qry_users&show_inactive=0'
+										url: 'permissions.ws?json-myna&method=search_users'
 									}),
 									reader: new Ext.data.JsonReader({
-										root: 'rows',
-										id: 'userid',
-										totalProperty:'total'
+										id: 'userid'
 									}, [
 										{name: 'name'},
 										{name: 'ldapid'},
@@ -908,6 +926,15 @@ var C ={
 						xtype:"tbfill"
 					},function(){
 						if (appname=="myna_admin") return {
+							text:"Manage Apps",
+							handler:C.apps_main
+						}
+						else return {
+							xtype:"tbspacer"
+							
+						}
+					}(),function(){
+						if (appname=="myna_admin") return {
 							text:"Manage Users",
 							handler:C.edit_users
 						}
@@ -943,6 +970,254 @@ var C ={
 			}]
 		}
 		viewport = new Ext.Viewport(config);	
+	}
+/* ---------------- apps_main --------------------------------------------- */
+	C.apps_main=function(){
+		var center_tabs = Ext.getCmp("center_tabs");
+		var tabId="manage_apps_main";
+		if (!center_tabs.findById(tabId)){
+			var config ={
+				id:tabId,
+				closable:true,
+				title:"Manage Apps",
+				layout:"border",
+				items:[{
+					region:"center",
+					xtype:"grid",
+					id:"manage_apps_grid",
+					functions:{
+						search:function(){
+							var field = Ext.getCmp("manage_apps_search")
+							var store = Ext.StoreMgr.get("manage_apps_grid")
+							var tb = Ext.getCmp("manage_apps_grid").getBottomToolbar()
+							store.baseParams.search=field.getValue();
+							store.baseParams.start=0;
+							tb.onClick("refresh");
+						}
+					},
+					stripeRows:true,
+					ds:new Ext.data.Store({
+						storeId:"manage_apps_grid",
+						proxy: new Ext.data.HttpProxy({
+							url: "permissions.ws?json-myna&method=qry_apps"
+						}),
+					
+						reader: new Ext.data.JsonReader({
+							root: "data",            
+							totalProperty: "totalRows",            
+							id: "appname"            
+						},
+						[
+							{name:'appname'},
+							{name:'description'},
+							{name:'inactive_ts'},
+							{name:'display_name'}	
+						]),
+						remoteSort: true
+					}),
+					columns:[
+						{id:"appname", header: "Appname", dataIndex:'appname', width: 100, sortable: true, renderer:C.linkRenderer},
+						{id:"display_name", header: "Display Name", dataIndex:'display_name', width: 100, sortable: true},
+						{id:"description", header: "Description", dataIndex:'description', width: 100, sortable: true},
+						{id:"inactive_ts", header: "Inactive Date", dataIndex:'inactive_ts', width: 100, sortable: true}
+					],
+					autoExpandColumn:0,
+					sm: new Ext.grid.RowSelectionModel({singleSelect:true}),
+					loadMask: true,
+					tbar:[{
+						xtype:"tbspacer"
+					},{
+						xtype:"textfield",
+						id:"manage_apps_search",
+						enableKeyEvents: true,
+						listeners:{
+							keydown:function(f,e){
+								if ("10,13".listContains(e.getKey()))
+								Ext.getCmp("manage_apps_grid").functions.search()
+							}
+						}
+					},{
+						xtype:"tbspacer"
+					},{
+						text:"Search", 
+						iconCls:"icon_search",
+						handler:function(){
+							Ext.getCmp("manage_apps_grid").functions.search()
+						}
+					},{
+						xtype:"tbseparator"
+					},{
+						text:"Add App",
+						iconCls:"icon_add",
+						handler:function(){
+							var formPanel = Ext.getCmp("form" + tabId);
+							formPanel.functions.loadForm()
+						}
+					},{
+						xtype:"tbfill"
+					}/* ,{
+						text:"Help",
+						iconCls:"icon_help",
+						handler:function(){
+							C.showHelp("permissions_apps_help")
+						}
+					} */],
+					bbar:new Ext.PagingToolbar({
+						pageSize: 25,
+						store: Ext.StoreMgr.get("manage_apps_grid"),
+						displayInfo: true,
+						displayMsg: 'Displaying rows {0} - {1} of {2}',
+						emptyMsg: "No rows to display"
+					}),
+					listeners: {
+						beforerender:function(){
+							Ext.StoreMgr.get("manage_apps_grid").load();
+						},
+						cellclick:function(grid,rowIndex,cellIndex,e){
+							var cm = grid.getColumnModel();
+							var record = grid.getStore().getAt(rowIndex);
+							var value = record.get(cm.getDataIndex(cellIndex))
+							switch(cm.getColumnId(cellIndex)){
+								case "appname":
+									var formPanel = Ext.getCmp("form" + tabId);
+									formPanel.functions.loadForm(value)
+								break;
+							}
+						},
+						rowclick:function(grid,rowIndex,e){
+							var record = grid.getStore().getAt(rowIndex);
+						},
+						rowdblclick:function(grid,rowIndex,e){
+							
+						}
+					}
+				},{
+					region:"east",
+					width:300,
+					title:"Edit Details",
+					tools:[{
+						id:"close",
+						handler:function(e,t,panel){
+							panel.functions.close();
+						}
+					}],
+					id:"form" + tabId,
+					frame:true,
+					autoScroll:true,
+					functions:{
+						loadForm:function(appname){
+							Ext.Ajax.request({
+								url:"permissions.ws?json-myna&method=get_app_data",
+								params:{appname:appname||""},
+								waitMsg:"Loading...",
+								callback:C.cbHandler(function(result){
+									if (result.success){
+										var formPanel = Ext.getCmp("form" + tabId);
+										var form = formPanel.form;
+										form.setValues(result.data)
+										
+										formPanel.show();
+										formPanel.ownerCt.doLayout();
+									} else return false;
+								})
+							})
+						},
+						save:function(){
+							var formPanel = Ext.getCmp("form" + tabId);
+							var form = formPanel.form;
+							
+							if (form.isValid()){
+								var data = form.getValues();
+								Ext.Ajax.request({
+									url:"permissions.ws?json-myna&method=save_app_data",
+									params:data,
+									waitMsg:"Saving...",
+									callback:C.cbHandler(function(result){
+										if (result.success){
+											Ext.StoreMgr.get("manage_apps_grid").reload();
+											formPanel.functions.close();
+										} else if (result.errors){
+											form.markInvalid(errors)
+										} else return false
+									})
+											
+								})
+							}
+						},
+						remove:function(){
+							Ext.MessageBox.confirm("Warning","Delete this object?",function(btn){
+								if (btn == 'yes') {
+									var formPanel = Ext.getCmp("form" + tabId);
+									var form = formPanel.form;
+									
+									var data = form.getValues();
+									Ext.Ajax.request({
+										url:"permissions.ws?json-myna&method=delete_app",
+										params:{
+											appname:data.appname											},
+										waitMsg:"Removing...",
+										callback:C.cbHandler(function(result){
+											if (result.success){
+												Ext.StoreMgr.get("manage_apps_grid").reload();
+												formPanel.functions.close();
+											} else return false
+										})
+												
+									})										
+								}
+							})
+							
+							
+						},
+						close:function(){
+							var formPanel = Ext.getCmp("form" + tabId);
+							formPanel.hide();
+							formPanel.ownerCt.doLayout();
+						}
+					},
+					xtype:"form",
+					labelAlign:"top",
+					hidden:true,
+					trackResetOnLoad:true,
+					defaults:{
+						xtype:"textfield",
+						labelStyle:"font-weight:bold"
+					},
+					bodyStyle:"padding:10px;",
+					items:[
+						{name:"appname", width:250,  fieldLabel:"Appname", maxLength:255,  id:"appname" + tabId },
+						{name:"display_name", width:250,  fieldLabel:"Display Name", maxLength:255,  id:"display_name" + tabId },
+						{name:"description", xtype:"textarea", width:250,  fieldLabel:"Description", maxLength:255,  id:"description" + tabId }
+						
+					],
+					buttons:[{
+						text:"Save/Reactivate",
+						iconCls:"icon_save",
+						handler:function(){
+							Ext.getCmp("form" + tabId).functions.save();
+							
+						}
+					},{
+						text:"Delete",
+						iconCls:"icon_delete",
+						handler:function(){
+							Ext.getCmp("form" + tabId).functions.remove();
+						}
+					}]
+				}],
+				listeners:{
+					activate:function(){
+						Ext.StoreMgr.get("manage_apps_grid").reload();
+					}	
+				}
+				
+				
+			}
+			C.addTab(center_tabs,config);
+	
+		}  
+			
+		center_tabs.activate(tabId)
 	}
 /* ---------------- edit_users ---------------------------------------------- */
 	C.edit_users=function(){
@@ -1591,7 +1866,7 @@ var C ={
 						{id:"user_group_id", header: "user_group_id", width: 150, sortable: true, renderer:C.linkRenderer, dataIndex: 'user_group_id'},
 						{id:"appname", hidden:appname!="myna_admin", header: "Appname", dataIndex:'appname', width: 100, sortable: true},
 						{id:"name", header: "Name", dataIndex:'name', width: 100, sortable: true},
-						{id:"description", header: "Description", dataIndex:'description', width: 100, sortable: true}
+						{id:"description", header: "Description", dataIndex:'description', width: 300, sortable: true}
 						
 					],
 					autoExpandColumn:0,
@@ -1825,14 +2100,13 @@ var C ={
 									store.baseParams.start=0;
 									tb.onClick("refresh");
 								},
-								add:function(user_id){
+								add:function(record){
 									var form = Ext.getCmp("form" + tabId).form;
+									var data = record.data;
+									data.user_group_id=form.findField("user_group_id").getValue();
 									Ext.Ajax.request({
 										url:"permissions.ws?json-myna&method=add_user_group_member&appname=" + appname,
-										params:{
-											user_id:user_id,
-											user_group_id:form.findField("user_group_id").getValue()
-										},
+										params:record.data,
 										callback:C.cbHandler(function(result){
 											if (result.success){
 												var grid = Ext.getCmp("manage_user_group_members_grid")
@@ -1889,7 +2163,8 @@ var C ={
 									{name:'user_group_member_id'},
 									{name:'user_group_id'},
 									{name:'user_id'},
-									{name:'user_name'}
+									{name:'user_name'},
+									{name:'logins'}
 								]),
 								remoteSort: true
 							}),
@@ -1906,6 +2181,7 @@ var C ={
 								},
 								
 								{id:"user_name", header: "User Name", dataIndex:'user_name', width: 150, sortable: true},
+								{id:"logins", header: "Logins", dataIndex:'logins', width: 250, sortable: false},
 								{id:"user_id", header: "User Id", dataIndex:'user_id', width: 100, sortable: true}
 							],
 							autoExpandColumn:0,
@@ -1941,7 +2217,7 @@ var C ={
 										var control =C.renderControlField("manage_user_group_members_grid","user-single","add_user","","",tabId);
 										control.listeners.select =function(combo,record,index){
 											var grid = Ext.getCmp("manage_user_group_members_grid")
-											grid.functions.add(record.id)
+											grid.functions.add(record)
 										}
 										return control;
 									}(),
@@ -2079,8 +2355,9 @@ var C ={
 									dataIndex: 'user_group_member_id'
 								},
 								
-								{id:"name", header: "Right Name", dataIndex:'name', width: 150, sortable: true},
-								{id:"description", header: "Description", dataIndex:'description', width: 150, sortable: true}
+								{id:"name", header: "Right Name", dataIndex:'name', width: 100, sortable: true},
+								{id:"appname", header: "App Name", dataIndex:'appname', width: 75, sortable: true},
+								{id:"description", header: "Description", dataIndex:'description', width: 250, sortable: true}
 								
 							],
 							autoExpandColumn:0,

@@ -161,6 +161,7 @@ function searchUsers(search){
 				first_name:"",
 				last_name:"",
 				middle_name:"",
+				email:"",
 				title:""
 			}
 			$this.config.map.forEach(function(ldap_attribute,myna_attribute){
@@ -171,7 +172,7 @@ function searchUsers(search){
 			if (result.login.length) return result
 			else return undefined
 		}),
-		columns:"login,first_name,last_name,middle_name,title"
+		columns:"login,first_name,last_name,middle_name,email,title"
 	})
 	
 }
