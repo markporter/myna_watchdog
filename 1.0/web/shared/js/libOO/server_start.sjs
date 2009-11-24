@@ -18,5 +18,4 @@ keys.forEach(function(dsName){
 				 bds.setTestOnBorrow(true);
 				 bds.setValidationQuery(dbTypes[ds.type].connectionTestSql);
 	  }
-
 })

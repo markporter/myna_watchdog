@@ -1481,7 +1481,8 @@ var C ={
 							fieldLabel:"Start Date",
 							xtype:"datefield",
 							format:"m/d/Y",
-							name:"event_ts_start"
+							name:"event_ts_start",
+							value:new Date().format("m/d/Y")
 							
 						},{
 							fieldLabel:"End Date",
@@ -1762,8 +1763,13 @@ var C ={
 							emptyMsg: "No rows to display"
 						}),
 						listeners: {
-							beforerender:function(){
-								Ext.StoreMgr.get("general_log_store").load();
+							beforerender:function(panel){
+								//window.setTimeout(function(){config.search();},1000);
+								var store =Ext.StoreMgr.get("general_log_store");
+								store.baseParams={
+									event_ts_start:new Date().format("m/d/Y")	
+								}
+								store.load()
 							},
 							rowclick:function(grid,rowIndex,e){
 								return false

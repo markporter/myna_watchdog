@@ -436,7 +436,7 @@ var fusebox={
 					log_elapsed
 				from myna_log_general
 				where 1=1
-				<@if data.event_ts_start.length>
+				<@if data.event_ts_start.length  >
 					and event_ts >= <%=p.addValue(data.event_ts_start,"date")%>
 				</@if>
 				<@if data.event_ts_end.length>
@@ -446,7 +446,16 @@ var fusebox={
 					and upper(type) = <%=p.addValue(data.type)%>
 				</@if>
 				<@if data.log_id.length>
-					and log_id >= <%=p.addValue(rawData.log_id)%>
+					<% 
+					var ts = new Myna.Query({
+						ds:"myna_log",
+						sql:"select event_ts from myna_log_general where log_id={log_id}",
+						values:rawData
+					}).data
+					%>
+					<@if ts.length>
+						and event_ts > <%=p.addValue(ts[0].event_ts,"timestamp")%>
+					</@if>
 				</@if>
 				<@if data.request_id.length>
 					and request_id = <%=p.addValue(rawData.request_id)%>

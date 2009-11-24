@@ -76,6 +76,16 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 			});
 			
 		}
+		//add missing indexes
+		var hasIndex=table.indexInfo.some(function(i){
+			return i.columns.sort().join()=="event_ts"
+		})
+		if (!hasIndex){
+			table.addIndex({
+					columns:["event_ts"]
+			})	
+		}
+		
 	
 /* myna_permissions */
 	ds = "myna_permissions";
