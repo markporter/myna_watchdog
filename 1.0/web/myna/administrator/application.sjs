@@ -8,30 +8,6 @@ $application.mainFuseAction="main";
 $application.extUrl =$server.rootUrl +"shared/js/ext_latest/"
 
 
-$application.onError=function(exception){
-	if ($req.returningJson){
-		var detail = "";
-		try {
-			if (exception.message) detail += "<b>Error:</b> " +exception.message;
-			if (exception.getMessage) detail += "<b>Error:</b> " +exception.getMessage();
-			
-			if (exception.fileName) detail += "<br><b>File:</b> " +exception.fileName;
-			if (exception.lineNumber) detail += "<br><b>Line:</b> " +exception.lineNumber;
-		} catch(e){
-			detail = Myna.formatError(exception);
-		}
-		
-		print({
-			success:false,
-			errorMsg:"An error occured on the server:",
-			errorDetail:detail
-		}.toJson());
-		//return true;
-	} else {
-		$res.print(Myna.formatError(exception))	
-	}
-	Myna.log("error",exception.message,Myna.formatError(exception));
-}
 
 
 //append request start function

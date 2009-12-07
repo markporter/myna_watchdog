@@ -45,17 +45,12 @@ var fusebox={
 			$cookie.setAuthUserId("myna_admin");
 			this.new_password_form({});
 		} else {
-			/* data.setDefaultProperties({error_message:""});
-			data.extUrl=$application.extUrl;
-			data.rootUrl=$server.rootUrl;
+			$res.redirectLogin({
+				callbackUrl:$server.requestScriptName +"?fuseaction=" +$application.mainFuseAction,
+				title:"Myna Administrator Login",
+				message:data.message||""
+			})
 			
-			includeTemplate('views/dsp_login.html',data); */
-			var url = $server.rootUrl+"myna/auth/auth.sjs?"+[
-				"fuseaction=login",
-				"callback=" +$server.requestUrl + $server.requestScriptName +"?fuseaction=" +$application.mainFuseAction,
-				"title=" +escape("Myna Administrator Login")
-			].join("&")
-			$res.metaRedirect(url)
 		}
 	},
 	logout:function(data){

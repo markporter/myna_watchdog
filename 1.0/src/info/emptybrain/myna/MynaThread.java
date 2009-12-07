@@ -775,7 +775,7 @@ public class MynaThread {
 				errorText.append("</pre>");
 				
 				this.log("ERROR",originalException.getClass().getName() + ": "+ originalException.getMessage(),errorText.toString());
-				this.generatedContent.append(errorText.toString());
+				//this.generatedContent.append(errorText.toString());
 			}
 		} catch (Exception newException){
 			System.err.println(newException);

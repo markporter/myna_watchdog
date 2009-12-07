@@ -124,6 +124,7 @@ var ObjectLib = {}
 		}
 		return target;
 	}
+
 /* Function: getKeys 
 	returns an alphabetized list of non-function properties in an object
 	
@@ -441,6 +442,7 @@ var ObjectLib = {}
 		}	
 		return obj
 	}
+	
 /* Function: forEach
 	loops over each non-function property of an object an executes the 
 	supplied function against it.   

@@ -567,7 +567,7 @@ var C ={
 						xtype:"combo",
 						store: new Ext.data.Store({
 							proxy: new Ext.data.HttpProxy({
-								url: 'permissions.ws?json-myna&method=search_users'
+								url: 'permissions.ws?json-myna&method=search_users&providers=' + providers
 							}),
 							reader: new Ext.data.JsonReader({
 								root:"data",

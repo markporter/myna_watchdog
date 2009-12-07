@@ -151,14 +151,14 @@ public class JSServlet extends HttpServlet {
 				
 				
 			} catch(Exception e){
-				res.getWriter().print("rhino catch" + e);
+				//res.getWriter().print("rhino catch" + e);
 				thread.handleError(e);
 				
 				//flush any error output
 				res.getWriter().print(thread.generatedContent);
 			}
 		} catch (Exception e){
-			e.printStackTrace(res.getWriter());
+			e.printStackTrace(System.err);
 			
 		}
 		//res.getWriter().print("dbg: end request");

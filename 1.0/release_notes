@@ -1,3 +1,29 @@
+Release Name: 1.0_beta_2
+Notes:
+This release contains bug fixes and minor enhancments
+
+Changes in his release
+---------------------
+
+* Added function Myna.Permissions.getRightByName
+* Modified Myna.Permissions.addRight to modify an existing right if found rather 
+  than create duplicate right
+* Modified Myna.Permissions.addUserGroup to modify an existing group if found 
+  rather than create duplicate group
+* added  function Myna.Permissions.addApp
+* added function WebService.getAuthUser
+* allowed any user with "`myna_admin/full_admin_access`" right to have full access 
+  to the permissions application
+* Added the ability to add users through adapter searches to the permissions 
+  application 
+* added index for `event_ts` to `myna_log_general` table
+* made "today" the default criteria for "start date" when viewing the general log
+* modified the "after log id" search to use the timestamp rather than 
+  lexicographical comparison of the log_id because UUID's have no guaranteed order
+* fixed bug in login page that cause the page to fail under tomcat  
+
+---------------------------------------
+
 Release Name: 1.0_beta_1
 Notes:
 

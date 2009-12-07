@@ -268,7 +268,63 @@
 	Object.prototype.forEach=function (func){
 		return ObjectLib.forEach(this,func);
 	}
-
+/* Function: copy
+	returns a new object with the same properties as the supplied object 
+	 
+	Parameters: 
+		obj		- 	object to apply to
+		deep		-	*optional, default false*
+						If true, a deep copy is made where no property or child of a 
+						property in the new object is shared with the original object. 
+						
+						*Only works with pure JavaScript, and functions will be 
+						stripped* 
+ 
+	Detail: 
+		by default, this performs a shallow copy by creating a new object and 
+		copying the properties of the old object onto it. 
+		
+		if _deep_ is true, then 
+		the object is decompiled to source and the compiled as a new object. Deep 
+		copies will fail if the object contains java objects, and all functions 
+		are removed, regardless. Deep copies are useful for "sanitizing" a complex 
+		data object for storage, transmission, or return from a function.
+		
+	Example:
+		(code)
+			
+			var dontChangeName =function(obj){
+				//make a shallow copy of object so we can alter it's properties
+				var myObj = obj.copy();
+				myObj.name = "stan";	
+			}
+			
+			var bob ={
+				name:"bob"
+			}
+			dontChangeName(bob);
+			//bob is still "bob"
+			
+			
+			var dataChunk={
+				_data:[1,2,3,4],
+				getData:function(){
+					//deep copy, user can't change contents of this._data
+					return this._data.copy(true);
+				}
+			}
+			var data = dataChunk.getData();
+			data.push(5); //doesn't affect dataChunk._data;
+		(end)
+	 
+	*/
+	Object.prototype.copy=function (deep){
+		if (deep) {
+			return eval( uneval(this) );
+		} else {
+			return this.applyTo({});
+		}
+	}
 if ("$server_gateway" in this){
 	(function(){
 		var hide = function (o, p) {

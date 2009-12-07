@@ -126,10 +126,14 @@ var $server={
 				path					-	a url path relative to the request directory
 				 
 			Example:
+			> //return full URL to this page
 			> var linkUrl = $server.resolveUrl($server.requestScriptName);
 	  */
 	  resolveUrl:function(path){
 			if (!path) throw new Error("'path' is required");
+			if (/^\//.test(path)) path = $server.serverUrl +path;
+			//echo back if URL is absolute
+			if (/^http/.test(path)) return path;
 			return new java.net.URI(
 				$server.serverUrl +
 				$server.requestUrl +

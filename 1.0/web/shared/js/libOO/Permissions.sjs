@@ -144,6 +144,7 @@ if (!Myna) var Myna={}
 		*/
 		addApp:function(options){
 			options.checkRequired(["appname"]);
+			var dm = new Myna.DataManager("myna_permissions");
 			var man = dm.getManager("apps")
 			options.inactive_ts=null;
 			man.create(options);
@@ -161,7 +162,22 @@ if (!Myna) var Myna={}
 			});
 			group.addRights(right_id);
 		},
-	
+	/* Function: getAppValues
+			returns an object containing the display name, description, and 
+			inactive_ts for the supplied appname, or null if not defined
+			
+			Parameters:
+				appname			-	appname of the application. 
+			
+		*/
+		getAppValues:function(appname){
+			var dm = new Myna.DataManager("myna_permissions");
+			var man = dm.getManager("apps")
+			var exists = man.findBeans(appname);
+			if (exists.length){
+				return exists[0].data.copy(true);	
+			}
+		},
 	/* Function: addRight
 			adds a new right, and returns an instance of <Myna.Permissions.Right>
 		
@@ -374,28 +390,28 @@ if (!Myna) var Myna={}
 			return user_id;
 		},
 	/* Function: getAuthAdapter
-			creates and configures and authentication adepter based on the 
-			_config_ name provided  
+			creates and configures and authentication adapter based on the 
+			_auth_type_ name provided  
 			
 			Parameters:
-				config		-	name of the configuration to use to create the 
+				auth_type		-	name of the configuration to use to create the 
 								adapter. This name should match a config file in 
-								/WEB-INF/myna.auth_types
+								/WEB-INF/myna/auth_types
 			
 		*/
-		getAuthAdapter:function(name){
-			if (!/^[^~]+$/.test(name)) {
-				throw new Error("Invalid adapter name '"
-				+ name
-				+"'. Adapter names cannot contain tilde(~) characters");
+		getAuthAdapter:function(auth_type){
+			if (!/^[^~]+$/.test(auth_type)) {
+				throw new Error("Invalid adapter auth_type '"
+				+ auth_type
+				+"'. Adapter auth_types cannot contain tilde(~) characters");
 			}
-			var adapter = $server.get("MYNA_auth_adapter_" + name);
+			var adapter = $server.get("MYNA_auth_adapter_" + auth_type);
 			if (!adapter){
 				adapter = {
-			   config:new Myna.File("/WEB-INF/myna/auth_types/" + name).readString().parseJson()
+			   config:new Myna.File("/WEB-INF/myna/auth_types/" + auth_type).readString().parseJson()
 			}
 				Myna.include("/shared/js/libOO/auth_adapters/" + adapter.config.adapter +".sjs",adapter);
-				$server.set("MYNA_auth_adapter_" + name,adapter);
+				$server.set("MYNA_auth_adapter_" + auth_type,adapter);
 			}
 			return adapter;
 		},
@@ -690,10 +706,9 @@ if (!Myna) var Myna={}
 				var msg="duplicate users ("+userId.join()+") for login '" + login+ "'";
 				throw new Error(msg)
 			}
-		}
-		
+		},
+	
 	}
-
 /* ============= Permissions User  ========================================== */
 	/* Class: Myna.Permissions.User
 		Provides access to user specific permissions. see <Myna.Permissions> for 
@@ -868,6 +883,64 @@ if (!Myna) var Myna={}
 				}
 			}).data.length
 		}
+	/* Function: hasAnyRight
+		returns true if this user has been assigned the supplied appname and any 
+		of the supplied right names 
+		
+		Parameters:
+			appname		-	name appname of of application
+			right			-	*Optional, default all rights for _appname_*
+								a comma separated list or right names
+	 */
+		Myna.Permissions.User.prototype.hasAnyRight = function(appname,right_list){
+			var ug = this;
+			//the admin user has all rights to the myna_admin application even 
+			//if the database is broken
+			if (
+				this.user_id == "myna_admin" &&
+				appname == "myna_admin"
+			) {return true;}
+			
+			var qry = new Myna.Query({
+				ds:ug.ds,
+				sql:<ejs>
+					select right_id from rights where appname ={appname}
+					<@if right_list>
+						and lower(name) in (<%=right_list.toLowerCase.listQualify()%>)  
+					</@if>
+				</ejs>,
+				values:{
+					appname:appname	
+				}
+			})
+			//can't have access if no rights defined
+			if (!qry.data.length) return false;
+			
+			right_list = qry.valueList(right_id).listQualify()
+			
+			// !! forces a boolean response instead of a number
+			return !!new Myna.Query({
+				ds:ug.ds,
+				sql:<ejs>
+					select 'x' 
+					from 
+						rights r,
+						assigned_rights ar,
+						user_group_members ugm
+					where 1=1
+						and r.right_id = ar.right_id
+						and ugm.user_group_id=ar.user_group_id
+						and user_id={id}
+						and appname={appname}
+						and r.right_id in (<%=right_list%>)
+				</ejs>	,
+				values:{
+					id:ug.get_user_id(),
+					appname:appname,
+					rightName:rightName
+				}
+			}).data.length
+		},
 	/* Function: getLogins
 		returns an array of objects in the form of [{type,login}] of the logins 
 		associated with this user

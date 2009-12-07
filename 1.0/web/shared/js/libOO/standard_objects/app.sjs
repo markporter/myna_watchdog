@@ -78,7 +78,7 @@ var $application={
 	*/
 	url:null,	
 	
-/* Property: appName
+/* Property: appname
 		String application name. 
 		
 		Detail:
@@ -87,7 +87,9 @@ var $application={
 			via <$application.set> and <$application.get>
 			
 	*/
-	appName:null,
+	appname:null,
+	get appName(){return $application.appname},
+	set appName(val){$application.appname = val},
 /* Property: idleMinutes
 		Max time in minutes between application data access before app data is destroyed.
 		Any data set in the application scope should be expected to be destroyed at some point.
@@ -624,10 +626,10 @@ var $application={
 			}
 		}
 		//load application
-			if ($application.appName){
+			if ($application.appname){
 				var cache =Packages.org.apache.jcs.JCS.getInstance("application");
 				
-				if (!cache.get($application.appName)){
+				if (!cache.get($application.appname)){
 					var attr = new Packages.org.apache.jcs.engine.ElementAttributes();
 					attr.setIdleTime(60*this.idleMinutes);
 					cache.put(this.appName,{},attr);

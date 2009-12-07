@@ -215,7 +215,7 @@ var $res = {
 			be performed via <Myna.Permissions.User.hasRight>
 									
 		Note:
-			This function called <Myna.abort>, so no further processing will be 
+			This function calls <Myna.abort>, so no further processing will be 
 			done after a call to this function
 	*/
 	redirectLogin:function(options){
@@ -229,13 +229,34 @@ var $res = {
 		var url = options.loginPage + 
 			(/\?/.test(options.loginPage)?"&":"?") + "providers=" +
 			(typeof options.providers ==="string"?options.providers.split(/,/):options.providers) +
-			"&title=" + options.title +
-			"&callback=" + $server.resolveUrl(options.callbackUrl)+
-			"&message=" + options.message
+			"&title=" + escape(options.title) +
+			"&callback=" + escape($server.resolveUrl(options.callbackUrl))+
+			"&message=" + (options.message)
 		$res.metaRedirect(url);
 		Myna.print("<a href ='" + url +"'>"+options.title+"</a>");
 		Myna.abort();
-	},	
+	},
+/* Function: redirectWithToken
+	redirect to a URL, including an auth_token for the current user.
+	
+	Parameters:
+		url	-	url to redirect to
+
+	*/
+	redirectWithToken:function(url){
+		var urlArray = url.split(/\?/);
+		url = urlArray[0];
+		var query;
+		if (urlArray.length > 1){
+			query=urlArray[1] + "&auth_token=";
+		} else {
+			query="auth_token=";
+		}
+		query+=escape(Myna.Permissions.getAuthToken($cookie.getAuthUserId()));
+		$res.redirect($server.resolveUrl(
+			url + "?" + query
+		))
+	},		
 /* 	Function: setHeader
 		sets a header to return to the browser
 		

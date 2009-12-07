@@ -50,6 +50,9 @@ try{
 			}
 		}
 	}
+} catch(e){
+	Myna.log("debug","got here");
+	$application.onError(e);
 } finally{
 	//on end
 	$application._onRequestEnd();

@@ -1,5 +1,6 @@
 var fusebox={
 	login:function(data){
+		//Myna.log("debug","data",Myna.dump($req.data));
 		data.setDefaultProperties({
 			providers:["openid"].concat(Myna.Permissions.getAuthTypes()).join(),
 			title:"Login"
@@ -34,6 +35,7 @@ var fusebox={
 		var SRegRequest = org.openid4java.message.sreg.SRegRequest;
 		var httpReq = $server.request; 
 		var httpResp = $server.response;
+		
 		if (data.provider =="openid"){
 			var manager = $server_gateway.openidConsumerManager;
 			

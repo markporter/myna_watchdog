@@ -711,17 +711,36 @@
 						this string before _val_. If this string is empty, or 
 						currently ends with _delimiter_, _delimiter_ will not be 
 						appended. 
-						returned string
 	*/
 	String.prototype.listMakeUniqueNoCase=function(delimiter){
 		var newList = "";
-		if (delimiter) {delimiter=",";}
+		if (!delimiter) {delimiter=",";}
 		
 		this.listToArray(delimiter).forEach(function(item){
 			newList = newList.listAppendUniqueNoCase(item, delimiter);
 		});
 		return newList;
 	};
+/* Function: listQualify 
+	returns new list (string) with each item surrounded by a qualifying symbol
+	 
+	Parameters: 
+		symbol		-	*Optional, default ' (single quote)*
+		delimiter	-	*Optional, default ","* 
+							The delimiter for this list
+		qualifier	-	*Optional, default null* 
+							Current qualifier for this list
+	*/
+	String.prototype.listQualify=function(symbol,delimiter,qaulifier){
+		var newList = "";
+		if (!delimiter) {delimiter=",";}
+		if (!qualifier) {qualifier=",";}
+		
+		this.listToArray(delimiter,qualifier).forEach(function(item){
+			newList = newList.listAppend(qualifier +item +qualifier, delimiter);
+		});
+		return newList;
+	};	
 /* Function: listSame 
 	returns true if the provided list contains the smae elements as this list
 	regardless of order. Both lists must use the same qualifier and delimiter
