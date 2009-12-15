@@ -36,8 +36,8 @@ try{
 			})()
 			
 		} else if (/\application.sjs$/.test($server.requestScriptName)){
-			$res.setStatus(500);
 			Myna.print("application.sjs files cannot be accessed remotely")
+			Myna.abort();
 		} else {
 			//request script
 			if (new Myna.File($server.requestDir + $server.requestScriptName).exists()){

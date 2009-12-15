@@ -1117,7 +1117,7 @@ if (!Myna) var Myna={}
 		
 		if(options.recreate){
 			this.drop();
-		} else {
+		} else if (!this.deferExec){
 			if (table.exists){
 				throw new Error("Table.create(): Table '" + table.tableName+ "' already exists. Use the"
 					+ " 'recreate' parameter to override.");
@@ -1218,7 +1218,7 @@ if (!Myna) var Myna={}
 		var table = this;
 		var deleted = false;
 		/* try { */
-			if (table.exists){
+			if (table.exists || this.deferExec){
 				var qry =new Myna.Query({
 					dataSource:table.db.ds,
 					sql:table.getTemplate("dropTable").apply({
@@ -1301,7 +1301,7 @@ if (!Myna) var Myna={}
 		table.init();
 		name = name;
 	
-		if (!this.defereExec){
+		if (!this.deferExec){
 			if (!table.exists){
 				throw new Error("Table.dropConstraint(): Table '" + table.tableName+ "' does not exist.");
 			}
