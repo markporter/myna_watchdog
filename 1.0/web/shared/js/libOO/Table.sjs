@@ -925,7 +925,7 @@ if (!Myna) var Myna={}
 	Myna.Table.prototype.addForeignKey = function(options){
 		options.checkRequired(["foreignTable","foreignColumn","localColumn"]);
 		var table = this;
-		if (!table.exists){
+		if (!this.deferExec && !table.exists){
 			throw new Error("Table.addForeignKey(): Table '" + table.tableName+ "' does not exist.");
 		}
 		if (!("id" in options)) {
@@ -983,7 +983,7 @@ if (!Myna) var Myna={}
 	*/
 	Myna.Table.prototype.addPrimaryKey = function(options){
 		var table = this;
-		if (!table.exists){
+		if (!this.deferExec && !table.exists){
 			throw new Error("Table.addPrimaryKey(): Table '" + table.tableName+ "' does not exist.");
 		}
 		options.tableName = table.sqlTableName;
@@ -1034,7 +1034,7 @@ if (!Myna) var Myna={}
 	Myna.Table.prototype.addIndex = function(options){
 		var table= this;
 		
-		if (!table.exists){
+		if (!this.deferExec && !table.exists){
 			throw new Error("Table.addColumn(): Table '" + table.tableName+ "' does not exist.");
 		}
 		options.checkRequired(["columns"]);
@@ -1341,7 +1341,7 @@ if (!Myna) var Myna={}
 		table.init();
 		name = name;
 	
-		if (!table.exists){
+		if (!this.deferExec && !table.exists){
 			throw new Error("Table.dropIndex(): Table '" + table.tableName+ "' does not exist.");
 		}
 		
