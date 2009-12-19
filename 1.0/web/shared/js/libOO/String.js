@@ -731,13 +731,13 @@
 		qualifier	-	*Optional, default null* 
 							Current qualifier for this list
 	*/
-	String.prototype.listQualify=function(symbol,delimiter,qaulifier){
+	String.prototype.listQualify=function(symbol,delimiter,qualifier){
 		var newList = "";
 		if (!delimiter) {delimiter=",";}
-		if (!qualifier) {qualifier=",";}
+		if (!qualifier) {qualifier="";}
 		
 		this.listToArray(delimiter,qualifier).forEach(function(item){
-			newList = newList.listAppend(qualifier +item +qualifier, delimiter);
+			newList = newList.listAppend(symbol +item +symbol, delimiter);
 		});
 		return newList;
 	};	

@@ -916,7 +916,7 @@ if (!Myna) var Myna={}
 			//can't have access if no rights defined
 			if (!qry.data.length) return false;
 			
-			right_list = qry.valueList(right_id).listQualify()
+			right_list = qry.valueArray("right_id").join().listQualify("'")
 			
 			// !! forces a boolean response instead of a number
 			return !!new Myna.Query({
@@ -937,7 +937,7 @@ if (!Myna) var Myna={}
 				values:{
 					id:ug.get_user_id(),
 					appname:appname,
-					rightName:rightName
+					right_list:right_list
 				}
 			}).data.length
 		},
