@@ -24,15 +24,21 @@ try{
 			} 
 		} else if (/\.ws$/.test($server.requestScriptName)){ //web service calls
 			(function(){
-				var file = new Myna.File($server.requestDir + $server.requestScriptName)
-				var config =$server_gateway.threadContext.evaluateString(
-				  this,
-				  "(" +$server_gateway.translateString(file.readString(),file.toString()) +")",
-				  file.toString(),
-				  1,
-				  null
-				);
-				new Myna.WebService(config).handleRequest($req);
+				try{
+					var file = new Myna.File($server.requestDir + $server.requestScriptName)
+					var config =$server_gateway.threadContext.evaluateString(
+					  this,
+					  "(" +$server_gateway.translateString(file.readString(),file.toString()) +")",
+					  file.toString(),
+					  1,
+					  null
+					);
+				
+					new Myna.WebService(config).handleRequest($req);
+				} catch(e){
+					Myna.println("An error has occured. See log for details.")
+					Myna.logSync("error","Web Service Error in "+$server.requestScriptName,Myna.formatError(e));	
+				}
 			})()
 			
 		} else if (/\application.sjs$/.test($server.requestScriptName)){
