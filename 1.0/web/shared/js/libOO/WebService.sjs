@@ -544,7 +544,7 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
             if (__exception__) exception =__exception__;
             formattedError = Myna.formatError(exception) 
             message = exception.message || exception.getMessage();
-            Myna.log("ERROR","Error in "+ this.spec.name +" afterHandler :" +message,formattedError);
+            Myna.logSync("ERROR","Error in "+ this.spec.name +" afterHandler :" +message,formattedError);
          }
           
       }
@@ -856,7 +856,7 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 			Ext.Ajax.request({
 				url:"http://myhost.com/myservice.ws?ext-api",
 				success:function(response){
-					Ext.Direct.addProvider(Ext.decode(response));		
+					Ext.Direct.addProvider(Ext.decode(response.responseText));		
 				}
 			})
 			MyService.someFunction(arg1, arg1,function(response){
@@ -873,7 +873,7 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 			Ext.Ajax.request({
 				url:"http://myhost.com/myservice.ws?ext-api",
 				success:function(response){
-					Ext.Direct.addProvider(Ext.decode(response));		
+					Ext.Direct.addProvider(Ext.decode(response.responseText));		
 				}
 			})
 			MyService.someFunction(arg1, arg1,function(response){
@@ -911,43 +911,48 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 		  
 	*/
 	Myna.WebService.prototype.printExtApi=function(req){
-		var f = this.spec.functions;
-		var API ={
-			url:$server.serverUrl+$server.currentUrl+$server.scriptName +"?ext-route",
-			type:"remoting",
-			actions:{}
-		}
-		if ("ns" in $req.data){
-			API.namespace=$req.rawData.ns
-		}
-		
-		API.actions[this.spec.name]=f.getKeys().map(function(method){
-			return {
-				name:method,
-				len:f[method].params.length
+		try {
+			var f = this.spec.functions;
+			var API ={
+				url:$server.serverUrl+$server.currentUrl+$server.scriptName +"?ext-route",
+				type:"remoting",
+				actions:{}
 			}
-		})
-		 
-		if ("scriptvar" in $req.data){
-			if (!$req.data.scriptvar.length) {
-				throw new SyntaxError("A value for scriptvar must be defined");
+			if ("ns" in $req.data){
+				API.namespace=$req.rawData.ns
 			}
 			
-			$res.setContentType("text/javascript");
-			$res.clear();
-			if ("ns" in $req.data){
-				$res.print("Ext.ns('"+$req.rawData.ns+"');"+$req.rawData.ns+".");
+			API.actions[this.spec.name]=f.getKeys().map(function(method){
+				return {
+					name:method,
+					len:"params" in f[method]? f[method].params.length:0
+				}
+			})
+			 
+			if ("scriptvar" in $req.data){
+				if (!$req.data.scriptvar.length) {
+					throw new SyntaxError("A value for scriptvar must be defined");
+				}
+				
+				$res.setContentType("text/javascript");
+				$res.clear();
+				if ("ns" in $req.data){
+					$res.print("Ext.ns('"+$req.rawData.ns+"');"+$req.rawData.ns+".");
+				}
+				$res.print($req.rawData.scriptvar +"=" +API.toJson());
+			} else if("callback" in $req.data){
+				if (!$req.data.callback.length) {
+					throw new SyntaxError("A value for callback must be defined");
+				}
+				$res.print($req.rawData.callback +"(" +API.toJson() +")");
+			} else {
+				$res.setContentType("application/json");
+				$res.clear();
+				$res.print(API.toJson());
 			}
-			$res.print($req.rawData.scriptvar +"=" +API.toJson());
-		} else if("callback" in $req.data){
-			if (!$req.data.callback.length) {
-				throw new SyntaxError("A value for callback must be defined");
-			}
-			$res.print($req.rawData.callback +"(" +API.toJson() +")");
-		} else {
-			$res.setContentType("application/json");
-			$res.clear();
-			$res.print(API.toJson());
+		} catch(e){
+			Myna.logSync("debug","ext API error",Myna.formatError(e));
+			Myna.print("An error has ocurred. See the log.")	
 		}
 	}
 /* Function: executeJsonRpcPost
@@ -1061,7 +1066,7 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 			
 		} catch(e){
 			$res.setStatusCode(500)
-			Myna.log("error","Error: " +this.spec.name ,Myna.formatError(__exception__));
+			Myna.logSync("error","Error: " +this.spec.name ,Myna.formatError(__exception__));
 			r.error = {
 				name:"JSONRPCError",
 				code:100,
@@ -1445,7 +1450,7 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 				}
 				return result;
 			} catch(e){
-				Myna.log(
+				Myna.logSync(
 					"debug",
 					"Error in WebService call " + ws.spec.name ,
 					Myna.formatError(__exception__) 
