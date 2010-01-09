@@ -38,6 +38,7 @@ var fusebox={
 			rootUrl:$server.rootUrl,
 			startDs:data.ds,
 			authenticated:!!$cookie.getAuthUserId(),
+			hasAccess:$cookie.getAuthUserId()&&$cookie.getAuthUser().hasRight("myna_admin","full_admin_access"),
 			dbProperties:$application.get("db_properties").toJson()
 		});
 	},

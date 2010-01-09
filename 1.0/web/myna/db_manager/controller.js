@@ -83,14 +83,15 @@ var C ={
 				delete conn.waitInstance;
 			}
 		})
-		if (authenticated===true){
+		if (authenticated===true && hasAccess == true){
 			C.main()
 		}else{
 			//C.login();
 			var url = rootUrl+"myna/auth/auth.sjs?"+[
 				"fuseaction=login",
 				"callback=" +String(location.href),
-				"title=" +escape("DB Administrator Login")
+				"title=" +escape("DB Administrator Login"),
+				hasAccess?"":"message=You do not have access to this application"
 			].join("&")
 			
 			location.href=url;
