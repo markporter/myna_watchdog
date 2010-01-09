@@ -33,6 +33,7 @@ var fusebox={
 	auth:function(data,rawData){
 		$session.set("auth_data",rawData);
 		var SRegRequest = org.openid4java.message.sreg.SRegRequest;
+		var FetchRequest = org.openid4java.message.ax.FetchRequest;
 		var httpReq = $server.request; 
 		var httpResp = $server.response;
 		
@@ -63,19 +64,39 @@ var fusebox={
 				// obtain a AuthRequest message to be sent to the OpenID provider
 				var authReq = manager.authenticate(discovered, returnToUrl);
 				
-				var sregReq = SRegRequest.createFetchRequest();
-				sregReq.addAttribute("nickname", true);
-				sregReq.addAttribute("email", true);
-				sregReq.addAttribute("fullname", true);
-				sregReq.addAttribute("dob", true);
-				sregReq.addAttribute("gender", true);
-				sregReq.addAttribute("postcode", true);
-				sregReq.addAttribute("country", true);
-				sregReq.addAttribute("language", true);
-				sregReq.addAttribute("timezone", true);
-				
-				// attach the extension to the authentication request
-				authReq.addExtension(sregReq);
+				switch(authReq.getOPEndpoint()){
+					//Google
+					case "https://www.google.com/accounts/o8/ud":
+						var fetch = FetchRequest.createFetchRequest();
+						
+						fetch.addAttribute("nickname", "http://axschema.org/namePerson/friendly", true);
+						fetch.addAttribute("email", "http://axschema.org/contact/email", true);
+						fetch.addAttribute("fullname", "http://axschema.org/namePerson", true);
+						fetch.addAttribute("dob", "http://axschema.org/birthDate", true);
+						fetch.addAttribute("gender", "http://axschema.org/person/gender", true);
+						fetch.addAttribute("postcode", "http://axschema.org/contact/postalCode/home", true);
+						fetch.addAttribute("country", "http://axschema.org/contact/country/home", true);
+						fetch.addAttribute("language", "http://axschema.org/pref/language", true);
+						fetch.addAttribute("timezone", "http://axschema.org/pref/timezone", true);
+						
+						authReq.addExtension(fetch);
+					break;
+					default: //Simple Registration
+						var sregReq = SRegRequest.createFetchRequest();
+						sregReq.addAttribute("nickname", true);
+						sregReq.addAttribute("email", true);
+						sregReq.addAttribute("fullname", true);
+						sregReq.addAttribute("dob", true);
+						sregReq.addAttribute("gender", true);
+						sregReq.addAttribute("postcode", true);
+						sregReq.addAttribute("country", true);
+						sregReq.addAttribute("language", true);
+						sregReq.addAttribute("timezone", true);
+						
+						// attach the extension to the authentication request
+						authReq.addExtension(sregReq);
+					break;
+				}
 				
 				
 				if (! discovered.isVersion2() ) {
@@ -133,6 +154,7 @@ var fusebox={
 		}
 	},
 	openid_return:function(data,rawData){
+		var AxMessage = org.openid4java.message.ax.AxMessage;
 		var SRegResponse = org.openid4java.message.sreg.SRegResponse;
 		var SRegMessage = org.openid4java.message.sreg.SRegMessage;
 		importPackage(org.openid4java.message);
@@ -165,11 +187,11 @@ var fusebox={
 		var verified = verification.getVerifiedId();
 		var user;
 		if (verified != null) {
+			//Myna.log("debug","openid",Myna.dump($req.data));
 			var auth_data =$session.get("auth_data");
 			var claimed_id =null;
 			if ("openid.claimed_id" in $req.rawData) auth_data.claimed_id =$req.rawData["openid.claimed_id"];
 			
-			var ext = verification.getAuthResponse().getExtension(SRegMessage.OPENID_NS_SREG);
 			
 			//try to find user by this login
 			user = Myna.Permissions.getUserByLogin("openid",auth_data.claimed_id);
@@ -182,35 +204,71 @@ var fusebox={
 					}
 				}
 			}
-				
-			if (ext instanceof SRegResponse) {
-				auth_data.userAttributes = Myna.JavaUtils.mapToObject(ext.getAttributes())
-				auth_data.userAttributes.forEach(function(value,key,obj){
-					switch(key){
-						case "dob":
-							obj.dob = Date.parseDate(value,"Y-m-d");
-						break;
-						case "fullname":
-							value.split(/\s+/).forEach(function(part,index,array){
-								if (index == 0){
-									obj.first_name = part; 	
-								}
-								else if (index == array.length-1){
-									obj.last_name = part;
-									if (obj.middle_name) obj.middle_name = obj.middle_name.trim()
-								} else {
-									obj.middle_name += part + " ";	
-								}
-							})
-						break;
+			
+			switch($req.data["openid.op_endpoint"]){
+				//Google
+				case "https://www.google.com/accounts/o8/ud":
+					user.data.forEach(function(value,key){
+						if ("openid.ext1.value." +key in $req.data){
+							value = $req.data["openid.ext1.value." +key];
+							switch(key){
+								case "dob":
+									value = Date.parseDate(value,"Y-m-d");
+									if (!user[key]) user.saveField(key,value);
+								break;
+								case "fullname":
+									
+									value.split(/\s+/).forEach(function(part,index,array){
+										if (index == 0){
+											if (!user.first_name) user.set_first_name(part);
+										} else if (index == array.length-1){
+											if (!user.last_name) user.set_last_name(part);
+										}
+									})
+								break;
+								default:
+									user.saveField(key,value);
+							}
+							
+						} else{
+							//Myna.log("debug","couldn't find " + key,Myna.dump($req.data));	
+						}
+					})
+				break;
+				default: //Simple Registration
+					var ext = verification.getAuthResponse().getExtension(SRegMessage.OPENID_NS_SREG);
+					if (ext instanceof SRegResponse) {
+						auth_data.userAttributes = Myna.JavaUtils.mapToObject(ext.getAttributes())
+						//Myna.log("debug","auth_data.userAttributes",Myna.dump(auth_data.userAttributes));
+						auth_data.userAttributes.forEach(function(value,key,obj){
+							switch(key){
+								case "dob":
+									obj.dob = Date.parseDate(value,"Y-m-d");
+								break;
+								case "fullname":
+									value.split(/\s+/).forEach(function(part,index,array){
+										if (index == 0){
+											obj.first_name = part; 	
+										}
+										else if (index == array.length-1){
+											obj.last_name = part;
+											if (obj.middle_name) obj.middle_name = obj.middle_name.trim()
+										} else {
+											obj.middle_name += part + " ";	
+										}
+									})
+								break;
+								
+							}
+							if (!user[key])  user.saveField(key,value)
+						})
 						
+						//user.setFields(auth_data.userAttributes)
 					}
-					if (!user[key])  user.saveField(key,value)
-				})
-				
-				//user.setFields(auth_data.userAttributes)
-				
+				break;
 			}
+				
+			
 			auth_data.user = user;
 			var discovered = $session.get("__MYNA_OPENID_DISCOVERED__")
 			if (discovered.getClaimedIdentifier()){
