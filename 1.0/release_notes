@@ -1,3 +1,49 @@
+Release Name: 1.0_beta_3
+Notes:
+This release contains a major security fix, minor feature 
+enhancements, minor bug fixes and documentation updates
+
+Security Fix
+------------
+* Fixed authorization error in db_manager that allowed un-privileged
+  access
+
+New Features
+------------
+* Added Myna.Permissions.User.hasAnyRight: This tests if the user has 
+  any in a list of rights. Good for deciding whether to allow a user 
+  to log in  
+* Added String.listQualify: adds a symbol to the beginning and end of 
+  each list item. Good for escaping text lists for use in SQL
+* Added $res.redirectWithToken: redirects user to a URL, including an
+  auth_token of the current user. Used to enable auto-login to other 
+  Myna applications 
+* Added Object.copy: shallow and deep object copying
+* Added Permissions.getAppValues: returns display name and description
+  for an  app, or null if app does not exist
+* Added support for Google's openid ns.ax properties. Google only
+  supplies email and language currently, but Myna asks for all the reg
+  properties in case they change their mind.
+
+
+Other changes in this release
+-----------------------
+* Fixed several bugs with Permissions.addApp
+* Removed some stack traces from printing to prevent information leaks.
+	stack traces still available in logs
+* Updated $server.resolveUrl to handle absolute URL's intelligently 
+* Fixed delimiter bug in listMakeUniqueNoCase
+* Added deferExec bug fixes 
+* Sync error logging for WebServices
+* Added error logging for printExtApi(ext-api)
+* Fixed bug in ext api for functions with no parameters
+* Fixed bug in ext api documentation for AJAX callbacks
+* Better error handling for web service objects
+
+
+
+------------------------------------------
+
 Release Name: 1.0_beta_2
 Notes:
 This release contains bug fixes and minor enhancments
