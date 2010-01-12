@@ -2416,14 +2416,15 @@ var C ={
 							listeners: {
 								activate:function(){
 									Ext.getCmp("form" + tabId).functions.quickSave();
-								},
-								beforerender:function(){
 									var user_group_id=Ext.getCmp("user_group_id" + tabId).getValue();
 									var store =Ext.StoreMgr.get("manage_assigned_rights_grid");
 									store.baseParams={
 										user_group_id:user_group_id
 									}
 									store.load();
+								},
+								beforerender:function(){
+									
 								},
 								cellclick:function(grid,rowIndex,cellIndex,e){
 									var cm = grid.getColumnModel();
