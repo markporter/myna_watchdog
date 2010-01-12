@@ -230,13 +230,18 @@ if (!Myna) var Myna={}
 			spec = new Myna.File(spec);
 		}
 		if (spec instanceof Myna.File){
-			spec =$server_gateway.threadContext.evaluateString(
-			  this,
-			  "(" +spec.readString() +")",
-			  spec.toString(),
-			  1,
-			  null
-			);	
+			try{
+				var spec =$server_gateway.threadContext.evaluateString(
+				  this,
+				  "(" +$server_gateway.translateString(spec.readString(),spec.toString()) +")",
+				  spec.toString(),
+				  1,
+				  null
+				);
+			} catch(e){
+				Myna.logSync("error","Web Service Error in "+$server.requestScriptName,Myna.formatError(e));
+				throw e;
+			}
 		}
 		
 		this.spec =spec

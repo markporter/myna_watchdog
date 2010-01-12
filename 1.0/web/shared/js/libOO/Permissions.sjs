@@ -1193,7 +1193,7 @@ if (!Myna) var Myna={}
 				})
 				if (!existing.length){
 					assigned_rights.create({
-						assigned_rights_id:Myna.createUuid(),
+						assigned_right_id:Myna.createUuid(),
 						user_group_id:ug.get_user_group_id(),
 						right_id:right_id
 					})
