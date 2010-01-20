@@ -4,7 +4,7 @@
 <@elseif $req.data.showprogress>
 		<%=$session.get("$uploadProgress")?$session.get("$uploadProgress").toJson():"{}"%>
 <@else >
-	<@set extUrl=$server.rootUrl +"shared/js/ext_latest/">
+	<@set extUrl=$server.rootUrl +"myna/ext/">
 	<link rel="stylesheet" type="text/css" href="<%=extUrl%>resources/css/ext-all.css" />
 	<script type="text/javascript" src="<%=extUrl%>adapter/ext/ext-base.js"></script>
 	<script type="text/javascript" src="<%=extUrl%>ext-all-debug.js"></script>

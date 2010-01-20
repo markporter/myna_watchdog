@@ -6,7 +6,8 @@ $application.prettyName = "Myna Database Manager";
 $application.noAuthFuses=["login","auth","main","logout"];
 $application.defaultFuseAction="main";
 $application.mainFuseAction="main";
-$application.extUrl =$server.rootUrl +"shared/js/ext_latest/"
+//this is moved to the parent folder's application.sjs
+//$application.extUrl =$server.rootUrl +"shared/js/ext_latest/"
 
 
 /* Load datasource driver properties */

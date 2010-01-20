@@ -15,8 +15,8 @@ ant clean
 ant compile
 echo "copying ext files..."
 
-rsync -a ext_latest/ build/shared/js/ext_latest/
-cp xtheme-slate.css build/shared/js/ext_latest/resources/css/
+#rsync -a ext_latest/ build/shared/js/ext_latest/
+#cp xtheme-slate.css build/shared/js/ext_latest/resources/css/
 ant dist
 if [ -e  build.dev ]; then
 	echo "restoring dev build directory..."

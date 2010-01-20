@@ -21,7 +21,7 @@
 		</ejs>,
 		attachments:[
 			new Myna.File("/application.sjs"),
-			"/shared/js/ext_latest/resources/images/default/editor/tb-sprite.gif"
+			"/myna/ext/resources/images/default/editor/tb-sprite.gif"
 		]	
 	}).send()
 	(end)
