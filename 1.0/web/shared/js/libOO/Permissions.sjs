@@ -787,18 +787,24 @@ if (!Myna) var Myna={}
 			value	-	new value
 	 */
 	/* Function: qryRights
-		returns query of rights associated with this group
+		returns query of rights associated with this user
 		
+		Detail:
+			returns a <Myna.Query> object containing right_id, name, appname, 
+			and description columns for each right this user has been assigned 
 	 */
 		Myna.Permissions.User.prototype.qryRights = function(){
 			var ug = this;
 			return new Myna.Query({
 				ds:ug.ds,
 				sql:<ejs>
-					select ar.* 
+					select distinct
+						r.*
 					from assigned_rights ar,
-						user_group_members ugm
+						user_group_members ugm,
+						rights r
 					where ugm.user_group_id=ar.user_group_id
+						and r.right_id = ar.right_id
 						and user_id={id}
 				</ejs>	,
 				values:{id:ug.get_user_id()}
