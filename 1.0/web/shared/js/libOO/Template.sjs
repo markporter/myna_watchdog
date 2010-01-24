@@ -351,6 +351,23 @@ Myna.Template.prototype.apply = Myna.Template.prototype.applyTemplate;
 	});
 	$res.print(tpl.apply(data));
 	(end)
+	
+	Sub Templates:
+	
+	Other XTemplates can be included inside a template. Simply use 
+	[path to template] to include them. The sub template will be passed the 
+	current values when encountered. See <Myna.includeTemplate>
+	
+	(code)
+	var tpl = new Ext.XTemplate(
+		'<html>',
+			'[header.tpl]',
+			'[body.tpl]',
+			'[footer.tpl]',
+		'<html>',
+	);
+	$res.print(tpl.apply(data));
+	(end)
 */
 
 /* Constructor: XTemplate
@@ -385,6 +402,15 @@ Creates a new template from the supplied string or array of strings
 */
 Myna.XTemplate = function(){
     Myna.Template.apply(this, arguments);
+		this.text =this.text.replace(/\[([^\]]+)\]/g,function(str,file,foundAt){
+			var f =new Myna.File(file);
+			if (!f.exists) return file +" no exist"//str;
+			var uniqueVar ="__MYNA_CONTENT_" + foundAt +"__";
+			return <ejs><tpl 
+				exec="values.<%=uniqueVar%>= new Myna.XTemplate(new Myna.File('<%=f.toString()%>').readString()).apply(values);"></tpl>{<%=uniqueVar%>}</ejs>
+			
+			
+		})
     var s = this.text;
 
     s = ['<tpl>', s, '</tpl>'].join('');

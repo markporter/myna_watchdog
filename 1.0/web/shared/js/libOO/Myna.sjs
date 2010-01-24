@@ -1058,33 +1058,31 @@ if (!Myna) var Myna={}
         return newContent;
 	}
 /* Function: includeTemplate   
-	Includes a template file (.tpl), 
+	Includes a file as a <Myna.XTemplate>
 
 	Parameters: 
-		path	-	<MynaPath> repesenting location of file 
-		scope 	-	*Optional, default <$server.globalScope>* This is the 
-					object that will be passed as the "this" object to the 
-					script
+		path		-	<MynaPath> repesenting location of file 
+		values 	-	*Optional, default {}* 
+						An object representing the values to qapply to this template
  
 	Returns: 
 		void
 		
 	Detail:
-		This function will only execute referenced file once per request.
-		The includeOnce function executes the the script at _path_ against the supplied _scope_.
-		This behavior is similar to the JavaScript "apply" function. The code in the file will be 
-		treated like the body of a function on _scope_. 
+		This function combines an <Myna.XTemplate> definition stored in a text 
+		file with a set of values and prints the result. 
 		
 		
 		
 	See:
-		* http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Global_Objects:Function:apply
+		* <Myna.XTemplate>
 		* <Myna.include>
 		
 	*/
 	Myna.includeTemplate=function Myna_includeTemplate(path,values){
+		if (!values) values = {};
 		$profiler.begin("Including template " + path);
-		var template = new Myna.Template(new Myna.File(path).readString())
+		var template = new Myna.XTemplate(new Myna.File(path).readString())
 		
 		$res.print(template.apply(values))
 		
@@ -1282,7 +1280,7 @@ if (!Myna) var Myna={}
 	A single threaded synchronous version of Myna.log
 	
 	See <Myna.log> for parameters and detail
-*/	
+ */	
 	Myna.logSync=function Myna_logSync(type,label,detail,app_name){
 		var purpose = "UNKNOWN";
 		var now = new Date();
