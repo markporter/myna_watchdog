@@ -1,0 +1,1 @@
+$application.extUrl =$server.rootUrl +"myna/ext/"

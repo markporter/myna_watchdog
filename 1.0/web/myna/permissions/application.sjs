@@ -4,7 +4,7 @@ $application.noAuthFuses=["login","logout","auth"];
 $application.defaultFuseAction="main";
 $application.mainFuseAction="main";
 //this is moved to the parent folder's application.sjs
-//$application.extUrl =$server.rootUrl+"shared/js/ext_latest/"
+//$application.extUrl =$server.rootUrl+"shared/../myna/ext/"
 $application.appDir =$server.requestDir;
 $application.ds ="myna_permissions"
 
