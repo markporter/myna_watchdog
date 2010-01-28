@@ -38,18 +38,43 @@
 		functionObj		- function object to append
 	
 	Detail:
-		Existing functions are preseved and executed after the supplied function. 
-		If _functionObj_ returns a real boolean false (not undefined or null), 
-		then the resulting chain with return undefined
+		Existing functions are preserved and executed after the supplied function. 
 		
-		The resulting chain will return the result of the original function, 
-		or undefined if _functionObj_ returns false
+		The resulting chain will return:
+		
+		* The _returnValue_ property of 
+		  arguments.callee.chain.returnValue, if defined
+		* Or undefined if _functionObj_ returns false  
+		* Or the result of the original function
+		
+		_functionObj_ will have properties added to it that can be accessed via 
+		arguments.callee.chain from inside the function
+		
+	arguments.callee.chain:
+		returnValue			-	*default undefined*
+								If this is defined after _functionObj_ 
+								completes, then this value will be returned 
+								instead of executing the original function. 
+								
+		originalFunction	-	This is a reference to the original function, 
+								bound to this object. This is useful in 
+								conjunction with _returnValue_ to call the 
+								original function with altered parameters and 
+								return the result
 	
-	Example:
+	Examples:
 	(code)
-		$application.before("onRequestStart",function(){
-			Myna.log("debug","Begining request",Myna.dump($req.data));
-		});
+		// example of setting calculated values during object creation
+		dm = new Myna.DataManager("hr")
+		dm.managerTemplate.before("create",function(obj){
+			var chain = arguments.callee.chain;
+			if (this.table.tableName == "employee"){
+				if (!obj.salary){
+					obj.salary = calcBaseSalary(obj)
+				}
+				chain.returnValue=chain.originalFunction(obj);
+			}
+		})
 	(end)
 	*/
 	Object.prototype.before=function( functionName, functionObj){
@@ -63,18 +88,38 @@
 		functionObj		- function object to append
 	
 	Detail:
-		Existing functions are preseved and executed in the order they were 
+		Existing functions are preserved and executed in the order they were 
 		declared. If the function _functionName_ does not exist, it will be 
 		created.
 		
-		The resulting chain will return the result of the original function
+		The resulting chain will return the result of the original function, 
+		unless overridden in arguments.callee.chain.returnValue
+		
+		_functionObj_ will have properties added to it that can be accessed via 
+		arguments.callee.chain from inside the function.
+		
+	arguments.callee.chain:
+		returnValue			-	*default return value from original function*
+								This is the value that will be returned. This 
+								can be overwritten by _functionObj_ 
+								
+		originalFunction	-	This is a reference to the original function, 
+								bound to this object. 
 	
 	Examples:
-	Example:
 	(code)
-		$application.before("onRequestStart",function(){
-			Myna.log("debug","Finished request",Myna.dump($res.getContent()));
-		});
+		// example of adding extra functions to bean objects
+		dm = new Myna.DataManager("hr")
+		dm.managerTemplate.after("getById",function(id){
+			var chain = arguments.callee.chain;
+			if (this.table.tableName == "employee"){
+				chain.returnValue.getDirectReports = function(){
+					return this.manager.findBeans({
+						manager_id:this.employee_id
+					})
+				}
+			}
+		})
 	(end)
 	
 	*/

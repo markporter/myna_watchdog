@@ -16,33 +16,59 @@ var ObjectLib = {}
 	
 	
 	Detail:
-		Existing functions are preseved and executed after the supplied function. 
-		If _functionObj_ returns a real boolean false (not undefined or null), 
-		then the resulting chain with return undefined
+		Existing functions are preserved and executed after the supplied function. 
 		
-		The resulting chain will return the result of the original function, 
-		or undefined if _functionObj_ returns false
+		The resulting chain will return:
+		
+		* the _returnValue_ property of 
+		  arguments.callee.chain.returnValue, if defined
+		* OR undefined if _functionObj_ returns false  
+		* Or the result of the original function
+		
+		_functionObj_ will have properties added to it that can be accessed via 
+		arguments.callee.chain from inside the function
+		
+	arguments.callee.chain:
+		returnValue			-	*default undefined*
+								If this is defined after _functionObj_ 
+								completes, then this value will be returned 
+								instead of executing the original function. 
+								
+		originalFunction	-	This is a reference to the original function, 
+								bound to this object. This is useful in 
+								conjunction with _returnValue_ to call the 
+								original function with altered parameters and 
+								return the result
 	
 	Examples:
-	>ObjectLib.before(window,"onload",function(){alert("window loaded!")});
-	
+	(code)
+		//client-side
+		ObjectLib.before(window,"onload",function(){alert("window loaded!")});
+		
+	(end)
 	*/
 	ObjectLib.before=function( obj, functionName, functionObj){
 		var oldFunction = obj[functionName] || function(){}
 		var $this = obj
+		
 		var newFunction = functionObj;
+		newFunction.chain={
+			originalFunction:function(){
+				return oldFunction.apply($this,Array.parse(arguments))
+			}
+		}
+		
 		obj[functionName] =function(){
 			var args = Array.parse(arguments);
 			if (newFunction.apply(this,args) === false){
 				return undefined;	
 			}
+			if ("returnValue" in newFunction.chain){
+				return newFunction.chain.returnValue;	
+			}
+		
 			return oldFunction.apply(this,args);
 		}
-		/* if (!(functionName in obj)){
-			obj[functionName] = functionObj;
-		} else {
-			obj[functionName] = obj[functionName].createInterceptor(functionObj,obj);
-		} */
 	}	
 /* Function: after
 	Appends supplied function to the event chain of an object.
@@ -55,32 +81,47 @@ var ObjectLib = {}
 	
 	
 	Detail:
-		Existing functions are preseved and executed in the order they were 
+		Existing functions are preserved and executed in the order they were 
 		declared. If the function _functionName_ does not exist, it will be 
 		created.
 		
-		The resulting chain will return the result of the original function
+		The resulting chain will return the result of the original function, 
+		unless overridden in arguments.callee.chain.returnValue
+		
+		_functionObj_ will have properties added to it that can be accessed via 
+		arguments.callee.chain from inside the function
+		
+	arguments.callee.chain:
+		returnValue			-	*default return value from original function*
+								This is the value that will be returned. This 
+								can be overwritten by _functionObj_ 
+								
+		originalFunction	-	This is a reference to the original function, 
+								bound to this object. 
 	
 	Examples:
-	>ObjectLib.after(window,"onload",function(){alert("window loaded!")});
-	
+	(code)
+		//client-side
+		ObjectLib.after(window,"onload",function(){alert("window loaded!")});
+		
+	(end)
 	*/
 	ObjectLib.after=function( obj, functionName, functionObj){
 		var oldFunction = obj[functionName] || function(){}
 		var $this = obj
 		var newFunction = functionObj;
+		newFunction.chain={
+			originalFunction:function(){
+				return oldFunction.apply($this,Array.parse(arguments))
+			}
+		}
 		obj[functionName] =function(){
 			var args = Array.parse(arguments);
 			
-			var retval = oldFunction.apply(this,args);
+			newFunction.chain.returnValue = oldFunction.apply(this,args);
 			newFunction.apply(this,args);
-			return retval;
+			return newFunction.chain.returnValue;
 		}
-		/* if (!(functionName in obj)){
-			obj[functionName] = functionObj;
-		} else {
-			obj[functionName] = obj[functionName].createSequence(functionObj,obj);
-		} */
 	}	
 /* Function: appendFunction
 	alias for <after>

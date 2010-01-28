@@ -925,7 +925,7 @@ if (!Myna) var Myna={}
 	 
 	Parameters: 
 		path	-	<MynaPath> representing location of file 
-		scope 	-	*Optional, default {}* 
+		scope 	-	*Optional, default <$server.globalScope>* 
 					This is the object that will be passed as the "this" object to 
 					the script. any "global" variables created in the script will be
 					created on _scope_ object instead.
@@ -968,6 +968,61 @@ if (!Myna) var Myna={}
 		} 
 		
 		if (typeof $profiler !== "undefined") $profiler.end("Include " + path);
+		return scope;
+	}
+/* Function: includeDirectory 
+	executes all .sjs files in the supplied directory, in the current thread
+	 
+	Parameters: 
+		path	-	<MynaPath> representing a directory 
+		scope 	-	*Optional, default <$server.globalScope>* 
+					This is the object that will be passed as the "this" object 
+					to the each script in _path_. Any "global" variables created 
+					in the script will be created on _scope_ object instead.
+ 
+	Returns: 
+		_scope_ after execution
+		
+	See:
+		* <Myna.include>
+		* <Myna.includeDirectoryOnce>
+		
+	*/
+	Myna.includeDirectory=function Myna_includeDirectory(path,scope){
+		scope = scope||$server_gateway.threadScope;
+		var dir = new Myna.File(path);
+		if (!dir.isDirectory()) throw new Error("'" + dir + "' is not a directory");
+		dir.listFiles("sjs").forEach(function(file){
+			Myna.include(file,scope);
+		})
+		return scope;
+	}
+/* Function: includeDirectoryOnce
+	executes all .sjs files in the supplied directory, in the current thread, if 
+	they have not been executed before in this request
+	 
+	Parameters: 
+		path	-	<MynaPath> representing a directory 
+		scope 	-	*Optional, default <$server.globalScope>* 
+					This is the object that will be passed as the "this" object 
+					to the each script in _path_. Any "global" variables created 
+					in the script will be created on _scope_ object instead.
+ 
+	Returns: 
+		_scope_ after execution
+		
+	See:
+		* <Myna.include>
+		* <Myna.includeDirectory>
+		
+	*/
+	Myna.includeDirectoryOnce=function Myna_includeDirectory(path,scope){
+		scope = scope||$server_gateway.threadScope;
+		var dir = new Myna.File(path);
+		if (!dir.isDirectory()) throw new Error("'" + dir + "' is not a directory");
+		dir.listFiles("sjs").forEach(function(file){
+			Myna.includeOnce(file,scope);
+		})
 		return scope;
 	}
 /* Function: includeText 
