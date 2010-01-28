@@ -80,6 +80,7 @@
 	Object.prototype.before=function( functionName, functionObj){
 		ObjectLib.before(this,functionName, functionObj);
 	}
+	
 /* Function: after
 	Appends supplied function to the event chain of this object.
 	

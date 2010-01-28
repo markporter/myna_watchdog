@@ -123,6 +123,7 @@ var ObjectLib = {}
 			return newFunction.chain.returnValue;
 		}
 	}	
+	
 /* Function: appendFunction
 	alias for <after>
 	*/
