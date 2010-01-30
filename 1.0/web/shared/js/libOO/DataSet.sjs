@@ -10,18 +10,18 @@ if (!Myna) var Myna={}
 	
 	Parameters:
 		options		-	Either an array to be converted to a DataSet, or and 
-							object containg detailed options. If an array, the array 
-							must contain at least one rcord, and the record should 
+							object containing detailed options. If an array, the array 
+							must contain at least one record, and the record should 
 							have all the non-function properties expected in the 
 							DataSet so that <DataSet.columns> can be inferred. If this 
-							is an object it should conform to the Optinos Object 
+							is an object it should conform to the Options Object 
 							defined below.
 		
 	Options Object:
 		data		-	*Optional default []*
 						This is an array of initial data. May be empty.
 		columns	-	*Optional default []*
-						Either a comma seperated list, an array of column names, or 
+						Either a comma separated list, an array of column names, or 
 						an object whose non-function properties represent the column 
 						names. These define the known properties of the objects in a 
 						DataSet array. If _columns_ is not provided, but _data_ 

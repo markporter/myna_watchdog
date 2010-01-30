@@ -89,6 +89,7 @@ if (!Myna) var Myna={}
 			<Myna.Database> object that represents the database this table resides in 
 		*/
 		this.db = new Myna.Database(dataSource);
+		this.qt = this.db.columnQuoteChar;
 		this.managerTemplate = ({}).setDefaultProperties( 
 			Myna.DataManager.managerTemplate
 		)
@@ -125,6 +126,7 @@ if (!Myna) var Myna={}
 	
 		manager.ds = this.ds;
 		manager.db = this.db;
+		manager.qt = this.qt;
 		manager.dm = this
 		manager.beanTemplate =({}).setDefaultProperties( 
 			this.beanTemplate
@@ -334,7 +336,7 @@ Myna.DataManager.managerTemplate ={
 				dataSource:this.ds,
 				sql:<ejs>
 					delete from <%=this.sqlTableName%>
-					where <%=this.columns[this.primaryKey].column_name%> = 
+					where <%=manager.qt%><%=this.columns[this.primaryKey].column_name%><%=manager.qt%> = 
 						<%=p.addValue(id,this.columns[this.primaryKey].data_type)%>
 				</ejs>,
 				parameters:p
@@ -416,7 +418,7 @@ Myna.DataManager.managerTemplate ={
 			}); 
 			//Myna.printDump(columnArray)
 			var fieldArray = columnArray.map(function(colName){
-				return  '"' + manager.columns[colName].column_name + '"';
+				return  manager.qt + manager.columns[colName].column_name + manager.qt;
 			});
 			
 			var p = new Myna.QueryParams();
@@ -623,9 +625,10 @@ Myna.DataManager.managerTemplate ={
 			
 	*/
 		genKey:function(){
+			var manager=this;
 			var maxId =new Myna.Query({
 				dataSource:this.ds,
-				sql:'select max(' + this.columns[this.primaryKey].column_name+ ') as id from ' + this.sqlTableName 
+				sql:'select max('+manager.qt+  this.columns[this.primaryKey].column_name+ manager.qt+') as id from ' + this.sqlTableName 
 			}).data[0].id;
 			if (!maxId) {
 			 	return 1;
@@ -660,16 +663,16 @@ Myna.DataManager.managerTemplate ={
 				sql:<ejs>
 					select
 						<@loop array="manager.columnNames" element="name" index="i">
-							"<%=manager.columns[name].column_name%>" <@if i < manager.columnNames.length - 1 >,</@if>
+							<%=manager.qt%><%=manager.columns[name].column_name%><%=manager.qt%> <@if i < manager.columnNames.length - 1 >,</@if>
 						</@loop>
 						
-					from <%=this.sqlTableName%>
-					where <%=this.columns[this.primaryKey].column_name%> = 
+					from <%=manager.qt%><%=this.sqlTableName%><%=manager.qt%>
+					where <%=manager.qt%><%=this.columns[this.primaryKey].column_name%><%=manager.qt%> = 
 						<%=p.addValue(id,this.columns[this.primaryKey].data_type)%>
 				</ejs>,
 				parameters:p
 			});
-			
+			Myna.log("debug","qry",Myna.dump(qry));
 			if (!qry.data.length) {
 				throw new Error("Unable to find '" + this.sqlTableName + "' by id '" + id +"'.");
 			}
@@ -842,11 +845,11 @@ Myna.DataManager.beanTemplate ={
 				dataSource:this.manager.ds,
 				parameters:p,
 				sql:<ejs>
-					UPDATE <%=this.sqlTableName%>
+					UPDATE <%=bean.manager.qt%><%=this.sqlTableName%><%=bean.manager.qt%>
 					SET
-						"<%=columnName%>" = <%=p.addValue(value,type,isNull)%>
+						<%=bean.manager.qt%><%=columnName%><%=bean.manager.qt%> = <%=p.addValue(value,type,isNull)%>
 					WHERE
-						"<%=this.columns[this.primaryKey].column_name%>" = <%=p.addValue(bean.id,this.columns[this.primaryKey].data_type)%>
+						<%=bean.manager.qt%><%=this.columns[this.primaryKey].column_name%><%=bean.manager.qt%> = <%=p.addValue(bean.id,this.columns[this.primaryKey].data_type)%>
 				</ejs>
 			});
 		} catch (e){

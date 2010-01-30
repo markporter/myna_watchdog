@@ -333,6 +333,14 @@ Myna.Query = function (optionsOrResultSet){
 	
 	*/
 	
+	/* Property: db
+		the <Myna.Database> object associated wioth this query
+		
+		Detail:
+			this property is only set when this query was initialized with a 
+			datasource
+	*/
+	this.db ={}
 	var qry = this;
 	if (optionsOrResultSet instanceof java.sql.ResultSet){
 		this.parseResultSet(optionsOrResultSet);
@@ -344,7 +352,7 @@ Myna.Query = function (optionsOrResultSet){
 			qry.rowHandler = optionsOrResultSet.rowHandler;
 		}
 		optionsOrResultSet.applyTo(qry,true);
-	
+		if (qry.ds) qry.db = new Myna.Database(qry.ds);
 		
 		if (!optionsOrResultSet.deferExec){
 			return this.execute();
@@ -404,7 +412,10 @@ Myna.Query.prototype={
 	getRowByColumn:function(columnName,value,start){
 		if (start == undefined) start = 0;
 		for (var x=start;x <this.data.length;++x){
-			if (this.data[x][columnName.toLowerCase()] == value){
+			if (!this.db || !this.db.isCaseSensitive){
+				columnName = columnName.toLowerCase();
+			}	
+			if (this.data[x][columnName] == value){
 				return this.data[x]; 	
 			}
 		}
@@ -447,7 +458,12 @@ Myna.Query.prototype={
 			});		
 		};
 		this.data.columns = this.columns.map(function(e){
-			return e.name.toLowerCase();
+			if (qry.db && qry.db.isCaseSensitive){
+				return e.name;
+			} else {
+				return e.name.toLowerCase();
+			}
+			
 		});
 		
 		$application.addOpenObject(jdbcResultSet);
@@ -480,7 +496,6 @@ Myna.Query.prototype={
 			columnName		-	String Column name to return
 	*/
 	valueArray:function(columnName){
-		var name=columnName.toLowerCase(); 
 		return this.data.valueArray(columnName)	
 	},
 	
@@ -531,7 +546,7 @@ Myna.Query.prototype={
 		var st;
 		var qry = this;
 		var dsName = this.dataSource;
-		var db = new Myna.Database(dsName);
+		var db =this.db = new Myna.Database(dsName);
 		var con = db.con;
 		var ResultSet = java.sql.ResultSet;
 		
@@ -874,7 +889,12 @@ Myna.Query.prototype.__defineGetter__("result", function() {
 			var result={}
 			var row = this;
 			this.columns.forEach(function(col,index){
-				result[col.name.toLowerCase()] = row.getValue(index) 
+				var name = col.name;
+				
+				if (!row.query.db || !row.query.db.isCaseSensitive){
+					name = name.toLowerCase();
+				} 
+				result[name] = row.getValue(index) 
 			})
 			return result;
 			

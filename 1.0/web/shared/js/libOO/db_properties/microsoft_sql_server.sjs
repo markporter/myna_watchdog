@@ -84,6 +84,7 @@ var types={
 	VARBINARY:"VARBINARY({maxLength})",
 	VARCHAR:"VARCHAR({maxLength})"
 }
+var columnQuoteChar='"';
 var dsInfo={
 	driver:"net.sourceforge.jtds.jdbc.Driver",
 	url:"jdbc:jtds:sqlserver://{server}:{port}/{db}"

@@ -97,7 +97,8 @@ if (!Myna) var Myna={}
 
 /* Property: columns 
 	Structure representing the defined columns in this table, keyed by
-	the lowercase column name. Each entry contains:
+	the column name. If the "Case Sensitive" property of the Datasource is false,
+	these keys will be lowercase. Each entry contains:
 	
 	table_cat			-	string table catalog/db name (may be null)
 	table_schem			-	string table schema/username (may be null)
@@ -143,6 +144,7 @@ if (!Myna) var Myna={}
 	*/
 	Myna.Table.prototype.__defineGetter__("columns", function() {
 		var table = this;
+		var $this = this;
 		if (this.exists){
 			return this._getCache("columns",function(t){
 				var rsColumns =t.md.getColumns(
@@ -163,8 +165,8 @@ if (!Myna) var Myna={}
 							){
 							row.column_size = row.character_maximum_length;
 						}
-					
-					result[row.column_name.toLowerCase()] = row;
+					var name = $this.db.isCaseSensitive?row.column_name:row.column_name.toLowerCase()
+					result[name] = row;
 				})
 				return result;
 			});
@@ -174,7 +176,9 @@ if (!Myna) var Myna={}
 	})
 
 /* Property: columnNames 
-	An array of lowercase column names, in the order they appear in the table 
+	An array of column names, in the order they appear in the table. If the 
+	"Case Sensitive" property of the Datasource is false, these names will be 
+	lowercase.
 	*/
 	Myna.Table.prototype.__defineGetter__("columnNames", function() {
 		if (this.exists){
@@ -215,9 +219,11 @@ if (!Myna) var Myna={}
 	})
 
 /* Property: primaryKeys 
-	An array of lowercase  column names that make up the primary key 
+	An array of column names that make up the primary key. If this datasource is
+	not case-sensitive, the nthe keys will be in lowercase.
 	*/
 	Myna.Table.prototype.__defineGetter__("primaryKeys", function() {
+		var $this = this;
 		if (this.exists){
 			return this._getCache("primaryKeys",function(t){
 				//some "table" types aren't really tables (views,synonyms,etc)
@@ -228,7 +234,8 @@ if (!Myna) var Myna={}
 						t.tableName
 					);
 					var result =new Myna.Query(rsTemp).data.valueArray("column_name").map(function(element){
-						return String(element.toLowerCase())
+					var name = String(element) 
+					return $this.db.isCaseSensitive?name:name.toLowerCase();
 					});
 					rsTemp.close();
 					return result;
@@ -425,10 +432,11 @@ if (!Myna) var Myna={}
 	Each entry contains:
 	
 	name 			-	index name
-	unique			-	boolean, true if this is a unique index
-	columns			-	an array of the lowercase column names that make of the index
+	unique		-	boolean, true if this is a unique index
+	columns		-	an array of the column names that make of the index. 
 	*/
 	Myna.Table.prototype.__defineGetter__("indexInfo", function() {
+		var $this = this;
 		if (this.exists){
 			return this._getCache("indexInfo",function(t){
 				//some "table" types aren't really tables (views,synonyms,etc)
@@ -455,7 +463,8 @@ if (!Myna) var Myna={}
 							}
 							indexInfo.push(curIndex)
 						}
-						curIndex.columns[row.ordinal_position-1] = row.column_name.toLowerCase();
+						var name = $this.db.isCaseSensitive?row.column_name:row.column_name.toLowerCase()
+						curIndex.columns[row.ordinal_position-1] = name;
 					}); 
 					rsTemp.close();
 					return indexInfo;
@@ -526,7 +535,7 @@ if (!Myna) var Myna={}
 		options = new Object().setDefaultProperties(options);
 		var table = this;
 		options.checkRequired(["name"]);
-		options.name = options.name.toUpperCase();
+		options.name = this.db.isCaseSensitive?options.name:options.name.toUpperCase()
 		options.setDefaultProperties({
 			defaultValue:"",
 			decimalDigits:"",
@@ -537,8 +546,8 @@ if (!Myna) var Myna={}
 			if (!table.exists){
 				throw new Error("Table.addColumn(): Table '" + table.tableName+ "' does not exist.");
 			}
-			
-			if (table.columnNames.indexOf(options.name.toLowerCase()) != -1){
+			var name = this.db.isCaseSensitive?options.name:options.name.toLowerCase()
+			if (table.columnNames.indexOf(name) != -1){
 				throw new Error("Table.addColumn(): Column '" + options.name+ "' already exists.");
 			}
 			
@@ -704,13 +713,15 @@ if (!Myna) var Myna={}
 	*/
 	Myna.Table.prototype.modifyColumn = function(name,options){
 		var table = this;
-		name= name.toLowerCase();
+		
+		name= this.db.isCaseSensitive?name:name.toLowerCase();
+		options.name =this.db.isCaseSensitive?options.name:options.name.toLowerCase()
 		var 
 			originalCol = this.columns[name],
 			currentCol = new Object().setDefaultProperties(options),
 			tempName,
 			isSame=true,
-			isRename = options.name&& options.name.toLowerCase() != name
+			isRename = options.name&& options.name != name
 		;
 		//check if existing column matches new column
 		if (isRename) {
@@ -787,7 +798,7 @@ if (!Myna) var Myna={}
 		//gather and drop refs
 			originalCol.foreignKeys= this.foreignKeys
 				.filter(function(row){
-					return row.fkcolumn_name.toLowerCase() == name
+					return row.fkcolumn_name.toLowerCase() == name.toLowerCase()
 				})
 				.map(function(row){
 					table.dropConstraint(row.fk_name);
@@ -805,7 +816,7 @@ if (!Myna) var Myna={}
 			
 			originalCol.exportedKeys= this.exportedKeys
 				.filter(function(row){
-					return row.pkcolumn_name.toLowerCase() == name
+					return row.pkcolumn_name.toLowerCase() == name.toLowerCase()
 				})
 				.map(function(row,index,array){
 					var ftable =table.db.getTable(row.fktable_name)
@@ -833,7 +844,7 @@ if (!Myna) var Myna={}
 				"onDelete"
 			]
 			table.primaryKeyInfo.forEach(function(row,index){
-				if (row.column_name.toLowerCase() == name && index==0){
+				if (row.column_name.toLowerCase() == name.toLowerCase() && index==0){
 					originalCol.primaryKey=true;
 					table.dropConstraint(row.pk_name)
 				}
@@ -1131,7 +1142,7 @@ if (!Myna) var Myna={}
 				tableName:table.tableName,
 				columns:options.columns.map(function(col){
 					col.checkRequired(["name","type"]);
-					col.name=col.name.toUpperCase();
+					//col.name=col.name.toUpperCase();
 					col.setDefaultProperties({
 						defaultValue:"",
 						decimalDigits:"",

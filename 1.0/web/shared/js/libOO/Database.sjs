@@ -61,8 +61,12 @@ Myna.Database.prototype.init = function(){
 		Datasource associated with this Database object
 	*/
 	
-	
-	
+	/* Property: isCaseSensitive
+		true if table and column names are case sensitive
+	*/
+	this.isCaseSensitive = !! Myna.JavaUtils.mapToObject(
+		Myna.JavaUtils.mapToObject($server_gateway.dataSources)[this.ds]
+	).case_sensitive;
 	
 	/* Property: md
 		database matadata object. Created in <init>, closed on requestEnd. 

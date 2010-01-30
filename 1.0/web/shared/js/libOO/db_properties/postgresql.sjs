@@ -84,6 +84,7 @@ var dsInfo={
 	driver:"org.postgresql.Driver",
 	url:"jdbc:postgresql://{server}:{port}/{db}"
 }
+var columnQuoteChar='"';
 var connectionTestSql="select 1";
 var functions={
 	getDefaultSchema:function(db){

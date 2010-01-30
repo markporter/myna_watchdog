@@ -87,6 +87,7 @@ var types={
 	VARBINARY:"BINARY({maxLength})",
 	VARCHAR:"VARCHAR({maxLength})"
 }
+var columnQuoteChar='"';
 var dsInfo={
 	driver:"org.h2.Driver",
 	url:"jdbc:h2:tcp://{server}:{port}/{db}",

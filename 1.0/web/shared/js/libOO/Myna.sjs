@@ -453,7 +453,7 @@ if (!Myna) var Myna={}
 											for (col=0; col < obj.columns.length; ++col) {
 												result+=
 												'<td class="">'+
-													obj.data[row][obj.columns[col].name.toLowerCase()] + 
+													obj.data[row][obj.columns[col].name] + 
 												'</td>';
 											}
 										result+=
@@ -1317,8 +1317,20 @@ if (!Myna) var Myna={}
 					})
 				} catch(e){
 					if (!/isAlive/.test(e.message)){
+						
 						java.lang.System.err.println("Error writing log: " + e.message);
 						java.lang.System.err.println("log Label: " +label);
+						java.lang.System.err.println("log Detail: " +detail);
+						$server_gateway.writeLog(
+							type,
+							String(label).left(255),
+							detail,
+							app_name,
+							String(java.lang.Thread.currentThread().getName().hashCode()),
+							req_elapsed,
+							log_elapsed,
+							now
+						);
 					}
 				}
 			}

@@ -81,6 +81,9 @@ var fusebox={
 	get_ds:function(data){
 		data.checkRequired(["name"]);
 		var ds =MynaAdmin.getDataSource(data.name);
+		ds.setDefaultProperties({
+			case_sensitive:0
+		}) 
 		if (!ds.file || !ds.file.length){
 			//ds.file=new Myna.File("/WEB-INF/myna/local_databases").toString().listAfter(":");
 			ds.file="/WEB-INF/myna/local_databases/"
@@ -142,6 +145,7 @@ var fusebox={
 			"location",
 			"file",
 			"server",
+			"case_sensitive",
 			"port",
 			"db",
 			"username",

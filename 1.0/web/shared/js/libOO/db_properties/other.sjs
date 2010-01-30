@@ -81,6 +81,7 @@ var dsInfo={
 	driver:"",
 	url:""
 }
+var columnQuoteChar='"';
 var connectionTestSql="select 1";
 var functions={
 	getDefaultSchema:function(db){

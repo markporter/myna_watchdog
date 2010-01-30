@@ -1267,6 +1267,25 @@ var C ={
 									}
 								}
 							},{
+								xtype:"combo",
+								fieldLabel: 'Use case-sensitive names?',
+								hiddenName: 'case_sensitive',
+								store: new Ext.data.SimpleStore({
+									fields: ['key','label'],
+									data: [
+										[0,"No"],
+										[1,"Yes"],
+									]
+								}),
+								displayField:'label',
+								valueField:'key',
+								typeAhead: true,
+								mode: 'local',
+								triggerAction: 'all',
+								selectOnFocus:true,
+								editable:false,
+								allowBlank:false
+							},{
 								fieldLabel: 'Driver',
 								name: 'driver',
 								allowBlank:true

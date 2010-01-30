@@ -85,6 +85,7 @@ var types={
 	VARBINARY:"VARBINARY({maxLength})",
 	VARCHAR:"VARCHAR({maxLength})"
 }
+var columnQuoteChar="`";
 var dsInfo={
 	driver:"com.mysql.jdbc.Driver",
 	url:"jdbc:mysql://{server}:{port}/{db}"

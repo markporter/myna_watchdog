@@ -9,7 +9,7 @@
 				// "myna_test_mssql",    
 				"myna_test_h2", 
 				"myna_test_mysql",
-				"myna_test_pgsql",
+				//"myna_test_pgsql",
 				// "myna_test_oracle", 
 				
 				
@@ -103,7 +103,7 @@
 					
 					
 					test.assertTrue(ds + ": 'test_all_col' table should exist after create",all_col.exists);
-					test.assertTrue(ds + ": 'test_all_col' primary key should be 'id'",all_col.primaryKeys[0] == "id");
+					test.assertTrue(ds + ": 'test_all_col' primary key should be 'id'",all_col.primaryKeys[0].toLowerCase() == "id");
 					test.assertTrue(ds + ": 'test_all_col' table Should have 10 columns",all_col.columnNames.length ==10);
 					
 					all_col.columns.forEach(function(col,index){
