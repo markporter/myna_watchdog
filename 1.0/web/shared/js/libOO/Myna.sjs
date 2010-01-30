@@ -677,159 +677,128 @@ if (!Myna) var Myna={}
  
 	*/
 	Myna.formatError=function Myna_formatError(e){
-		/* if (e instanceof Packages.org.mozilla.javascript.RhinoException){ */
-		if (e.sourceName){
-			e = {rhinoException:e}	
-		}
-		
-		
-		if (e.rhinoException){
-			e.lineNumber = e.rhinoException.lineNumber();
-			e.fileName = e.rhinoException.sourceName();
-			e.message = e.rhinoException.details();
-		}
-		
-		e.rootIndex=0;
-		if (e.rhinoException && !$server.isThread){
-			var stack =Myna.parseJsStack(e);
-			for (var x=0;x < stack.length;++x){
-				/* $server_gateway.currentDir + $server_gateway.scriptName */
-				if (String(stack[x]).indexOf("/shared/js/") ==-1 ){
-					var parts = stack[x].match(/at (.*?):(\d+)/);
-					e.fileName = parts[1];
-					e.lineNumber = parts[2]; 
-					e.rootIndex=x+1;
-					break;
-				} 
-			}	
-		} 
-		
-		
-		var errorTpl = new Myna.XTemplate(
-			'<div class="myna_error_div">',
-				'<h1>An Error has Occurred:</h1>',
-				'{content}',
-			'</div>',
-			'<style>',
-				'h1{',
-					'font-size:14pt;',
-				'}',
-				'.myna_error_div{',
-					'background-color:silver;',
-					'border:2px solid brown;',
-					'padding:10px;',
-					'margin:10px;',
-					'width:"99%";',
-				'}',
-				'.myna_error_div .error_line{',
-					'background-color:pink;	',
-					'border:1px solid red;	',
-				'}',
-				'.myna_error_div, .myna_error_div td,.myna_error_div th{',
-					'font-family:sans-serif;',
-					'font-size:10pt',
-				'}',
-				'.myna_error_div th{',
-					'text-align:right;	',
-					'width:80;',
-					'vertical-align:top;',
-					'color:white;',
-					'background-color:darkblue;',
-				'}',
-				'.myna_error_div td{',
-					'background-color:white;',
-					'border:1px solid darkblue;',
-				'}',
-				'.myna_root_line{',
-					'font-weight:bold;',
-				'}',
-			'</style>'
+		try{
+			/* if (e instanceof Packages.org.mozilla.javascript.RhinoException){ */
+			if (e.sourceName){
+				e = {rhinoException:e}	
+			}
 			
 			
-		)
-		var standardTpl = new Myna.XTemplate(
-			'\n\n\n\n<!-- ',
-				'\n\tERROR: {message}',
-				'\n\tFILE: {fileName}',
-				'\n\tLINE:{lineNumber}',
-			'\n-->\n\n\n\n',
-			'<table width="100%" height="1" cellpadding="5" cellspacing="0" border="0" >',
-				'<tr><th >Message:</th><td>{message}</td></tr>',
-				'<tr><th >File:</th><td>{fileName}</td></tr>',
-				'<tr><th >Line:</th><td>{lineNumber}</td></tr>',
-				'<tr><th >Stacktrace:</th><td>',
-					'<tpl for="jsStack">',
-					'<div class="{[ xindex == parent.rootIndex? "myna_root_line":"" ]}" style="padding-left:{#}0">{.}</div>',
-					'</tpl>',
-				'</td></tr>',
-				'<tr><th >Query:</th><td>{query}</td></tr>',
-				'<tr><th >File Context:</th><td>',
-					'<pre>',
-					'<tpl for="lines">',
-						'<div class="{[ parent.lineNumber == values.lineNumber? "error_line":"" ]}">{lineNumber}: {lineText}</div>',
-					'</tpl>',
-					'</pre>',
-				'</td></tr>',
-				'<tr><th >Memory Context:</th><td>',
-					'<pre>',
-					'<tpl for="scriptLines">',
-						'<div class="{[ parent.lineNumber == values.originalIndex? "error_line":"" ]}">{lineNumber}: {lineText}</div>',
-					'</tpl>',
-					'</pre>',
-				'</td></tr>',
-				'<tr><th >Java Stacktrace:</th><td>',
-					'<tpl for="javaStack">',
-						'<div >{.}</div>',
-					'</tpl>',
-				
-				'<tr><th >$server:</th><td>',
-					'<b>Server URL</b>: {serverUrl}<br>',
-					'<b>Hostname</b>: {hostname}<br>',
-					'<b>Instance ID</b>: {instance_id}<br>',
-					'<b>Purpose</b>: {purpose}<br>',
-					'<b>Request Path</b>: {requestPath}<br>',
-					'<b>Client IP</b>: {remoteAddr}<br>',
-				'</td></tr>',
-				'<tr><th >$req:</th><td>{req}</td></tr>',
-			'</table>'
-		)
-		
-		
-		
-		if (e.fileName !== undefined && e.lineNumber !== undefined && e.message !== undefined){
-			e.fileName = String(e.fileName).split(/#/)[0];
-			var lines ;
-			try{
-				lines =new Myna.File(e.fileName).readLines().map(function(element,index){
-					return {
-						lineNumber:index+1,
-						lineText:element.escapeHtml()+"\n"
-					}
-				})
-				.filter(function(element,index){
-					return e.lineNumber -10 < element.lineNumber && element.lineNumber < e.lineNumber +10; 
-				})
-				
-			}catch(e){lines="unavailable"}
+			if (e.rhinoException){
+				e.lineNumber = e.rhinoException.lineNumber();
+				e.fileName = e.rhinoException.sourceName();
+				e.message = e.rhinoException.details();
+			}
+			
+			e.rootIndex=0;
+			if (e.rhinoException && !$server.isThread){
+				var stack =Myna.parseJsStack(e);
+				for (var x=0;x < stack.length;++x){
+					/* $server_gateway.currentDir + $server_gateway.scriptName */
+					if (String(stack[x]).indexOf("/shared/js/") ==-1 ){
+						var parts = stack[x].match(/at (.*?):(\d+)/);
+						e.fileName = parts[1];
+						e.lineNumber = parts[2]; 
+						e.rootIndex=x+1;
+						break;
+					} 
+				}	
+			} 
+			
+			var errorTpl = new Myna.XTemplate(
+				'<div class="myna_error_div">',
+					'<h1>An Error has Occurred:</h1>',
+					'{content}',
+				'</div>',
+				'<style>',
+					'h1{',
+						'font-size:14pt;',
+					'}',
+					'.myna_error_div{',
+						'background-color:silver;',
+						'border:2px solid brown;',
+						'padding:10px;',
+						'margin:10px;',
+						'width:"99%";',
+					'}',
+					'.myna_error_div .error_line{',
+						'background-color:pink;	',
+						'border:1px solid red;	',
+					'}',
+					'.myna_error_div, .myna_error_div td,.myna_error_div th{',
+						'font-family:sans-serif;',
+						'font-size:10pt',
+					'}',
+					'.myna_error_div th{',
+						'text-align:right;	',
+						'width:80;',
+						'vertical-align:top;',
+						'color:white;',
+						'background-color:darkblue;',
+					'}',
+					'.myna_error_div td{',
+						'background-color:white;',
+						'border:1px solid darkblue;',
+					'}',
+					'.myna_root_line{',
+						'font-weight:bold;',
+					'}',
+				'</style>'
 				
 				
-			var data ={
-				message:e.message,
-				fileName:e.fileName,
-				lineNumber:e.lineNumber,
-				jsStack:["unavailable"],
-				javaStack:["unavailable"],
-				rootIndex:e.rootIndex,
-				req: Myna.dump($req.data,"Request Data",10),
-				lines:lines,
-				serverUrl:$server.serverUrl,
-				instance_id:$server.instance_id,
-				requestPath:$server.requestUrl+$server.requestScriptName,
-				hostname:$server.hostName,
-				remoteAddr:$server.remoteAddr,
-				purpose:$server.purpose,
-				scriptLines:String($server_gateway.currentScript).split(/\n/)
-					.map(function(element,index){
+			)
+			var standardTpl = new Myna.XTemplate(
+				'\n\n\n\n<!-- ',
+					'\n\tERROR: {message}',
+					'\n\tFILE: {fileName}',
+					'\n\tLINE:{lineNumber}',
+				'\n-->\n\n\n\n',
+				'<table width="100%" height="1" cellpadding="5" cellspacing="0" border="0" >',
+					'<tr><th >Message:</th><td>{message}</td></tr>',
+					'<tr><th >File:</th><td>{fileName}</td></tr>',
+					'<tr><th >Line:</th><td>{lineNumber}</td></tr>',
+					'<tr><th >Stacktrace:</th><td>',
+						'<tpl for="jsStack">',
+						'<div class="{[ xindex == parent.rootIndex? "myna_root_line":"" ]}" style="padding-left:{#}0">{.}</div>',
+						'</tpl>',
+					'</td></tr>',
+					'<tr><th >Query:</th><td>{query}</td></tr>',
+					'<tr><th >File Context:</th><td>',
+						'<pre>',
+						'<tpl for="lines">',
+							'<div class="{[ parent.lineNumber == values.lineNumber? "error_line":"" ]}">{lineNumber}: {lineText}</div>',
+						'</tpl>',
+						'</pre>',
+					'</td></tr>',
+					'<tr><th >Memory Context:</th><td>',
+						'<pre>',
+						'<tpl for="scriptLines">',
+							'<div class="{[ parent.lineNumber == values.originalIndex? "error_line":"" ]}">{lineNumber}: {lineText}</div>',
+						'</tpl>',
+						'</pre>',
+					'</td></tr>',
+					'<tr><th >Java Stacktrace:</th><td>',
+						'<tpl for="javaStack">',
+							'<div >{.}</div>',
+						'</tpl>',
+					
+					'<tr><th >$server:</th><td>',
+						'<b>Server URL</b>: {serverUrl}<br>',
+						'<b>Hostname</b>: {hostname}<br>',
+						'<b>Instance ID</b>: {instance_id}<br>',
+						'<b>Purpose</b>: {purpose}<br>',
+						'<b>Request Path</b>: {requestPath}<br>',
+						'<b>Client IP</b>: {remoteAddr}<br>',
+					'</td></tr>',
+					'<tr><th >$req:</th><td>{req}</td></tr>',
+				'</table>'
+			)
+			
+			if (e.fileName !== undefined && e.lineNumber !== undefined && e.message !== undefined){
+				e.fileName = String(e.fileName).split(/#/)[0];
+				var lines ;
+				try{
+					lines =new Myna.File(e.fileName).readLines().map(function(element,index){
 						return {
 							lineNumber:index+1,
 							lineText:element.escapeHtml()+"\n"
@@ -838,18 +807,57 @@ if (!Myna) var Myna={}
 					.filter(function(element,index){
 						return e.lineNumber -10 < element.lineNumber && element.lineNumber < e.lineNumber +10; 
 					})
+					
+				}catch(e){lines="unavailable"}
+					
+					
+				var data ={
+					message:e.message,
+					fileName:e.fileName,
+					lineNumber:e.lineNumber,
+					jsStack:["unavailable"],
+					javaStack:["unavailable"],
+					rootIndex:e.rootIndex,
+					req: Myna.dump($req.data,"Request Data",10),
+					lines:lines,
+					serverUrl:$server.serverUrl,
+					instance_id:$server.instance_id,
+					requestPath:$server.requestUrl+$server.requestScriptName,
+					hostname:$server.hostName,
+					remoteAddr:$server.remoteAddr,
+					purpose:$server.purpose,
+					scriptLines:String($server_gateway.currentScript).split(/\n/)
+						.map(function(element,index){
+							return {
+								lineNumber:index+1,
+								lineText:element.escapeHtml()+"\n"
+							}
+						})
+						.filter(function(element,index){
+							return e.lineNumber -10 < element.lineNumber && element.lineNumber < e.lineNumber +10; 
+						})
+				}
+					data.jsStack=e.rhinoException?Myna.parseJsStack(e):Myna.dump(e);
+					data.javaStack=e.rhinoException?Myna.parseJavaStack(e):"unavailable";	
+				if (e.query){
+					data.query = Myna.dump(e.query)	
+				}	
+				return errorTpl.apply({
+					content:standardTpl.apply(data)
+				})
+			} else {
+				return errorTpl.apply({content:Myna.dump(e)})
 			}
-				data.jsStack=e.rhinoException?Myna.parseJsStack(e):Myna.dump(e);
-				data.javaStack=e.rhinoException?Myna.parseJavaStack(e):"unavailable";	
-			if (e.query){
-				data.query = Myna.dump(e.query)	
-			}	
-			return errorTpl.apply({
-				content:standardTpl.apply(data)
-			})
-		} else {
-			return errorTpl.apply({content:Myna.dump(e)})
+		} catch (ne){
+			var result =String(e) +Myna.dump(Myna.JavaUtils.beanToObject(e)); 
+			Myna.log("Error",
+					"Error formating error",
+					"Original error:<br>" + result +"<br>Formatting error:<br>" 
+					+String(ne)+Myna.dump(Myna.JavaUtils.beanToObject(ne) + Myna.formatError(ne))
+			)
+			return result	;
 		}
+		
 	}
 
 /* Function: freeMemory 

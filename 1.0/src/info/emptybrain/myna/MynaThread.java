@@ -775,7 +775,12 @@ public class MynaThread {
 				errorText.append("</pre>");
 				
 				this.log("ERROR",originalException.getClass().getName() + ": "+ originalException.getMessage(),errorText.toString());
-				//this.generatedContent.append(errorText.toString());
+				if (generalProperties.getProperty("instance_purpose").toLowerCase().equals("dev")){
+					this.generatedContent.append(errorText.toString());
+				} else {
+					this.generatedContent.append("An error has occurred. See administrator log for details.");
+				}
+				
 			}
 		} catch (Exception newException){
 			System.err.println(newException);

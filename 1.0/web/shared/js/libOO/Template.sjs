@@ -403,13 +403,16 @@ Creates a new template from the supplied string or array of strings
 Myna.XTemplate = function(){
     Myna.Template.apply(this, arguments);
 		this.text =this.text.replace(/\[([^\]]+)\]/g,function(str,file,foundAt){
-			var f =new Myna.File(file);
-			if (!f.exists) return file +" no exist"//str;
-			var uniqueVar ="__MYNA_CONTENT_" + foundAt +"__";
-			return <ejs><tpl 
-				exec="values.<%=uniqueVar%>= new Myna.XTemplate(new Myna.File('<%=f.toString()%>').readString()).apply(values);"></tpl>{<%=uniqueVar%>}</ejs>
-			
-			
+			try{
+				var f =new Myna.File(file);
+				if (!f.exists) return str;
+				var uniqueVar ="__MYNA_CONTENT_" + foundAt +"__";
+				return <ejs><tpl 
+					exec="values.<%=uniqueVar%>= new Myna.XTemplate(new Myna.File('<%=f.toString()%>').readString()).apply(values);"></tpl>{<%=uniqueVar%>}</ejs>
+				
+			} catch(e){
+				return str;
+			}
 		})
     var s = this.text;
 

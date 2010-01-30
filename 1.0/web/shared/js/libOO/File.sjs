@@ -336,33 +336,87 @@ if (!Myna) var Myna={}
 	Returns a <Myna.DataSet> of <File> objects contained in this directory.
 	 
 	Parameters:
-		extensions	-	*Optional, default: null* A comma separated list of file 
-                     extensions to list, ex: "css,js". If null all files are 
-                     returned
-      recursive   	-  *Optional, default: false* If true, all subdirectories will 
-                     be searched as well
+		filter		-	*Optional, default: null* 
+							Either a comma separated list of file extensions to list, 
+							ex: "css,js", OR a filter function. If null all files are 
+                     returned.
+      recursive   -  *Optional, default: false* 
+							If true, all sub-directories will be searched 
+							as well
+	Examples:
+	(code)
+		//Find all the files and sub-directories in the Myna root:
+		var files = new Myna.File("/").listFiles();
+		
+		//Find all the code files in the current directory, or lower
+		var files = new Myna.File(".").listFiles("sjs,ejs,ws",true);
+		
+		//Find all files in the tmp directory older than 30 days
+		var files = new Myna.File("file:/tmp").listFiles(function(f){
+			var isOld =f.lastModified < new Date().add(Date.DAY,-30);
+			return isOld && !f.isDirectory();
+		},true);
+	(end)
+	
+	See:
+	* <function.filter>
+	
 	*/
-	Myna.File.prototype.listFiles=function(extensions,recursive){
-		var FileUtils = Packages.org.apache.commons.io.FileUtils;
-		if (extensions){
-			extensions = extensions.split(/,/);
-		} else {
-			extensions=null;
+	Myna.File.prototype.listFiles=function(filter,recursive){
+		if (!filter){
+			filter = function(){return true}
+		}
+		if (typeof filter === "string"){
+			
+			var extentions = filter.toLowerCase().split(/,/);
+			filter = function(f){
+				return extentions.some(function(ext){
+					var exp = new RegExp("\\."+ext +"$");
+					return exp.test(f.fileName.toLowerCase());
+				})
+			}
 		}
 		recursive = !!recursive; //force a boolean value
 		
+		/* make sure this file exists */
+		if (!this.exists){
+			throw new Error(String(this) +" does not exist");
+		}
 		/* make sure this is a directory */
 		if (!this.javaFile.isDirectory){
-			throw {message:"Can only list files for directories"}
+			throw new Error("Can only list files for directories")
 		} 
-		var iterator = FileUtils.iterateFiles(this.javaFile,extensions,recursive);
+		
 		var result=new Myna.DataSet({
 			data:[],
 			columns:"directoryPath,fileName,type,size,lastModified"
 		});
-		while (iterator.hasNext()){
-			result.push(new Myna.File(iterator.next().toURI()));
-		}
+		var subDirs=[];
+		this.javaFile.listFiles()
+			.map(function(jf){
+				var f = new Myna.File(jf.toURI());
+				if (recursive && f.isDirectory()){
+					subDirs.push(f)
+				}
+				return f
+			})
+			/* .filter(function(f,index,array){
+				if (recursive && f.isDirectory()){
+					subDirs.push(f)
+					return false;
+				} else {
+					return true;	
+				}
+			}) */
+			.filter(filter)
+			.forEach(function(f){
+				result.push(f)
+			})
+		subDirs.forEach(function(f){
+			f.listFiles(filter,true).forEach(function(subf){
+				result.push(subf);
+			})
+		})
 		return result;
 	}
 /* Function: readBinary

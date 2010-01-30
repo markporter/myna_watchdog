@@ -858,7 +858,7 @@ if (!Myna) var Myna={}
 			currentCol.name = originalCol.column_name;
 			table.addColumn(currentCol);
 			//copy data from temp_column
-			var qry =new Myna.Query({
+			qry =new Myna.Query({
 				dataSource:table.db.ds,
 				sql:<ejs>
 					update <%=table.sqlTableName%> set
