@@ -73,7 +73,7 @@
   affect where the build process stores its outputs.
 -->
 
-  <property name="app.version"   value="1.0_beta_3"/>
+  <property name="app.version"   value="1.0_beta_3-1"/>
   <property name="app.name"      value="myna"/>
   <property name="app.path"      value="/${app.name}"/>
   <property name="build.home"    value="${basedir}/build"/>

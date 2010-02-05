@@ -18,11 +18,12 @@ if (!Myna) var Myna={}
 			this.schema = String(db.defaultSchema);
 		}
 		table.db = db;
+		table.qt = this.db.columnQuoteChar;
 		
 		
 		table.init();
 		if (this.schema && this.schema.trim().length){
-			this.sqlTableName = '"' + this.schema + '"."' + this.tableName +'"';
+			this.sqlTableName = table.qt + this.schema + table.qt +"." +table.qt + this.tableName +table.qt;
 		} else {
 			this.sqlTableName = this.tableName;		
 		}

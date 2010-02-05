@@ -508,7 +508,7 @@ Myna.DataManager.managerTemplate ={
 						column:caseSensitive?colName:"lower(" + colName +")",
 						op:/%/.test(pattern[colName])?" like " :" = ",
 						type:$this.columns[colName].data_type,
-						pattern:caseSensitive?pattern[colName]:pattern[colName].toLowerCase()
+						pattern:caseSensitive?pattern[colName]:String(pattern[colName]).toLowerCase()
 					})
 					
 				})
@@ -666,13 +666,12 @@ Myna.DataManager.managerTemplate ={
 							<%=manager.qt%><%=manager.columns[name].column_name%><%=manager.qt%> <@if i < manager.columnNames.length - 1 >,</@if>
 						</@loop>
 						
-					from <%=manager.qt%><%=this.sqlTableName%><%=manager.qt%>
+					from <%=this.sqlTableName%>
 					where <%=manager.qt%><%=this.columns[this.primaryKey].column_name%><%=manager.qt%> = 
 						<%=p.addValue(id,this.columns[this.primaryKey].data_type)%>
 				</ejs>,
 				parameters:p
 			});
-			Myna.log("debug","qry",Myna.dump(qry));
 			if (!qry.data.length) {
 				throw new Error("Unable to find '" + this.sqlTableName + "' by id '" + id +"'.");
 			}
@@ -845,7 +844,7 @@ Myna.DataManager.beanTemplate ={
 				dataSource:this.manager.ds,
 				parameters:p,
 				sql:<ejs>
-					UPDATE <%=bean.manager.qt%><%=this.sqlTableName%><%=bean.manager.qt%>
+					UPDATE <%=this.sqlTableName%>
 					SET
 						<%=bean.manager.qt%><%=columnName%><%=bean.manager.qt%> = <%=p.addValue(value,type,isNull)%>
 					WHERE

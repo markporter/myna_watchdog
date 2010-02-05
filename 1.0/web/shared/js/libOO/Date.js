@@ -908,7 +908,7 @@ Date.formatInterval = function(interval, value){
 	if (seconds) result.push(seconds +" seconds");
 	
 	var milliseconds = interval;
-	if (milliseconds) result.push(milliseconds +" milliseconds");
+	if (milliseconds) result.push(Math.round(milliseconds) +" milliseconds");
 	
 	return result.join(", ")
 	

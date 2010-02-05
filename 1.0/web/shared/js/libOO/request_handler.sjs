@@ -9,19 +9,22 @@ try{
 			/* This is now handled in the JSServlet init */
 		}
 		if ($server_gateway.environment.get("threadFunctionSource")){
-			try { 
-				(function(){
-					var f =eval(String($server_gateway.environment.get("threadFunctionSource")));
-					var args = $server_gateway.environment.get("threadFunctionArguments");
-					args = Array.prototype.slice.call(args,0);
-					var result = f.apply($server.globalScope,args||[])
-					$server_gateway.environment.put("threadReturn",result);
-					$server_gateway.environment.put("threadComplete",true);
-				})()
-					
-			} catch(e){
-				$server_gateway.log("ERROR","ThreadError: " + String(e.message),Myna.formatError(__exception__));
-			} 
+			(function(){
+					var src = String($server_gateway.environment.get("threadFunctionSource"))
+					.replace(/(function.*?{)(.*)}/,'$1try{$2}catch(e){$server_gateway.log("ERROR","ThreadError: " + String(e.message),Myna.formatError(e));}}' ) 
+						//+ ''
+				var f =eval(src);
+				
+				var args = $server_gateway.environment.get("threadFunctionArguments");
+				args = Array.prototype.slice.call(args,0);
+				var result = f.apply($server.globalScope,args||[])
+				if (/return/.test(src)) {
+					Myna.log("debug","src",src);
+					Myna.log("debug","result",Myna.dump(result));
+				}
+				$server_gateway.environment.put("threadReturn",result);
+				$server_gateway.environment.put("threadComplete",true);
+			})()
 		} else if (/\.ws$/.test($server.requestScriptName)){ //web service calls
 			(function(){
 				try{
@@ -57,7 +60,7 @@ try{
 		}
 	}
 } catch(e){
-	Myna.log("debug","got here");
+	Myna.log("ERROR","Thread Error: " +e.message,Myna.formatError(e));
 	$application.onError(e);
 } finally{
 	//on end

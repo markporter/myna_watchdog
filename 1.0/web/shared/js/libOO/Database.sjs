@@ -19,7 +19,14 @@ Myna.Database = function (ds){
 		db.ds = String(ds).toLowerCase();
 	} else {db.ds=ds;}
 	
-	db.init()
+	if (!("__MYNA_DB_CACHE__" in $req)) $req["__MYNA_DB_CACHE__"] ={}
+	if (db.ds in $req["__MYNA_DB_CACHE__"]){
+		return $req["__MYNA_DB_CACHE__"][db.ds];
+	} else {
+		db.init()
+		$req["__MYNA_DB_CACHE__"][db.ds] = this;
+		return this;
+	}
 }
 /* Property: con
 		jdbc connection object. Created in <init>, closed on requestEnd

@@ -24,7 +24,7 @@ import org.openid4java.consumer.ConsumerManager;
 */
 public class MynaThread {
 	//static public Log logger = LogFactory.getLog(MynaThread.class);
-	static public String version="1.0_beta_3";
+	static public String version="1.0_beta_3-1";
 	static public FIFOSemaphore threadPermit;
 	static public FIFOSemaphore manageLocksPermit;
 	static public volatile CopyOnWriteArrayList runningThreads 	= new CopyOnWriteArrayList();
@@ -1443,9 +1443,10 @@ public class MynaThread {
 	}
 	
 	public Object spawn(String func, Object[] args) throws Exception{
-		Runner runner;
-		runner = new Runner(func, args);
+		Runner runner= new Runner(func, args);
+		Hashtable retval = new Hashtable();
 		
+		runner.currentThread = new MynaThread();
 		runner.parentThread = this;
 		String f = (String) this.environment.get("threadFunctionSource");
 		/* if ( this.threadChain.contains(func)){
@@ -1460,8 +1461,11 @@ public class MynaThread {
 		
 		Thread thread = new Thread(runner);
 		thread.start();
-		return thread;
-  }
+		
+		retval.put("javaThread",thread);
+		retval.put("mynaThread",runner.currentThread);
+		return retval;
+    }
 	
 	class Runner implements Runnable {
 			Runner( String func, Object[] args) {
@@ -1471,8 +1475,8 @@ public class MynaThread {
 			public void run()
 			{
 				try {
-					currentThread = new MynaThread();
 					currentThread.environment.put("threadFunctionSource", f);
+					currentThread.environment.put("threadParent", this.parentThread);
 					currentThread.threadChain = new Vector(parentThread.threadChain);
 					currentThread.threadChain.add(f);
 					//java.lang.System.out.println("adding: "+ f.hashCode());
@@ -1480,7 +1484,7 @@ public class MynaThread {
 					
 					String threadId = java.lang.Thread.currentThread().getName();
 					//java.lang.System.out.println("run: "+ threadId);
-					parentThread.environment.put("subthread_" + threadId, currentThread);
+					//parentThread.environment.put("subthread_" + threadId, currentThread);
 					
 					
 				} catch (Exception e){
