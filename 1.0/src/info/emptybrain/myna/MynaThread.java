@@ -15,34 +15,36 @@ import org.apache.commons.pool.impl.*;
 import org.apache.commons.dbcp.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory; 
-import EDU.oswego.cs.dl.util.concurrent.*;
+//import EDU.oswego.cs.dl.util.concurrent.*;
+import java.util.concurrent.*;
 import org.openid4java.consumer.ConsumerManager;
 
 /**
 * This class handles the execution of *.sjs and *.ejs files
 *
 */
+
 public class MynaThread {
 	//static public Log logger = LogFactory.getLog(MynaThread.class);
 	static public String version="1.0_beta_3-1";
-	static public FIFOSemaphore threadPermit;
-	static public FIFOSemaphore manageLocksPermit;
+	static public Semaphore threadPermit;
+	static public Semaphore manageLocksPermit;
 	static public volatile CopyOnWriteArrayList runningThreads 	= new CopyOnWriteArrayList();
 	static public volatile CopyOnWriteArrayList recentThreads 	= new CopyOnWriteArrayList();
 	
-	static public Hashtable cron = new Hashtable();
+	static public ConcurrentHashMap cron = new ConcurrentHashMap();
 	
-	static public Hashtable dataSources = new Hashtable(); //stores ds properties
-	static public Hashtable javaDataSources = new Hashtable(); //stores dbcp BasicDataSource instances
+	static public ConcurrentHashMap dataSources = new ConcurrentHashMap(); //stores ds properties
+	static public ConcurrentHashMap javaDataSources = new ConcurrentHashMap(); //stores dbcp BasicDataSource instances
 		
-	static public Hashtable locks = new Hashtable(); //used by Myna.getLock()
-	static public Hashtable scriptCache = new Hashtable();
+	static public ConcurrentHashMap locks = new ConcurrentHashMap(); //used by Myna.getLock()
+	static public ConcurrentHashMap scriptCache = new ConcurrentHashMap();
 	static public Properties generalProperties = new Properties();
-	static public Hashtable serverVarMap = new Hashtable();//used by $server.get/set
+	static public ConcurrentHashMap serverVarMap = new ConcurrentHashMap();//used by $server.get/set
 	
 	public final java.lang.Thread javaThread = java.lang.Thread.currentThread();
 	
-	//static private Hashtable compiledScripts_ = new Hashtable();
+	//static private ConcurrentHashMap compiledScripts_ = new ConcurrentHashMap();
 	static private boolean isInitialized = false;
 	static volatile private Scriptable sharedScope_ = null;
 	
@@ -64,8 +66,8 @@ public class MynaThread {
 	
 	public boolean inError = false; //Are we currently handling an error?
 	
-	public Hashtable environment = new Hashtable();
-	public Hashtable runtimeStats = new Hashtable();
+	public ConcurrentHashMap environment = new ConcurrentHashMap();
+	public ConcurrentHashMap runtimeStats = new ConcurrentHashMap();
 	
 	public Context threadContext;
 	public ScriptableObject threadScope;
@@ -305,8 +307,8 @@ public class MynaThread {
 			loadGeneralProperties();
 			
 			int max_running_threads = Integer.parseInt(generalProperties.getProperty("max_running_threads"));
-			threadPermit = new FIFOSemaphore(max_running_threads);
-			manageLocksPermit = new FIFOSemaphore(1);
+			threadPermit = new Semaphore(max_running_threads);
+			manageLocksPermit = new Semaphore(1,true);
 			
 			this.threadHistorySize = Integer.parseInt(generalProperties.getProperty("thread_history_size"));
 			
@@ -1259,7 +1261,7 @@ public class MynaThread {
 			path = path.replaceAll(":","___MYNA_COLON___");
 			path = path.replaceAll("/","___MYNA_SLASH___");
 			path = path.replaceAll(" ","___MYNA_SPACE___");
-			path = java.net.URLEncoder.encode(path);
+			path = java.net.URLEncoder.encode(path,"utf-8");
 			path = path.replaceAll("___MYNA_SPACE___","%20");
 			path = path.replaceAll("___MYNA_COLON___",":");
 			path = path.replaceAll("___MYNA_SLASH___","/");
@@ -1281,11 +1283,11 @@ public class MynaThread {
 		return uri.toString();
 	}
 	
-	public FIFOSemaphore getLock(String name) throws Exception{
+	public Semaphore getLock(String name) throws Exception{
 		manageLocksPermit.acquire();
 		try{
-			FIFOSemaphore lock = (FIFOSemaphore) locks.get(name);
-			if (lock == null) locks.put(name, new FIFOSemaphore(1));
+			Semaphore lock = (Semaphore) locks.get(name);
+			if (lock == null) locks.put(name, new Semaphore(1,true));
 			lock.acquire();
 			return lock;
 		} finally{

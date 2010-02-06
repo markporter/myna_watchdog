@@ -1569,7 +1569,7 @@ if (!Myna) var Myna={}
 	 
 	*/
 	Myna.println=function Myna_println(text){
-		$res.print(String(text) + "<br>");
+		$res.print(String(text) + "<br>\n");
 	}
 /* Function: sealObject 
 	This seals a JavaScript object, preventing it from being modified.

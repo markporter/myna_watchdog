@@ -183,6 +183,7 @@
 		deprecation="${compile.deprecation}"
 		optimize="${compile.optimize}">
 		
+		<!-- <compilerarg value="-Xlint"/> -->
 		<classpath refid="compile.classpath"/>
 	</javac>
 

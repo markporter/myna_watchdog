@@ -2,26 +2,22 @@
 	Global object for managing the current application.
 	
 	Detail:
-		When a .ejs or .sjs file is requested, $application._mergeApplications() 
-		is called first. This function examines every directory between the 
-		web root and the requested file, and includes any application.sjs files 
-		it finds. Each of these files has an opportunity to:
+		When a .ejs or .sjs file is requested, Myna examines every directory 
+		between the web root and the requested file, and includes any 
+		application.sjs file it finds. Each of these files has an opportunity to:
 		
-		* declare application specificvariables
+		* declare application specific variables
 		* execute functions
 		* append or prepend $application.onXXX() event functions. 
 		  See <Object.before> and <Object.after>
 		
-		Once all the application.sjs files have been included, $application._onRequestStart()
-		is called to set up the standard environment (request variables, application 
-		variables, session setup, etc). Eventually <$application.onRequestStart is called.
-		<$application.onApplicationStart> and <$application.onSessionStart> may be called as 
-		well.
+		Once all the application.sjs files have been included, 
+		<$application.onRequestStart> is called. <$application.onApplicationStart> 
+		and <$application.onSessionStart> may be called as well.
 		
 		Next, the originally requested .sjs or .ejs file is executed.
 		
-		Finally $application._onRequestEnd() is called, which in turn calls 
-		<$application.onRequestEnd>
+		Finally <$application.onRequestEnd> is called 
 		
 		
 		Example:
@@ -40,12 +36,12 @@
 			tags:[]
 		}
 		//this assigns a propery to the $application object
-		$application.layoutDir =$application.directory +"layout";
+		var layoutDir =$application.directory +"layout";
 		
 		// this wraps all content generated in a layout file
 		$application.before("onRequestEnd",function(){
 			if (Page.includeLayout) {
-				Myna.includeOnce($application.layoutDir + "/SiteLayout.ejs",{content:$res.clear()})
+				Myna.includeOnce(layoutDir + "/SiteLayout.ejs",{content:$res.clear()})
 			}
 		})
 		(end)
@@ -58,9 +54,10 @@ var $application={
 		
 		Detail:
 			application.sjs files are loaded consecutively from the web root 
-			to the requested file. This property is the directory of the last 
-			application.sjs file to run and generally represents the  "home" 
-			directory of the application.
+			to the requested file. Inside an application.sjs file, this represents
+			the directory of the currently executing application.sjs file. Because 
+			each consecutive application.sjs file overwrites this property, it will
+			always represent the innermost application.
 			
 	*/
 	directory:null,
@@ -82,8 +79,8 @@ var $application={
 		String application name. 
 		
 		Detail:
-			Should only contain letters, numbers and the underbar (_) character. If set an
-			application cache is created. Varable can be set and retrieved from this scope 
+			Should only contain letters, numbers and the underbar (_) character. If set, an
+			application cache is created. Varables can be set and retrieved from this scope 
 			via <$application.set> and <$application.get>
 			
 	*/
@@ -103,18 +100,33 @@ var $application={
 		Detail:
 			This is primarily to ensure the release of jdbc connection, 
 			statement, and resultSet objects, but anything with a close() 
-			function can be pusshed onto this array
+			function can be pushed onto this array.
+			
+		See:
+			<addOpenObject>
 	*/
 	closeArray:[],
 	
 /* Function: addOpenObject 
 		Add an object to $application to be closed at the end of the thread. 
-		Any object with a close() function can be addded. Intended for resource cleanup. 
+		Any object with a close() function can be added. Intended for resource 
+		cleanup.  
 		
 		Parameters:
 			obj	-	an object with a close() function
 			
 		
+		Example:
+		(code)
+			function getFileStream(path){
+				var fis = new java.io.FileInputStream(new File(scriptPath).javaFile);
+				// we can't be sure the caller will close this stream, so we'll register
+				// fis to be closed at the end of the thread 
+				$application.addOpenObject(fis);
+				return fis;
+			}
+		(end)
+			
 	*/
 	addOpenObject:function(obj){
 		/* if (!this["closeArray" + $server.threadId]) this["closeArray" + $server.threadId] =[];
@@ -129,17 +141,24 @@ var $application={
 			
 		Returns:
 			The application variable associated with the supplied _key_.
+			
+		Example:
+		(code)
+			var lastUser = $application.get("lastUser")||$cookie.getAuthUser();
+		(end)
+		
 	*/
 	get:function(key){
 		this._initAppScope();
 		var cache =Packages.org.apache.jcs.JCS.getInstance("application");
-		
-		var data = cache.get($application.appName);
-		if (data){
-			return data[key];
-		}else {
-			return null;
-		}
+		var retval = null;
+		Myna.lock($application.appname +"_get",10,function(){
+			var data = cache.get($application.appName);
+			if (data){
+				retval = data[key];
+			}		
+		})
+		return retval;
 	},
 /* Function: getData
 		Returns a read-only object representing all of the application's 
@@ -164,24 +183,32 @@ var $application={
 	},
 	
 /* Function: set
-		Set the application variable associated with the supplied key
+		Set the application variable associated with the supplied key, returns _value_
 		
 		Parameters:
 			key		-	String variable name
 			value	-	value to set
 			
-	
+		Example:
+		(code)
+			$application.set("lastUser",$cookie.getAuthUser());
+		(end)
 	*/
 	set:function(key,value){
 		this._initAppScope();
 		var cache =Packages.org.apache.jcs.JCS.getInstance("application");
-		var data = cache.get($application.appName);
-		if (!data){
-			data ={};	
-		}
-		
-		data[key] = value;
-		cache.put($application.appName,data);
+		var retval = value;
+		Myna.lock($application.appname +"_get",10,function(){
+			var data = cache.get($application.appName);
+			if (!data){
+				data ={};	
+			}
+			
+			data[key] = value;
+			cache.put($application.appName,data);		
+		})
+		return retval;
+			
 	},
 	
 	_initAppScope:function(){
@@ -409,8 +436,19 @@ var $application={
 		}
 	},
 	
+	_onApplicationStart:function(){
+		var originalCurrentDir =$server_gateway.currentDir;
+		$server_gateway.currentDir=$application.directory
+		try{
+			this.onApplicationStart();
+		} catch(e){
+			$application._onError(e);
+		}
+		$server_gateway.currentDir=originalCurrentDir;
+	}
 /* Function: onApplicationStart
-		Called when a new application scope is created, before <$application.onRequestStart>.
+		Called when a new application scope is created, before 
+		<$application.onRequestStart>.
 		
 		Detail:
 			A new application scope is typically created on server restart or 
@@ -421,26 +459,40 @@ var $application={
 	*/
 	onApplicationStart:function(){},
 	_onRequestStart:function(){
-		
 		// call overloaded on request 
-			$server_gateway.runtimeStats.put("currentTask","overloded onRequestStart");
+			var originalCurrentDir =$server_gateway.currentDir;
+			$server_gateway.currentDir=$application.directory
 			try{
 				this.onRequestStart();
 			} catch(e){
 				$application._onError(e);
 				//$res.print(Myna.formatError(e));
 			}
+			$server_gateway.currentDir=originalCurrentDir;
 
 	},
 /* Function: onRequestStart
 		Called before processing a request. 
 		
 		Detail:
-			This function is called after all the initial request processing, but before 
-			executing the requested file.
+			This function is called after all the initial request processing, but 
+			before executing the requested file.
 			
 			This function does nothing unless it is appended or replaced in an
 			application.sjs file.
+			
+		Example:
+		(code)
+			//in application.sjs
+			
+			// Using Object.after ensures that an existing onRequestStart function
+			// loaded by an earlier application.sjs will be executed first
+			$application.after("onRequestStart",function(){
+				// create a DataManager with a datasource that
+				// has the same name as the application directory
+				dm = new Myna.DataManager(new Myna.File($application.directory).getFileName);
+			})
+		(end)
 	*/
 	onRequestStart:function(){},
 	_onRequestEnd:function(){
@@ -473,9 +525,10 @@ var $application={
 			} catch(e) {$server.request = null}
 			
 		}
-		
+		var originalCurrentDir =$server_gateway.currentDir;
+		$server_gateway.currentDir=$application.directory;
 		$application.onRequestEnd();
-		
+		$server_gateway.currentDir=originalCurrentDir;
 		$profiler.mark("Request completed");
 		if ($server_gateway.generalProperties.getProperty("append_profiler_output") == "1"){
 			try{
@@ -554,13 +607,15 @@ var $application={
 		} catch(j){
 			Myna.log("ERROR",message,formattedError);
 		}
-		
+		var originalCurrentDir =$server_gateway.currentDir
+		$server_gateway.currentDir=$application.directory
 		if ((!this.onError || !this.onError(exception)) && formattedError){
 			$res.print(formattedError)
 		}
+		$server_gateway.currentDir=befpre
 	},
 /* Function: onError
-		Called when a an error occurrs. 
+		Called when a an error occurs. 
 		
 		Parameters:
 			exception	-	a caught exception object
@@ -576,28 +631,34 @@ var $application={
 	
 	_onError404:function(){
 		$res.clear();
+		var originalCurrentDir =$server_gateway.currentDir;
+		$server_gateway.currentDir=$application.directory
 		if (!this.onError404 || !this.onError404()){
 			Myna.print("The file you requested is not available at that location.")
 		}
+		$server_gateway.currentDir=originalCurrentDir;
 		$res.setStatusCode(404);
 		$res.flush();
 	},
 /* Function: onError404
-		Called when a an error occurrs. 
-		
-		Parameters:
-			exception	-	a caught exception object
+		Called when a request for a non-existent file occurs. 
+		 
 		
 		Detail:
-			This function is executed before the default error handler. 
-			Return true to cancel the default error handler.
+			This function is executed before the default 404 error handler. You can 
+			Use this to provide your own "missing file" error handler.
+			
+			Return true to cancel the default 404  error handler.
 			
 	*/
 	onError404:function(){
 		return false;
 	},
 	_onSessionStart:function(){
+		var originalCurrentDir =$server_gateway.currentDir;
+		$server_gateway.currentDir=$application.directory
 		if (this.onSessionStart) this.onSessionStart();
+		$server_gateway.currentDir=originalCurrentDir;
 	},
 /* Function: onSessionStart
 		Called when a new session is created, before <$application.onRequestStart>. 
@@ -622,7 +683,10 @@ var $application={
 			if (appFile.exists()){
 				$application.directory = curPath;
 				$application.url = $server.rootUrl +$application.directory.right($application.directory.length -$server.rootDir.length)
+				var before = $server_gateway.currentDir;
+				$server_gateway.currentDir =curPath;
 				Myna.includeOnce(curPath + "application.sjs");
+				$server_gateway.currentDir = before;
 			}
 		}
 		//load application
@@ -633,7 +697,7 @@ var $application={
 					var attr = new Packages.org.apache.jcs.engine.ElementAttributes();
 					attr.setIdleTime(60*this.idleMinutes);
 					cache.put(this.appName,{},attr);
-					this.onApplicationStart();	
+					this._onApplicationStart();	
 					
 				}
 			} 
