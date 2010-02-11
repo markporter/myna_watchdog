@@ -18,10 +18,6 @@ try{
 				var args = $server_gateway.environment.get("threadFunctionArguments");
 				args = Array.prototype.slice.call(args,0);
 				var result = f.apply($server.globalScope,args||[])
-				if (/return/.test(src)) {
-					Myna.log("debug","src",src);
-					Myna.log("debug","result",Myna.dump(result));
-				}
 				$server_gateway.environment.put("threadReturn",result);
 				$server_gateway.environment.put("threadComplete",true);
 			})()

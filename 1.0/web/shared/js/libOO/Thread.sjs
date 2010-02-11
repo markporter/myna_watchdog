@@ -122,7 +122,7 @@ Myna.Thread=function(f,args,priority){
 	/* this.functionSource = f.toSource();
 	$server_gateway.environment.put("threadSource", this.functionSource); */
 	
-	
+	$cookie.setAuthUserId($cookie.getAuthUserId());
 	var source = f.toSource().replace(/^\((.*)\)$/,"$1");
 	if ($server_gateway.threadChain.size() > 5){
 		Myna.logSync("ERROR","thread chains cannot descend more than 5 levels.",Myna.dump($server_gateway.threadChain,"Thread Chain") + Myna.dump($server,"$server")+ Myna.dump($req.data,"$req.data"));

@@ -231,7 +231,7 @@ if (!Myna) var Myna={}
 		}
 		if (spec instanceof Myna.File){
 			try{
-				var spec =$server_gateway.threadContext.evaluateString(
+				spec =$server_gateway.threadContext.evaluateString(
 				  this,
 				  "(" +$server_gateway.translateString(spec.readString(),spec.toString()) +")",
 				  spec.toString(),

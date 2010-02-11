@@ -31,14 +31,28 @@ var $server={
 /* 	property: request
 		A reference the servlet request object.  
 	*/
-	get request(){return $server_gateway.environment.get("request")},
+	get request(){
+		var pThread=$server_gateway.environment.get("threadParent")
+		if (pThread){
+			return pThread.environment.get("request");
+		} else {
+			return $server_gateway.environment.get("request")
+		}
+	},
 /* 	property: requestScriptName
 		The name of the originally requested script.
 		
 		Example:
 		> index.sjs
 	*/	
-	get requestScriptName(){ return String($server_gateway.requestScriptName)},
+	get requestScriptName(){ 
+		var pThread=$server_gateway.environment.get("threadParent")
+		if (pThread){
+			return String(pThread.requestScriptName)
+		} else {
+			return String($server_gateway.requestScriptName)
+		}
+	},
 /* 	property: serverUrl
 		The the server name and protocol of the request
 		

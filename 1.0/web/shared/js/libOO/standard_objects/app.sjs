@@ -230,7 +230,12 @@ var $application={
 		$profiler.mark("Runtime scripts included");
 		
 		$server_gateway.runtimeStats.put("currentTask","built-in onRequestStart");
-		
+		var pThread=$server_gateway.environment.get("threadParent")
+		if (pThread){
+			//Myna.log("debug","setting id " +pThread.threadScope.$cookie.__AUTH_USER_ID__,Myna.dump(pThread.threadScope.$cookie));
+			$cookie.setAuthUserId(pThread.threadScope.$cookie.__AUTH_USER_ID__)	
+			//Myna.log("debug","curUser =" + $cookie.getAuthUserId(),Myna.dump($req.data));
+		}
 		if ($server.request){
 			// load request
 				$server_gateway.runtimeStats.put("currentTask","buildRequest");
@@ -518,11 +523,16 @@ var $application={
 		
 	// save session
 		if ($server.request){
-			try{
-				var local_session = $server.request.getSession();
+			Myna.lock("___MYNA_SAVE_SESSION___",10,function(){
+				try{
+					var local_session = $server.request.getSession();
+					
+					if ($session.timeoutMinutes != undefined) {
+						local_session.setMaxInactiveInterval($session.timeoutMinutes*60)
+					}
+				} catch(e) {}
+			})
 				
-				if ($session.timeoutMinutes != undefined) {local_session.setMaxInactiveInterval($session.timeoutMinutes*60)}
-			} catch(e) {$server.request = null}
 			
 		}
 		var originalCurrentDir =$server_gateway.currentDir;

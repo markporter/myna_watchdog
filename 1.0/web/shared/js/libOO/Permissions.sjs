@@ -176,7 +176,7 @@ if (!Myna) var Myna={}
 			var exists = man.findBeans(appname);
 			if (exists.length){
 				return exists[0].data.copy(true);	
-			}
+			} else return null;
 		},
 	/* Function: addRight
 			adds a new right, and returns an instance of <Myna.Permissions.Right>

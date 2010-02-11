@@ -102,7 +102,7 @@ var $cookie={
 			
 	*/
 	setAuthUserId:function(user_id){
-		var local_cache=arguments.callee;
+		$cookie.__AUTH_USER_ID__ = user_id;
 		var cookie_data={
 			user_id:user_id,
 			ts:new Date().getTime()
@@ -122,6 +122,7 @@ var $cookie={
 	*/
 	clearAuthUserId:function(name){
 		$cookie.clear("myna_auth_cookie");
+		delete $cookie.__AUTH_USER_ID__
 		$cookie.__authCleared = true;
 	},
 	/* Function: getAuthUserId
@@ -133,8 +134,8 @@ var $cookie={
 	*/
 	getAuthUserId:function(){
 		if ($cookie.__authCleared) return null;
-		var local_cache=arguments.callee;
-		if (local_cache.user_id !== undefined) return local_cache.user_id;
+		
+		if ("__AUTH_USER_ID__" in $cookie) return $cookie.__AUTH_USER_ID__;
 		
 		var cookie = $cookie.get("myna_auth_cookie");
 		if (cookie){
@@ -143,16 +144,17 @@ var $cookie={
 				var auth_data = cookie
 				.decrypt(key)
 				.parseJson();
-				local_cache.user_id = auth_data.user_id;
+				$cookie.__AUTH_USER_ID__ = auth_data.user_id;
 			} catch (e){
 				Myna.log("info","myna_auth_cookie decryption failed",
 					"cookie = '"+cookie+"'<hr>" + Myna.formatError(e));
-				local_cache.user_id = null;
+				$cookie.__AUTH_USER_ID__ = null;
 			}
 		} else {
-			local_cache.user_id = null;
+			$cookie.__AUTH_USER_ID__ = null;
 		}
-		return local_cache.user_id;
+		
+		return $cookie.__AUTH_USER_ID__;
 	},
 	/* Function: getAuthUser
 		Return the result of <Myna.Permissions.getUserById> for the user_id in 
