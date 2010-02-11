@@ -1,3 +1,90 @@
+Release Name: 1.0_beta_4
+Notes:
+
+This release contains some new features, performance
+enhancements, minor bug fixes and documentation updates
+
+
+New Features
+------------
+* **Added a sub-template pre-processor to XTemplate.**
+
+  entering a path inside hard brackets "[]" in an extemplate will internally 
+  call Myna.includeTemplate() with that path and the currently scoped values.
+  The text generated from the template will be inserted at that location. This
+  makes it possible to include Templates from inside other Templates.
+
+* **Added new data source property: "Use case-sensitive names?"**
+
+  This is "false" by default. Setting this to true will cause all references to
+  database table names and columns to match exactly how the entity is 
+  defined in the database instead of being forced to lowercase. 
+
+* **Added "mynaThread" property to Myna.Thread**
+
+  This property references the subThread's MynaThread instance. Setting this to
+  null will prevent access to the subThread but will also allow the subThread's
+  memory to be released when the thread finishes
+  * **added Myna.Thread.releaseOnJoin property**
+
+     Default "false". When set to "true" all subThread's are released after a
+     call to join()
+
+  * **Added Myna.Thread.captureOutput property**
+     Default "true". When set to false, no output will be captured from 
+     subThreads. Combining this with _Myna.Thread.releaseOnJoin_ results in
+     maximum memory efficiency for "fire and forget" subThreads
+
+
+Other Changes
+-------------
+
+* modified Myna.Permissions.User.qryRights() to provide more useful columns
+* Fixed bug in permissions application regarding user group rights
+* Fixed but in WebService constructor when passing a file path
+* Fixed bug in Myna.Permissions.UserGroup.addRights regarding key generation
+* moved ext from the /shared/js/ext_latest folder to /myna/ext. It is 
+  recommended that users install their own copy of Ext and not refer to the 
+  version distributed with Myna
+* Modified Myna.includeTemplate to use an XTemplate internally and 
+  fixed the documentation
+* Modified global Java error handler to print stack traces as usual 
+  when instance purpose is "DEV". Any other instance purpose will 
+  generate "An error has occurred. See administrator log for details." 
+* Modified File.listFiles to now return directories as well as files.
+* Modified File.listFiles to accept either filter definition or the 
+  string extension list as the first parameter
+* updated docs to include examples for File.listFiles
+* added db_property "columnQuoteChar" which is the backtick for MySQL
+  and the double quote for the others. This can be used anytime you 
+  need to escape and column or table name 	
+* Fixed bug in Date.formatInterval where milliseconds were not being rounded to
+  a whole number
+* Fixed bug in DataManager.manager.findBeans that caused an error for
+  numeric keys
+* Fixed several DB bugs related to the new columnQuoteChar property
+* Added per request DB metadata caching. This should speed up DataManager
+  operations
+* Added newline (\n) to Myna.println to make the source more readable.
+* Converted all references to HashTable in MynaThread to 
+  ConcurrentHashMap. This should allow better performance under heavy 
+	load
+* Converted all concurrency classes in MynaThread to Java 5 classes. 
+  This should provide slightly better performance and better 
+	reliability since the oswego.edu classes are now deprecated
+* The $server.currentDir property is now set correctly inside of 
+  application.sjs files. Previously any Myna.File operations in these 
+  files where executed against the /shared/js/libOO directory. These 
+  are now executed against the directory in which the application.sjs 
+  file resides. Also note that $application.on<event> functions will
+  execute against $application.directory, which may not be the same
+  directory in which the function was defined, if the event function 
+  has been chained via Object.after()
+	
+
+
+------------------------------------------
+
 Release Name: 1.0_beta_3
 Notes:
 This release contains a major security fix, minor feature 

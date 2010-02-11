@@ -402,7 +402,7 @@ Creates a new template from the supplied string or array of strings
 */
 Myna.XTemplate = function(){
     Myna.Template.apply(this, arguments);
-		this.text =this.text.replace(/\[([^\]]+)\]/g,function(str,file,foundAt){
+		this.text =this.text.replace(/[^\\]\[([^\]]+)[^\\]\]/g,function(str,file,foundAt){
 			try{
 				var f =new Myna.File(file);
 				if (!f.exists) return str;

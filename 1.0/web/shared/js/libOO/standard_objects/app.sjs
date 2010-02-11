@@ -445,7 +445,7 @@ var $application={
 			$application._onError(e);
 		}
 		$server_gateway.currentDir=originalCurrentDir;
-	}
+	},
 /* Function: onApplicationStart
 		Called when a new application scope is created, before 
 		<$application.onRequestStart>.
@@ -612,7 +612,7 @@ var $application={
 		if ((!this.onError || !this.onError(exception)) && formattedError){
 			$res.print(formattedError)
 		}
-		$server_gateway.currentDir=befpre
+		$server_gateway.currentDir=originalCurrentDir;
 	},
 /* Function: onError
 		Called when a an error occurs. 
