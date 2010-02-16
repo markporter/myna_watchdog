@@ -192,22 +192,23 @@ Myna.Thread=function(f,args,priority){
 	
 	Parameters:
 		timeout			-	*Optional, default 300000 (30 seconds)*
-								time in milliseconds to wait for the thread to finish. 
-								If the thread has not finished before the timeout 
-								control is returned to the current thread
+							time in milliseconds to wait for the thread to finish. 
+							If the thread has not finished before the timeout 
+							control is returned to the current thread. 
+							*A timeout of 0 disables the timeout*
 		throwOnTimeout	-	*Optional, default true*
-								If the thread has not finished before the timeout, 
-								throw an Error.
+							If the thread has not finished before the timeout, 
+							throw an Error.
 */
 Myna.Thread.prototype.join=function(timeout,throwOnTimeout){
 	var $this = this;
 	if (throwOnTimeout === undefined) throwOnTimeout=true;
-	if (!timeout) timeout = 30*1000; //30 seconds
+	if (timeout === undefined) timeout = 30*1000; //30 seconds
 	if (this.javaThread.isAlive()){
 		this.javaThread.join(timeout);
 		if (this.javaThread.isAlive()){
 			if (throwOnTimeout){
-				Myna.log("error","Thread ("+this.javaThread.toString()+") Timeout detail", this.functionSource);
+				Myna.log("error","Thread ("+this.javaThread.toString()+") Timeout detail",Myna.dump(this,"thread detail",15));
 				throw new Error("Thread ("+this.javaThread.toString()+") still running after "+timeout+" miliseconds. See log for thread detail.")	
 			} else return undefined 
 		} else {
@@ -294,6 +295,18 @@ Myna.Thread.prototype.kill=function(){
 	Static function that calls <join> on all threads spawned from the current 
 	thread, and returns an array of their return values
 	
+	Parameters:
+		timeout			-	*Optional, default 300000 (30 seconds)*
+							time in milliseconds to wait for all threads to finish. 
+							If all threads are not finished before the timeout 
+							control is returned to the current thread
+							*A timeout of 0 disables the timeout*
+		throwOnTimeout	-	*Optional, default true*
+							If all threads are not finished before the timeout, 
+							throw an Error.
+		killOnTimeout	-	*Optional, default true*
+							If true, threads running past the timeout will be 
+							first stopped, then killed.
 	Example:
 	(code)
 	(10).times(function(i){
@@ -304,10 +317,40 @@ Myna.Thread.prototype.kill=function(){
 	Myna.printDump(Myna.Thread.joinAll())
 	(end)
 */
-Myna.Thread.joinAll = function(){
-	return Myna.Thread.getThreadArray().map(function(t){
-		return t.join();
-	})	
+Myna.Thread.joinAll = function(timeout,throwOnTimeout,killOnTimeout){
+	var result =[];
+	var $this = this;
+	if (throwOnTimeout === undefined) throwOnTimeout=true;
+	if (killOnTimeout === killOnTimeout) killOnTimeout=true;
+	
+	if (timeout === undefined) timeout = 30*1000; //30 seconds
+	var timeExceeded = false;
+	
+	var start = new Date().getTime();
+	this.getThreadArray().forEach(function(t){
+		var elapsed = new Date().getTime() -start;
+		var timeLeft = Math.max(timeout?1:0,(timeout) - elapsed);
+		result.push(t.join(timeLeft,false));
+		if (!timeLeft){
+			
+			if (t.javaThread.isAlive()){
+				timeExceeded =true;
+				if (killOnTimeout){
+					t.stop();
+					new Myna.Thread(function(t){
+						Myna.sleep(10000);
+						if (t.javaThread.isAlive()){
+							t.kill();
+						}
+					},[t])
+				}
+			}
+		}
+	})
+	if (timeExceeded && throwOnTimeout) {
+		throw new Error("Threads exceeded timeout of " + Date.formatInterval(timeout))
+	}
+	return result;
 }
 
 /* Function: getThreadArray 
@@ -317,4 +360,194 @@ Myna.Thread.joinAll = function(){
 Myna.Thread.getThreadArray = function(){
 	if (!("__MYNA_THREADS__" in $req)) $req.__MYNA_THREADS__=[];
 	return $req.__MYNA_THREADS__
+}
+
+/* 
+	Class: Myna.ThreadGroup
+		manages a collection of threads
+		
+*/
+/* Constructor: ThreadGroup
+	Constructor function for ThreadGroup class
+	
+	Parameters:
+		options		-	options object, see below
+		
+	Options:
+		priority			-	*Optional, default 0*
+								default priority for each thread 
+		args				-	*Optional, default []*
+								default array of arguments to pass to the threads 
+								created in this group
+		releaseOnJoin		-	*Optional, default false*
+								default value for <Thread.releaseOnJoin> for 
+								each thread in this group
+		captureOutput		-	*Optional, default true*
+								default value for <Thread.captureOutput> for 
+								each thread in this group
+		fn					-	*Optional, default null*
+								default function to be used for each thread in 
+								this group
+		joinEvery			-	*Optional, default 0*
+								if a positive number, this thread group will 
+								join all running threads after this many 
+								spawns/adds. This allows you you put a limit on 
+								the number of threads running at a time.
+		
+	
+	
+	Examples:
+	
+	(code)
+	// ----- send several emails in the background with  a very low priority ---------
+	var tg= new Myna.ThreadGroup({
+		priority:-90,
+		releaseOnJoin:true,
+		captureOutput:false,
+		fn:function(data){
+			new Myna.Mail({
+				to:data.toAddress,
+				from:data.fromAddress,
+				...
+			}).send()
+		}
+		
+	})
+	
+	qry.data.forEach(function(row){
+		tg.spawn(row);
+	})
+			
+	// ----- run all your queries at once --------------------------------------
+	var queries= new Myna.ThreadGroup({
+		releaseOnJoin:true
+	})
+	
+	qry.data.forEach(function(row){
+		tg.spawn(row);
+	})
+	tg.add(function(){
+		return new Myna.Query({
+			ds:"some ds",
+			sql:"..."
+		}).data
+	}])
+	
+	tg.add(function(){
+		return new Myna.Query({
+			ds:"some other ds",
+			sql:"..."
+		}).data
+	})
+	
+	// a destructuring assignment takes each row from the array returned from 
+	// joinAll and assigns them to the variables in the assignment array
+	var [ qryData1, qryData2] = tg.join();
+	
+	
+	// ----- break up a memory intensive task into  ----------------------------
+	// ----- a set number of concurrent threads     ----------------------------
+	var workers= new Myna.ThreadGroup({
+		releaseOnJoin:true,
+		fn:function(row){
+			... bunch of work ...
+		},
+		joinEvery:3
+	})
+	qry.data.forEach(function(row,index,array){
+		workers.spawn(row);
+	})
+	
+	var result = workers.join();
+	
+	(end)
+*/
+Myna.ThreadGroup=function(options){
+	options.applyTo(this);	 
+	this.threadArray = [];
+}
+
+/* Function: getThreadArray 
+	returns an array of all the threads spawned by this group
+*/
+Myna.ThreadGroup.prototype.getThreadArray=function(){
+	return this.threadArray;	
+}
+
+
+/* Function: getThreadArray 
+	join all the threads in this group. 
+	
+	Takes the same parameters as <Myna.Thread.joinAll>
+*/
+Myna.ThreadGroup.prototype.join=Myna.Thread.joinAll;
+
+/* Function: spawn 
+	calls <ThreadGroup.add> using this this group's defaults. 
+	
+	<ThreadGroup.fn> must be defined. Anny arguments passed to this function 
+	will be passed to the generated thread  
+*/
+Myna.ThreadGroup.prototype.spawn=function(){
+	var args = Array.parse(arguments);
+	if ((!args || !args.length) && this.args && this.args.length){
+		args = this.args;
+	}
+	if (!args) args=[]
+	if (!this.fn || typeof this.fn !== "function"){
+		throw new Error("the 'fn' property must be set to a function before calling spawn");	
+	}
+	this.add(this.fn,args)
+	
+}
+
+
+/* Function: getRunningThreads() 
+	returns an array of the threads in this ThreadGroup that are still running 
+	  
+*/
+Myna.ThreadGroup.prototype.getRunningThreads=function(){
+	return this.getThreadArray().filter(function(t){
+		return t.javaThread.isAlive();
+	})
+	
+}
+
+/* Function: add 
+	creates a thread and adds it to this group
+	
+	Parameters:
+		func		-	*Optional, default <ThreadGroup.fn>*
+						Function to execute in the the thread. If null or not defined
+						<ThreadGroup.fn> will be used
+		args		-	*Optional, default <ThreadGroup.args>*
+						Array of arguments to pass to the function. If null or not
+						defined, <ThreadGroup.args> will be used
+		priority	-	*Optional, default <ThreadGroup.priority>*
+						This integer represents how often this thread should be 
+						scheduled as a percentage of normal priority. For 
+						example, priority 20 would be 20% more likely to run 
+						than normal requests  during a given time slice. 
+						Priority -10 would be 10% LESS likely than normal 
+						requests to run during a given time slice
+	
+*/
+Myna.ThreadGroup.prototype.add=function(func,args,priority){
+	if (!func) func = this.fn;
+	if (!args) func = this.args||[];
+	if (!priority) priority = 0;
+	
+	var t= new Myna.Thread(
+		func,
+		args,
+		priority
+	)
+	if (this.releaseOnJoin) t.releaseOnJoin = this.releaseOnJoin;
+	if (this.captureOutput) t.captureOutput = this.captureOutput;
+	this.getThreadArray().push(t)
+	
+	if (this.joinEvery && this.getRunningThreads().length >= this.joinEvery) {
+		this.join(0);
+	}
+		
 }
