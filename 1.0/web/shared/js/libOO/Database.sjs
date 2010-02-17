@@ -73,9 +73,9 @@ Myna.Database.prototype.init = function(){
 	*/
 	this.isCaseSensitive = false;
 	try{
-		this.isCaseSensitive = !!Myna.JavaUtils.mapToObject(
+		this.isCaseSensitive = !!Math.parseInt(Myna.JavaUtils.mapToObject(
 			Myna.JavaUtils.mapToObject($server_gateway.dataSources)[this.ds]
-		).case_sensitive;
+		).case_sensitive);
 	} catch(e){}
 	
 	/* Property: md
