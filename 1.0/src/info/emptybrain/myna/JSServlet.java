@@ -124,13 +124,13 @@ public class JSServlet extends HttpServlet {
 								path.append("/" + parts[x]);
 							}
 						}
-						scriptPath = new File(this.getServletContext().getRealPath(path.toString())).toURI().toString();
+						scriptPath = thread.rootDir + path.substring(1);
 						
 						thread.environment.put("URL-MAP",url_map);
 						/* res.getWriter().print(context + "<br>" + parts[0].toString() +"<br>" + scriptPath + "<br>" + url_map.toString());
 						return; */
 				} else {
-					scriptPath = new File(this.getServletContext().getRealPath(servletPath)).toURI().toString();
+					scriptPath = thread.rootDir + servletPath.substring(1);
 				}
 				thread.handleRequest(scriptPath);
 				

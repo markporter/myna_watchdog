@@ -423,6 +423,7 @@ public class MynaThread {
 		
 		int lastSlash = scriptPath.lastIndexOf("/");
 		this.currentDir = new URI(scriptPath.substring(0,lastSlash+1)).toString();
+		//System.out.println(this.currentDir);
 		this.requestDir = this.currentDir;
 		
 		this.scriptName = scriptPath.substring(lastSlash+1);
