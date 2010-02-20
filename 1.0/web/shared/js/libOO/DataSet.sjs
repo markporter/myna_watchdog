@@ -124,7 +124,7 @@ if (!Myna) var Myna={}
 				return true;
 			}
 		}
-		return true;
+		return false;
 	};
 /* Function: findFirst
 	returns the first row in the DataSet whose _column_ value matches _compare_, or 
