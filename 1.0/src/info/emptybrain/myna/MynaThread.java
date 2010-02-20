@@ -360,8 +360,9 @@ public class MynaThread {
 						if (!curUri.isAbsolute()){
 							curUri = sharedPath.resolve(new URI(libPaths[x]));
 						}
-						
-						if (!curUri.isAbsolute() || !new File(curUri).exists()){
+						boolean exists =false;
+						try{exists=new File(curUri).exists();}catch(Exception e_exists){}
+						if (!curUri.isAbsolute() || !exists){
 							throw new IOException("Cannot find '" +libPaths[x] +"'  in system root directory or in '"+sharedPath.toString() +"'. See standard_libs in WEB-INF/classes/general.properties.");	
 						}
 						
@@ -925,16 +926,23 @@ public class MynaThread {
 				!ds.getProperty("type").equals("other") 
 				&& ds.getProperty("location").equals("file")
 				&& ds.getProperty("file") != null
-				&& !new File(ds.getProperty("file")).exists()
 			){
-			 	String newPath = getNormalizedPath(ds.getProperty("file"))
-				.replaceAll("file:","").replaceAll("//","/").replaceAll("%20"," ");
-				ds.setProperty("url",
-					ds.getProperty("url").replaceAll(
-						ds.getProperty("file"),
-						newPath 
-					)
-				);
+				boolean exists = false;
+				try{
+					exists=new File(ds.getProperty("file")).exists();
+				} catch(Exception e_exists){
+				}
+				if (!exists){
+					String newPath = getNormalizedPath(ds.getProperty("file"))
+						.replaceAll("file:","").replaceAll("//","/").replaceAll("%20"," ");
+						
+					ds.setProperty("url",
+						ds.getProperty("url").replaceAll(
+							ds.getProperty("file"),
+							newPath 
+						)
+					);
+				}
 			}
 			//register connection pool
 			

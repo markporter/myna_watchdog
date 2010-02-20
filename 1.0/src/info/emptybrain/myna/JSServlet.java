@@ -29,19 +29,25 @@ public class JSServlet extends HttpServlet {
 				try{
 					MynaThread thread = new MynaThread();
 					thread.environment.put("servlet",this);
-					thread.rootDir = new File(sc.getRealPath("/")).toURI().toString();
 					thread.loadGeneralProperties();
+					if (thread.generalProperties.get("webroot") == null){
+						thread.rootDir = new File(sc.getRealPath("/")).toURI().toString();
+					} else {
+						
+						thread.rootDir = thread.generalProperties.getProperty("webroot");
+						System.out.println("using webroot: " + thread.rootDir);
+					}
+					
 					try {
 						String [] serverStartScripts = thread.generalProperties.getProperty("server_start_scripts").split(",");
 						
-						URI sharedPath = new File(sc.getRealPath("/")).toURI().resolve("shared/js/");
+						URI sharedPath = new URI(thread.rootDir).resolve("shared/js/");
 						for (int x=0;x < serverStartScripts.length;++x){
 							String path = serverStartScripts[x];
 							URI curUri = new java.net.URI(path);
 							if (!curUri.isAbsolute()){
 								curUri = sharedPath.resolve(curUri);
 							}
-							
 							if (!curUri.isAbsolute() || !new File(curUri).exists()){
 								throw new IOException("Cannot find '" +path +"' in system root directory or in '"
 								+sharedPath.toString() 
@@ -91,7 +97,12 @@ public class JSServlet extends HttpServlet {
 			}
 			thread.environment.put("requestURL",req.getRequestURL());
 			
-			thread.rootDir = new File(this.getServletContext().getRealPath("/")).toURI().toString();
+			if (thread.generalProperties.get("webroot") == null){
+				thread.rootDir = new File(this.getServletContext().getRealPath("/")).toURI().toString();
+			} else {
+				thread.rootDir = thread.generalProperties.getProperty("webroot");
+			}
+			
 			thread.rootUrl = req.getContextPath() + "/";
 			
 			try {
@@ -100,8 +111,8 @@ public class JSServlet extends HttpServlet {
 				//extract URL-MAP
 				if (originalURI.indexOf("URL-MAP") != -1){
 						String nomap = originalURI.substring(originalURI.indexOf("URL-MAP/")+7);
-						
-						if (new File(this.getServletContext().getRealPath(nomap)).exists()){
+						String realPath = thread.rootDir + nomap.substring(thread.rootUrl.length());
+						if (new File(realPath).exists()){
 							this.getServletContext().getRequestDispatcher(nomap).forward(req,res);
 							return;
 						}

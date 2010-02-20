@@ -205,7 +205,9 @@ if (!Myna) var Myna={}
 	
 	*/
 	Myna.File.prototype.exists = function(){
-		return this.javaFile.exists();
+		var exists = false; 
+		try {exists =this.javaFile.exists();} catch(e){} 
+		return exists;
 	}
 
 

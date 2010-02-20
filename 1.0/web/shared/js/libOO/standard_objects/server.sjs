@@ -24,11 +24,11 @@ var $server={
 	Settings of Myna Administrator
 	*/
 	get purpose(){return String($server_gateway.generalProperties.getProperty("instance_purpose"))},	
-/* 	property: response
+/* property: response
 		A reference to servlet response object
 	*/	
 	get response(){return $server_gateway.environment.get("response")},
-/* 	property: request
+/* property: request
 		A reference the servlet request object.  
 	*/
 	get request(){
@@ -39,7 +39,7 @@ var $server={
 			return $server_gateway.environment.get("request")
 		}
 	},
-/* 	property: requestScriptName
+/* property: requestScriptName
 		The name of the originally requested script.
 		
 		Example:
@@ -53,7 +53,7 @@ var $server={
 			return String($server_gateway.requestScriptName)
 		}
 	},
-/* 	property: serverUrl
+/* property: serverUrl
 		The the server name and protocol of the request
 		
 		Example:
@@ -86,7 +86,7 @@ var $server={
 			return URL.left(URL.length-URI.length);
 		}
 	},
-/* 	property: remoteAddr
+/* property: remoteAddr
 		The IP address of the requestor
 		
 		Example:
@@ -105,14 +105,14 @@ var $server={
 		}
 		return ip;
 	},
-/* 	property: requestServerUrl
+/* property: requestServerUrl
 		*DEPRECATED* see  <$server.serverUrl>
 	*/	
 	get requestServerUrl(){
 		//Myna.log("WARNING","Deprecated property 'requestServerUrl' called.",Myna.dump($req.data));
 		return $server.serverUrl
 	},
-/* 	property: requestDir
+/* property: requestDir
 		<MynaPath> representing the directory of the originally requested script.
 		
 		Example:
