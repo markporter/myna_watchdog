@@ -8,6 +8,7 @@ var fusebox={
 		if (rawData.username.toLowerCase() == "admin"){
 			var props=getGeneralProperties();
 			if (rawData.password.hashEquals(props.admin_password)){
+				java.lang.System.err.println(" setting myna_admin line 11")
 				$cookie.setAuthUserId("myna_admin");
 				success = true; 
 			} else {
@@ -42,6 +43,7 @@ var fusebox={
 		var props=getGeneralProperties();
 		if (!props.admin_password || !props.admin_password.length){
 			// should only get here if a password is not set
+			java.lang.System.err.println(" setting myna_admin line 46")
 			$cookie.setAuthUserId("myna_admin");
 			this.new_password_form({});
 		} else {
@@ -367,8 +369,8 @@ var fusebox={
 	new_password_form:function(data){
 		data.extUrl=$application.extUrl;
 		data.rootUrl=$server.rootUrl;
-			
-		includeTemplate('views/dsp_new_password_form.html',data);		
+		
+		Myna.include('views/dsp_new_password_form.ejs',data);		
 	},
 	new_password_save:function(data){
 		$req.returningJson = true;

@@ -146,14 +146,14 @@ var $cookie={
 				.parseJson();
 				$cookie.__AUTH_USER_ID__ = auth_data.user_id;
 			} catch (e){
-				Myna.log("info","myna_auth_cookie decryption failed",
-					"cookie = '"+cookie+"'<hr>" + Myna.formatError(e));
 				$cookie.__AUTH_USER_ID__ = null;
+				Myna.logSync("info","myna_auth_cookie decryption failed",
+					"cookie = '"+cookie+"'<hr>" + Myna.formatError(e));
+				
 			}
 		} else {
 			$cookie.__AUTH_USER_ID__ = null;
 		}
-		
 		return $cookie.__AUTH_USER_ID__;
 	},
 	/* Function: getAuthUser

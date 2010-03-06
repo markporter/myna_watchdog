@@ -716,7 +716,9 @@ if (!Myna) var Myna={}
 		var table = this;
 		
 		name= this.db.isCaseSensitive?name:name.toLowerCase();
-		options.name =this.db.isCaseSensitive?options.name:options.name.toLowerCase()
+		if (options.name){
+			options.name =this.db.isCaseSensitive?options.name:options.name.toLowerCase()
+		}
 		var 
 			originalCol = this.columns[name],
 			currentCol = new Object().setDefaultProperties(options),

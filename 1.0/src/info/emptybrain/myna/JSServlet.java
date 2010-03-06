@@ -29,15 +29,12 @@ public class JSServlet extends HttpServlet {
 				try{
 					MynaThread thread = new MynaThread();
 					thread.environment.put("servlet",this);
+					thread.rootDir = new File(sc.getRealPath("/")).toURI().toString();
 					thread.loadGeneralProperties();
-					if (thread.generalProperties.get("webroot") == null){
-						thread.rootDir = new File(sc.getRealPath("/")).toURI().toString();
-					} else {
-						
+					if (thread.generalProperties.getProperty("webroot") != null){
 						thread.rootDir = thread.generalProperties.getProperty("webroot");
-						System.out.println("using webroot: " + thread.rootDir);
+						
 					}
-					
 					try {
 						String [] serverStartScripts = thread.generalProperties.getProperty("server_start_scripts").split(",");
 						

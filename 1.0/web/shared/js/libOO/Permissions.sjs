@@ -438,7 +438,7 @@ if (!Myna) var Myna={}
 			} catch(e){
 				
 				try{
-					Myna.log("ERROR","Error accessing permissions database from Myna.Permissions.getAuthKey",Myna.formatError(__exception__));
+					Myna.logSync("ERROR","Error accessing permissions database from Myna.Permissions.getAuthKey",Myna.formatError(__exception__));
 				} catch(e2){}
 				var localKeysFile = new Myna.File("/WEB-INF/myna/localKeys");
 				if (localKeysFile.exists()){

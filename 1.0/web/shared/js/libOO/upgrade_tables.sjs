@@ -1,11 +1,11 @@
 /* installs or upgrades standard tables */
 
-
 var ds;
 var db;
 var table;
 var dm;
 Myna.include("/myna/administrator/myna_admin.sjs");
+
 /* myna_log */
 	ds = "myna_log"
 	if (MynaAdmin.isUniqueDsName(ds)){
@@ -102,6 +102,7 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 			file:new Myna.File("/WEB-INF/myna/local_databases/myna_permissions").toString().listAfter(":")
 		})
 	}
+	
 	db = new Myna.Database(ds);
 	/* apps table */
 		table = db.getTable("apps");
@@ -483,6 +484,7 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 			}
 		
 	dm = new Myna.DataManager("myna_permissions");
+	
 	/* check for Myna Admin rights */
 		var installed_rights = new Myna.Query({
 				ds:"myna_permissions",
