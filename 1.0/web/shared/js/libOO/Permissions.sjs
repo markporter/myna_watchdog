@@ -355,17 +355,20 @@ if (!Myna) var Myna={}
  		*/
 		consumeAuthToken:function(token){
 			var qry =new Myna.Query({
-					ds:"myna_permissions",
-					sql:<ejs>
-						select user_id
-						from tokens
-						where token = {token}
-							and expires >= {now:timestamp}
-					</ejs>,
-					values:{
-						token:token,
-						now:new Date(),
-					}
+				ds:"myna_permissions",
+				sql:<ejs>
+					select user_id
+					from tokens
+					where 
+						token = {token}
+						or token = {escaped_token}
+						and expires >= {now:timestamp}
+				</ejs>,
+				values:{
+					token:token,
+					escaped_token:unescape(token),
+					now:new Date(),
+				}
 			})
 			var user_id=null;
 			if (qry.data.length) {
@@ -425,6 +428,10 @@ if (!Myna) var Myna={}
 		*/
 		getAuthKey:function(name){
 			name = String(name).toLowerCase();
+			var varName ="__MYAN_AUTH_KEY_" + name 
+			if (varName in $req) return $req[varName];
+			
+			
 			try {
 				var manager = new Myna.DataManager("myna_permissions").getManager("crypt_keys");
 				if (!manager.find(name).length){
@@ -434,7 +441,8 @@ if (!Myna) var Myna={}
 						key:Myna.createUuid().toHash()
 					})
 				}
-				return manager.getById(name).get_key();
+				
+				return $req[varName]=manager.getById(name).get_key();
 			} catch(e){
 				
 				try{
@@ -448,7 +456,8 @@ if (!Myna) var Myna={}
 					localKeys[name] = Myna.createUuid().toHash();
 					localKeysFile.writeString(localKeys.toJson())
 				}
-				return localKeys[name]
+				
+				return $req[varName]=localKeys[name]
 			}
 		},
 	/* Function: getAuthToken

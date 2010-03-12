@@ -236,7 +236,7 @@ var $res = {
 		Myna.print("<a href ='" + url +"'>"+options.title+"</a>");
 		Myna.abort();
 	},
-/* Function: redirectWithToken
+/*  Function: redirectWithToken
 	redirect to a URL, including an auth_token for the current user.
 	
 	Parameters:

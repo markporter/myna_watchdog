@@ -499,16 +499,25 @@ Myna.DataManager.managerTemplate ={
 			
 			if (typeof pattern == "object"){
 				var myColumnList = this.columnNames.join()
-				pattern.getKeys().filter(function(colname){
-					return myColumnList.listContains(colname.toLowerCase())
+				pattern.getKeys().filter(function(colName){
+					return myColumnList.listContains(colName.toLowerCase())
 				}).forEach(function(colName){
 					colName= colName.toLowerCase();
+					colNameSql=colName;
+					var isNumeric=false;
 					if (pattern[colName] === undefined) pattern[colName] ="";
+					if (parseInt(pattern[colName]) != pattern[colName]){
+						if (!caseSensitive){
+							pattern[colName] = pattern[colName].toLowerCase()
+							colNameSql = "lower(" + colName +")"
+						}
+					}
 					criteria.push({
-						column:caseSensitive?colName:"lower(" + colName +")",
+						column:colNameSql,
 						op:/%/.test(pattern[colName])?" like " :" = ",
 						type:$this.columns[colName].data_type,
-						pattern:caseSensitive?pattern[colName]:String(pattern[colName]).toLowerCase()
+						isNumeric:isNumeric,
+						pattern:pattern[colName]
 					})
 					
 				})

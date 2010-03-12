@@ -157,7 +157,7 @@ Myna.Thread=function(f,args,priority){
 	this.__defineSetter__("captureOutput", function(val) {
 		if (!val){
 			_captureOutput=false;
-			this.releaseSubThread()
+			//this.releaseSubThread()
 		}
 	});
 	
@@ -204,9 +204,9 @@ Myna.Thread.prototype.join=function(timeout,throwOnTimeout){
 	var $this = this;
 	if (throwOnTimeout === undefined) throwOnTimeout=true;
 	if (timeout === undefined) timeout = 30*1000; //30 seconds
-	if (this.javaThread.isAlive()){
+	if (this.isRunning()){
 		this.javaThread.join(timeout);
-		if (this.javaThread.isAlive()){
+		if (this.isRunning()){
 			if (throwOnTimeout){
 				Myna.log("error","Thread ("+this.javaThread.toString()+") Timeout detail",Myna.dump(this,"thread detail",15));
 				throw new Error("Thread ("+this.javaThread.toString()+") still running after "+timeout+" miliseconds. See log for thread detail.")	
@@ -249,6 +249,7 @@ Myna.Thread.prototype.releaseSubThread=function(){
 		this.returnValue=undefined
 	}
 	this.mynaThread=null;
+	this.javaThread=null;
 }
 
 
@@ -256,7 +257,8 @@ Myna.Thread.prototype.releaseSubThread=function(){
 	returns true if this thread is still running
 */
 Myna.Thread.prototype.isRunning=function(){
-	return this.javaThread.isAlive();
+	if (this.mynaThread) return !this.mynaThread.environment.get("threadComplete"); 
+	return this.javaThread && this.javaThread.isAlive();
 }
 
 /* Function: getContent
@@ -333,13 +335,13 @@ Myna.Thread.joinAll = function(timeout,throwOnTimeout,killOnTimeout){
 		result.push(t.join(timeLeft,false));
 		if (!timeLeft){
 			
-			if (t.javaThread.isAlive()){
+			if (t.isRunning()){
 				timeExceeded =true;
 				if (killOnTimeout){
 					t.stop();
 					new Myna.Thread(function(t){
 						Myna.sleep(10000);
-						if (t.javaThread.isAlive()){
+						if (t.isRunning()){
 							t.kill();
 						}
 					},[t])
@@ -483,7 +485,9 @@ Myna.ThreadGroup.prototype.getThreadArray=function(){
 Myna.ThreadGroup.prototype.join=Myna.Thread.joinAll;
 
 /* Function: spawn 
-	calls <ThreadGroup.add> using this this group's defaults. 
+	calls <ThreadGroup.add> using this this group's defaults and returns the generated thread.
+	
+	
 	
 	<ThreadGroup.fn> must be defined. Anny arguments passed to this function 
 	will be passed to the generated thread  
@@ -497,7 +501,7 @@ Myna.ThreadGroup.prototype.spawn=function(){
 	if (!this.fn || typeof this.fn !== "function"){
 		throw new Error("the 'fn' property must be set to a function before calling spawn");	
 	}
-	this.add(this.fn,args)
+	return this.add(this.fn,args)
 	
 }
 
@@ -508,13 +512,13 @@ Myna.ThreadGroup.prototype.spawn=function(){
 */
 Myna.ThreadGroup.prototype.getRunningThreads=function(){
 	return this.getThreadArray().filter(function(t){
-		return t.javaThread.isAlive();
+		return t.isRunning();
 	})
 	
 }
 
 /* Function: add 
-	creates a thread and adds it to this group
+	creates a thread, adds it to this group, and returns the generated thread
 	
 	Parameters:
 		func		-	*Optional, default <ThreadGroup.fn>*
@@ -542,12 +546,13 @@ Myna.ThreadGroup.prototype.add=function(func,args,priority){
 		args,
 		priority
 	)
-	if (this.releaseOnJoin) t.releaseOnJoin = this.releaseOnJoin;
-	if (this.captureOutput) t.captureOutput = this.captureOutput;
+	if ("releaseOnJoin" in this) t.releaseOnJoin = this.releaseOnJoin;
+	if ("captureOutput" in this) t.captureOutput = this.captureOutput;
 	this.getThreadArray().push(t)
 	
 	if (this.joinEvery && this.getRunningThreads().length >= this.joinEvery) {
 		this.join(0);
 	}
+	return t;
 		
 }
