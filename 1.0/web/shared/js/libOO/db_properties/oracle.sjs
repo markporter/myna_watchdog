@@ -84,7 +84,8 @@ var types={
 }
 var dsInfo={
 	driver:"oracle.jdbc.OracleDriver",
-	url:"jdbc:oracle:thin:@{server}:{port}:{db}"
+	url:"jdbc:oracle:thin:@{server}:{port}:{db}",
+	port:"1521"
 }
 var columnQuoteChar='"';
 var connectionTestSql="select 1 from dual";

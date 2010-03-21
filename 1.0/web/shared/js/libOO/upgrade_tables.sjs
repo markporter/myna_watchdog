@@ -13,12 +13,12 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 			name:ds,
 			desc:"Datsource for Myna Logging",
 			driver:"org.h2.Driver",
-			url:"jdbc:h2:" + new Myna.File("/WEB-INF/myna/local_databases/myna_log").toString(),
+			url:"jdbc:h2:/WEB-INF/myna/local_databases/myna_log;FILE_LOCK=SERIALIZED",
 			username:"",
 			password:"",
 			type:"h2",
 			location:"file",
-			file:new Myna.File("/WEB-INF/myna/local_databases/myna_log").toString().listAfter(":")
+			file:"/WEB-INF/myna/local_databases/myna_log"
 		})
 	}
 	
@@ -94,12 +94,12 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 			name:ds,
 			desc:"Datsource for Myna Permissions",
 			driver:"org.h2.Driver",
-			url:"jdbc:h2:" + new Myna.File("/WEB-INF/myna/local_databases/myna_permissions").toString(),
+			url:"jdbc:h2:/WEB-INF/myna/local_databases/myna_permissions;FILE_LOCK=SERIALIZED",
 			username:"",
 			password:"",
 			type:"h2",
 			location:"file",
-			file:new Myna.File("/WEB-INF/myna/local_databases/myna_permissions").toString().listAfter(":")
+			file:"/WEB-INF/myna/local_databases/myna_permissions"
 		})
 	}
 	

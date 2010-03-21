@@ -1165,9 +1165,15 @@ var C ={
 							);	
 						}
 						
-						form.findField("driver").setValue(
+						ObjectLib.forEach(dsInfo,function(v,k){
+							var f =form.findField(k) 
+							if (f && !f.getValue()){
+								f.setValue(v)	
+							}
+						})
+						/* form.findField("driver").setValue(
 							dsInfo.driver
-						);
+						); */
 					} else {
 						form.findField("url").setDisabled(false)
 					}

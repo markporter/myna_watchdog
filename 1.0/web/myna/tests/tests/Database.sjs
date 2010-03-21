@@ -7,9 +7,9 @@
 			//Myna.print("running tests for:");
 			this.dataSources =[
 				// "myna_test_mssql",    
-				"myna_test_h2", 
-				"myna_test_mysql",
-				//"myna_test_pgsql",
+				//"myna_test_h2", 
+				//"myna_test_mysql",
+				"myna_test_pgsql",
 				// "myna_test_oracle", 
 				
 				
@@ -17,6 +17,7 @@
 				try {
 					MynaAdmin.loadDataSource(name);
 					//Myna.print(" " +name + " ");		
+					
 					return true;
 				
 				} catch (e){

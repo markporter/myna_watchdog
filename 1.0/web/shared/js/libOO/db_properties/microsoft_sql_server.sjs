@@ -87,7 +87,8 @@ var types={
 var columnQuoteChar='"';
 var dsInfo={
 	driver:"net.sourceforge.jtds.jdbc.Driver",
-	url:"jdbc:jtds:sqlserver://{server}:{port}/{db}"
+	url:"jdbc:jtds:sqlserver://{server}:{port}/{db}",
+	port:"1433"
 }
 var connectionTestSql="select 1";
 var functions={

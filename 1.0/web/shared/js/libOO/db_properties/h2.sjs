@@ -91,7 +91,7 @@ var columnQuoteChar='"';
 var dsInfo={
 	driver:"org.h2.Driver",
 	url:"jdbc:h2:tcp://{server}:{port}/{db}",
-	file_url:"jdbc:h2:file:{file};FILE_LOCK=SOCKET"
+	file_url:"jdbc:h2:file:{file};FILE_LOCK=SERIALIZED"
 }
 var connectionTestSql="select 1";
 var functions={

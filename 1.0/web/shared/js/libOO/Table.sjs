@@ -93,7 +93,7 @@ if (!Myna) var Myna={}
 			schema:table.schema,
 			tableName:table.tableName
 		}
-		
+		table.clearMetadataCache();
 	}
 
 /* Property: columns 
@@ -1125,6 +1125,7 @@ if (!Myna) var Myna={}
 
 	*/
 	Myna.Table.prototype.create = function(options){
+		this.clearMetadataCache()
 		var table= this;
 		this.db.init();
 		this.init();

@@ -88,7 +88,8 @@ var types={
 var columnQuoteChar="`";
 var dsInfo={
 	driver:"com.mysql.jdbc.Driver",
-	url:"jdbc:mysql://{server}:{port}/{db}"
+	url:"jdbc:mysql://{server}:{port}/{db}",
+	port:"3306"
 }
 var connectionTestSql="select 1";
 var functions={

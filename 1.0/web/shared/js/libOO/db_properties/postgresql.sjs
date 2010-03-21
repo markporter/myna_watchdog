@@ -82,7 +82,9 @@ var types={
 
 var dsInfo={
 	driver:"org.postgresql.Driver",
-	url:"jdbc:postgresql://{server}:{port}/{db}"
+	url:"jdbc:postgresql://{server}:{port}/{db}",
+	db:"postgres",
+	port:"5432"
 }
 var columnQuoteChar='"';
 var connectionTestSql="select 1";
@@ -94,7 +96,10 @@ var functions={
 			if (schemas[x] == ""){
 				defaultSchema = "";
 				break;
-
+			}
+			if (schemas[x].toLowerCase() == db.md.getUserName().toLowerCase() ){
+				defaultSchema = schemas[x];
+				break;
 			}
 		}
 		return defaultSchema;
@@ -104,13 +109,13 @@ var functions={
 		return new Myna.Query({
 			ds:db.ds,
 			sql:<ejs>
-				select t.table_schema as owner, count('x')
-				from INFORMATION_SCHEMA.TABLES t
-				
-				group by t.table_schema
-				having count('x') > 0
+				SELECT 
+					schemata.schema_name
+				FROM 
+					information_schema.schemata
+				where schema_name not like 'pg_%'
 			</ejs>
-		}).valueArray("owner")
+		}).valueArray("schema_name")
 		
 	}, 
 	/* getSchemas:function(db){
