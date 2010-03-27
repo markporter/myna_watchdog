@@ -333,7 +333,7 @@ var ObjectLib = {}
 			break;
 			
 			case "date":
-				return '"' +obj.toString() +'"';
+				return '"\\/Date(' +obj.getTime() +')\\/"';
 			break;
 		
 			case "number":

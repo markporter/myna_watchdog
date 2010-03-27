@@ -2,7 +2,17 @@
 	Global object that stores information about the server environment.
 */
 var $server={
-	
+/* property: dataSources
+		A structure of DS information
+	*/	
+	get dataSources(){
+		var result ={}
+		Myna.JavaUtils.mapToObject($server_gateway.dataSources)
+		.forEach(function(v,k){
+			result[k] =Myna.JavaUtils.mapToObject(v); 
+		})
+		return result;
+	},
 /* property: isThread
 	true if this is an independent thread with no access to session or servlet 
 	*/

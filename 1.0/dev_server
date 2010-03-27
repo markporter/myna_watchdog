@@ -33,7 +33,7 @@ start)
     ;;
 stop)
 	cd $myna_home
-	kill -9 $(pgrep -f ^java.*$server)
+	kill -9 $(pgrep -f ^java.*webroot=$webroot)
 	rm $pidfile
 	echo "Myna instance '$server' stopped."
     ;;

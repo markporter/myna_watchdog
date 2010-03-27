@@ -50,111 +50,114 @@ var C ={
 		var buttons=[];
 		
 		var config={
-			layout:"border",
+			layout:"fit",
 			items:[{
-				xtype:"panel",
-				region:"center",
-				frame:false,
-				layout:"fit",
-				border:false,
-				items:[{
-					id:"center_tabs",
-					hidden:true,
-					xtype:"tabpanel",
-					autoDestroy:true,
-					listeners: {
-					}		
-				}]
-				
-			},{
-				region:"north",
-				height:25,
 				layout:"border",
-				
-				defaults:{
-					border:false,
-					layout:"fit"
-					
-				},
-				items:[{
-					html:"<div class='app_title'>Myna Adminstrator</div>",
-					region:"west",
-					width:200
-				},{
-					 region:"center", 
-					 html:""
-				},{
-					region:"east",
-					html:'Version: ' +version + ' <a class="link" href="?fuseaction=logout">Logout</a>',
-					bodyStyle:"padding-right:10px;text-align:right",
-					width:200
-				
-				}]
-			},{
-				region:"west",
-				width:150,
-				border:false,
-				xtype:"panel",
-				/* bodyStyle:"padding:10px;", */
-				bodyBorder:false,
-				title:"Options:",
-				collapsible:true,
-				frame:true,
-				defaults:{
-					border:false,
-					bodyStyle:"padding:5px"
-				},
-				items:[{
-					html:'<span class="link" onclick="C.settings.main()">General Settings</span>'
-				},{
-					html:'<span class="link" onclick="C.ds.main()">Data Sources</span>'
-				},{
-					html:'<span class="link" onclick="C.threads.main()">Running Requests</span>'
-				},{
-					html:'<span class="link" onclick="C.log_general.main()">View General Log</span>'
-					//html:'<a href="?fuseaction=view_log_general" class="link" target="myna_log_general">View General Log</span>'
-				},{
-					html:'<span class="link" onclick="C.upgrade.main()">Upgrade Myna</span>'
-				},{
-					html:'<span class="link" onclick="C.tasks.main()">Scheduled Tasks</span>'
-				},{
-					html:'<span class="link" onclick="C.launch_permissions()">Permissions</span>'
-				},{
-					/*html:'<b>Permissions:</b>'
-				},{
-					 html:'<li><span class="link" onclick="C.users.main()">Manage Users</span></li>'
-				},{
-					html:'<li><span class="link" onclick="C.rights.main()">Manage Rights</span></li>'
-				},{
-					html:'<li><span class="link" onclick="C.user_groups.main()">Manage User Groups</span></li>'
-				},{ */
-					html:'<a href="?fuseaction=new_password_form" class="link" >Change Admin Password</a>'
-				},{
-					html:'<span class="link" onclick="window.open(\'' + rootUrl + 'shared/docs/index.html\')">Documentation</span>'
-				},{
-					html:'<span class="link" onclick="window.open(\'' + rootUrl + 'examples/index.ejs\')">Code Examples</span>'
-				}]
-			},{
-				region:"south",
-				height:20,
-				layout:"fit",
-				hidden:true,
-				xtype:"toolbar",
-				items:[{
+				tbar:[{
+						xtype:"tbtext",
+						text:"<div class='app_title'>Myna Adminstrator</div>"
+					},{
 						xtype:"tbfill"
-					},
-					C.body.createChild({
-						id:"status_label",
-						html:"status_label"
-					}).dom,
-					{
-						xtype:"tbspacer"
 					},{
-						xtype:"tbspacer"
+						
+						xtype:"tbtext",
+						text:title,
 					},{
-						xtype:"tbspacer"
+						xtype:"tbtext",
+						text:"&nbsp;".repeat(10),
+					},{
+						xtype:"tbtext",
+						text:'Version: ' +version
+					},{
+						text:"Logout",
+						handler:function(){
+							location.href="?fuseaction=logout"
+						}
+				}],
+				items:[{//center
+						xtype:"panel",
+						region:"center",
+						frame:false,
+						layout:"fit",
+						border:false,
+						
+						
+						items:[{//center_tabs
+							id:"center_tabs",
+							hidden:true,
+							xtype:"tabpanel",
+							autoDestroy:true,
+							listeners: {
+							}		
+						}]
+					
+					},{//west
+						region:"west",
+						width:150,
+						border:false,
+						xtype:"panel",
+						/* bodyStyle:"padding:10px;", */
+						bodyBorder:false,
+						title:"Options:",
+						collapsible:true,
+						frame:true,
+						defaults:{
+							border:false,
+							bodyStyle:"padding:5px"
+						},
+						items:[{
+							html:'<span class="link" onclick="C.settings.main()">General Settings</span>'
+						},{
+							html:'<span class="link" onclick="C.ds.main()">Data Sources</span>'
+						},{
+							html:'<span class="link" onclick="C.threads.main()">Running Requests</span>'
+						},{
+							html:'<span class="link" onclick="C.log_general.main()">View General Log</span>'
+							//html:'<a href="?fuseaction=view_log_general" class="link" target="myna_log_general">View General Log</span>'
+						},{
+							html:'<span class="link" onclick="C.upgrade.main()">Upgrade Myna</span>'
+						},{
+							html:'<span class="link" onclick="C.tasks.main()">Scheduled Tasks</span>'
+						},{
+							html:'<span class="link" onclick="C.launch_permissions()">Permissions</span>'
+						},{
+							/*html:'<b>Permissions:</b>'
+						},{
+							 html:'<li><span class="link" onclick="C.users.main()">Manage Users</span></li>'
+						},{
+							html:'<li><span class="link" onclick="C.rights.main()">Manage Rights</span></li>'
+						},{
+							html:'<li><span class="link" onclick="C.user_groups.main()">Manage User Groups</span></li>'
+						},{ */
+							html:'<a href="?fuseaction=new_password_form" class="link" >Change Admin Password</a>'
+						},{
+							html:'<span class="link" onclick="window.open(\'' + rootUrl + 'shared/docs/index.html\')">Documentation</span>'
+						},{
+							html:'<span class="link" onclick="window.open(\'' + rootUrl + 'examples/index.ejs\')">Code Examples</span>'
+						}]
+					},{//south
+						region:"south",
+						height:20,
+						layout:"fit",
+						hidden:true,
+						xtype:"toolbar",
+						items:[{
+								xtype:"tbfill"
+							},
+							C.body.createChild({
+								id:"status_label",
+								html:"status_label"
+							}).dom,
+							{
+								xtype:"tbspacer"
+							},{
+								xtype:"tbspacer"
+							},{
+								xtype:"tbspacer"
+						}]
 				}]
 			}]
+				
 		}
 
 		

@@ -61,9 +61,12 @@ var fusebox={
 			this.login({error_message:"You have been logged out of Myna Administrator"});
 	},
 	main:function(data){
+		var props=Myna.getGeneralProperties();
+		
 		includeTemplate("views/dsp_main.html",{
 			version:$server.version,
 			extUrl:$application.extUrl,
+			title:props.instance_id + "/" + props.instance_purpose + " on " + $server.hostName,
 			rootUrl:$server.rootUrl,
 			dbProperties:$application.get("db_properties").toJson()
 		});

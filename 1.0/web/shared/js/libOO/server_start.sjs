@@ -1,4 +1,3 @@
-
 Myna.include("/shared/js/libOO/upgrade_tables.sjs",{});
 
 
@@ -20,3 +19,17 @@ keys.forEach(function(dsName){
 				 bds.setValidationQuery(dbTypes[ds.type].connectionTestSql);
 	  }
 })
+
+
+//set up HazelCast
+var Hazelcast = com.hazelcast.core.Hazelcast;
+var config = Hazelcast.getConfig();
+var perms= $server.dataSources.myna_permissions
+config.setGroupConfig(new com.hazelcast.config.GroupConfig(perms.url,perms.password||Myna.createUuid().toHash()))
+Hazelcast.restart();
+var topic = Hazelcast.getTopic("default");  
+topic.addMessageListener(new com.hazelcast.core.MessageListener({
+	onMessage:function(msg){
+		java.lang.System.out.println("topic message: " + String(msg))
+	}
+}));
