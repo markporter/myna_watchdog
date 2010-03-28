@@ -1193,8 +1193,8 @@ if (!Myna) var Myna={}
 		If more than one thread calls lock() near the same time, the first call 
 		will get access and the other call will be placed in a FIFO queue until 
 		the first thread calls release() on the returned lock object. For this 
-		reason it is best to "return" from _+func_ as soon as possible. If your 
-		function throws an exceptiion, its lock will be released. If _timeout_ is 
+		reason it is best to "return" from _func_ as soon as possible. If your 
+		function throws an exception, its lock will be released. If _timeout_ is 
 		exceeded while waiting for a lock, then <Myna.lock> will return false
 		
 		Example:
@@ -1244,6 +1244,46 @@ if (!Myna) var Myna={}
 		} finally {
 			$server_gateway.manageLocksPermit.release();	
 		}
+	}
+/* Function: clusterLock 
+		Gets an exclusive lock by name for the whole cluster. 
+		
+		Parameters:
+		name 		-	name of the lock to acquire
+		timeout	-	time in seconds to wait to acquire a lock. If this is 0, the 
+						lock will only be acquired if no other thread is using it
+		func		-	function to execute inside the lock
+		
+		Returns:
+			true if a lock was acquired and _func_ was executed
+		
+		Detail:
+		If more than one thread calls lock() near the same time, the first call 
+		will get access and the other call will be placed in a FIFO queue until 
+		the first thread calls release() on the returned lock object. For this 
+		reason it is best to "return" from _func_ as soon as possible. If your 
+		function throws an exception, its lock will be released. If _timeout_ is 
+		exceeded while waiting for a lock, then <Myna.clusterLock> will return false
+		
+		Example:
+		(code)
+			//getting a cluster-wide lock on an DB operation
+			var success=Myna.clusterLock("Update Employees",10,function(){
+				new Myna.Query(...)
+			}
+		(end)
+	 
+	*/
+	Myna.clusterLock=function Myna_getLock(name, timeout, func){
+		var lock = com.hazelcast.core.Hazelcast.getLock("name");
+		if (lock.tryLock(timeout*1000,java.util.concurrent.TimeUnit.MILLISECONDS)){
+			try {
+				func();
+				return true;
+			} finally {
+				lock.unlock();
+			}
+		} else return false;
 	}
 /* Function: log 
 	logs a string to the general log table 
