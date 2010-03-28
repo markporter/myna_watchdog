@@ -24,7 +24,8 @@
 	"Mail.sjs",
 	"HttpConnection.sjs",
 	"WebService.sjs",
-	"Permissions.sjs"
+	"Permissions.sjs",
+	"Event.sjs"
 	
 ].forEach(function(element){
 	try {

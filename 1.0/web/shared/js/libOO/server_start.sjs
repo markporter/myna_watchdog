@@ -27,9 +27,23 @@ var config = Hazelcast.getConfig();
 var perms= $server.dataSources.myna_permissions
 config.setGroupConfig(new com.hazelcast.config.GroupConfig(perms.url,perms.password||Myna.createUuid().toHash()))
 Hazelcast.restart();
-var topic = Hazelcast.getTopic("default");  
-topic.addMessageListener(new com.hazelcast.core.MessageListener({
-	onMessage:function(msg){
-		java.lang.System.out.println("topic message: " + String(msg))
+//create global listeners variable
+$server.set("event_listeners",{})
+//load registered listeners
+if (new Myna.File("/WEB-INF/myna/registered_listeners.sjs").exists()){ 
+	Myna.include("/WEB-INF/myna/registered_listeners.sjs");
+}
+/* new Myna.Event("test").listen({
+	handler:function(event){
+		java.lang.System.out.println(event.toJson())
 	}
-}));
+})
+
+new Myna.Event("test").listen({
+	path:"/event_target.sjs",
+	purpose:$server.purpose
+}) 
+new Myna.Event("test").listen({
+	url:"http://localhost:8180/dev/event_target.sjs",
+	server:$server.hostName
+})  */

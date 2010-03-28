@@ -359,11 +359,15 @@ var $server={
 		key		-		a variable name
 		value	-		The value to set
 	
+	Returns:
+		_value_	
+	
 	See:
 		<$server.get>, 
 	*/	
 	set:function(key,value){
-		$server_gateway.serverVarMap.put(key,value)
+		$server_gateway.serverVarMap.put(key,value);
+		return value;
 	},
 }
 	

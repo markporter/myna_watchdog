@@ -121,9 +121,13 @@ Myna.Thread=function(f,args,priority){
 	var parent = this;
 	/* this.functionSource = f.toSource();
 	$server_gateway.environment.put("threadSource", this.functionSource); */
-	
-	$cookie.setAuthUserId($cookie.getAuthUserId());
-	var source = f.toSource().replace(/^\((.*)\)$/,"$1");
+	try{
+		if ($cookie) $cookie.setAuthUserId($cookie.getAuthUserId());
+	}catch(e){
+		$req={}
+	}
+	var source = typeof f == "string"?f:f.toSource()
+	source=source.replace(/^\((.*)\)$/,"$1");
 	if ($server_gateway.threadChain.size() > 5){
 		Myna.logSync("ERROR","thread chains cannot descend more than 5 levels.",Myna.dump($server_gateway.threadChain,"Thread Chain") + Myna.dump($server,"$server")+ Myna.dump($req.data,"$req.data"));
 		throw new Error("thread chains cannot descend more than 5 levels.");

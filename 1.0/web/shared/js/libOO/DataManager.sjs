@@ -495,7 +495,7 @@ Myna.DataManager.managerTemplate ={
 			var criteria=[];
 			var $this= this;
 			var pkey =this.columns[this.primaryKey].column_name;
-			
+			var colNameSql;
 			
 			if (typeof pattern == "object"){
 				var myColumnList = this.columnNames.join()

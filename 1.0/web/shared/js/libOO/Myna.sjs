@@ -1190,12 +1190,26 @@ if (!Myna) var Myna={}
 			true if a lock was acquired and _func_ was executed
 		
 		Detail:
-		If more than one thread calls getLock() near the same time, the first call 
+		If more than one thread calls lock() near the same time, the first call 
 		will get access and the other call will be placed in a FIFO queue until 
 		the first thread calls release() on the returned lock object. For this 
 		reason it is best to "return" from _+func_ as soon as possible. If your 
 		function throws an exceptiion, its lock will be released. If _timeout_ is 
 		exceeded while waiting for a lock, then <Myna.lock> will return false
+		
+		Example:
+		(code)
+			// classic check-lock-check-update algorithm
+			// this is the most thread-safe way to create global resources 
+			if (!$server.get("globalVar")){
+				Myna.lock("create globalVar",0,function(){
+					//second check in case another thread created globalVar
+					if (!$server.get("globalVar")){
+						$server.set("globalVar",{})
+					}
+				})
+			}
+		(end)
 	 
 	*/
 	Myna.lock=function Myna_getLock(name, timeout, func){
