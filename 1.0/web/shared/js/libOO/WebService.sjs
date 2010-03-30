@@ -516,7 +516,7 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
       var paramObject ={}
       if ("params" in  functionDef){
          functionDef.params.forEach(function(p,index){
-            if (paramArray[index] == undefined){
+            if (paramArray[index] === undefined || (!paramArray[index] && paramArray[index]!==0 && paramArray[index]!==false)){
                if ("defaultValue" in p){
                   paramObject[p.name] = p.defaultValue;
                } else if ("required" in p && p.required){

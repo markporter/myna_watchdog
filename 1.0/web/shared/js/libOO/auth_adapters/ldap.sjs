@@ -125,6 +125,7 @@ function isCorrectPassword(username,password){
 		 dn = username +"@"+this.config.ad_domain;
 	} else {
 		 var dn = this.getDN(username);
+		 Myna.log("AUTH","LDAP: unable to find user " + username +" in LDAP",Myna.dump(this));
 		 if (!dn) return false;
 	}
 		 
@@ -132,7 +133,10 @@ function isCorrectPassword(username,password){
 	try {
 		new Myna.Ldap(this.config.server, dn, password);
 		return true;
-		} catch(e){return false}
+	} catch(e){
+		Myna.log("AUTH","LDAP Authentication failed for " + dn,Myna.formatError(e));
+		return false
+	}
 }
 
 function searchUsers(search){
@@ -140,7 +144,7 @@ function searchUsers(search){
 	var qry ="(|";
 	
 	$this.config.search_columns.split(/,/).forEach(function(col){
-		 qry +="("+col+"=*" + search +"*)"
+		 qry +="("+col+"=" + search +"*)"
 	})
 	
 	qry +=")";
@@ -155,7 +159,15 @@ function searchUsers(search){
 	})
 	
 	return new Myna.DataSet({
-		data:$this.getLdap().search(qry,attributes).map(function(row){
+		data:$this.getLdap().search(qry,attributes)
+		.filter(function(row){
+			
+			return $this.config.map.login in row.attributes 
+			&& row.attributes[$this.config.map.login].length
+			&& $this.config.map.email in row.attributes
+			&& row.attributes[$this.config.map.email].length
+		})
+		.map(function(row){
 			var result = {
 				login:"",
 				first_name:"",
@@ -167,10 +179,10 @@ function searchUsers(search){
 			$this.config.map.forEach(function(ldap_attribute,myna_attribute){
 				 if (ldap_attribute in row.attributes){
 					 result[myna_attribute] = row.attributes[ldap_attribute][0];
+					 if (myna_attribute == "login") result[myna_attribute] = result[myna_attribute].toLowerCase(); 
 				 }
 			})
-			if (result.login.length) return result
-			else return undefined
+			return result;
 		}),
 		columns:"login,first_name,last_name,middle_name,email,title"
 	})

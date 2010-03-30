@@ -718,8 +718,8 @@
 								password,
 								u.first_name,
 								u.middle_name,
-								u.last_name
-								type,
+								u.last_name,
+								ul.type,
 								'' as user_name,
 								
 								u.user_id

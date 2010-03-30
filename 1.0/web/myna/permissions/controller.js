@@ -1567,6 +1567,9 @@ var C ={
 							{name:'login'},
 							{name:'password'},
 							{name:'user_name'},
+							{name:'first_name'},
+							{name:'middle_name'},
+							{name:'last_name'},
 							{name:'type'},
 							{name:'user_id'}	
 						]),
@@ -1576,7 +1579,9 @@ var C ={
 						{id:"user_login_id", header: "user_login_id", width: 150, sortable: true, renderer:C.linkRenderer, dataIndex: 'user_login_id'},
 						{id:"login", header: "Login", dataIndex:'login', width: 100, sortable: true},
 						{id:"type", header: "Type", dataIndex:'type', width: 100, sortable: true},
-						{id:"user_name", header: "User Name", dataIndex:'user_name', width: 100, sortable: true},
+						{id:"first_name", header: "First Name", dataIndex:'first_name', width: 50, sortable: true},
+						{id:"middle_name", header: "Middle Name", dataIndex:'middle_name', width: 30, sortable: true},
+						{id:"last_name", header: "Last Name", dataIndex:'last_name', width: 100, sortable: true},
 						{id:"user_id", header: "User Id", dataIndex:'user_id', width: 100, sortable: true}
 					],
 					autoExpandColumn:0,
@@ -2164,6 +2169,9 @@ var C ={
 									{name:'user_group_id'},
 									{name:'user_id'},
 									{name:'user_name'},
+									{name:'first_name'},
+									{name:'middle_name'},
+									{name:'last_name'},
 									{name:'logins'}
 								]),
 								remoteSort: true
@@ -2180,7 +2188,9 @@ var C ={
 									dataIndex: 'user_group_member_id'
 								},
 								
-								{id:"user_name", header: "User Name", dataIndex:'user_name', width: 150, sortable: true},
+								{id:"first_name", header: "First Name", dataIndex:'first_name', width: 50, sortable: true},
+								{id:"middle_name", header: "Middle Name", dataIndex:'middle_name', width: 30, sortable: true},
+								{id:"last_name", header: "Last Name", dataIndex:'last_name', width: 100, sortable: true},
 								{id:"logins", header: "Logins", dataIndex:'logins', width: 250, sortable: false},
 								{id:"user_id", header: "User Id", dataIndex:'user_id', width: 100, sortable: true}
 							],

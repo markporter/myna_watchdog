@@ -149,7 +149,7 @@ var fusebox={
 				$res.metaRedirect(rawData.callback);	
 			} else {
 				data.message="Authentication failed."
-				fusebox.login({});
+				fusebox.login({message:"Username or Password is incorrect"});
 			}
 		}
 	},

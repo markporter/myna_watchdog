@@ -411,8 +411,8 @@ if (!Myna) var Myna={}
 			var adapter = $server.get("MYNA_auth_adapter_" + auth_type);
 			if (!adapter){
 				adapter = {
-			   config:new Myna.File("/WEB-INF/myna/auth_types/" + auth_type).readString().parseJson()
-			}
+					config:new Myna.File("/WEB-INF/myna/auth_types/" + auth_type).readString().parseJson()
+				}
 				Myna.include("/shared/js/libOO/auth_adapters/" + adapter.config.adapter +".sjs",adapter);
 				$server.set("MYNA_auth_adapter_" + auth_type,adapter);
 			}
@@ -648,11 +648,11 @@ if (!Myna) var Myna={}
 					where
 						users.user_id = user_logins.user_id
 						and type={type}
-						and login={login}
+						and lower(login)={login}
 				</ejs>,
 				values:{
 					type:type,
-					login:login
+					login:login.toLowerCase()
 				}
 			});
 			
