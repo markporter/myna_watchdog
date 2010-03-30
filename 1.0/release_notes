@@ -1,3 +1,64 @@
+Release Name: 1.0_beta_5
+Notes:
+
+This release contains some new features, performance
+enhancements, minor bug fixes and documentation updates
+
+
+New Features
+------------
+
+* Added symlink support. Now myna pages inside symlinked sub directories will 
+  appear to be in the myna directory instead of the actual directory where the 
+  file resides. This should allow application.sjs nesting to work properly 
+* Added extra parameters to Myna.Thread.joinAll(): timeout, throwOnTimeout, and
+  killOnTimeout
+* Added Myna.ThreadGroup: a class for grouping multiple threads together with
+  the same options
+* $cookie.getAuthUserId() will now return the same value in a subThread as in
+  the parent thread
+* Cookies and request data in subThreads now match the parentThread
+* Added property to WEB-INF/general.properties: webroot. When this 
+  property is set to an absolute MynaPath, then this directory will be 
+  used instead of attempting to calculate the root directory
+* Modified several file tests to interpret security exceptions as 
+  "not exists". This makes Myna more friendly to security managers
+* Updated H2 jar (1.2.131)
+* Added "json-sans-eval" by Mike Samuel as the default JSON parser. This parser
+  offers a speed increase and the ability to parse dates. This parser also does 
+  not use eval() so it is impossible to execute JS code in JSON 
+* Added Hazelcast distributed messaging system. Currently cluster membership is 
+  based on the myna_permissions connection details. Only instances with the same 
+  url and password for myna_permissions will cluster   
+* Added new property $server.dataSources which is a JS structure of DataSource 
+  details
+* Made some cosmetic changes to the Myna Administrator to make it more clear 
+  which server you are looking at when you have multiple servers
+* Added event system to Myna via Myna.Event. This allows distributed events 
+  across the Myna cluster
+  
+Bug Fixes
+----------
+* fixed bug where Database.isCaseSensitive was blowing up for in-memory
+  databases
+* fixed bug in case-sensitive db code that caused all datasources to be
+  sensitive
+  by default
+* Fixed bug with webroot property that could cause errors accessing files
+* Fixed bug in $cookie.getAuthUserID that could cause timeouts on every page
+* Modified new password dialog to use a Myna include instead of includeTemplate
+* Fixed bug in Table.modifyColumn related to isCaseSensitive. This was causing 
+  the "black page" problem in beta4
+* Added fix for bug that caused logins to fail when the token contains
+  url encoded characters
+* Modified DataManager.manager.find to detect numeric search criteria
+* Various Myna.Thread tweaks
+* Fixes for PostgreSQL schema support 
+* Changed default lock type to "SERIALIZED"
+
+
+------------------------------------------------------------------------
+
 Release Name: 1.0_beta_4
 Notes:
 
