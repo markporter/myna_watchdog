@@ -116,7 +116,7 @@ if (!Myna) var Myna={}
 /* ============= Permissions Main  ========================================== */
 	Myna.Permissions ={
 	/* Function: addApp
-			Adds a new application, and returns an instance of 
+			Adds/updates an application, and returns an instance of 
 			<Myna.Permissions.App>. 
 			
 			Parameters:

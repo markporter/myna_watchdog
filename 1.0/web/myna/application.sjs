@@ -1,1 +1,3 @@
-$application.extUrl =$server.rootUrl +"myna/ext/"
+{
+	extUrl:$server.rootUrl +"myna/ext/"
+}

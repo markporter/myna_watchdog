@@ -402,14 +402,6 @@ if (!Myna) var Myna={}
 				}
 				return f
 			})
-			/* .filter(function(f,index,array){
-				if (recursive && f.isDirectory()){
-					subDirs.push(f)
-					return false;
-				} else {
-					return true;	
-				}
-			}) */
 			.filter(filter)
 			.forEach(function(f){
 				result.push(f)

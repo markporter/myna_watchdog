@@ -4,7 +4,8 @@
 	Detail:
 		When a .ejs or .sjs file is requested, Myna examines every directory 
 		between the web root and the requested file, and includes any 
-		application.sjs file it finds. Each of these files has an opportunity to:
+		application.sjs file it finds, in the order found. Each of these files has 
+		an opportunity to:
 		
 		* declare application specific variables
 		* execute functions
@@ -17,40 +18,280 @@
 		
 		Next, the originally requested .sjs or .ejs file is executed.
 		
-		Finally <$application.onRequestEnd> is called 
+		Finally <$application.onRequestEnd> is called.
 		
+		Applications can be named or anonymous. Named applications are registered 
+		in the permissions system and also have a variable cache accessed through
+		$application.set/get. 
 		
-		Example:
+		The application.sjs file should conform to this template:
+		
+		Template:
 		(code)
-		// this creates a Page object that will be available to every page under 
-		// this directory 
-		var Page={
-			includeLayout:true,
-			title:"Myna Application Server",
-			keywords:"",
-			breadCrumbs:[{
-				url:$server.rootUrl+"layout_test/",
-				label:"Layout Test"
-			}],
-			description:"",
-			tags:[]
+		{
+			//--------- properties -----------------------------------------------
+			appname:"",// unique variable name of this application, omit this for anonymous applications
+			idleMinutes:60,// Lifetime of Application variable cache
+			//--------- local properties -----------------------------------------
+			myProp:"".
+			
+			//--------- init method ----------------------------------------------
+			init:function(){	// this is run before any workflow methods to setup the application.
+			
+			},
+			
+			//--------- workflow methods -----------------------------------------
+			// Each workflow method is appended to the same named method in the 
+			// parent application. If you need to override the parent functions 
+			// or prepend instead of append, use init()
+			//
+			onApplicationStart:function(){ // run if application cache has expired
+			
+			},
+			onRequestStart:function(){ // run directly before requested file
+			
+			},
+			onRequestEnd:function(){ // run directly after requested file
+			
+			},
+			onSessionStart:function(){ // run before a call to $session.get/set when session is expired 
+			
+			},
+			onError:function(){ //run when an error occurs. Return true to cancel default. 
+				
+			},
+			onError404:function(){ //run when a call to a non-existent file is made. Return true to cancel default.
+				
+			},
+			rights:[], // an array of Myna.Permissions.Right definitions to be created 
 		}
-		//this assigns a propery to the $application object
-		var layoutDir =$application.directory +"layout";
-		
-		// this wraps all content generated in a layout file
-		$application.before("onRequestEnd",function(){
-			if (Page.includeLayout) {
-				Myna.includeOnce(layoutDir + "/SiteLayout.ejs",{content:$res.clear()})
-			}
-		})
 		(end)
+		
+		Note:
+			To maintain compatibility with older Myna code, an application.sjs file 
+			may contain plain JS. In this case it will internally be converted into
+			an "init" function and executed.
+		
+		Examples:
+		(code)
+		//from the Myna Adminstrator
+		{
+			appname:"myna_admin",
+			prettyName:"Myna Adminstrator",
+			noAuthFuses:["login","auth", "logout"],
+			defaultFuseAction:"login",
+			mainFuseAction:"main",
+			onRequestStart:function(){
+				Myna.applyTo($server.globalScope);
+				var session_cookie;		// stores encrypted session data
+				
+				if (!$req.data.fuseaction) $req.data.fuseaction=this.defaultFuseAction; 
+				//is the user authenticated?
+				if (this.noAuthFuses.indexOf($req.data.fuseaction.toLowerCase()) != -1) return;	
+				if ( !$cookie.getAuthUserId() ){
+						$req.data.fuseaction=this.defaultFuseAction;
+				} else { //is the the user authorized for this fuseaction?
+					if ($cookie.getAuthUserId() == "myna_admin") return;
+					
+					var user = $cookie.getAuthUser();
+					if (user.hasRight("myna_admin","full_admin_access")) return;
+					
+					$req.data.fuseaction="no_access";
+					throw new Error("You do not have access to that feature")
+					
+				}
+				
+				
+			},
+			onApplicationStart:function(){
+				Myna.applyTo($server.globalScope);
+				var props =new Myna.File("/WEB-INF/classes/cron.properties") 
+				if (!props.exists()){
+					props.writeString("")
+				}
+			
+				//Load datasource driver properties 
+				var propFiles = new Myna.File("/shared/js/libOO/db_properties").listFiles("sjs");
+				var db_props={}
+				
+				propFiles.forEach(function(propFile){
+					if (!/[\w]+.sjs$/.test(propFile.getFileName())) return;
+					var vendor = propFile.getFileName().split(/\./)[0];
+					var obj={};
+					Myna.include(propFile,obj);
+					if (obj.dsInfo){
+						db_props[vendor] = obj.dsInfo;
+					}
+				});
+				$application.set("db_properties",db_props);
+				
+			},
+			rights:[{
+				name:"full_admin_access",
+				description:"Full access to all Administrator functions"
+			}]
+		}
+
+
+
+		// an example of anonymous applications and altered workflow.
+		
+		// parent folder  
+		{
+			//$application.directory/url are set before this file is loaded
+			layoutFile:$application.directory +"layout/outer_template.ejs"
+			init:function(){
+				// this wraps all content generated in a layout file
+				// by using "before" in this init function we are reversing the 
+				// execution order to "inside-out" instead of the default "outside-in"
+				$application.before("onRequestEnd",function(){
+					if (Page.includeLayout) {
+						Myna.includeOnce(this.layoutFile,{content:$res.clear()})
+					}
+				})
+			},
+			onRequestStart:function(){
+				//decalres global variable that the request page can access
+				Page={
+					includeLayout:true,
+					title:"Parent content",
+					breadCrumbs:[{
+						url:$application.url,
+						label:"Parent"
+					}],
+				}
+			},
+		}
+		
+		//child folder
+		{
+			layoutFile:$application.directory +"layout/inner_template.ejs"
+			init:function(){
+				// this wraps all content generated in a layout file, before the parent wrap
+				// by using "before" in this init function we are reversing the 
+				// execution order to "inside-out" instead of the default "outside-in"
+				$application.before("onRequestEnd",function(){
+					if (Page.includeLayout) {
+						Myna.includeOnce(this.layoutFile,{content:$res.clear()})
+					}
+				})
+			},
+			onRequestStart:function(){
+				//override page defaults
+				Page.title = "Child content"
+				Page.breadCrumbs.push({
+					url:$application.url,
+					label:"Child"
+				})
+			},
+		}
+		
+		//outer_template layout file
+		<html>
+			<head><title><%=Page.title%></title></head>
+			<body>
+				<!-- Breadcrumbs -->
+				<div class="header-breadcrumbs">
+					<ul>
+					<@loop array="Page.breadCrumbs" element="bc">
+						<li><a href="<%=bc.url%>"><%=bc.label%></a></li>
+					</@loop>
+					</ul>
+				</div>
+				<div id="main_content"><%=this.content%></div>
+			</body>
+		</html>
+		
+		//inner_template layout file
+		
+		<div id="inner_content">
+			<h1> Here is the inner layout </h1>
+			<%=this.content%>
+		</div>
+		
+		(end)
+		
+		
 		
 		
 */
 var $application={
+	/* Property: appname
+		String application name. 
+		
+		Detail:
+			Should only contain letters, numbers and the underbar (_) character. 
+			If set, an application cache is created. Variables can be set and 
+			retrieved from this scope via <$application.set> and 
+			<$application.get>. Setting an appname also registers this application
+			in the permissions system
+			
+		Example:
+		(code)
+			..
+			appname:"myna_admin",
+			..
+		(end)
+	*/
+	appname:null,
+	get appName(){return $application.appname},
+	set appName(val){$application.appname = val},
+	/* Property: displayName
+		String application name for displaying to humans *Default appname*.   
+		
+		Detail:
+			This should be a single line title for the application as you might 
+			display in you page title
+		
+		Example:
+		(code)
+			..
+			displayName:"Myna Administrator",
+			..
+		(end)
+	*/
+	_displayName:null,
+	get displayName(){return $application._displayName||$application.appname},
+	set displayName(val){$application._displayName = val},
+	get display_name(){return $application.displayName},
+	set display_name(val){$application.displayName = val},
+	/* Property: description
+		Short description of this application   
+		
+		
+		
+		Example:
+		(code)
+			..
+			description:"Manages Myna server settings",
+			..
+		(end)
+	*/
+	description:"",
+/* Property: idleMinutes
+		Max time in minutes between application data access before app memory is 
+		recovered *Default 60*. 
+		
+		Detail:
+		Any data set in the application scope should be expected to be 
+		destroyed at some point. Persistent data should be set in 
+		<$application.onApplicationStart> since that function is called before 
+		<$application.onRequestStart> when the application cache has timed out. 
+		
+	*/
+	idleMinutes:60,
+/* Property: rights
+		Array of <Myna.Permissions.Right> definitions
+		
+		Detail:
+			Any rights defined here will be created/updated before 
+			<$application.onApplicationStart>. The "appname" property is 
+			automatically added  
+
+	*/
+	rights:[],
 /* Property: directory
-		directory of closest application.sjs
+		MynaPath of directory of closest application.sjs *CALCULATED*
 		
 		Detail:
 			application.sjs files are loaded consecutively from the web root 
@@ -62,7 +303,7 @@ var $application={
 	*/
 	directory:null,
 /* Property: url
-		url path of closest application.sjs
+		URL path of closest application.sjs *CALCULATED*
 		
 		Detail:
 			application.sjs files are loaded consecutively from the web root 
@@ -75,24 +316,6 @@ var $application={
 	*/
 	url:null,	
 	
-/* Property: appname
-		String application name. 
-		
-		Detail:
-			Should only contain letters, numbers and the underbar (_) character. If set, an
-			application cache is created. Varables can be set and retrieved from this scope 
-			via <$application.set> and <$application.get>
-			
-	*/
-	appname:null,
-	get appName(){return $application.appname},
-	set appName(val){$application.appname = val},
-/* Property: idleMinutes
-		Max time in minutes between application data access before app data is destroyed.
-		Any data set in the application scope should be expected to be destroyed at some point.
-		
-	*/
-	idleMinutes:60,
 
 	/* Property: closeArray
 		Array of resources onwhich we should cal close() on request end.
@@ -149,7 +372,8 @@ var $application={
 		
 	*/
 	get:function(key){
-		this._initAppScope();
+		//called in request start
+		//this._initAppScope();
 		var cache =Packages.org.apache.jcs.JCS.getInstance("application");
 		var retval = null;
 		Myna.lock($application.appname +"_get",10,function(){
@@ -171,7 +395,8 @@ var $application={
 			The application variable associated with the supplied _key_.
 	*/
 	getData:function(key){
-		this._initAppScope();
+		//called in request start
+		//this._initAppScope();
 		var cache =Packages.org.apache.jcs.JCS.getInstance("application");
 		
 		var data = cache.get($application.appName);
@@ -195,7 +420,8 @@ var $application={
 		(end)
 	*/
 	set:function(key,value){
-		this._initAppScope();
+		//called in request start
+		//this._initAppScope();
 		var cache =Packages.org.apache.jcs.JCS.getInstance("application");
 		var retval = value;
 		Myna.lock($application.appname +"_get",10,function(){
@@ -442,14 +668,25 @@ var $application={
 	},
 	
 	_onApplicationStart:function(){
-		var originalCurrentDir =$server_gateway.currentDir;
-		$server_gateway.currentDir=$application.directory
 		try{
+			if ($application.rights){
+				$application.rights.forEach(function(r){
+					if (!r.appname) r.appname = $application.appname;
+					Myna.Permissions.addRight(r)
+				})
+			}
+			var originalCurrentDir =$server_gateway.currentDir;
+			$server_gateway.currentDir=$application.directory
+		
 			this.onApplicationStart();
+		
+			$server_gateway.currentDir=originalCurrentDir;
+			//refresh app entry after start
+			$server_gateway.applications.put($application.directory,$application);
+			Myna.Permissions.addApp($application);
 		} catch(e){
 			$application._onError(e);
 		}
-		$server_gateway.currentDir=originalCurrentDir;
 	},
 /* Function: onApplicationStart
 		Called when a new application scope is created, before 
@@ -464,6 +701,7 @@ var $application={
 	*/
 	onApplicationStart:function(){},
 	_onRequestStart:function(){
+		this._initAppScope();
 		// call overloaded on request 
 			var originalCurrentDir =$server_gateway.currentDir;
 			$server_gateway.currentDir=$application.directory
@@ -474,7 +712,7 @@ var $application={
 				//$res.print(Myna.formatError(e));
 			}
 			$server_gateway.currentDir=originalCurrentDir;
-
+		
 	},
 /* Function: onRequestStart
 		Called before processing a request. 
@@ -680,25 +918,89 @@ var $application={
 	onSessionStart:function(){},
 	_mergeApplications:function(){
 		$profiler.begin("$application import");
-		var appPaths = $server.requestDir.substring($server.rootDir.length).split("/");
-		//var appPaths = path.substring($server.rootDir.length).split("/");
 		
-		appPaths.splice(0,0,""); //prepend rootDir entry
-		appPaths.pop(); //remove trailing blank caused by trailing slash in $server.requestDir
 		
-		var curPath = $server.rootDir;
-		for (var x=0; x < appPaths.length;++x){
-			if (appPaths[x].length) curPath += appPaths[x] +"/" ;
-			var appFile = new Myna.File(curPath + "application.sjs");
-			if (appFile.exists()){
-				$application.directory = curPath;
-				$application.url = $server.rootUrl +$application.directory.right($application.directory.length -$server.rootDir.length)
-				var before = $server_gateway.currentDir;
-				$server_gateway.currentDir =curPath;
-				Myna.includeOnce(curPath + "application.sjs");
-				$server_gateway.currentDir = before;
+		/* 
+		   disabling caching because cached even function enclose the scope that 
+		   they were declared in instead of the current scope.
+		   
+		var appFound=false;
+		var cacheApplications =parseInt( Myna.getGeneralProperties().cacheApplications);
+		
+		if (cacheApplications){
+			var closestAppDir =$server.requestDir;
+		
+			while (closestAppDir.listLen("/") >1 && !new Myna.File(closestAppDir+"application.sjs").exists()){
+				closestAppDir =closestAppDir.listBefore("/");
 			}
-		}
+			if ($server_gateway.applications.containsKey(closestAppDir)){
+				$server_gateway.applications.get(closestAppDir).applyTo($application,true);
+				java.lang.System.err.println("loading from cache " + closestAppDir);
+				appFound=true;
+			}
+		} 
+		
+		if (!appFound) { */ 
+			var plainAppInChain=false
+			var appPaths = $server.requestDir.substring($server.rootDir.length).split("/");
+			//var appPaths = path.substring($server.rootDir.length).split("/");
+			
+			appPaths.unshift(""); //prepend rootDir entry
+			appPaths.pop(); //remove trailing blank caused by trailing slash in $server.requestDir
+			var curPath = $server.rootDir;
+			var logs=[]
+			for (var x=0; x < appPaths.length;++x){
+				try{
+					if (appPaths[x].length) curPath += appPaths[x] +"/" ;
+					var appFile = new Myna.File(curPath + "application.sjs");
+					if (appFile.exists()){
+						var before = $server_gateway.currentDir;
+						$server_gateway.currentDir =curPath;
+						var appText = new Myna.File(curPath + "application.sjs").readString();
+						//java.lang.System.err.println("-1" +curPath)
+						$application.directory = curPath;
+						$application.url = $server.rootUrl +$application.directory.right($application.directory.length -$server.rootDir.length)
+						if (/^\s*\{/.test(appText.left(100))){
+							$server_gateway.executeJsString(
+								$server.globalScope, 
+								"var curApp =(" + appText +")", 
+								curPath+"application.sjs"
+							)
+							//var curApp = eval("(" + appText + ")");
+							/* if (curApp.init){
+								curApp.init= curApp.init.bind($server.globalScope);
+							} else curApp.init=function(){}*/
+							if (curApp.init){
+								curApp.init();
+							}
+							curApp.getProperties().forEach(function(p){
+								if (typeof curApp[p] === "function"){
+									$application.after(p,curApp[p]);
+									//java.lang.System.err.println(curPath + ": applied " +p)
+								} else {
+									//java.lang.System.err.println(curPath + ":" +p)
+									$application[p] = curApp[p];
+								}
+							})
+						} else {
+							plainAppInChain=true;
+							Myna.include(curPath + "application.sjs")
+						}
+						//curApp.applyTo($application,true);
+						//curApp.init.apply($server.globalScope,[]);
+						$server_gateway.currentDir = before;
+					}
+				} catch(e){
+					java.lang.System.err.println(e)
+					//Myna.log("ERROR","Error in " + curPath + "/application.sjs",Myna.formatError(e));
+					$application.onError(e);
+				}
+			}
+			//if (typeof $application.init == "function") $application.init();
+			//if (!plainAppInChain){
+				
+			//}
+		//}
 		//load application
 			if ($application.appname){
 				var cache =Packages.org.apache.jcs.JCS.getInstance("application");

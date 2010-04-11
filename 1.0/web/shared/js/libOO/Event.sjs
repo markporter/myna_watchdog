@@ -42,6 +42,7 @@
 	Myna.Event.prototype.fire = function(data){
 		var props=Myna.getGeneralProperties();
 		var packet ={
+			id:Myna.createUuid(),
 			ts:new Date(),
 			server:$server.hostName.toLowerCase(),
 			instance:props.instance_id.toLowerCase(),

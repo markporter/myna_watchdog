@@ -41,6 +41,7 @@ public class MynaThread {
 	static public ConcurrentHashMap scriptCache = new ConcurrentHashMap();
 	static public Properties generalProperties = new Properties();
 	static public ConcurrentHashMap serverVarMap = new ConcurrentHashMap();//used by $server.get/set
+	static public ConcurrentHashMap applications = new ConcurrentHashMap();//contains Application descriptors, keyed by path
 	
 	public final java.lang.Thread javaThread = java.lang.Thread.currentThread();
 	
@@ -1034,6 +1035,10 @@ public class MynaThread {
 		}
 		if (generalProperties.getProperty("administrator_email_on_error") == null){
 			generalProperties.setProperty("administrator_email_on_error","0");
+			propsChanged=true;
+		}
+		if (generalProperties.getProperty("cacheApplications") == null){
+			generalProperties.setProperty("cacheApplications","0");
 			propsChanged=true;
 		}
 		if (propsChanged) saveGeneralProperties();

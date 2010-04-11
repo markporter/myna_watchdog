@@ -148,8 +148,15 @@ var fusebox={
 				rawData.callback+="auth_token=" + Myna.Permissions.getAuthToken(user.user_id).escapeUrl()
 				$res.metaRedirect(rawData.callback);	
 			} else {
-				data.message="Authentication failed."
-				fusebox.login({message:"Username or Password is incorrect"});
+				$res.metaRedirect($server.serverUrl
+					+$server.requestUrl
+					+$server.requestScriptName
+					+"?fuseaction=login"
+					+"&message=" + escape("Authentication Failed")
+					+"&provider=" + escape(rawData.provider)
+					+"&providers=" + escape(rawData.providers)
+					+"&callback=" + escape(rawData.callback)
+				);
 			}
 		}
 	},

@@ -44,6 +44,60 @@ Function.prototype.repeat = function(count){
 	}
 	return result
 }
+/* Function: bind
+	returns a version of this function bound to a specific scope object
+	
+	Parameters:
+		scope			-	object to bind as "this"
+		n1+				-	any arguments after _scope_ will be bound tothe function 
+							as well. Any arguments passed to the returned function will
+							appended to these 		
+	
+	Detail:
+		The purpose of this function is to bind a function to a specific scope. If
+		this function is later assigned to another object, it will still apply to 
+		it's bound scope. 
+		
+	Note:
+		This function is API compatible with the EcmaScript5 "bind" function 
+		
+	
+	Example:
+	(code)
+	var obj={
+		name"bob"
+	}
+	var f = function(){
+		Myna.println(this.name)
+	}
+	
+	var bound =f.bind(obj);
+	
+	bound(); //prints bob
+	f();//throws an error
+	
+	//example using bound arguments
+	
+	var logError = Myna.log.bind({},"ERROR");
+	logError("something bad happend")
+	
+	(end)
+	
+*/
+Function.prototype.bind = Function.prototype.bind ||function(o) {
+    // Save the this and arguments values
+    var self = this, boundArgs = arguments;
+    return function() {
+        // Build up an argument list
+        var args = [], i;
+        for(i = 1; i < boundArgs.length; i++)
+            args.push(boundArgs[i]);
+        for(i = 0; i < arguments.length; i++)
+            args.push(arguments[i]);
+        // Now invoke self as a method of o
+        return self.apply(o, args);
+    };
+};
 
 /* Function: createCallback
 	returns a callback function that will execute this function with the 
