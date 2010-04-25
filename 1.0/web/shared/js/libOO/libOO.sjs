@@ -15,6 +15,7 @@
 	"Profiler.js",
 	"Query.sjs",
 	"File.sjs",
+	"CommonJS.sjs",
 	"Ldap.sjs",
 	"ValidationResult.js",
 	"DataManager.sjs",

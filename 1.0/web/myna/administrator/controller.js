@@ -694,6 +694,7 @@ var C ={
 							{name:"instance_id"},
 							{name:"instance_purpose"},
 							{name:"administrator_email"},
+							{name:"commonjs_paths"},
 							{name:"administrator_email_on_error"},
 							{name:"strict_error_checking"},
 							{name:"max_running_threads"},
@@ -797,6 +798,11 @@ var C ={
 							/* xtype:"textarea", */
 							fieldLabel: 'Request Handler Script',
 							name: 'request_handler',
+							style:{width:"100%"}
+						},{
+							/* xtype:"textarea", */
+							fieldLabel: 'CommonJS Search Paths',
+							name: 'commonjs_paths',
 							style:{width:"100%"}
 						},{
 							xtype:"combo",

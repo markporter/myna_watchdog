@@ -649,25 +649,9 @@ if (!Myna) var Myna={}
 		return result;
 		
 	}
-/* Function: enableServerJS 
-	eneables the ServerJS runtime environment
-	 
-	Detail: 
-      Calling this function enables the "require" funciton, and gives access to 
-      the ServerJS standard libraries. If you call this in your application.sjs
-      file you can enable ServerSJ for a directory and its decendents
-		
-	See:
-      https://wiki.mozilla.org/ServerJS
-	*/
+/* deprecated */
 	Myna.enableServerJS=function Myna_enableServerJS(){
-      if (!("require" in $server.globalScope)){
-         /* if ($server_gateway.generalProperties.getProperty("strict_error_checking") == '1'){
-            throw new Error("ServerJS support in only available when Strict Error checking is disabled");
-         } else {  */
-            Myna.includeOnce("/WEB-INF/narwhal/platforms/myna/bootstrap.sjs");
-         /* } */
-		}
+      
 	}
 /* Function: formatError 
 	returns an html formatted string representing the supplied exception. 

@@ -55,7 +55,6 @@ public class MynaThread {
 	static public java.util.Date serverStarted = new java.util.Date(); //date object representing the time this server was started
 	
 	static public ConsumerManager openidConsumerManager; //initialized in init
-	static public Require requireObject; //this thread's CommonJS Require object
 	
 	
 	
@@ -341,27 +340,6 @@ public class MynaThread {
 			
 			try{
 				Scriptable sharedScope = MynaThread.sharedScope_ = this.threadScope =  new ImporterTopLevel(cx);
-				java.util.Vector list = new java.util.Vector();
-				list.add(new URI(getNormalizedPath("/shared/js/commonjs/")));
-				list.add(new URI(getNormalizedPath("/shared/js/libOO/")));
-				list.add(new URI(getNormalizedPath("/")));
-								
-				MynaThread.requireObject =new Require(
-					cx, 
-					sharedScope, 
-					new StrongCachingModuleScriptProvider(
-						new MynaUrlModuleSourceProvider(
-							list, 
-							null
-						)
-               ), 
-               null, 
-               null, 
-               false
-            );
-            MynaThread.requireObject.install(sharedScope);
-				//cx.initStandardObjects(null,false);
-				
 				Object server_gateway = Context.javaToJS(this,sharedScope);
 			
 			
@@ -1058,8 +1036,8 @@ public class MynaThread {
 			generalProperties.setProperty("administrator_email_on_error","0");
 			propsChanged=true;
 		}
-		if (generalProperties.getProperty("cacheApplications") == null){
-			generalProperties.setProperty("cacheApplications","0");
+		if (generalProperties.getProperty("commonjs_paths") == null){
+			generalProperties.setProperty("commonjs_paths","/shared/js/commonjs/,/shared/js/narwhal/engines/rhino/lib,/shared/js/narwhal/engines/default/lib,/shared/js/narwhal/lib/,/");
 			propsChanged=true;
 		}
 		if (propsChanged) saveGeneralProperties();
