@@ -1,17 +1,26 @@
-Myna.applyTo(this);
+{
+	//--------- properties -----------------------------------------------
+	appname:"db_manager",
+	display_name:"Myna Database Manager",
+	description:"",
+	//--------- local properties -----------------------------------------
+	prettyName:"Myna Database Manager",
+	noAuthFuses:["login","auth","main","logout"],
+	defaultFuseAction:"main",
+	mainFuseAction:"main",
 
+	//--------- init method ----------------------------------------------
+	init:function(){		// this is run before any workflow methods to setup the application.
 
-$application.appName = "db_manager";
-$application.prettyName = "Myna Database Manager";
-$application.noAuthFuses=["login","auth","main","logout"];
-$application.defaultFuseAction="main";
-$application.mainFuseAction="main";
-//this is moved to the parent folder's application.sjs
-//$application.extUrl =$server.rootUrl +"shared/../myna/ext/"
+	},
 
-
-/* Load datasource driver properties */
-	if (!$application.get("db_properties")){
+	//--------- workflow methods -----------------------------------------
+	// Each workflow method is appended to the same named method in the
+	// parent application. If you need to override the parent functions
+	// or prepend instead of append, use init()
+	//
+	onApplicationStart:function(){ // run if application cache has expired
+		Myna.applyTo($server.globalScope);
 		var propFiles = new File("/shared/js/libOO/db_properties").listFiles("sjs");
 		var props={}
 		
@@ -27,12 +36,19 @@ $application.mainFuseAction="main";
 				}
 			}
 		});
-		$application.set("db_properties",props);
-}
+		$application.set("db_properties",props);	
+	},
+	onRequestStart:function(){ // run directly before requested file
+		Myna.applyTo($server.globalScope);
+	},
+	onRequestEnd:function(){ // run directly after requested file
 
-/* onerror */
-	$application.onError=function(exception){
-		
+	},
+	onSessionStart:function(){ // run before a call to $session.get/set when session is expired
+
+	},
+	onError:function(exception){
+		Myna.applyTo($server.globalScope);
 		var detail = "";
 		
 		if (exception.message) detail += "<b>Error:</b> " +exception.message;
@@ -47,8 +63,12 @@ $application.mainFuseAction="main";
 			errorDetail:Myna.formatError(exception)
 		}.toJson());	
 		return true; //cancel standard onError handler
-	}
+	},
+	onError404:function(){ //run when	a call to a non-existent file is made
 
+	},
+	rights:[], // an array of Myna.Permissions.Right definitions to be created
+}
 
 
 

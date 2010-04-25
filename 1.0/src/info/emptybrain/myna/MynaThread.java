@@ -6,6 +6,8 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.sql.DataSource;
 import org.mozilla.javascript.*;
+import org.mozilla.javascript.commonjs.module.*;
+import org.mozilla.javascript.commonjs.module.provider.*;
 import java.util.*;
 import java.util.regex.*;
 import java.sql.*;
@@ -53,7 +55,7 @@ public class MynaThread {
 	static public java.util.Date serverStarted = new java.util.Date(); //date object representing the time this server was started
 	
 	static public ConsumerManager openidConsumerManager; //initialized in init
-	
+	static public Require requireObject; //this thread's CommonJS Require object
 	
 	
 	
@@ -80,6 +82,8 @@ public class MynaThread {
 	
 	public String currentDir; // system path to the directory containing the currently running script
 	public String currentScript; // text of the currently running script
+	
+	
 	
 	public String scriptName; //name of the currently running script
 	public String requestScriptName; // name of the originally requested script
@@ -204,6 +208,7 @@ public class MynaThread {
 			if (message.indexOf("Referenced to undefined property \"") == 0) return;
 			if (message.indexOf("Reference to undefined property \"") == 0) return;
 			if (message.indexOf("Code has no side effects") == 0) return;
+			if (message.indexOf("missing ; after statement") == 0) return;
 			if (MynaThread.generalProperties.getProperty("strict_error_checking").equals("1")){
         /* errorText.append("<p>Stack Trace:<br><pre>");
 				
@@ -216,7 +221,7 @@ public class MynaThread {
         try {
           MynaContext mcx = (MynaContext) Context.getCurrentContext();
           if (mcx.mynaThread != null)
-          mcx.mynaThread.log("WARNING",message,"File: " + sourceURI + "<br>Line: " + line + "<br> column: " + lineOffset +"<br>Contaxt:<br><br>" +lineText);
+          mcx.mynaThread.log("WARNING",message,"File: " + sourceURI + "<br>Line: " + line + "<br> column: " + lineOffset +"<br>Context:<br><br>" +lineText+"<hr>");
       } catch (Exception e){
           System.out.println("WARNING"+":"+message+":"+"File: " + sourceURI + "<br>Line: " + line + "<br> column: " + lineOffset +"<br>Contaxt:<br><br>" +lineText); 
       }
@@ -329,16 +334,32 @@ public class MynaThread {
 				return MynaThread.sharedScope_;
 			}
 			
-			
 			Context cx = this.threadContext = new CustomContextFactory().enter();
 			((MynaContext) (cx)).mynaThread =this;
 			
 			cx.setErrorReporter(new MynaErrorReporter());
 			
-			
 			try{
-				
 				Scriptable sharedScope = MynaThread.sharedScope_ = this.threadScope =  new ImporterTopLevel(cx);
+				java.util.Vector list = new java.util.Vector();
+				list.add(new URI(getNormalizedPath("/shared/js/commonjs/")));
+				list.add(new URI(getNormalizedPath("/shared/js/libOO/")));
+				list.add(new URI(getNormalizedPath("/")));
+								
+				MynaThread.requireObject =new Require(
+					cx, 
+					sharedScope, 
+					new StrongCachingModuleScriptProvider(
+						new MynaUrlModuleSourceProvider(
+							list, 
+							null
+						)
+               ), 
+               null, 
+               null, 
+               false
+            );
+            MynaThread.requireObject.install(sharedScope);
 				//cx.initStandardObjects(null,false);
 				
 				Object server_gateway = Context.javaToJS(this,sharedScope);

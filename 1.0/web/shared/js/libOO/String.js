@@ -40,8 +40,45 @@
 		"#",
 		"\\"
 	];
-	
-/* function: charToHtmlEntity
+/* Function: after 
+	returns all the characters after the first _count_ characters
+	 
+	Parameters: 
+		count 	-	number of characters to skip
+ 
+	Example:
+	(code)
+		 
+		var requestDir = $server.requestDir;
+		//this is an example only. $server.requestUrl does this for you
+		var requestUrl = requestDir.after($server.rootDir.length);
+	(end)
+	 
+	 
+	*/
+	String.prototype.after=function(count){
+		return this.slice(count);
+	};
+/* Function: before 
+	returns all the characters before the last _count_ characters
+	 
+	Parameters: 
+		count 	-	number of characters to remove from the end of the string
+ 
+	Example:
+	(code)
+		var requestUrl = $server.requestUrl;
+		var contextRelativeUrl = requestUrl.after($server.rootUrl.length);
+		//this is an example only. $server.rootDir does this for you
+		var rootDir = $server.requestDir.before(contextRelativeUrl.length);
+	(end)
+	 
+	 
+	*/
+	String.prototype.before=function(count){
+		return this.substr(0,this.length-count);
+	};	
+/* Function: charToHtmlEntity
 	returns the HTML/XML entity of the supplied character in &#code; format where code is the decimal ASCII code
 	
 	Parameters:

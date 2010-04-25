@@ -70,6 +70,7 @@ Group: Myna Global Objects  {
 
       File: Myna  (Myna.sjs)
       File: Myna.Cache  (Cache.sjs)
+      File: Myna.CommonJS  (CommonJS.sjs)
       File: Myna.Database  (Database.sjs)
       File: Myna.DataManager  (DataManager.sjs)
       File: Myna.DataSet  (DataSet.sjs)

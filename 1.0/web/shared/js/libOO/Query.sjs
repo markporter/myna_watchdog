@@ -456,7 +456,7 @@ Myna.Query.prototype={
 				typeName:String(md.getColumnTypeName(index+1)),
 				size:size
 			});		
-		};
+		}
 		this.data.columns = this.columns.map(function(e){
 			if (qry.db && qry.db.isCaseSensitive){
 				return e.name;
