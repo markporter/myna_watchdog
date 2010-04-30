@@ -227,6 +227,7 @@ public class MynaEjsParser {
 				}	
 			}
 		} */
+		
 		return new String(script.toString());	
 	}
 	
@@ -250,8 +251,11 @@ public class MynaEjsParser {
 			break;
 			case EJS: 		
 				for (i =0;i<lines.length;++i){
-					
-					script.append("___EJS_BUFFER___.push('" + jsEscape(lines[i]));
+					if (textMode.size() ==1){
+						script.append("$res.print('" + jsEscape(lines[i]));
+					}else {
+						script.append("___EJS_BUFFER___.push('" + jsEscape(lines[i]));
+					}
 					if (i < lines.length -1) {
 						script.append( "\\n');\n");	
 					} else {
@@ -263,7 +267,11 @@ public class MynaEjsParser {
 				script.append(text);
 			break;
 			case EVAL:
-				script.append("___EJS_BUFFER___.push(String(" + text + "));");
+				if (textMode.size() ==2 && ((Integer)(textMode.elementAt(0))).equals(EJS)){
+					script.append("$res.print(String(" + text + "));");
+				} else {
+					script.append("___EJS_BUFFER___.push(String(" + text + "));");
+				}
 			break;
 			
 		}

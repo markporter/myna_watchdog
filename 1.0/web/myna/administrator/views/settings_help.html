@@ -75,7 +75,7 @@
 	
 	<b>CommonJS Search Paths</b><br>
 	List of MynaPaths to directories containing CommonJS files. See 
-	<a target="commonjs" href="../../../shared/docs/js/libOO/files/CommonJS-sjs.html">$profiler</a> 
+	<a target="commonjs" href="../../shared/docs/js/libOO/files/CommonJS-sjs.html">CommonJS</a> 
 	for more information.
 	<br><br>
 	
@@ -84,13 +84,19 @@
 	If Yes, common warnings will be logged. This is recommended in 
 	development as it will often find mistakes that are hard to track down at 
 	run-time. Turning this off in production reduces logging and can improve 
-	performance.
+	performance.<br><br>
+	
+	<b>Save Parser Debug Output?</b><br>
+	If Yes, a copy of each page will be saved in /WEB-INF/myna/parser_debug/ 
+	containing the translated EJS. This should be "No" in most environments but may 
+	be helpful for troubleshooting parser errors or for translating Myna JS to 
+	pure JS 
 	
 	<br><br><b>Log Profiler Output</b><br>
 	If Yes, a table describing interesting events will be logged after every 
 	page. To create your own events call <br><br><code>$profiler.mark("some label");</code><br><br> 
 	See 
-	<a target="profiler" href="../../../shared/docs/js/libOO/files/standard_objects/profiler-sjs.html">$profiler</a> 
+	<a target="profiler" href="../../shared/docs/js/libOO/files/standard_objects/profiler-sjs.html">$profiler</a> 
 	for more information.
 	
 	<br><br><b>SMTP Mail Host</b><br>

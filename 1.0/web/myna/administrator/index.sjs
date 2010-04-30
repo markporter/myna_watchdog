@@ -5,6 +5,7 @@ if (fusebox[$req.data.fuseaction]){
 	try{
 		var result = fusebox[$req.data.fuseaction]($req.data,$req.rawData);
 		if (result){
+			$res.setContentType("application/json")
 			print(result.toJson());
 		}
 	} catch(e){

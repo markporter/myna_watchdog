@@ -533,9 +533,9 @@ var fusebox={
 	get_settings:function(data){
 		var result ={}
 		getGeneralProperties().forEach(function(element,key){
-			
 			result[key.replace(/\./,"_dot_")] = element;
 		})
+		delete result.admin_password;
 		return [result];
 	},
 	settings_save:function(data){

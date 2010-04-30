@@ -61,10 +61,10 @@ var C ={
 					},{
 						
 						xtype:"tbtext",
-						text:title,
+						text:title
 					},{
 						xtype:"tbtext",
-						text:"&nbsp;".repeat(10),
+						text:"&nbsp;".repeat(10)
 					},{
 						xtype:"tbtext",
 						text:'Version: ' +version
@@ -697,6 +697,7 @@ var C ={
 							{name:"commonjs_paths"},
 							{name:"administrator_email_on_error"},
 							{name:"strict_error_checking"},
+							{name:"debug_parser_output"},
 							{name:"max_running_threads"},
 							{name:"smtp_host"},
 							{name:"request_timeout"},
@@ -704,10 +705,9 @@ var C ={
 							{name:"thread_whitelist"}
 						]),
 						url:'?fuseaction=settings_save',
-						bodyStyle:"padding:10px,margin:10px;",
-							labelWidth:150,
+						bodyStyle:"padding:10px",
 						defaults:{
-							/* labelStyle:"font-weight:bold", */
+							labelStyle:"font-weight:bold;width:150px;",
 							xtype:"textfield",
 							grow:true,
 							growMin:150
@@ -718,6 +718,7 @@ var C ={
 							key: [10,13],
 							fn: submitFn
 						},
+						frame:true,
 						items:[{
 							/* xtype:"textarea", */
 							fieldLabel: 'Instance Name',
@@ -824,6 +825,24 @@ var C ={
 							allowBlank:false
 						},{
 							xtype:"combo",
+							fieldLabel: 'Save Parser Debug Output?',
+							hiddenName: 'debug_parser_output',
+							store: new Ext.data.SimpleStore({
+								fields: ['text','value'],
+								data : [['Yes',1],['No',0]]
+							}),
+							displayField:'text',
+							valueField:'value',
+							typeAhead: true,
+							mode: 'local',
+							triggerAction: 'all',
+							/* emptyText:'Select Optimization Level', */
+							selectOnFocus:true,
+							editable:false,
+							width:50,
+							allowBlank:false
+						},{
+							xtype:"combo",
 							fieldLabel: 'Log Profiler Output',
 							hiddenName: 'append_profiler_output',
 							store: new Ext.data.SimpleStore({
@@ -874,7 +893,7 @@ var C ={
 					},{
 						region:"east",
 						title:"Help",
-						autoLoad: {url: 'views/settings_help.html'},
+						autoLoad: {url: 'views/settings_help.html',nocache:true},
 						collapsible:true,
 						split:true,
 						width:"300",
@@ -1289,7 +1308,7 @@ var C ={
 									fields: ['key','label'],
 									data: [
 										[0,"No"],
-										[1,"Yes"],
+										[1,"Yes"]
 									]
 								}),
 								displayField:'label',
@@ -2042,26 +2061,33 @@ var C ={
 							handler:function(){
 								Ext.StoreMgr.get("threads").reload();	
 							}
-						}],
-						listeners:{
-							beforerender:function(){
-								Ext.TaskMgr.start({
-									run:function(){
-										Ext.StoreMgr.get("threads").reload();
-									},
-									interval:10000
-								});
-								Ext.StoreMgr.get("threads").reload();
-							}
-						}
+						}]
+						
 					},{
 						region:"east",
 						title:"Help",
-						autoLoad: {url: 'views/running_requests_help.html'},
+						autoLoad: {url: 'views/running_requests_help.html',nocache:true},
 						collapsible:true,
 						width:"300",
 						autoScroll:true
-					}]
+					}],
+					listeners:{
+						activate:function(panel){
+							if (panel.timer) return;
+							panel.timer = window.setInterval(function(){
+								Ext.StoreMgr.get("threads").reload();
+							},2000)
+							Ext.StoreMgr.get("threads").reload();	
+						},
+						deactivate:function(panel){
+							window.clearInterval(panel.timer);
+							panel.timer=null;
+						},
+						destroy:function(panel){
+							window.clearInterval(panel.timer);
+							panel.timer=null;
+						}
+					}
 				}
 				C.addTab(center_tabs,config);
 			}  
@@ -2213,7 +2239,7 @@ var C ={
 					},{
 						region:"east",
 						title:"Help",
-						autoLoad: {url: 'views/upgrade_help.html'},
+						autoLoad: {url: 'views/upgrade_help.html',nocache:true},
 						collapsible:true,
 						width:"400",
 						autoScroll:true
@@ -2507,7 +2533,7 @@ var C ={
 					/* east - help */
 						region:"east",
 						title:"Help",
-						autoLoad: {url: 'views/scheduled_tasks_help.html'},
+						autoLoad: {url: 'views/scheduled_tasks_help.html',nocache:true},
 						collapsible:true,
 						width:"300",
 						autoScroll:true
