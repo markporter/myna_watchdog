@@ -491,60 +491,69 @@ Myna.DataManager.managerTemplate ={
 		See:
 			<findBeans>
 	*/
-		find:function(pattern,caseSensitive){
-			var criteria=[];
-			var $this= this;
-			var pkey =this.columns[this.primaryKey].column_name;
-			var colNameSql;
-			
-			if (typeof pattern == "object"){
-				var myColumnList = this.columnNames.join()
-				pattern.getKeys().filter(function(colName){
-					return myColumnList.listContains(colName.toLowerCase())
-				}).forEach(function(colName){
-					colName= colName.toLowerCase();
-					colNameSql=colName;
-					var isNumeric=false;
-					if (pattern[colName] === undefined) pattern[colName] ="";
-					if (parseInt(pattern[colName]) != pattern[colName]){
-						if (!caseSensitive){
-							pattern[colName] = pattern[colName].toLowerCase()
-							colNameSql = "lower(" + colName +")"
-						}
-					}
-					criteria.push({
-						column:colNameSql,
-						op:/%/.test(pattern[colName])?" like " :" = ",
-						type:$this.columns[colName].data_type,
-						isNumeric:isNumeric,
-						pattern:pattern[colName]
-					})
-					
-				})
-			} else{
-				criteria.push({
-					column:pkey,
-					op:/%/.test(String(pattern))?" like " :" = ",
-					type:this.columns[this.primaryKey].data_type,
-					pattern:pattern
-				})
-				
+	find:function(pattern,caseSensitive){
+		var criteria=[];
+		var $this= this;
+		var pkey =this.columns[this.primaryKey].column_name;
+		var colNameSql;
+		var op;
+		
+		var getCriteria=function(colName,pattern){
+			var col = {
+				column:colName,
+				op:"=",
+				isNull:false,
+				type:$this.columns[colName].data_type,
+				pattern:pattern
 			}
-			var p = new Myna.QueryParams();
-			var qry = new Myna.Query({
-				dataSource:this.ds,
-				parameters:p,
-				sql:<ejs>
-					select <%=pkey%>
-					from <%=this.sqlTableName%>
-					where 1=1
-					<@loop array="criteria" element="col" >
-						and <%=col.column%> <%=col.op%> <%=p.addValue(col.pattern,col.type)%>
-					</@loop>
-				</ejs>
+			
+
+			if (/%/.test(String(pattern))){
+				col.op =" like ";
+			}
+			
+			if (pattern === null){
+				col.isNull = true;
+			} else if (Myna.Database.dbTypeToJs($this.columns[colName].data_type) == "string"){
+				if (caseSensitive){
+					col.pattern = col.patter.toLowerCase();
+					col.column = colName.toLowerCase();
+				}
+			}
+			
+			return col
+			
+		}
+		
+		if (typeof pattern == "object"){
+			var myColumnList = this.columnNames.join()
+			pattern.getKeys().filter(function(colName){
+				return myColumnList.listContains(colName.toLowerCase())
+			}).forEach(function(colName){
+				criteria.push(getCriteria(colName,pattern[colName]))
 			})
-			return qry.valueArray(pkey.toLowerCase());
-		},
+		} else{
+		criteria.push(getCriteria($this.db.isCaseSensitive?pkey:pkey.toLowerCase(),pattern));
+		}
+		var p = new Myna.QueryParams();
+		var qry = new Myna.Query({
+			dataSource:this.ds,
+			parameters:p,
+			sql:<ejs>
+				select <%=pkey%>
+				from <%=this.sqlTableName%>
+				where 1=1
+				<@loop array="criteria" element="col" >
+					<@if col.isNull>
+					and <%=col.column%> is null
+					<@else>
+					and <%=col.column%> <%=col.op%> <%=p.addValue(col.pattern,col.type,!!col.pattern)%>
+					</@if>
+				</@loop>
+			</ejs>
+		})
+		return qry.valueArray(pkey.toLowerCase());
+	},
 	/* Function: findBeans
 		returns a <Myna.DataSet> of bean objects that match a search
 		

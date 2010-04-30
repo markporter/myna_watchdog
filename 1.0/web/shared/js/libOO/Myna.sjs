@@ -31,9 +31,9 @@ if (!Myna) var Myna={}
 	*/
 	Myna.abort=function Myna_abort(label,value){
 		if (value != undefined){
-			$res.print(Myna.dump(value,label));
+			this.print(Myna.dump(value,label));
 		} else if (label != undefined){
-			$res.print("<hr>" +label);
+			this.print("<hr>" +label);
 		}
 		if ($req) $req.handled=true;
 		throw new Error("___MYNA_ABORT___");
@@ -1033,7 +1033,7 @@ if (!Myna) var Myna={}
 	*/
 	Myna.includeText=function Myna_includeText(path){
 		var file =new Myna.File(path); 
-		$res.print(file.readString())
+		this.print(file.readString())
 	}
 	/* Experimental code */
 	/* Myna.evalIinclude=function Myna_evalIinclude(path,scope){
@@ -1101,7 +1101,7 @@ if (!Myna) var Myna={}
         var oldContent = $res.clear();
         Myna.include(path,scope);
         var newContent = $res.clear();
-        $res.print(oldContent);
+        this.print(oldContent);
         return newContent;
 	}
 /* Function: includeTemplate   
@@ -1131,7 +1131,7 @@ if (!Myna) var Myna={}
 		$profiler.begin("Including template " + path);
 		var template = new Myna.XTemplate(new Myna.File(path).readString())
 		
-		$res.print(template.apply(values))
+		this.print(template.apply(values))
 		
 		$profiler.end("Including template " + path);
 	}
@@ -1565,7 +1565,7 @@ if (!Myna) var Myna={}
 		return st;
 	}
 /* Function: print 
-	This is an alias for <$res.print>
+	This is an alias for <this.print>
 	 
 	Parameters: 
 		string -  string to append to the output buffer
@@ -1575,10 +1575,11 @@ if (!Myna) var Myna={}
 	 
 	*/
 	Myna.print=function Myna_print(string){
-		$res.print(String(string));
+		var print ="res" in this?this.res.print:$res.print
+		print(String(string));
 	}
 /* Function: printDump
-	shortcut for $res.print(Myna.dump())
+	shortcut for this.print(Myna.dump())
 	 
 	Parameters: 
 		obj			-	Object to dump
@@ -1593,10 +1594,10 @@ if (!Myna) var Myna={}
 	 
 	*/
 	Myna.printDump=function Myna_printDump(obj,label,maxDepth){
-		$res.print(Myna.dump(obj,label,maxDepth));
+		this.print(Myna.dump(obj,label,maxDepth));
 	}
 /* Function: println
-	shortcut for $res.print(<text> + "<br>")
+	shortcut for this.print(<text> + "<br>")
 	 
 	Parameters: 
 		text		-	text to print
@@ -1607,7 +1608,7 @@ if (!Myna) var Myna={}
 	 
 	*/
 	Myna.println=function Myna_println(text){
-		$res.print(String(text) + "<br>\n");
+		this.print(String(text) + "<br>\n");
 	}
 /* Function: sealObject 
 	This seals a JavaScript object, preventing it from being modified.

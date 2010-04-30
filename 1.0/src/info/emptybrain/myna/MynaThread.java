@@ -70,6 +70,8 @@ public class MynaThread {
 	
 	public ConcurrentHashMap environment = new ConcurrentHashMap();
 	public ConcurrentHashMap runtimeStats = new ConcurrentHashMap();
+
+	public ConcurrentHashMap translatedSources = new ConcurrentHashMap();
 	
 	public Context threadContext;
 	public ScriptableObject threadScope;
@@ -1040,6 +1042,10 @@ public class MynaThread {
 			generalProperties.setProperty("commonjs_paths","/shared/js/commonjs/,/shared/js/narwhal/engines/rhino/lib,/shared/js/narwhal/engines/default/lib,/shared/js/narwhal/lib/,/");
 			propsChanged=true;
 		}
+		if (generalProperties.getProperty("debug_parser_output") == null){
+			generalProperties.setProperty("debug_parser_output","0");
+			propsChanged=true;
+		}
 		if (propsChanged) saveGeneralProperties();
 	}
 	
@@ -1319,6 +1325,8 @@ public class MynaThread {
 	public String translateString(String content, String scriptPath) throws Exception{
 		MynaEjsParser parser = new MynaEjsParser();
 		String translated = parser.parseString(content,scriptPath);
+
+		translatedSources.put(scriptPath,translated);		
 		//log("TRANSLATED",scriptPath,translated);
 		//java.lang.System.out.println(scriptPath);
 		

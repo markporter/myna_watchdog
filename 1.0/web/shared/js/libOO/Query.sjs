@@ -898,6 +898,12 @@ Myna.Query.prototype.__defineGetter__("result", function() {
 			})
 			return result;
 			
+		},
+		/*	Property: rowNum
+			the current row number, starting with 1 
+		*/
+		get rowNum(){
+			return this.rs.getRow();	
 		}
 	}
 /* Class: Myna.QueryParams 

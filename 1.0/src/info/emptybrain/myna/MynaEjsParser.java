@@ -251,7 +251,7 @@ public class MynaEjsParser {
 			case EJS: 		
 				for (i =0;i<lines.length;++i){
 					
-					script.append("$res.print('" + jsEscape(lines[i]));
+					script.append("___EJS_BUFFER___.push('" + jsEscape(lines[i]));
 					if (i < lines.length -1) {
 						script.append( "\\n');\n");	
 					} else {
@@ -263,7 +263,7 @@ public class MynaEjsParser {
 				script.append(text);
 			break;
 			case EVAL:
-				script.append("$res.print(String(" + text + "));");
+				script.append("___EJS_BUFFER___.push(String(" + text + "));");
 			break;
 			
 		}
@@ -349,7 +349,8 @@ public class MynaEjsParser {
 		appendText();
 		
 		textMode.push(new Integer(EJS));
-		script.append("function(){var originalContent=$res.clear();");
+		//script.append("function(){var originalContent=$res.clear();");
+		script.append("function(__EJS_RES__,__EJS_MYNA__){var ___EJS_BUFFER___=[];var $res = __EJS_RES__.applyTo({print:function(text){___EJS_BUFFER___.push(text)}});var Myna = __EJS_MYNA__.applyTo({res:$res});");
 			
 		//System.err.println("ejsBegin <br>");	
 	}
@@ -361,7 +362,8 @@ public class MynaEjsParser {
 		if (curTextMode() != EJS) return;
 		appendText();
 		
-		script.append("var newContent=$res.clear();$res.print(originalContent);return newContent;}.apply(this)");
+		//script.append("var newContent=$res.clear();$res.print(originalContent);return newContent;}.apply(this)");
+		script.append("return ___EJS_BUFFER___.join('');}.call(this,$res,Myna)");
 		textMode.pop();
 		if (textMode.size() == 0){
 			throw new EvaluatorException(

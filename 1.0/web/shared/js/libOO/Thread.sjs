@@ -493,7 +493,7 @@ Myna.ThreadGroup.prototype.join=Myna.Thread.joinAll;
 	
 	
 	
-	<ThreadGroup.fn> must be defined. Anny arguments passed to this function 
+	<ThreadGroup.fn> must be defined. Any arguments passed to this function 
 	will be passed to the generated thread  
 */
 Myna.ThreadGroup.prototype.spawn=function(){
@@ -542,7 +542,7 @@ Myna.ThreadGroup.prototype.getRunningThreads=function(){
 */
 Myna.ThreadGroup.prototype.add=function(func,args,priority){
 	if (!func) func = this.fn;
-	if (!args) func = this.args||[];
+	if (!args) args = this.args||[];
 	if (!priority) priority = 0;
 	
 	var t= new Myna.Thread(
