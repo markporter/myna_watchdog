@@ -1,8 +1,17 @@
 {
 	appname:"myna_admin",
-	prettyName:"Myna Adminstrator",
-	displayName:"Myna Adminstrator",
-	description:"Manages Myna server settings.",
+	displayName:"Myna Administrator",
+	description:<ejs>
+		Manages Myna server settings.
+	</ejs>.trim(),
+	author:"Mark Porter",
+	authorEmail:"mark@porterpeople.com",
+	website:"http://www.mynajs.org",
+	version:Myna.getGeneralProperties().version, //always based on current Myna build
+	minMynaVersion:null,//no minimum version
+	postInstallUrl:null,//no post-installation setup
+	
+	prettyName:"Myna Administrator",
 	noAuthFuses:["login","auth", "logout"],
 	defaultFuseAction:"login",
 	mainFuseAction:"main",

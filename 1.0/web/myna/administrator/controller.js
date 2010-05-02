@@ -17,7 +17,8 @@ var C ={
 		var oldDecode = Ext.util.JSON.decode;
 		Ext.decode = Ext.util.JSON.decode = function(text){
 			try{
-				return oldDecode(text);	
+				console.dir(text.parseJson())
+				return text.parseJson();
 			} catch(e){
 				new Ext.Window({
 					id:"decode_error",
@@ -44,6 +45,14 @@ var C ={
 				throw e
 			}
 		}
+		Ext.data.JsonReader.prototype.read=function(response){
+		  var json = response.responseText;
+		  var o = json.parseJson();
+		  if(!o) {
+				throw {message: "JsonReader.read: Json object not found"};
+		  }
+		  return this.readRecords(o);
+		},
 		Ext.form.Field.prototype.msgTarget = 'under';
 		//Provides attractive and customizable tooltips for any element.
 		Ext.QuickTips.init();
@@ -129,6 +138,9 @@ var C ={
 						},{
 							html:'<li><span class="link" onclick="C.user_groups.main()">Manage User Groups</span></li>'
 						},{ */
+							html:'<span class="link" onclick="C.applications.main()">Manage Applications</span>'
+							
+						},{
 							html:'<a href="?fuseaction=new_password_form" class="link" >Change Admin Password</a>'
 						},{
 							html:'<span class="link" onclick="window.open(\'' + rootUrl + 'shared/docs/index.html\')">Documentation</span>'
@@ -174,6 +186,9 @@ var C ={
 		})
 		
 		viewport = new Ext.Viewport(config);
+		
+		
+		C.applications.exportApp("myna_admin");
 	}
 /* ================ helper functions ======================================== */
 	/* ---------------- addTab ----------------------------------------------- */
@@ -2545,6 +2560,210 @@ var C ={
 			}  
 				
 			center_tabs.activate(tabId)
+		}
+/* ================ applications ================================================= */
+	C.applications={}
+	/* ---------------- main ------------------------------------------------- */
+		C.applications.main=function(){
+			var center_tabs = Ext.getCmp("center_tabs");
+			var tabId="applications_main";
+			if (!center_tabs.findById(tabId)){
+				var config={
+					id:tabId,
+					title:"Manage Applications",
+					closable:true,
+					layout:"border",
+					header:false,
+					items:[{
+						/* frame:true, */
+						region:"center",
+						layout:"fit",
+						items:[C.applications.main.cmp_app_grid(tabId)]
+					},{
+						region:"east",
+						hidden:true,
+						width:"400",
+						autoScroll:true
+					}]
+				}
+				C.addTab(center_tabs,config);
+			}  
+				
+			center_tabs.activate(tabId)
+		}
+		/* ---------------- cmp_app_grid ------------------------------------------------- */
+			C.applications.main.cmp_app_grid=function(tabId){
+				var thisPanel = function(){
+					return Ext.getCmp("app_grid");	
+				}
+				return {
+					xtype:"grid",
+					id:"app_grid",
+					/* functions */
+					stripeRows:true,
+					ds:new Ext.data.Store({
+						storeId:"app_grid",
+						autoLoad:true,
+						proxy: new Ext.data.HttpProxy({
+							url: "?fuseaction=get_installed_apps"
+						}),
+					
+						reader: new Ext.data.JsonReader({
+							root: "data",            
+							totalProperty: "totalRows",            
+							id: "appname"            
+						},
+						[
+							 "appname",
+							 "displayname",
+							 "description",
+							 "author",
+							 "authoremail",
+							 "website",
+							 "version",
+							 "minmynaversion",
+							 "postinstallurl",
+							 "installdate",
+							 "installpath"
+						]),
+						remoteSort: false,
+						sortInfo:{
+							field:'appname',
+							direction:'ASC'
+						}
+					}),
+					
+					columns:[
+						{header:"appname", width: 100, sortable: true, dataIndex: 'appname', id:'appname'},
+						{
+							header:"", width: 100, sortable: true, dataIndex: 'appname',id:'export', 
+							renderer:function(){
+								return "<span class='link'>export</span>";	
+							}
+						},
+						
+						{header:"Display Name", width: 100, sortable: true, dataIndex:"displayname"},
+						{header:"Description", width: 100, sortable: true, dataIndex:"description"},
+						{header:"Version", width: 100, sortable: true, dataIndex:"version"},
+						{header:"Author", width: 100, sortable: true, dataIndex:"author"},
+						{header:"Email", width: 100, sortable: true, dataIndex:"authoremail"},
+						{header:"Website", width: 100, sortable: true, dataIndex:"website"},
+						
+						{header:"Minimum Myna Version", width: 100, sortable: true, dataIndex:"minmynaversion"},
+						
+						{header:"Install Date", width: 100, sortable: true, dataIndex:"installdate"},
+						{header:"Install Path", width: 100, sortable: true, dataIndex:"installpath"}
+					],
+					autoExpandColumn:0,
+					sm: new Ext.grid.RowSelectionModel({singleSelect:true}),
+					loadMask: true,
+					tbar:[{
+							xtype:"button",
+							text:"Import App",
+							iconCls:"icon_add",
+							tooltip:"Import an application that is already in the web root",
+							handler:function(){
+								C.applications.importApp();	
+							}
+					}],
+					bbar:new Ext.PagingToolbar({
+						pageSize: 25,
+						store: Ext.StoreMgr.get("app_grid"),
+						displayInfo: true,
+						displayMsg: 'Displaying rows {0} - {1} of {2}',
+						emptyMsg: "No rows to display",
+						items:[{
+							
+						}]
+					}),
+					listeners: {
+						cellclick:function(grid,rowIndex,cellIndex,e){
+							var cm = grid.getColumnModel();
+							var record = grid.getStore().getAt(rowIndex);
+							var value = record.get(cm.getDataIndex(cellIndex))
+							switch(cm.getColumnId(cellIndex)){
+								case "export":
+									C.applications.exportApp(value);
+								break;
+							}
+						},
+						rowclick:function(grid,rowIndex,e){
+							var record = grid.getStore().getAt(rowIndex);
+						},
+						rowdblclick:function(grid,rowIndex,e){
+							
+						}
+					}
+					
+				}
+			}
+	/* ---------------- import ------------------------------------------------- */		
+		C.applications.importApp=function(){
+			Ext.Msg.prompt(
+				"Importing Application",
+				"Enter the directory where the application resides, relative to web root",
+				function(button,folder){
+					if (button == "ok")
+					{
+						Ext.Ajax.request(
+							{
+								url:"?fuseaction=import_app",
+								params:{
+									folder:folder
+								},
+								waitMsg:"Importing " + folder +" ...",
+								callback:C.cbHandler(
+									function(result)
+									{
+										if (result.success)
+										{
+											C.infoMsg("Imported " + folder)
+											C.applications.main();
+										} else return false;
+									}
+								)
+							}
+						)
+					}
+					//console.dir(Array.parse(arguments))	
+				}
+			)
+		}
+	/* ---------------- exportApp ------------------------------------------------- */		
+		C.applications.exportApp=function(appname){
+			Ext.Msg.prompt(
+				"Exporting Application",
+				"Enter the directory where the application package should be exported",
+				function(button,folder){
+					if (button == "ok")
+					{
+						Ext.Ajax.request(
+							{
+								url:"?fuseaction=export_app",
+								params:{
+									folder:folder,
+									appname:appname
+								},
+								waitMsg:"Exporting " + appname +" ...",
+								callback:C.cbHandler(
+									function(result)
+									{
+										if (result.success)
+										{
+											C.infoMsg(result.message)
+											C.applications.main();
+										} else return false;
+									}
+								)
+							}
+						)
+					}
+					//console.dir(Array.parse(arguments))	
+				},
+				null,
+				null,
+				rootDir
+			)
 		}
 /* ================ Permissions ============================================= */
 	/* ================ Rights =============================================== */

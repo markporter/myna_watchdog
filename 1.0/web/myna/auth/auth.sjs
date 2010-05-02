@@ -138,6 +138,7 @@ var fusebox={
 		} else {
 			var username = data.username || ""
 			var password = data.password || ""
+			var cb = rawData.callback;
 			var user = Myna.Permissions.getUserByAuth(username,password,data.provider);
 			if (user){
 				if (rawData.callback.listLen("?")>1){
@@ -146,8 +147,11 @@ var fusebox={
 					rawData.callback+="?"
 				}
 				rawData.callback+="auth_token=" + Myna.Permissions.getAuthToken(user.user_id).escapeUrl()
-				$res.metaRedirect(rawData.callback);	
+				//metaRedirect
+				$res.metaRedirect(rawData.callback);
+				
 			} else {
+				//metaRedirect
 				$res.metaRedirect($server.serverUrl
 					+$server.requestUrl
 					+$server.requestScriptName
@@ -303,5 +307,6 @@ var fusebox={
 	},
 }
 //$req.data.setDefaultProperties({fuseaction:"login"})
+//java.lang.System.out.println($req.data.fuseaction)
 fusebox[$req.data.fuseaction]($req.data,$req.rawData);
 

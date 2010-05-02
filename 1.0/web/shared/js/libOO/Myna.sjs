@@ -1161,6 +1161,26 @@ if (!Myna) var Myna={}
 		
 		return 	result;
 	}
+/* Function: loadAppProperties 
+	loads an application.sjs file and returns the parsed app object 
+	 
+	Parameters: 
+		filepath	-	<MynaPath> of application.sjs file
+ 
+	Example:
+	(code)
+		var admin_props = Myna.loadAppProperties("/myna/administrator/application.sjs");
+		Myna.println(admin_props.appname);
+	(end)
+	*/
+	Myna.loadAppProperties=function Myna_loadProperties(filepath){
+		var result= {}
+		
+		var text = $server_gateway.translateString(new Myna.File(filepath).readString(),filepath);
+		result = eval("("+text+")");
+		
+		return result;
+	}	
 /* Function: lock 
 		Gets an exclusive lock by name. 
 		

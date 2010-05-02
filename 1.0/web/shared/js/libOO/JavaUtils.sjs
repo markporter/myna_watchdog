@@ -6,6 +6,23 @@
  
 if (!Myna) var Myna={}
 if (!("JavaUtils" in Myna)) Myna.JavaUtils={}
+/* Function: base64ToByteArray 
+	returns a Java byte[] from a Base64 string
+		
+	Paramters:
+		bytes		-	byte array to convert
+		
+		
+	See Also:
+		* <base64ByteArray>
+	*/
+	
+	Myna.JavaUtils.base64ToByteArray = function(string){
+		
+		var Base64 =new org.apache.commons.codec.binary.Base64();
+	
+		return Base64.decode(new java.lang.String(string).getBytes());
+	}
 /* Function: beanToObject 
 	Attempts to convert a JavaBean in to JavaScript object 
 	 
@@ -81,6 +98,50 @@ if (!("JavaUtils" in Myna)) Myna.JavaUtils={}
 			}
 		}
 		return result;
+	}
+/* Function: byteArrayToHex 
+	returns HEX string representation of a Java byte[] 
+		
+	Paramters:
+		bytes	-	byte array to convert
+		
+	See Also:
+		* <hexToByteArray>
+	*/
+	Myna.JavaUtils.byteArrayToHex = function(bytes){
+		var hex="";
+		var index = 0;
+		
+		var HEX_CHAR_TABLE = [
+			 '0', '1', '2', '3',
+			 '4', '5', '6', '7',
+			 '8', '9', 'a', 'b',
+			 'c', 'd', 'e', 'f'
+		]
+		
+		bytes.forEach(function(b){
+			var v = b & 0xFF;
+			hex += HEX_CHAR_TABLE[v >>> 4];
+			hex += HEX_CHAR_TABLE[v & 0xF];
+		})
+		
+		return hex;
+	}
+/* Function: byteArrayToBase64 
+	returns Base64 string representation of a Java byte[] 
+		
+	Paramters:
+		bytes		-	byte array to convert
+		
+		
+	See Also:
+		* <base64ByteArray>
+	*/
+	Myna.JavaUtils.byteArrayToBase64 = function(bytes, options){
+	
+		var Base64 =new org.apache.commons.codec.binary.Base64();
+	
+		return String(new java.lang.String(Base64.encodeBase64(bytes),"ASCII"));
 	}
 /* Function: createSyncFunction 
 	returns a thread-safe version of a javascript function  
@@ -164,7 +225,29 @@ if (!("JavaUtils" in Myna)) Myna.JavaUtils={}
 		return result;
 	}
 	
-
+/* Function: hexToByteArray 
+	returns a Java byte[] representation of a HEX string  
+		
+	Paramters:
+		string	-	byte array to convert
+		
+	See Also:
+		* <byteArrayToHex>
+	*/
+	Myna.JavaUtils.hexToByteArray = function(string){
+		data = Myna.JavaUtils.createByteArray(string.length/2);
+		var digits = Array.parse(string,function(o,i){return o.charAt(i)})
+		var i=0;
+		var Byte =java.lang.Byte;
+		var Integer =java.lang.Integer;
+		var Character =java.lang.Character;
+		for (; i < digits.length; i += 2) {
+			var decimal = (Character.digit(digits[i], 16) << 4) 
+				+Character.digit(digits[i+1], 16);
+			data[i/2 ] = new Integer(decimal).byteValue();
+		}
+		return data
+	}
 /* Function: mapToObject 
 	returns a Java Map as a JavaScript Object
 	 
@@ -231,7 +314,23 @@ if (!("JavaUtils" in Myna)) Myna.JavaUtils={}
 		var IOUtils = Packages.org.apache.commons.io.IOUtils;
 		return IOUtils.toByteArray(stream);
 	}
-	
+/* Function: streamCopy 
+	Copies a java.io.InputStream to a java.io.OutputStream
+	 
+	Parameters: 
+		input 				- Java InputStream (or subclass/implementation)
+		output 			- Java OutputStream (or subclass/implementation)
+		closeStreams		- *Optional, default false*
+								If true, both streams will be closed after the copy
+	*/
+	Myna.JavaUtils.streamToByteArray=function(input,output,closeStreams){
+		var IOUtils = Packages.org.apache.commons.io.IOUtils;
+		IOUtils.copy(input,output);
+		if (closeStreams){
+			try{input.close()}catch(e){}
+			try{output.close()}catch(e){}
+		}
+	}	
 /* Function: readerToByteArray 
 	returns a Java  byte[] containing the entire contents off the supplied 
 	Java Reader.

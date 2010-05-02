@@ -427,8 +427,9 @@ if (!Myna) var Myna={}
 			
 		*/
 		getAuthKey:function(name){
+			//java.lang.System.out.println("authkey")
 			name = String(name).toLowerCase();
-			var varName ="__MYAN_AUTH_KEY_" + name 
+			var varName ="__MYNA_AUTH_KEY_" + name 
 			if (varName in $req) return $req[varName];
 			
 			
@@ -441,10 +442,11 @@ if (!Myna) var Myna={}
 						key:Myna.createUuid().toHash()
 					})
 				}
-				
-				return $req[varName]=manager.getById(name).get_key();
+				var key =$req[varName]=manager.getById(name).get_key();
+				//java.lang.System.out.println("key=" + key)
+				return key
 			} catch(e){
-				
+				//java.lang.System.out.println("first fail")
 				try{
 					Myna.logSync("ERROR","Error accessing permissions database from Myna.Permissions.getAuthKey",Myna.formatError(__exception__));
 				} catch(e2){}

@@ -20,6 +20,7 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 			location:"file",
 			file:"/WEB-INF/myna/local_databases/myna_log"
 		})
+		$server_gateway.loadDataSources();
 	}
 	
 	db = new Myna.Database(ds);
@@ -101,6 +102,7 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 			location:"file",
 			file:"/WEB-INF/myna/local_databases/myna_permissions"
 		})
+		$server_gateway.loadDataSources();
 	}
 	
 	db = new Myna.Database(ds);
@@ -531,4 +533,78 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 			 Myna.Permissions.getRightsByAppname("myna_admin")
 				.valueArray("right_id")
 		);
+		
+
+/* myna_instance */
+	ds = "myna_instance"
+	if (MynaAdmin.isUniqueDsName(ds)){
+		MynaAdmin.saveDataSource({
+			name:ds,
+			desc:"Instance specific data",
+			driver:"org.h2.Driver",
+			url:"jdbc:h2:/WEB-INF/myna/local_databases/"+ds+";FILE_LOCK=SERIALIZED",
+			username:"",
+			password:"",
+			type:"h2",
+			location:"file",
+			file:"/WEB-INF/myna/local_databases/" + ds
+		})
+		$server_gateway.loadDataSources();
+	}
+	
+	db = new Myna.Database(ds);
+	/* myna_log_general table */
+		table = db.getTable("installed_applications");
+		if (!table.exists){
+			table.create({
+				columns:[{
+					name:"appname",
+					type:"VARCHAR",
+					maxLength:1000,
+					isPrimaryKey:true
+				},{
+					name:"displayname",
+					type:"VARCHAR",
+					maxLength:1000
+				},{
+					name:"description",
+					type:"VARCHAR",
+					maxLength:1000
+				},{
+					name:"author",
+					type:"VARCHAR",
+					maxLength:1000
+				},{
+					name:"authoremail",
+					type:"VARCHAR",
+					maxLength:1000
+				},{
+					name:"website",
+					type:"VARCHAR",
+					maxLength:1000
+				},{
+					name:"version",
+					type:"VARCHAR",
+					maxLength:1000
+				},{
+					name:"minmynaversion",
+					type:"VARCHAR",
+					maxLength:1000
+				},{
+					name:"postinstallurl",
+					type:"VARCHAR",
+					maxLength:1000
+				},{
+					name:"installdate",
+					type:"TIMESTAMP"
+				},{
+					name:"installpath",
+					type:"VARCHAR",
+					maxLength:1000
+				}]
+			});
+			
+		}
+		
+
 $server_gateway.loadDataSources();

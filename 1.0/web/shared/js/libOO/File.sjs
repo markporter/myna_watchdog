@@ -200,6 +200,7 @@ if (!Myna) var Myna={}
 		
 		return String(java.io.File.createTempFile(prefix,suffix,new Myna.File(path).javaFile).toURI());
 	}
+
 /* Function: exists
 	returns true if the filepath this object reperesents currently exists
 	
@@ -264,6 +265,47 @@ if (!Myna) var Myna={}
 			return FileUtils.forceDelete(this.javaFile);
 		} else return true;
 	}
+/* Function: getChecksum
+	returns a checksum for this file as a Java byte[]
+	
+	Parameters:
+		type		-	*Optional, default "SHA-256"*
+						Any valid digest algorithm, see below
+						
+	Sun Java Digest Algorithms (versions 5/6):
+	* MD2
+	* MD5
+	* SHA-1
+	* SHA-256
+	* SHA-384
+	* SHA-512
+	
+	Detail: 
+		This function returns a Hex string representing the state of the file. 
+		This can be validated via <Myna.File.isValidChecksum> to confirm that a 
+		file has not been altered. 
+		
+	See:
+		* <isValidChecksum>
+	*/
+	Myna.File.prototype.getChecksum = function(type){
+		type=type||"SHA-256";
+		var fis =  this.getInputStream();
+		var buffer = Myna.JavaUtils.createByteArray(1024)
+		var MessageDigest= java.security.MessageDigest;     
+		var complete = MessageDigest.getInstance(type);
+		var numRead;
+		do {
+			numRead = fis.read(buffer);
+			if (numRead > 0) {
+				complete.update(buffer, 0, numRead);
+			}
+		} while (numRead != -1);
+		fis.close();
+		var digest=complete.digest();
+		
+		return digest;
+	}
 /* Function: getDirectory 
 	Returns a <File> representing the parent directory of this <File>
 	 
@@ -289,6 +331,31 @@ if (!Myna) var Myna={}
 	Myna.File.prototype.getFileName=function(){
 		return String(this.javaFile.getName());
 	}
+/* Function: getInputStream 
+	Returns a java.io.InputStream for this object.
+	
+	If this stream is not explicitly closed, then it will be closed at the end of 
+	the request.
+	
+	*/
+	Myna.File.prototype.getInputStream=function(){
+		var s= org.apache.commons.io.FileUtils.openInputStream(this.javaFile);
+		$application.addOpenObject(s);
+		return s;
+	}	
+/* Function: getOutputStream 
+	Returns a java.io.OutputStream for this object.
+	
+	If this stream is not explicitly closed, then it will be closed at the end of 
+	the request.
+	
+	*/
+	Myna.File.prototype.getOutputStream=function(){
+		var s= org.apache.commons.io.FileUtils.openOutputStream(this.javaFile);
+		$application.addOpenObject(s);
+		return s;
+	}	
+
 /* Function: getLastModified
 		returns the Date() this file was last modified, or null if this file does 
 		not exist
@@ -334,6 +401,35 @@ if (!Myna) var Myna={}
 	Myna.File.prototype.isDirectory = function(name){
 		return this.javaFile.isDirectory();
 	}
+/* Function: isValidChecksum
+	returns true if the supplied hex checksum matchs this file 
+	
+	Parameters:
+		checksum	-	java byte[] representing a checksum
+		type		-	*Optional, default "SHA-256"*
+						Any valid digest algorithm, see below
+						
+	Sun Java Digest Algorithms (versions 5/6):
+	* MD2
+	* MD5
+	* SHA-1
+	* SHA-256
+	* SHA-384
+	* SHA-512
+	
+	Detail: 
+		This function returns a Hex string representing the state of the file. 
+		This can be validated via <Myna.File.isValidChecksum> to confirm that a 
+		file has not been altered. 
+		
+	See:
+		* <isValidChecksum>
+	*/
+	Myna.File.prototype.isValidChecksum = function(checksum,type){
+		type=type||"SHA-256";
+		var checksum = Myna.JavaUtils.byteArrayToHex(checksum)
+		return Myna.JavaUtils.byteArrayToHex(this.getChecksum(type)) == checksum;
+	}
 /* Function: listFiles
 	Returns a <Myna.DataSet> of <File> objects contained in this directory.
 	 
@@ -347,7 +443,7 @@ if (!Myna) var Myna={}
 							as well
 	Examples:
 	(code)
-		//Find all the files and sub-directories in the Myna root:
+		//Find all the files and directories, but not sub-directories in the Myna root:
 		var files = new Myna.File("/").listFiles();
 		
 		//Find all the code files in the current directory, or lower

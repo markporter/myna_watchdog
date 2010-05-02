@@ -1,5 +1,5 @@
 var fusebox={
-/* login/auth/main */
+/* ========== login/auth/main =============================================== */
 	auth:function(data,rawData){
 		$req.returningJson = true;
 		data.checkRequired(["username","password"]);
@@ -66,10 +66,11 @@ var fusebox={
 			extUrl:$application.extUrl,
 			title:props.instance_id + "/" + props.instance_purpose + " on " + $server.hostName,
 			rootUrl:$server.rootUrl,
+			rootDir:$server.rootDir,
 			dbProperties:$application.get("db_properties").toJson()
 		});
 	},
-/* data sources */
+/* ========== Data Sources ================================================== */
 	get_data_sources:function(data){
 		var dataSources =mapToObject($server_gateway.dataSources);
 		dataSources.getKeys().forEach(function(x){
@@ -183,7 +184,7 @@ var fusebox={
 		
 		return {success:false,errorMsg:message,name:data.name}
 	},
-/* threads */	
+/* ========== Threads ======================================================= */
 	exec_in_thread:function(data){
 		data.checkRequired(["code","thread_id"]);
 		var t = $server_gateway.runningThreads.toArray()
@@ -281,7 +282,7 @@ var fusebox={
 			}
 		})
 	},
-/* Tasks (cron) */	
+/* ========== Tasks (cron) ================================================== */
 	get_all_cron_jobs:function(data){
 		$req.returningJson=true;
 		var cronProperties = Myna.loadProperties("/WEB-INF/classes/cron.properties");
@@ -366,7 +367,7 @@ var fusebox={
 	},
 	
 	
-/* change password */	
+/* ========== Change Password =============================================== */
 	new_password_form:function(data){
 		data.extUrl=$application.extUrl;
 		data.rootUrl=$server.rootUrl;
@@ -392,7 +393,7 @@ var fusebox={
 		return{success:true,msg:"Password saved.",url:"?fuseaction=main"};
 		//this.main({});
 	},
-/* search_general_log */
+/* ========== search_general_log ============================================ */
 	search_general_log:function(data,rawData){
 		data.setDefaultProperties({
 			start:0,
@@ -500,7 +501,7 @@ var fusebox={
 		//Myna.log("debug","sql",dump(qry))
 		return qry
 	},
-/* get_general_log_detail */
+/* ========== General Log =================================================== */
 	get_general_log_detail:function(data){
 		data.checkRequired(["log_id"]);
 		
@@ -518,7 +519,6 @@ var fusebox={
 		//print(dump(row))
 		includeTemplate("views/dsp_log_detail.html",row);
 	},
-/* get_general_log_types */
 	get_general_log_types:function(data){
 		return  new Myna.Query({
 			dataSource:"myna_log",
@@ -529,7 +529,7 @@ var fusebox={
 		}).data
 		
 	},
-/* General Settings */
+/* ========== General Settings ============================================== */
 	get_settings:function(data){
 		var result ={}
 		getGeneralProperties().forEach(function(element,key){
@@ -550,8 +550,122 @@ var fusebox={
 		$server_gateway.saveGeneralProperties();
 		return {success:true}
 	},
-	
-/* Upgrade */	
+/* ========== Applications ================================================== */
+	get_installed_apps:function(){
+		return new Myna.Query({
+			ds:"myna_instance",
+			sql:<ejs>
+				select 
+					*
+				from installed_applications
+				where 1=1
+				order by appname
+			</ejs>,
+			values:{}
+		}).result
+	},
+	import_app:function(data,rawData){
+		var path = new Myna.File(
+				"/" +
+				rawData.folder.replace(/^\[\/]?(\.\.\/)*[\/]?/,"") +
+				"/application.sjs"
+			);
+		if (!path.exists()){
+			return {
+				success:false,
+				errorMsg:"Unable to find application in " + path
+			}	
+		}
+		
+		try{
+			var app = Myna.loadAppProperties(path)
+			
+			var man = new Myna.DataManager("myna_instance").getManager("installed_applications");
+			var props ={
+				appname:app.appname,
+				displayname:app.displayName,
+				description:app.description,
+				author:app.author,
+				authoremail:app.authorEmail,
+				website:app.website,
+				version:app.version,
+				minmynaversion:app.minMynaVersion,
+				postinstallurl:app.postInstallUrl,
+				installdate:new Date(),
+				installpath:path.toString()
+			}
+			man.create(props);
+			return {
+				success:true
+			}
+		} catch(e){
+			return {
+				success:false,
+				errorMsg:"Unable to find valid application.sjs at " + path
+			}	
+		}
+	},
+	export_app:function(data,rawData){
+		var path = new Myna.File(rawData.folder);
+		path.createDirectory()
+		if (!path.exists()){
+			return {
+				success:false,
+				errorMsg:"Unable to create output folder " + path
+			}	
+		}
+		
+		
+		var app = new Myna.DataManager("myna_instance")
+			.getManager("installed_applications").getById(rawData.appname)
+		
+		var appDir = new Myna.File(app.installpath).getDirectory();
+		if (!appDir.exists()){
+			return {
+				success:false,
+				errorMsg:"Unable to find application at " + appDir
+			}
+		}
+		var FileUtils = org.apache.commons.io.FileUtils;
+		var IOUtils = org.apache.commons.io.IOUtils;
+		var zipName = app.appname +"_" + app.version.replace(/\W+/g,"_") + ".egg"; 
+		var zipFileStream = new java.util.zip.ZipOutputStream(
+			new java.io.BufferedOutputStream(
+				FileUtils.openOutputStream(
+					new java.io.File(
+						new java.net.URI(path.toString()).resolve(zipName)
+					)
+				)
+			)
+		);
+		var parentDir = appDir.getDirectoryPath().length
+		appDir.listFiles(function(f){return f.type=="file"},true)
+		.forEach(function(file){
+				
+			var relativePath = new java.io.File(file.toString().after(parentDir));
+			zipFileStream.putNextEntry(new java.util.zip.ZipEntry(relativePath));
+			var is =FileUtils.openInputStream(file.javaFile);
+			IOUtils.copy(is,zipFileStream);
+			is.close();
+		})
+		zipFileStream.close();
+		var zipFile = new Myna.File(path.toString() + zipName);
+		new Myna.File(path.toString()+zipName+".checksum").writeString(
+			Myna.JavaUtils.byteArrayToBase64(
+				zipFile.getChecksum("SHA-512"),
+				{
+					lineLength:0,
+					urlSafe:true
+				}
+			)
+		);
+		return {
+			success:true	,
+			message:"Created Myna Egg and checksum in <br>("+path+")"
+		}
+			
+	},
+/* ========== Upgrade ======================================================= */
 	upgradeLog:function(message){
 		var log =$session.get("upgrade_log");
 		if (!log) log=[];
@@ -708,7 +822,7 @@ var fusebox={
 		}
 		return "";
 	},
-/* Misc */
+/* ========== Misc ========================================================== */
 	no_access:function(){
 		return {
 			success:false,

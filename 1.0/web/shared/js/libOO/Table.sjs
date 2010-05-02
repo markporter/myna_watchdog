@@ -1049,7 +1049,7 @@ if (!Myna) var Myna={}
 		var table= this;
 		
 		if (!this.deferExec && !table.exists){
-			throw new Error("Table.addColumn(): Table '" + table.tableName+ "' does not exist.");
+			throw new Error("Table.addIndex(): Table '" + table.tableName+ "' does not exist.");
 		}
 		options.checkRequired(["columns"]);
 		options.setDefaultProperties({

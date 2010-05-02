@@ -32,6 +32,18 @@
 			//--------- properties -----------------------------------------------
 			appname:"",// unique variable name of this application, omit this for anonymous applications
 			idleMinutes:60,// Lifetime of Application variable cache
+			//--------- app package properties
+				displayName:"",// "pretty" name used in labels and titles
+				description:<ejs>
+				
+				</ejs>.replace(/\t\t+/g," "),//short description of application
+				author:"", //name of app author
+				authorEmail:"",// email of app author
+				website:"",//website associated with this app
+				version:"", //app version. This should be a dot notation
+				minMynaVersion:null,// Minimum version of Myna the app might run on
+				postInstallUrl:null,// URL that should be visited first after deployment, relative to app install dir
+			
 			//--------- local properties -----------------------------------------
 			myProp:"".
 			
@@ -257,9 +269,6 @@ var $application={
 	set display_name(val){$application.displayName = val},
 	/* Property: description
 		Short description of this application   
-		
-		
-		
 		Example:
 		(code)
 			..
@@ -268,6 +277,94 @@ var $application={
 		(end)
 	*/
 	description:"",
+	/* Property: author
+		name of  the author of this application   
+		Example:
+		(code)
+			..
+			author:"Mark Porter",
+			..
+		(end)
+	*/
+	author:"", 
+	/* Property: authorEmail
+		email of the author of this application   
+		Example:
+		(code)
+			..
+			authorEmail:"mark@porterpeople.com",
+			..
+		(end)
+	*/
+	authorEmail:"",// email of app author
+	/* Property: authorEmail
+		website associated with this app   
+		Example:
+		(code)
+			..
+			website:"http://www.mynajs.org",
+			..
+		(end)
+	*/
+	website:"",
+	/* Property: authorEmail
+		application version
+		
+		This should be in dot notation such that <String.compareNatural> will sort 
+		the version properly. Here is an example for testing a version scheme:
+		
+		(code)
+			var v = [
+				"1.0_beta_5-1",
+				"1.0_beta_5-2",
+				"1.0_beta_6-1",
+				"1.0_alpha_5-1",
+				"1.0_rc_1-2",
+				"1.0_stable",
+				"1.1_alpha_1",
+				"1.1_beta_2",
+				"1.1_stable",
+			]
+			v.sort(String.compareNatural)
+			Myna.printDump(v)
+			v.sort(String.compareNaturalReverse)
+			Myna.printDump(v)
+		(end)
+		
+		Example:
+		(code)
+			..
+			version:"1.0_beta_5-1",
+			..
+		(end)
+	*/
+	version:"", 
+	/* Property: minMynaVersion
+		Minimum version of Myna this app is likely to work with   
+		Example:
+		(code)
+			..
+			website:"1.0_beta_5-1",
+			..
+		(end)
+	*/
+	minMynaVersion:null,// Minimum version of Myna the app might run on
+	/* Property: postInstallUrl
+		URL that should be visited first after deployment, relative to the 
+		application's install directory
+		
+		This should be null unless your application requires setup beyond copying 
+		files. 
+		
+		Example:
+		(code)
+			..
+			website:"1.0_beta_5-1",
+			..
+		(end)
+	*/
+	postInstallUrl:null,// 
+				
 /* Property: idleMinutes
 		Max time in minutes between application data access before app memory is 
 		recovered *Default 60*. 
@@ -656,10 +753,12 @@ var $application={
 						return key +"="+$req.rawData[key].escapeUrl()
 					}).join("&");
 					if (queryVars) queryVars ="?"+queryVars
-					$res.clear();
+					//$res.clear();
 					
-					
+					Myna.printDump(queryVars)
 					$res.metaRedirect($server.requestUrl+$server.requestScriptName + queryVars)
+					$res.flush();
+					Myna.abort();
 					$req.handled = true;
 				}
 			
@@ -966,10 +1065,7 @@ var $application={
 								"var curApp =(" + appText +")", 
 								curPath+"application.sjs"
 							)
-							//var curApp = eval("(" + appText + ")");
-							/* if (curApp.init){
-								curApp.init= curApp.init.bind($server.globalScope);
-							} else curApp.init=function(){}*/
+							//var curApp = $server.curApp;
 							if (curApp.init){
 								curApp.init();
 							}
