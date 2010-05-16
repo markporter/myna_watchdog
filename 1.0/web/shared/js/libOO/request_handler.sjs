@@ -58,32 +58,40 @@ try{
 		}
 		/* dump translated code to /WEB-INF/parser_debug */
 		if (Myna.getGeneralProperties().debug_parser_output == "1"){
-			var print = function(label,text){
-				//java.lang.System.out.println("\n----------=====["+label+"]=====----------\n"+text+"\n");	
-			}
 			var translated =Myna.JavaUtils.mapToObject($server_gateway.translatedSources);
 			translated.forEach(function(source,path,translated){
 				var target;
 				var sourcePath = new Myna.File(path);
-				print("sourcePath",sourcePath)
 				if (sourcePath.exists()){
-					target=new Myna.File("/WEB-INF/myna/parser_debug/" + sourcePath.toString().after($server.rootDir.length));
-					print("target","/WEB-INF/myna/parser_debug/" + sourcePath.toString().after($server.rootDir.length))
+					target=new Myna.File(
+						"/WEB-INF/myna/parser_debug/" 
+						+ sourcePath.toString().after($server.rootDir.length).listBefore(".").replace(/\W+/g,"_")
+						+ sourcePath.toString().listLast(".")
+					);
 				} 
 				if (!target){
-					var newSourcePath  = new Myna.File("/shared/js/libOO/" + sourcePath.toString().after($server.rootDir.length));
+					var newSourcePath  = new Myna.File("/shared/js/libOO/" + sourcePath.toString().after($server.rootDir.length).listAfter("/"));
 					if (newSourcePath.exists()){
-						target=new Myna.File("/WEB-INF/myna/parser_debug/" + newSourcePath.toString().after($server.rootDir.length));
-						print("target","/WEB-INF/myna/parser_debug/" + newSourcePath.toString().after($server.rootDir.length))
+						target=new Myna.File(
+							"/WEB-INF/myna/parser_debug/" 
+							+ newSourcePath.toString().after($server.rootDir.length).listBefore(".").replace(/\W+/g,"_")
+							+ newSourcePath.toString().listLast(".")
+						);
 					} 
 				}
+				
 				if (!target){
-					 target=new Myna.File($server.currentDir + path.replace(/\W+/g,"_"))
-					 print("target","/WEB-INF/myna/parser_debug/" + sourcePath.toString().after($server.rootDir.length))
+					 /* target=new Myna.File(
+					 	 $server.currentDir 
+					 	 + path.listBefore(".").replace(/\W+/g,"_") 
+					 	 + path.listLast(".")
+					 ) */
 				}
 				
-				target.getDirectory().createDirectory();
-				target.writeString(source)
+				if (target){
+					target.getDirectory().createDirectory();
+					target.writeString(source)
+				}
 			})
 		}
 	}

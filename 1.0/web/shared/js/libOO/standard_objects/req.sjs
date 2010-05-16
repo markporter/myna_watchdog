@@ -77,8 +77,31 @@ var $req={
 				}
 			}
 			(end)
+			
 			multiple uploads with the same fieldname are stored in 
 			$req.data.<fieldname>$array.
+			
+			Upload progress can be tracked  in a separate request/Thread via 
+			(code)
+				var progress=$session.get("$uploadProgress");
+			(end)
+			
+			which returns a progress object.
+			
+			Progress Object properties:
+			fileNumber			-	File number currently being uploaded
+			bytesRead				-	Bytes uploaded so far for this file
+			totalBytes			-	Total bytes to be uploaded for this file
+			percentComplete		-	Percent complete as a ratio, from 0 to 1
+			kps						-	Upload rate in KiloBytes Per Second. Multiply this 
+										by 8 to get KiloBits per second 
+			message				-	Generic message in the form of 
+										"Uploading file #1, 10% complete (200 KBps)"; 
+			elapsedSeconds		-	total time in seconds since upload processing 
+										started
+			
+			
+			
 	*/
 	data:{},
 /* Property: handled

@@ -187,8 +187,8 @@ var C ={
 		
 		viewport = new Ext.Viewport(config);
 		
-		
-		C.applications.exportApp("myna_admin");
+		C.applications.installEgg()
+		//C.applications.exportApp("myna_admin");
 	}
 /* ================ helper functions ======================================== */
 	/* ---------------- addTab ----------------------------------------------- */
@@ -2134,7 +2134,7 @@ var C ={
 							title:"Upgrade Myna",
 							trackResetOnLoad:true,
 							xtype:"form",
-							
+							fileUpload:true,
 							url:'?fuseaction=upgrade_start',
 							bodyStyle:"padding:10px,margin:10px;",
 								labelWidth:150,
@@ -2144,7 +2144,7 @@ var C ={
 							},
 							labelAlign:"top",
 							labelPosition:"top",
-							fileUpload:true,
+							
 							items:[{
 								xtype:"textfield",
 								fieldLabel: 'Upload myna.war',
@@ -2665,16 +2665,24 @@ var C ={
 							handler:function(){
 								C.applications.importApp();	
 							}
+					},{
+							xtype:"button",
+							text:"Install Egg",
+							iconCls:"icon_add",
+							tooltip:"Installs an application (Myna Egg) from a directory on the server",
+							handler:function(){
+								C.applications.installEgg();	
+							}
 					}],
 					bbar:new Ext.PagingToolbar({
 						pageSize: 25,
 						store: Ext.StoreMgr.get("app_grid"),
 						displayInfo: true,
 						displayMsg: 'Displaying rows {0} - {1} of {2}',
-						emptyMsg: "No rows to display",
+						emptyMsg: "No rows to display"/* ,
 						items:[{
 							
-						}]
+						}] */
 					}),
 					listeners: {
 						cellclick:function(grid,rowIndex,cellIndex,e){
@@ -2697,7 +2705,7 @@ var C ={
 					
 				}
 			}
-	/* ---------------- import ------------------------------------------------- */		
+	/* ---------------- importApp ------------------------------------------------- */		
 		C.applications.importApp=function(){
 			Ext.Msg.prompt(
 				"Importing Application",
@@ -2717,6 +2725,11 @@ var C ={
 									{
 										if (result.success)
 										{
+											var store = Ext.StoreMgr.get("app_grid");
+											if (store) {
+												
+												store.reload();
+											}
 											C.infoMsg("Imported " + folder)
 											C.applications.main();
 										} else return false;
@@ -2728,6 +2741,131 @@ var C ={
 					//console.dir(Array.parse(arguments))	
 				}
 			)
+		}
+	/* ---------------- installEgg ------------------------------------------------- */		
+		C.applications.installEgg=function(){
+			var win = new Ext.Window({
+				title:"Install a Myna Egg",
+				width:600,
+				height:240,
+				frame:true,
+				layout:"fit",
+				modal:true,
+				items:[{
+					xtype:"form",
+					fileUpload:true,
+					url:'?fuseaction=install_egg',
+					frame:true,
+					id:"install_egg_form",
+					labelAlign:"top",
+					defaults:{
+						width:570
+					},
+					items:[
+						{//eggfile
+							xtype:"textfield",
+							fieldLabel: 'Upload .egg file',
+							name: 'eggfile',
+							/* grow:true, */
+							//style:{width:"100%"},
+							inputType: 'file',
+							allowBlank:false
+						},{//checksum
+							xtype:"textfield",
+							fieldLabel: '<b>Optional</b> Checksum',
+							name: 'checksum',
+							/* grow:true, */
+							//style:{width:"100%"},
+							allowBlank:true
+						},{//progress
+							id:"install_egg_progress",
+							xtype:'progress'
+							
+						}
+					],
+					buttons:[
+						{//install
+							text:"Install Egg",
+							handler:function(){
+								var form = Ext.getCmp("install_egg_form").form;
+								if (!form.isValid()) return;
+								form.submit();
+								form.timer=null;
+								var checkProgress = function(){
+									Ext.Ajax.request({
+										url:"?fuseaction=install_egg_progress",
+										success:function(response){
+											//alert(response.responseText)
+											try{
+												var obj = Ext.decode(response.responseText);
+											} catch(e){
+												alert(response.responseText)
+											}
+											var progressBar = Ext.getCmp("install_egg_progress");
+											if (!progressBar) return;
+											if (obj.message){
+												progressBar.updateProgress(obj.percentComplete,obj.message);
+											}
+											if (obj.isComplete) {
+												C.infoMsg("Installation Complete.")
+												window.clearInterval(form.timer);
+												win.close();
+											}
+											if (obj.hasError) window.clearInterval(form.timer);
+										}
+									})
+									
+								}
+								//window.setTimeout(function(){
+									form.timer = window.setInterval(checkProgress,500)	
+								//},100)
+							}
+							
+						},{
+							text:"Cancel",
+							handler:function(){
+								win.close();
+							}
+						}
+					]
+					
+				}]
+			});
+			win.show();
+			/* Ext.Msg.prompt(
+				"Installing Application",
+				"Enter the path to the .egg file, relative to web root",
+				function(button,folder){
+					if (button == "ok")
+					{
+						Ext.Ajax.request(
+							{
+								url:"?fuseaction=install_egg",
+								params:{
+									path:path
+								},
+								waitMsg:"Installing " + path +" ...",
+								callback:C.cbHandler(
+									function(result)
+									{
+										if (result.success)
+										{
+											var store = Ext.StoreMgr.get("app_grid");
+											if (store) {
+												
+												store.reload();
+											}
+											C.infoMsg("Installed " + path)
+											C.applications.main();
+										} else return false;
+									}
+								)
+							}
+						)
+					}
+					//console.dir(Array.parse(arguments))	
+				}
+			) */
 		}
 	/* ---------------- exportApp ------------------------------------------------- */		
 		C.applications.exportApp=function(appname){
@@ -2752,6 +2890,7 @@ var C ={
 										{
 											C.infoMsg(result.message)
 											C.applications.main();
+											
 										} else return false;
 									}
 								)

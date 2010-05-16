@@ -605,6 +605,124 @@ var fusebox={
 			}	
 		}
 	},
+	
+	install_egg:function(data,rawData){
+		var progress={}
+		var filePath = data.eggfile.stats.diskLocation;
+		
+		if (rawData.checksum){
+			var checksum = Myna.JavaUtils.base64ToByteArray(rawData.checksum);
+			if (!new File(filePath).isValidChecksum(checksum,"SHA-512")){
+				Myna.log("debug","hash",Myna.dump($req.rawData));
+				progress.percentComplete=0
+				progress.message = "Egg does not match checksum, installation aborted";
+				progress.hasError = true;
+				$session.set("install_egg_progress",progress);
+				return;
+			}
+		}
+		
+		var fileName = data.eggfile.stats.fileName.match(/[\\\/]*(.*)$/)[1];
+		var upgradeDir = new Myna.File("/WEB-INF/install_temp/" + fileName);
+		if (upgradeDir.exists()) upgradeDir.forceDelete();
+		upgradeDir.createDirectory();
+		//create directory for backups. Try to avoid a collision with previous backups
+			var backupBase = "/WEB-INF/upgrade_backups/"+fileName+"/backup_" + (new Date().format("m-d-Y_H.i.s")) ;
+			var backupDir = new File(backupBase);
+			var dupeCounter=0;
+			while (backupDir.exists()) {
+				backupDir = new File(backupBase +"_" + (++dupeCounter));
+			}
+			backupDir.createDirectory();
+		
+		var FileUtils = Packages.org.apache.commons.io.FileUtils;
+		var IOUtils = Packages.org.apache.commons.io.IOUtils;
+		var zipFile = new java.util.zip.ZipFile(new File(filePath).javaFile);
+		var entries =Myna.enumToArray(zipFile.entries());
+		
+		
+		//find and export application.sjs
+			try{
+				entries.forEach(function(entry,index,array){
+					//Myna.printConsole(entry.getName());
+					if (entry.getName() == "application.sjs"){
+						var is = zipFile.getInputStream(entry);
+						var upgradeFile = new Myna.File (upgradeDir.toString()+"/"+entry.getName());
+						var os = FileUtils.openOutputStream(upgradeFile.javaFile);
+						IOUtils.copyLarge(is,os);
+						is.close();
+						os.close();
+						throw "done";
+					}
+				})
+			} catch (e if e =="done"){}
+		var appProps = Myna.loadAppProperties(upgradeDir +"application.sjs");
+		var destDir = new Myna.File("/" + appProps.appname);			
+		entries.forEach(function(entry,index,array){
+			var outputFile = new Myna.File (destDir.toString()+entry.getName());
+			var backupFile = new Myna.File (backupDir.toString()+"/"+entry.getName());
+			var upgradeFile = new Myna.File (upgradeDir.toString()+"/"+entry.getName());
+			
+			progress.percentComplete=index/array.length;
+			progress.message = "Examining file " +index +" of " + array.length;
+			$session.set("install_egg_progress",progress);
+			
+			
+			if(entry.isDirectory()) {
+				outputFile.createDirectory();
+				backupFile.createDirectory();
+				upgradeFile.createDirectory();
+			} else{
+				var isSame=false;
+				
+				if (outputFile.exists()){
+					//make a backup is the zip file does not match the contents of the target file
+					var targetIS = FileUtils.openInputStream(outputFile.javaFile);
+					var sourceIS = zipFile.getInputStream(entry);
+					if (IOUtils.contentEquals(sourceIS,targetIS)){
+						isSame=true;
+					} else { 
+						outputFile.copyTo(backupFile);
+						fusebox.upgradeLog("Backup: " + backupFile);
+					}
+					targetIS.close();
+					sourceIS.close();
+				}
+				//skip same files and others we don't want to change
+				if (isSame) return;
+				//copy to upgrade directory
+				var is = zipFile.getInputStream(entry);
+				var os = FileUtils.openOutputStream(upgradeFile.javaFile);
+				IOUtils.copyLarge(is,os);
+				is.close();
+				os.close();
+				
+			}
+			return;
+		});
+		zipFile.close();
+		progress.percentComplete=.9;
+		progress.message = "Copying files...";
+		$session.set("install_egg_progress",progress);
+		upgradeDir.copyTo(destDir);
+		this.import_app(null,{
+			folder:destDir.toString()
+		})
+		progress.percentComplete=1;
+		progress.isComplete=1;
+		progress.message = "Installation complete.";
+		$session.set("install_egg_progress",progress);
+		
+	},
+	install_egg_progress:function(data){
+		var uploadProgress=$session.get("$uploadProgress");
+		var installProgress=$session.get("install_egg_progress");
+		if (installProgress){
+			return installProgress;
+		} else {
+			return uploadProgress;
+		}
+	},
 	export_app:function(data,rawData){
 		var path = new Myna.File(rawData.folder);
 		path.createDirectory()
@@ -640,9 +758,11 @@ var fusebox={
 		);
 		var parentDir = appDir.getDirectoryPath().length
 		appDir.listFiles(function(f){return f.type=="file"},true)
+		.filter(function(file){
+			return /^[\w\.\-]+$/.test(file.fileName);
+		})
 		.forEach(function(file){
-				
-			var relativePath = new java.io.File(file.toString().after(parentDir));
+			var relativePath = new java.io.File(file.toString().after(appDir.toString().length));
 			zipFileStream.putNextEntry(new java.util.zip.ZipEntry(relativePath));
 			var is =FileUtils.openInputStream(file.javaFile);
 			IOUtils.copy(is,zipFileStream);
@@ -653,10 +773,7 @@ var fusebox={
 		new Myna.File(path.toString()+zipName+".checksum").writeString(
 			Myna.JavaUtils.byteArrayToBase64(
 				zipFile.getChecksum("SHA-512"),
-				{
-					lineLength:0,
-					urlSafe:true
-				}
+				true
 			)
 		);
 		return {
@@ -795,6 +912,7 @@ var fusebox={
 			backupDir:backupDir.toString()
 		};
 	},
+	
 	upgrade_progress:function(data){
 		var uploadProgress = $session.get("$uploadProgress");
 		var log =$session.get("upgrade_log");
@@ -810,7 +928,8 @@ var fusebox={
 			return {
 				total_message:"Total Upgrade Process: Uploading",
 				total_percentage:0,
-				current_message:"Uploading war file: " + Math.floor(uploadProgress.percentComplete*100) + "% complete.",
+				//current_message:"Uploading war file: " + Math.floor(uploadProgress.percentComplete*100) + "% complete.",
+				current_message:uploadProgress.message,
 				current_percentage:uploadProgress.percentComplete,
 				entries:log,
 				isComplete:false

@@ -493,7 +493,7 @@ if (!Myna) var Myna={}
 		getAuthToken:function(user_id,timeout){
 			if (!timeout) timeout = 10;
 			var expires = new Date().add(Date.SECOND,timeout);
-			var token  = Myna.createUuid().toHash();
+			var token  = Myna.createUuid().toHash(true)
 			new Myna.Query({
 					ds:"myna_permissions",
 					sql:<ejs>

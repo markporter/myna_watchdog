@@ -1318,7 +1318,7 @@
 	};
 /* ======================= Myna-only functions ============================== */
 if ("$server_gateway" in this){
-	/* Function: hashCode
+/* Function: hashCode
 		returns java.lang.String.hasCode() for this string
 		
 		Detail:
@@ -1331,7 +1331,7 @@ if ("$server_gateway" in this){
 	String.prototype.hashCode=function(){
 		return new java.lang.String(this).hashCode();	
 	}
-	/* Function: hashEquals 
+/* Function: hashEquals 
 		Returns true if the plaintext password matches the encrypted password 
 		 
 		Parameters: 
@@ -1355,6 +1355,12 @@ if ("$server_gateway" in this){
 		 
 	*/
 	String.prototype.hashEquals=function(hash){
+		if (/[\.-_]/.test(hash)){
+			hash = hash
+				.replace(/-/g,"+")
+				.replace(/_/g,"/")
+				.replace(/\./g,"=")	
+		}
 		var 
 			plainPassword = this,
 			cryptTool = new Packages.org.jasypt.util.password.BasicPasswordEncryptor()
@@ -1362,8 +1368,15 @@ if ("$server_gateway" in this){
 		return cryptTool.checkPassword(plainPassword,hash);
 	};
 /* Function: toHash 
-	Returns a copy of this string encrypted with a strong one-way hash. 
+	Returns a copy of this string encrypted with a strong one-way hash in base64 
+	format. 
 	 
+	Parameters:
+		urlSafe	-	*Optional, default false*
+						If true, then the characters + and / and = will be replaced with 
+						- and _ and . respectively. <String.hashEquals> will 
+						automatically detect this format
+							
 	 
 	Returns: 
 		Encrypted password string in only printable characters. 
@@ -1406,12 +1419,20 @@ if ("$server_gateway" in this){
 	*	http://www.jasypt.org/
 	 
 	*/
-	String.prototype.toHash=function(){
+	String.prototype.toHash=function(urlSafe){
 		var 
 			password = this,
 			cryptTool = new Packages.org.jasypt.util.password.BasicPasswordEncryptor()
 		;
-		return cryptTool.encryptPassword(password);
+		var b64 = cryptTool.encryptPassword(password);
+		
+		if (urlSafe){
+			b64 = b64
+				.replace(/\+/g,"-")
+				.replace(/\//g,"_")
+				.replace(/=/g,".")
+		}
+		return b64;
 	};
 /* Function: decrypt 
 	Returns the unencrypted string contained in this string
@@ -1485,6 +1506,13 @@ if ("$server_gateway" in this){
 		return cryptTool.encrypt(string);
 	};
 
+/* Function: toJava 
+	returns a new java.lang.String of this string
+	
+	*/
+	String.prototype.toJava=function(){
+		return new java.lang.String(this);
+	};
 /* Function: toXml 
 	returns an E4X XML object from this string, or throws an exception if not 
 	possible 

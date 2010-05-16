@@ -20,8 +20,14 @@ if (!("JavaUtils" in Myna)) Myna.JavaUtils={}
 	Myna.JavaUtils.base64ToByteArray = function(string){
 		
 		var Base64 =new org.apache.commons.codec.binary.Base64();
-	
-		return Base64.decode(new java.lang.String(string).getBytes());
+		if (/[\.-_]/.test(string)){
+			string = string
+				.replace(/-/g,"+")
+				.replace(/_/g,"/")
+				.replace(/\./g,"=")	
+		}
+		var bytes = string.toJava().getBytes();
+		return Base64.decode(bytes);
 	}
 /* Function: beanToObject 
 	Attempts to convert a JavaBean in to JavaScript object 
@@ -132,16 +138,26 @@ if (!("JavaUtils" in Myna)) Myna.JavaUtils={}
 		
 	Paramters:
 		bytes		-	byte array to convert
-		
-		
+		urlSafe	-	*Optional, default false*
+						If true, then the characters + and / and = will be replaced with 
+						- and _ and . respectively. <base64ToByteArray> will 
+						automatically detect this format, but it is non-standard so 
+						other libraries may not properly parse it.
 	See Also:
 		* <base64ByteArray>
 	*/
-	Myna.JavaUtils.byteArrayToBase64 = function(bytes, options){
+	Myna.JavaUtils.byteArrayToBase64 = function(bytes, urlSafe){
 	
 		var Base64 =new org.apache.commons.codec.binary.Base64();
-	
-		return String(new java.lang.String(Base64.encodeBase64(bytes),"ASCII"));
+		var b64 = String(new java.lang.String(Base64.encodeBase64(bytes),"ASCII"));
+		
+		if (urlSafe){
+			b64 = b64
+				.replace(/\+/g,"-")
+				.replace(/\//g,"_")
+				.replace(/=/g,".")
+		}
+		return b64;
 	}
 /* Function: createSyncFunction 
 	returns a thread-safe version of a javascript function  

@@ -1630,6 +1630,25 @@ if (!Myna) var Myna={}
 	Myna.println=function Myna_println(text){
 		this.print(String(text) + "<br>\n");
 	}
+/* Function: printConsole
+	prints text to java.lang.System.out
+	
+	Parameters:
+		header		-	Text label to print first, including timestamp. If _text_ is
+						omitted then this is assumed to be the text and will be 
+						printed without a header
+		text		-	If provided this will be printed after the header
+	*/
+	Myna.printConsole=function(header,text){
+		var out = java.lang.System.out;
+		if (text !== undefined){
+			header = "[Myna/" + $server.instance_id+" "+ new Date().format("Y/m/d H:i:s") + "] - " + header +" "
+			out.println(header)
+		} else {
+			text = header	
+		}
+		out.println(text);
+	}
 /* Function: sealObject 
 	This seals a JavaScript object, preventing it from being modified.
 	 

@@ -95,7 +95,7 @@
 			mainFuseAction:"main",
 			onRequestStart:function(){
 				Myna.applyTo($server.globalScope);
-				var session_cookie;		// stores encrypted session data
+				
 				
 				if (!$req.data.fuseaction) $req.data.fuseaction=this.defaultFuseAction; 
 				//is the user authenticated?
@@ -755,7 +755,6 @@ var $application={
 					if (queryVars) queryVars ="?"+queryVars
 					//$res.clear();
 					
-					Myna.printDump(queryVars)
 					$res.metaRedirect($server.requestUrl+$server.requestScriptName + queryVars)
 					$res.flush();
 					Myna.abort();
@@ -1066,9 +1065,7 @@ var $application={
 								curPath+"application.sjs"
 							)
 							//var curApp = $server.curApp;
-							if (curApp.init){
-								curApp.init();
-							}
+							
 							curApp.getProperties().forEach(function(p){
 								if (typeof curApp[p] === "function"){
 									$application.after(p,curApp[p]);
@@ -1078,6 +1075,9 @@ var $application={
 									$application[p] = curApp[p];
 								}
 							})
+							if ($application.init){
+								$application.init();
+							}
 						} else {
 							plainAppInChain=true;
 							Myna.include(curPath + "application.sjs")
