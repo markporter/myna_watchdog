@@ -1,5 +1,5 @@
 /* Class: Function 
-	Additional functions on the JS Function object    
+	Additional functions on the JS Function object	 
 	 
 */
 /* Function: repeat
@@ -35,23 +35,23 @@
 	(end)
 	
 	See also: <Array.forEach>
-*/
-Function.prototype.repeat = function(count){
-	var f = this;
-	var result =[];
-	for (var x=0; x < count; ++ x){
-		result.push(f(x,count));
+	*/
+	Function.prototype.repeat = function(count){
+		var f = this;
+		var result =[];
+		for (var x=0; x < count; ++ x){
+			result.push(f(x,count));
+		}
+		return result
 	}
-	return result
-}
 /* Function: bind
 	returns a version of this function bound to a specific scope object
 	
 	Parameters:
 		scope			-	object to bind as "this"
-		n1+				-	any arguments after _scope_ will be bound tothe function 
+		n1+				-	any arguments after _scope_ will be bound to the function 
 							as well. Any arguments passed to the returned function will
-							appended to these 		
+							appended to these when calling the returned function	
 	
 	Detail:
 		The purpose of this function is to bind a function to a specific scope. If
@@ -59,7 +59,7 @@ Function.prototype.repeat = function(count){
 		it's bound scope. 
 		
 	Note:
-		This function is API compatible with the EcmaScript5 "bind" function 
+		This function is API compatible with the EcmaScript 5 "bind" function 
 		
 	
 	Example:
@@ -83,21 +83,21 @@ Function.prototype.repeat = function(count){
 	
 	(end)
 	
-*/
-Function.prototype.bind = Function.prototype.bind ||function(o) {
-    // Save the this and arguments values
-    var self = this, boundArgs = arguments;
-    return function() {
-        // Build up an argument list
-        var args = [], i;
-        for(i = 1; i < boundArgs.length; i++)
-            args.push(boundArgs[i]);
-        for(i = 0; i < arguments.length; i++)
-            args.push(arguments[i]);
-        // Now invoke self as a method of o
-        return self.apply(o, args);
-    };
-};
+	*/
+	Function.prototype.bind = Function.prototype.bind ||function(o) {
+		 // Save the this and arguments values
+		 var self = this, boundArgs = arguments;
+		 return function() {
+			  // Build up an argument list
+			  var args = [], i;
+			  for(i = 1; i < boundArgs.length; i++)
+					args.push(boundArgs[i]);
+			  for(i = 0; i < arguments.length; i++)
+					args.push(arguments[i]);
+			  // Now invoke self as a method of o
+			  return self.apply(o, args);
+		 };
+	};
 
 /* Function: createCallback
 	returns a callback function that will execute this function with the 
@@ -121,16 +121,171 @@ Function.prototype.bind = Function.prototype.bind ||function(o) {
 	var f = myFunc.createCallback("woot!",false);
 	(end)
 	
-*/
-    Function.prototype.createCallback = function(/*args...*/){
-        // make args available, in function below
-        var args = arguments;
-        var method = this;
-        return function() {
-            return method.apply(window || $server.globalScope, args);
-        };
-    }
+	*/
+	Function.prototype.createCallback = function(/*args...*/){
+		  // make args available, in function below
+		  var args = arguments;
+		  var method = this;
+		  return function() {
+				return method.apply(window || $server.globalScope, args);
+		  };
+	 }
 
+/* Function: after
+	returns a chain function out of this function and another function, new 
+	function second
+	
+	Parameters:
+		func		-	a function to chain after this function. This function may
+						be a chain function
+		
+	See <createChainFunction> for a description of chain functions
+	*/
+	Function.prototype.after = function(func){
+		return Function.createChainFunction([this,func]);	
+	}
+	 
+/* Function: before
+	returns a chain function out of this function and another function, new 
+	function first
+	
+	Parameters:
+		func		-	a function to chain before this function. This function may
+						be a chain function
+		
+	See <createChainFunction> for a description of chain functions
+	*/
+	Function.prototype.before = function(func){
+		return Function.createChainFunction([func,this]);	
+	}
+/* Function: createChainFunction
+	returns a function that will execute a chain of functions when called.
+	
+	Parameters:
+		initialChain		-	*Optional, default []*
+								Array to use as the initial function chain
+	
+	Detail:
+		This creates a function that will execute a chain of functions stored in 
+		the returned function's chainArray property. Before each function is 
+		called a chin property will be set on the function with metadata about 
+		the function chain. See "Chain Object Properties" below. The chain object 
+		can be used to manipulate the chain by altering the return value from 
+		previous functions in the chain, altering the arguments to the next 
+		function in the chain, or by exiting early via chain.exit(). The final 
+		result of the function chain will be returned by the chain function.
+		
+	Note:
+		The same "chain" property is passed to each function in the chain and thus
+		provides a mechanism for earlier functions in the chain to communicate 
+		with later functions in the chain
+		
+	Chain Object Properties:
+		exitChain			-	If set to true, then no other functions in the chain 
+								will be executed and the return from this function
+								will be the final one. See the _exit_ function for 
+								combining this setting with a return
+		lastReturn		-	The return value from the function that executed before
+								this one in the chain
+		args				-	An array of the arguments to the next function in the 
+								chain. Altering this array will alter the arguments to 
+								the next function
+		index				-	The 0-based position of this function in the chain
+		array				-	The complete array of functions in this chain
+		exit(retval)		-	a function that takes a return value and sets 
+								_exitChain_ to true and returns _retval_ as the final 
+								value
+								
+	Example:
+	(code)
+		var obj={
+			stuff:function (text){
+				Myna.println("in orig")
+				return text + " " + this.myVal; 	
+			},
+			myVal:"firstObj"
+		}
+		
+		var obj2={
+			myVal:"secondObj"
+		}
+		
+		
+		obj.stuff=obj.stuff.before(function(text){
+			var chain = arguments.callee.chain; 
+			Myna.println("in before")
+			chain.args[0] = "before " + text
+			if (text == "dude!"){
+				// exit now with this return value, nothing after will be executed
+				chain.exit("sweet!")  
+			}
+			
+		})
+		
+		obj.stuff=obj.stuff.after(function(text){
+			var chain = arguments.callee.chain; 
+			Myna.println("in after")
+			return chain.lastReturn + " after "
+		})
+		
+		Myna.println(obj.stuff("woot!") +"<hr>");
+		Myna.println(obj.stuff("dude!") +"<hr>");
+		
+		obj2.stuff = obj.stuff;
+		Myna.println(obj2.stuff("woot!") +"<hr>");
+	(end)
+	
+	See Also:
+		* <Function.before>
+		* <Function.after>
+		* <Object.before>
+		* <Object.after>
+	*/
+	Function.createChainFunction=function(initialChain){
+		var f = function(){
+			var functions = arguments.callee.chainArray;
+			var $this = this;
+			//var args = Array.parse(arguments);
+			var finalState=functions.reduce(function(state,f,index,array){
+				if (state.exitChain) return state;
+				f.chain = state;
+				f.chain.index = index;
+				f.chain.array = array;
+				f.chain.exit = function(retval){
+					throw {retval:retval}
+				}
+				try{
+					state.lastReturn=f.apply($this,state.args);
+				} catch(e if "retval" in e ){
+					state.lastReturn = e.retval;
+					state.exitChain=true
+				}
+				state.args = f.chain.args
+				return state;
+			},{
+				exitChain:false,
+				lastReturn:undefined,
+				args:Array.parse(arguments)
+			})
+			
+			return finalState.lastReturn;
+		}
+		f.chainArray=(initialChain||[]).reduce(function(chain,f){
+			//expand nested chains
+			if ("chainArray" in f){
+				f.chainArray.forEach(function(f){
+					//we'll assume no further nested chains 
+					chain.push(f);
+				})
+				
+			} else {
+				chain.push(f);
+			}
+			return chain;
+		},[])
+		
+		return f;
+	}
 /* Function: createDelegate
 	returns a function that executes this function with supplied scope and 
 	arguments
@@ -203,19 +358,19 @@ Function.prototype.bind = Function.prototype.bind ||function(o) {
 	b.myFunc("woot! woot!");
 	
 	(end)
-*/
-    Function.prototype.createDelegate = function(obj, args, appendArgs){
-        var method = this;
-        return function() {
-            var callArgs = args || arguments;
-            if(appendArgs === true){
-                callArgs = Array.prototype.slice.call(arguments, 0);
-                callArgs = callArgs.concat(args);
-            }else if(typeof appendArgs == "number"){
-                callArgs = Array.prototype.slice.call(arguments, 0); // copy arguments first
-                var applyArgs = [appendArgs, 0].concat(args); // create method call params
-                Array.prototype.splice.apply(callArgs, applyArgs); // splice them in
-            }
+	*/
+	 Function.prototype.createDelegate = function(obj, args, appendArgs){
+		  var method = this;
+		  return function() {
+				var callArgs = args || arguments;
+				if(appendArgs === true){
+					 callArgs = Array.prototype.slice.call(arguments, 0);
+					 callArgs = callArgs.concat(args);
+				}else if(typeof appendArgs == "number"){
+					 callArgs = Array.prototype.slice.call(arguments, 0); // copy arguments first
+					 var applyArgs = [appendArgs, 0].concat(args); // create method call params
+					 Array.prototype.splice.apply(callArgs, applyArgs); // splice them in
+				}
 			var scope;
 			if (obj){
 				scope=obj;
@@ -224,9 +379,9 @@ Function.prototype.bind = Function.prototype.bind ||function(o) {
 			} else if (typeof $server != "undefined"){
 				scope= $server.globalScope;
 			}
-            return method.apply(scope, callArgs);
-        };
-    }
+				return method.apply(scope, callArgs);
+		  };
+	 }
 
 /* Function: createSequence
 	creates and returns a combined function call sequence of this function 
@@ -254,14 +409,14 @@ Function.prototype.bind = Function.prototype.bind ||function(o) {
 	seq();
 
 	(end)
-    */
+	 */
 	Function.prototype.createSequence = function(fcn, scope){
-        if(typeof fcn != "function"){
-            return this;
-        }
-        var method = this;
-        return function() {
-            var retval = method.apply(this || window, arguments);
+		  if(typeof fcn != "function"){
+				return this;
+		  }
+		  var method = this;
+		  return function() {
+				var retval = method.apply(this || window, arguments);
 			var callScope;
 			if (scope){
 				callScope=scope;
@@ -272,10 +427,10 @@ Function.prototype.bind = Function.prototype.bind ||function(o) {
 			} else if (typeof $server != "undefined"){
 				callScope= $server.globalScope;
 			}
-            fcn.apply(callScope, arguments);
-            return retval;
-        };
-    }
+				fcn.apply(callScope, arguments);
+				return retval;
+		  };
+	 }
 
 /* Function: createInterceptor
 	returns a function that executes a supplied interceptor function, then this 
@@ -308,15 +463,15 @@ Function.prototype.bind = Function.prototype.bind ||function(o) {
 	doWork();
 	
 	(end)
-     */
-    Function.prototype.createInterceptor=function(fcn, scope){
-        if(typeof fcn != "function"){
-            return this;
-        }
-        var method = this;
-        return function() {
-            fcn.target = this;
-            fcn.method = method;
+	  */
+	 Function.prototype.createInterceptor=function(fcn, scope){
+		  if(typeof fcn != "function"){
+				return this;
+		  }
+		  var method = this;
+		  return function() {
+				fcn.target = this;
+				fcn.method = method;
 			var callScope;
 			if (scope){
 				callScope=scope;
@@ -327,10 +482,10 @@ Function.prototype.bind = Function.prototype.bind ||function(o) {
 			} else if (typeof $server != "undefined"){
 				callScope= $server.globalScope;
 			}
-            if(fcn.apply(callScope, arguments) === false){
-                return undefined;
-            } else {
+				if(fcn.apply(callScope, arguments) === false){
+					 return undefined;
+				} else {
 					return method.apply(callScope, arguments);
 				}
-        };
-    }
+		  };
+	 }

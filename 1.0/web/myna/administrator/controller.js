@@ -187,7 +187,7 @@ var C ={
 		
 		viewport = new Ext.Viewport(config);
 		
-		C.applications.installEgg()
+		//C.applications.installEgg()
 		//C.applications.exportApp("myna_admin");
 	}
 /* ================ helper functions ======================================== */

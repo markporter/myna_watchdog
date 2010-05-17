@@ -427,7 +427,7 @@ if (!Myna) var Myna={}
 	*/
 	Myna.File.prototype.isValidChecksum = function(checksum,type){
 		type=type||"SHA-256";
-		var checksum = Myna.JavaUtils.byteArrayToHex(checksum)
+		checksum = Myna.JavaUtils.byteArrayToHex(checksum)
 		return Myna.JavaUtils.byteArrayToHex(this.getChecksum(type)) == checksum;
 	}
 /* Function: listFiles

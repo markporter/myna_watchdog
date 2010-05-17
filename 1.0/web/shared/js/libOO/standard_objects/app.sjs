@@ -812,8 +812,17 @@ var $application={
 			$server_gateway.currentDir=originalCurrentDir;
 		
 	},
+/* Function: onBeforeRequestStart
+		Called before any parent request start functions.
+		
+		Calling arguments.callee.chain.exit() will exit the chain and prevent any
+		further request start functions from executing
+		
+	*/
+	onBeforeRequestStart:function(){},
 /* Function: onRequestStart
-		Called before processing a request. 
+		Called before processing a request, but after and parent onRequestStart 
+		functions. 
 		
 		Detail:
 			This function is called after all the initial request processing, but 
@@ -825,14 +834,13 @@ var $application={
 		Example:
 		(code)
 			//in application.sjs
-			
-			// Using Object.after ensures that an existing onRequestStart function
-			// loaded by an earlier application.sjs will be executed first
-			$application.after("onRequestStart",function(){
-				// create a DataManager with a datasource that
-				// has the same name as the application directory
-				dm = new Myna.DataManager(new Myna.File($application.directory).getFileName);
-			})
+			{
+				onRequestStart:function(){
+					// create a DataManager with a datasource that
+					// has the same name as the application directory
+					dm = new Myna.DataManager(new Myna.File($application.directory).getFileName);
+				}
+			}
 		(end)
 	*/
 	onRequestStart:function(){},
@@ -1059,16 +1067,37 @@ var $application={
 						$application.directory = curPath;
 						$application.url = $server.rootUrl +$application.directory.right($application.directory.length -$server.rootDir.length)
 						if (/^\s*\{/.test(appText.left(100))){
+							appText = $server_gateway.translateString(appText,curPath + "application.sjs")
 							$server_gateway.executeJsString(
 								$server.globalScope, 
 								"var curApp =(" + appText +")", 
 								curPath+"application.sjs"
-							)
+							) 
+							//var curApp = eval("(" + appText + ")");
 							//var curApp = $server.curApp;
 							
 							curApp.getProperties().forEach(function(p){
 								if (typeof curApp[p] === "function"){
-									$application.after(p,curApp[p]);
+									//$application.after(p,curApp[p]);
+									switch(p){
+										case "onRequestStart":
+										case "onAfterRequestEnd":
+										case "onAfterError":
+										case "onAfterError404":
+											$application.after(p.replace(/After/,""),curApp[p])
+										break;
+										
+										case "onBeforeRequestStart":
+										case "onRequestEnd":
+										case "onError":
+										case "onError404":
+											$application.before(p.replace(/Before/,""),curApp[p])
+										break;
+											
+										default:
+											//All other functions override
+											$application[p] = curApp[p];
+									}
 									//java.lang.System.err.println(curPath + ": applied " +p)
 								} else {
 									//java.lang.System.err.println(curPath + ":" +p)

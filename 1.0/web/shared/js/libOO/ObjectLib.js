@@ -16,58 +16,69 @@ var ObjectLib = {}
 	
 	
 	Detail:
-		Existing functions are preserved and executed after the supplied function. 
+		Existing functions are preserved and executed after the supplied function.
+		This is a shortcut for creating chain functions and is the equivalent of
+		(code)
+		obj[functionName] = obj[functionName].before(functionObj) 
+		(end)
+		See <Function.createChainFunction> for how chain functions work.
 		
-		The resulting chain will return:
-		
-		* the _returnValue_ property of 
-		  arguments.callee.chain.returnValue, if defined
-		* OR undefined if _functionObj_ returns false  
-		* Or the result of the original function
-		
-		_functionObj_ will have properties added to it that can be accessed via 
-		arguments.callee.chain from inside the function
-		
-	arguments.callee.chain:
-		returnValue			-	*default undefined*
-								If this is defined after _functionObj_ 
-								completes, then this value will be returned 
-								instead of executing the original function. 
-								
-		originalFunction	-	This is a reference to the original function, 
-								bound to this object. This is useful in 
-								conjunction with _returnValue_ to call the 
-								original function with altered parameters and 
-								return the result
-	
 	Examples:
 	(code)
-		//client-side
-		ObjectLib.before(window,"onload",function(){alert("window loaded!")});
+		var obj={
+			stuff:function (text){
+				Myna.println("in orig")
+				return text + " " + this.myVal; 	
+			},
+			myVal:"firstObj"
+		}
+		
+		var obj2={
+			myVal:"secondObj"
+		}
+		
+		
+		ObjectLib.before(obj,"stuff",function(text){
+			var chain = arguments.callee.chain; 
+			Myna.println("in before")
+			chain.args[0] = "before " + text
+			if (text == "dude!"){
+				// exit now with this return value, nothing after will be executed
+				chain.exit("sweet!")  
+			}
+			
+		})
+		
+		ObjectLib.after(obj,"stuff",function(text){
+			var chain = arguments.callee.chain; 
+			Myna.println("in after")
+			return chain.lastReturn + " after "
+		})
+		
+		Myna.println(obj.stuff("woot!") +"<hr>");
+		Myna.println(obj.stuff("dude!") +"<hr>");
+		
+		obj2.stuff = obj.stuff;
+		Myna.println(obj2.stuff("woot!") +"<hr>");
 		
 	(end)
 	*/
 	ObjectLib.before=function( obj, functionName, functionObj){
-		var oldFunction = obj[functionName] || function(){}
 		var $this = obj
-		
-		var newFunction = functionObj;
-		newFunction.chain={
-			originalFunction:function(){
-				return oldFunction.apply($this,Array.parse(arguments))
+		//does the function exist?
+		if (functionName in $this) {
+			//is the function a chain header?
+			if (!("chainArray" in $this[functionName])){
+				$this[functionName]=Function.createChainFunction([$this[functionName]]);
 			}
+		} else {
+			$this[functionName]=Function.createChainFunction();	
 		}
-		
-		obj[functionName] =function(){
-			var args = Array.parse(arguments);
-			if (newFunction.apply(this,args) === false){
-				return undefined;	
-			}
-			if ("returnValue" in newFunction.chain){
-				return newFunction.chain.returnValue;	
-			}
-		
-			return oldFunction.apply(this,args);
+		if("chainArray" in functionObj){
+			$this[functionName].chainArray=
+				functionObj.chainArray.concat($this[functionName].chainArray)
+		} else {
+			$this[functionName].chainArray.unshift(functionObj)
 		}
 	}	
 /* Function: after
@@ -80,47 +91,36 @@ var ObjectLib = {}
 	
 	
 	
-	Detail:
-		Existing functions are preserved and executed in the order they were 
-		declared. If the function _functionName_ does not exist, it will be 
-		created.
+		Detail:
+		Existing functions are preserved and executed after the supplied function.
+		This is a shortcut for creating chain functions and is the equivalent of
+		(code)
+		obj[functionName] = obj[functionName].before(functionObj) 
+		(end)
+		See <Function.createChainFunction> for how chain functions work.
 		
-		The resulting chain will return the result of the original function, 
-		unless overridden in arguments.callee.chain.returnValue
-		
-		_functionObj_ will have properties added to it that can be accessed via 
-		arguments.callee.chain from inside the function
-		
-	arguments.callee.chain:
-		returnValue			-	*default return value from original function*
-								This is the value that will be returned. This 
-								can be overwritten by _functionObj_ 
-								
-		originalFunction	-	This is a reference to the original function, 
-								bound to this object. 
-	
 	Examples:
-	(code)
-		//client-side
-		ObjectLib.after(window,"onload",function(){alert("window loaded!")});
+	*	see <before>
 		
 	(end)
 	*/
 	ObjectLib.after=function( obj, functionName, functionObj){
-		var oldFunction = obj[functionName] || function(){}
 		var $this = obj
-		var newFunction = functionObj;
-		newFunction.chain={
-			originalFunction:function(){
-				return oldFunction.apply($this,Array.parse(arguments))
+		
+		//does the function exist?
+		if (functionName in $this) {
+			//is the function a chain header?
+			if (!("chainArray" in $this[functionName])){
+				$this[functionName]=Function.createChainFunction([$this[functionName]]);
 			}
+		} else {
+			$this[functionName]=Function.createChainFunction();	
 		}
-		obj[functionName] =function(){
-			var args = Array.parse(arguments);
-			
-			newFunction.chain.returnValue = oldFunction.apply(this,args);
-			newFunction.apply(this,args);
-			return newFunction.chain.returnValue;
+		if("chainArray" in functionObj){
+			$this[functionName].chainArray=
+				$this[functionName].chainArray.concat(functionObj.chainArray)
+		} else {
+			$this[functionName].chainArray.push(functionObj)
 		}
 	}	
 	

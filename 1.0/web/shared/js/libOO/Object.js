@@ -34,13 +34,107 @@
 	Prepends supplied function to the event chain of this object.
 	
 	Parameters:
+		obj				- object to apply to 
 		functionName 	- name of the function on an object to modify
 		functionObj		- function object to append
 	
+	
+	
+	Detail:
+		Existing functions are preserved and executed after the supplied function.
+		This is a shortcut for creating chain functions and is the equivalent of
+		(code)
+		obj[functionName] = obj[functionName].before(functionObj) 
+		(end)
+		See <Function.createChainFunction> for how chain functions work.
+		
+	
+	Examples:
+	(code)
+		// example of creating an audit function
+		dm = new Myna.DataManager("hr")
+		dm.managerTemplate.before("saveField",function(fieldName,newVal){
+			var chain = arguments.callee.chain;
+			//save audit table manager
+			if (!this.audiManager) {
+				this.auditManager = new Myna.DataManager("audit_db").getManager("audit_Table")
+			}
+			
+			this.audiManager.create({
+				ts:new Date(),
+				user_id:$cookie.getAuthUserId,
+				table:this.table.tableName,
+				column:fieldName,
+				old_val:this.data[fieldName],
+				new_val:newVal
+			})
+		})
+		
+	(end)
+	*/
+	Object.prototype.before=function( functionName, functionObj){
+		ObjectLib.before(this,functionName, functionObj);
+	}
+	
+/* Function: after
+	Appends supplied function to the event chain of this object.
+	
+	Parameters:
+		obj				- object to apply to 
+		functionName 	- name of the function on an object to modify
+		functionObj		- function object to append
+	
+	
+	
+		Detail:
+		Existing functions are preserved and executed after the supplied function.
+		This is a shortcut for creating chain functions and is the equivalent of
+		(code)
+		obj[functionName] = obj[functionName].before(functionObj) 
+		(end)
+		See <Function.createChainFunction> for how chain functions work.
+		
+	Examples:
+	(code)
+		// example of adding extra functions to bean objects
+		dm = new Myna.DataManager("hr")
+		dm.managerTemplate.after("getById",function(id){
+			var chain = arguments.callee.chain;
+			if (this.table.tableName == "employee"){
+				chain.lastReturn.getDirectReports = function(){
+					return this.manager.findBeans({
+						manager_id:this.employee_id
+					})
+				}
+			}
+			return chain.lastReturn;
+		})
+	(end)
+	
+	*/
+	Object.prototype.after=function( functionName, functionObj){
+		ObjectLib.after(this,functionName, functionObj);
+	}
+/* Function: old_before
+	/* Function: old_after
+	*DEPRECATED* This function is for backwards compatibility only. See <before>
+	
+	Prepends supplied function to the event chain of this object.
+	
+	Parameters:
+
+		functionName 	- name of the function on an object to modify
+		functionObj		- function object to append
+	
+
+
 	Detail:
 		Existing functions are preserved and executed after the supplied function. 
 		
 		The resulting chain will return:
+
+
+
 		
 		* The _returnValue_ property of 
 		  arguments.callee.chain.returnValue, if defined
@@ -74,17 +168,32 @@
 				}
 				chain.returnValue=chain.originalFunction(obj);
 			}
+
+
+
+
+
+
+
+
+
 		})
+
 	(end)
 	*/
-	Object.prototype.before=function( functionName, functionObj){
+	Object.prototype.old_before=function( functionName, functionObj){
 		ObjectLib.before(this,functionName, functionObj);
 	}
 	
-/* Function: after
+/* Function: old_after
+	*DEPRECATED* This function is for backwards compatibility only. See <after>
+	
 	Appends supplied function to the event chain of this object.
 	
+	
+	
 	Parameters:
+
 		functionName 	- name of the function on an object to modify
 		functionObj		- function object to append
 	
@@ -107,6 +216,15 @@
 		originalFunction	-	This is a reference to the original function, 
 								bound to this object. 
 	
+
+
+
+
+
+
+
+
+
 	Examples:
 	(code)
 		// example of adding extra functions to bean objects
@@ -120,11 +238,12 @@
 					})
 				}
 			}
+
 		})
 	(end)
 	
 	*/
-	Object.prototype.after=function( functionName, functionObj){
+	Object.prototype.old_after=function( functionName, functionObj){
 		ObjectLib.after(this,functionName, functionObj);
 	}
 /* Function: appendFunction
@@ -371,6 +490,7 @@
 			return this.applyTo({});
 		}
 	}
+
 if ("$server_gateway" in this){
 	(function(){
 		var hide = function (o, p) {
