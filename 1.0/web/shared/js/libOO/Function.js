@@ -256,9 +256,13 @@
 				}
 				try{
 					state.lastReturn=f.apply($this,state.args);
-				} catch(e if "retval" in e ){
-					state.lastReturn = e.retval;
-					state.exitChain=true
+				} catch(e){
+					if ("retval" in e){
+						state.lastReturn = e.retval;
+						state.exitChain=true
+					}else{
+						throw e;	
+					}
 				}
 				state.args = f.chain.args
 				return state;

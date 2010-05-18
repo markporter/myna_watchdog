@@ -383,6 +383,33 @@
 		return new_string; */
 	};
 
+/* Function: getLineIterator
+	returns java Iterator that produces a line at a time for this string
+	
+	Detail:
+	   If you are working with large strings, split().forEach() may be
+	   inefficient. This function produces a Java Iterator object that
+	   can be used to efficiently loop over all the lines in this string.
+	
+	Example:
+	(code)
+	   //big text chunk
+	   var text = qry.data[0].big_text_field;
+	   for (var line in text.getLineIterator()){
+			   ... do stuff with line...
+	   }
+	(end)
+	
+	
+	See Also:
+		<Myna.File.getLineIterator>
+*/
+	String.prototype.getLineIterator = function(){
+	   var r = new java.io.StringReader(this)
+	   $application.addOpenObject(r);
+	   return Iterator(new org.apache.commons.io.LineIterator(r));
+	
+	}
 
 
 /* function: htmlEntityToChar

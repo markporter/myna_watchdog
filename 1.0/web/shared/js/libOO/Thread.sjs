@@ -147,6 +147,16 @@ Myna.Thread=function(f,args,priority){
 		cached before releasing the the subThread
 	*/
 	this.releaseOnJoin=false;
+	/* Property: deleteOnJoin
+		should this thread's metadata be deleted when <join> or <joinAll> is 
+		called? (Default: false) 
+		
+		Setting this to true will cause the subThread's metadata to be deleted when <join>
+		or <joinAll> is called. This makes any return value or captured output unavailable.
+		
+		This is a good choice for maximum memory efficiency
+	*/
+	this.deleteOnJoin=false;
 	/* Property: captureOutput
 		should this thread capture generated content and return value from the 
 		subThread? (Default: true) 
@@ -324,6 +334,10 @@ Myna.Thread.prototype.kill=function(){
 	(end)
 */
 Myna.Thread.joinAll = function(timeout,throwOnTimeout,killOnTimeout){
+	return Myna.Thread.joinThreads(Myna.Thread.getThreadArray(),timeout,throwOnTimeout,killOnTimeout);
+}
+
+Myna.Thread.joinThreads =function(array,timeout,throwOnTimeout,killOnTimeout){
 	var result =[];
 	var $this = this;
 	if (throwOnTimeout === undefined) throwOnTimeout=true;
@@ -333,12 +347,11 @@ Myna.Thread.joinAll = function(timeout,throwOnTimeout,killOnTimeout){
 	var timeExceeded = false;
 	
 	var start = new Date().getTime();
-	this.getThreadArray().forEach(function(t){
+	array.forEach(function(t,i){
 		var elapsed = new Date().getTime() -start;
 		var timeLeft = Math.max(timeout?1:0,(timeout) - elapsed);
 		result.push(t.join(timeLeft,false));
 		if (!timeLeft){
-			
 			if (t.isRunning()){
 				timeExceeded =true;
 				if (killOnTimeout){
@@ -352,7 +365,15 @@ Myna.Thread.joinAll = function(timeout,throwOnTimeout,killOnTimeout){
 				}
 			}
 		}
+		if (t.deleteOnJoin) {
+			delete array[i];
+			Myna.Thread.getThreadArray().forEach(function(global,i,array){
+				if (global === t) delete array[i]; 
+			})
+		}
+		
 	})
+	//java.lang.System.gc();//good time to collect released memory
 	if (timeExceeded && throwOnTimeout) {
 		throw new Error("Threads exceeded timeout of " + Date.formatInterval(timeout))
 	}
@@ -387,6 +408,9 @@ Myna.Thread.getThreadArray = function(){
 								created in this group
 		releaseOnJoin		-	*Optional, default false*
 								default value for <Thread.releaseOnJoin> for 
+								each thread in this group
+		deleteOnJoin		-	*Optional, default false*
+								default value for <Thread.deleteOnJoin> for 
 								each thread in this group
 		captureOutput		-	*Optional, default true*
 								default value for <Thread.captureOutput> for 
@@ -486,7 +510,9 @@ Myna.ThreadGroup.prototype.getThreadArray=function(){
 	
 	Takes the same parameters as <Myna.Thread.joinAll>
 */
-Myna.ThreadGroup.prototype.join=Myna.Thread.joinAll;
+Myna.ThreadGroup.prototype.join=function(timeout,throwOnTimeout,killOnTimeout){
+	return Myna.Thread.joinThreads(this.threadArray,timeout,throwOnTimeout,killOnTimeout);	
+}
 
 /* Function: spawn 
 	calls <ThreadGroup.add> using this this group's defaults and returns the generated thread.
@@ -551,12 +577,22 @@ Myna.ThreadGroup.prototype.add=function(func,args,priority){
 		priority
 	)
 	if ("releaseOnJoin" in this) t.releaseOnJoin = this.releaseOnJoin;
+	if ("deleteOnJoin" in this) t.deleteOnJoin = this.deleteOnJoin;
 	if ("captureOutput" in this) t.captureOutput = this.captureOutput;
+	
+	while (this.getRunningThreads().length >= this.joinEvery){
+		Myna.sleep(100);	
+	}
+	this.getThreadArray().forEach(function(t){
+		if (!t.isRunning()) t.join()
+	})
+	
 	this.getThreadArray().push(t)
 	
-	if (this.joinEvery && this.getRunningThreads().length >= this.joinEvery) {
+	
+	/* if (this.joinEvery && this.getRunningThreads().length >= this.joinEvery) {
 		this.join(0);
-	}
+	} */
 	return t;
 		
 }
