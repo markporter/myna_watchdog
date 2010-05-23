@@ -15,7 +15,10 @@ if (!Myna) var Myna={}
 	Myna.File =function (path){
 		if (path instanceof Myna.File){
 			path =path.javaFile.toURI();	
+		}else if (path instanceof java.io.file){
+			path = path.toURI();
 		}
+		
 		/* Property: javaFile
 			the underlying java.io.File object 
 		*/

@@ -111,20 +111,45 @@ var $req={
 /* Property: headers
 		a JavaScript Object where the properties are header names and the 
 		property values are an array of strings containing each of request 
-		header's values
+		header's values.
+		
+		Note:
+			Each header is keyed by how it appeared in the header, and as 
+			lowercase. This is because not every server formats header names the 
+			same. This means that if you are looking for a specific header, it is 
+			better to use 
+			
+			(code)
+			if ("user-agent" in $req.headers)
+			(end)
+			rather than
+			(code)
+			if("User-Agent" in $req.headers)
+			(end)
+			
+			To avoid confusion when looping over key names, the lowercase key names 
+			are hidden and do not show up in Myna.dump() or $req.headers.getKeys()
 	*/
 	get headers(){
 		var result={};
 		try{
 			var headerNames = Myna.JavaUtils.enumToArray($server.request.getHeaderNames());
 			headerNames.forEach(function(name){
-				var values =Myna.JavaUtils.enumToArray($server.request.getHeaders(name))
-				if (values.length == 1){
-					values = String(values[0]).split(/,/)
-				} else {
-					values  = values.map(function(value){return String(value)})
+				//try to detect date headers
+				try {
+					result[name] = new Date($server.request.getDateHeader(name));
+				} catch (e){
+					var values =Myna.JavaUtils.enumToArray($server.request.getHeaders(name))
+					if (values.length == 1){
+						values = String(values[0]).split(/,/)
+					} else {
+						values  = values.map(function(value){return String(value)})
+					}
+					
+					result[name] =values;
+					result[name.toLowerCase()]=result[name];
+					result.hideProperty(name.toLowerCase());
 				}
-				result[name] =values;
 			});
 		} catch(e){}
 		return result;

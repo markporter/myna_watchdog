@@ -339,7 +339,7 @@ if (!("JavaUtils" in Myna)) Myna.JavaUtils={}
 		closeStreams		- *Optional, default false*
 								If true, both streams will be closed after the copy
 	*/
-	Myna.JavaUtils.streamToByteArray=function(input,output,closeStreams){
+	Myna.JavaUtils.streamCopy=function(input,output,closeStreams){
 		var IOUtils = Packages.org.apache.commons.io.IOUtils;
 		IOUtils.copy(input,output);
 		if (closeStreams){

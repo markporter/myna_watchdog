@@ -574,6 +574,7 @@ var $application={
 							$req.paramNames.push(param)	
 						})
 					}
+				
 				//get array of merged GET and POST parameters as key, value pairs
 				var params = Myna.JavaUtils.mapToObject($server.request.getParameterMap())
 									

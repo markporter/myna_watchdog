@@ -2,7 +2,7 @@
 try{
 	//standard objects
 	$server_gateway.includeOnce("/shared/js/libOO/standard_objects.sjs")
-	
+	//if the application.sjs has not already handled this request
 	if (!$req.handled){
 		//server start scripts, if necessary
 		if ($server_gateway.isInitThread){
@@ -47,13 +47,61 @@ try{
 			Myna.abort();
 		} else {
 			//request script
-			if (new Myna.File($server.requestDir + $server.requestScriptName).exists()){
+			$req.scriptFile =new Myna.File($server.requestDir + $server.requestScriptName);
+			// try to resolve mapping
+			
+			if ($req.scriptFile.exists() && $req.scriptFile.fileName.match(/\.(sjs|ejs|ws)$/)){
+				
 				Myna.includeOnce($server.requestDir + $server.requestScriptName)
 			} else {
-				$application._onError404();
-				/* $res.setStatusCode(404, "The file you requested is not available at that location.");
-				$res.clear();
-				Myna.abort(); */
+				//process REST params
+				if (!$server_gateway.requestScriptName 
+					|| !new Myna.File($server_gateway.requestDir+"/"+$server_gateway.requestScriptName).exists()
+				){
+					var params=[]
+					var dirStack = $server.requestDir.after($server.rootDir.length).split("/")
+						.filter(function(e){return e.length})
+					var curFile;
+					var dir,name;
+					var found = false;
+					if ($server_gateway.requestScriptName) dirStack.push($server_gateway.requestScriptName);
+					while (dirStack.length ){
+						curFile=new Myna.File($server.rootDir +dirStack.join("/") + "/index.sjs");
+						if (curFile.exists()) {
+							dir=dirStack.join("/")
+							name= "index.sjs";
+							found=true;
+							break;
+						}
+						curFile=new Myna.File($server.rootDir+dirStack.join("/"));
+						if (curFile.exists()) {
+							name= dirStack.pop();
+							dir=dirStack.join("/")
+							
+							found=true;
+							break;
+						}
+						params.unshift(dirStack.pop());
+					}
+					if(found){
+						//reset pathing:
+						$server_gateway.currentDir = $server.rootDir+dir+"/";
+						$server_gateway.requestDir = $server_gateway.currentDir;
+						$server_gateway.scriptName = name
+						$server_gateway.requestScriptName = $server_gateway.scriptName;
+						var serverUrl = $server.serverUrl;
+						$server_gateway.environment.put("requestURI",$server.rootUrl + dir+"/"+name);
+						$server_gateway.environment.put("requestURL",serverUrl+$server.rootUrl + dir+"/"+name);
+						$req.$restParams = params;
+						Myna.includeOnce($server.rootDir +dir + "/"+name)
+					} else {
+						$application._onError404();
+					}
+					
+				} else {
+					$res.serveFile($req.scriptFile,{headers:$req.headers});
+					Myna.abort();
+				}
 			}
 		}
 		/* dump translated code to /WEB-INF/parser_debug */
@@ -96,8 +144,10 @@ try{
 		}
 	}
 } catch(e){
-	Myna.log("ERROR","Thread Error: " +e.message,Myna.formatError(e));
-	$application.onError(e);
+	if (e.message != "___MYNA_ABORT___"){
+		Myna.log("ERROR","Thread Error: " +e.message,Myna.formatError(e));
+		$application.onError(e);
+	}
 } finally{
 	//on end
 	$application._onRequestEnd();

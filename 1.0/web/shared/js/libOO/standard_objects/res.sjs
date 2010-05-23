@@ -256,7 +256,214 @@ var $res = {
 		$res.redirect($server.resolveUrl(
 			url + "?" + query
 		))
-	},		
+	},	
+/* 	Function: serveFile
+		Efficiently serves a file on the filesystem
+		
+		Parameters: 
+			file 		-  a Myna.File, java.io.File, or MynaPath to a file to serve 
+							to the client
+			
+		
+		Detail:
+			This function replaces the normal output of this response with the contents 
+			of _file_. Executing this function after a call to <$res.flush> will likely 
+			fail or corrupt the file. This function is appropriate for for large 
+			file downloads as it supports resuming.
+		
+	*/
+	serveFile:function(file,options){
+	
+		file = new Myna.File(file);
+		
+		var codes =javax.servlet.http.HttpServletResponse;
+		var ranges=[];
+		if (!file.exists()){
+			Myna.log("error","$res.serveFile: file " + file + " does not exist",Myna.dump($req.data));
+			throw new Error("Filename does not exist");
+			return;
+		}
+		$server_gateway.requestHandled=true;
+		
+		//clear any existing content
+		$res.clear();
+		
+		var fs = new net.balusc.webapp.FileServer(
+			file.javaFile,
+			$server.servlet,
+			$server.request,
+			$server.response
+		)
+		fs.serve($server_gateway.type != "HEAD");
+		Myna.abort();
+	},
+	serveFile2:function(file,options){
+		if (!options) options={}
+		options.setDefaultProperties({
+			contentType:null,
+			downloadName:null,
+			headers:null
+		})
+		file = new Myna.File(file);
+		
+		var codes =javax.servlet.http.HttpServletResponse;
+		var ranges=[];
+		if (!file.exists()){
+			Myna.log("error","$res.serveFile: file " + file + " does not exist",Myna.dump($req.data));
+			throw new Error("Filename does not exist");
+			return;
+		}
+		$server_gateway.requestHandled=true;
+		
+		//clear any existing content
+		$res.clear();
+		var ETag = file.fileName 
+						+ "_" + file.size + "_" 
+						+ Math.floor(file.lastModified.getTime()/1000);
+		
+		/* header checks, if supplied*/
+		if (options.headers){
+			var ifNoneMatch = options.headers["If-None-Match"];
+			if (ifNoneMatch == ETag) {
+				$res.setHeader("ETag", ETag); 
+				$res.setStatusCode(codes.SC_NOT_MODIFIED);
+				return;
+			}
+	
+			var ifModifiedSince = options.headers["If-Modified-Since"];
+			if (ifModifiedSince && ifModifiedSince + 1000 > file.lastModified) {
+				$res.setHeader("ETag", ETag); 
+				$res.setStatusCode(codes.SC_NOT_MODIFIED);
+				return;
+			}
+			var ifMatch = options.headers["If-Match"];
+			if (ifMatch && ifMatch != ETag) {
+				$res.setStatusCode(codes.SC_PRECONDITION_FAILED);
+				return;
+			}
+	
+			var ifUnmodifiedSince = options.headers["If-Unmodified-Since"];
+			if (ifUnmodifiedSince && ifUnmodifiedSince + 1000 <= file.lastModified.getTime()) {
+				$res.setStatusCode(codes.SC_PRECONDITION_FAILED);
+				return;
+			}
+			//Get ranges
+			var range = options.headers["Range"];
+			if (range){
+				range =String(range);
+				// Range header should match format "bytes=n-n,n-n,n-n...". If not, then return 416.
+				if (!range.match(/^bytes=\d*-\d*(,\d*-\d*)*$/)) {
+					$res.setHeader("Content-Range", "bytes */" + file.size); 
+					$res.setStatusCode(codes.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+					return;
+				}
+				// If-Range header should either match ETag or be greater then LastModified. If not,
+				// then return full file.
+				var ifRange = options.headers["If-Range"];
+				if (!ifRange || ifRange !=ETag) {
+					var ifRangeTime = options.headers["If-Range"];
+					if (!ifRangeTime || ifRangeTime + 1000 >= file.lastModified) {
+						range.after(6).split(",").forEach(function(part){
+							// Assuming a file with length of 100, the following examples returns bytes at:
+							// 50-80 (50 to 80), 40- (40 to length=100), -20 (length-20=80 to length=100).
+							var rangeParts = part.split(/-/)
+							var start = rangeParts[0]
+							var end = rangeParts[1]
+		
+							if (start == "") {
+								start = file.size - end;
+								end = file.size - 1;
+							} else if (end == "" || end > file.size - 1) {
+								end = file.size - 1;
+							}
+		
+							// Check if Range is syntactically valid. If not, then return 416.
+							if (start > end) {
+								$res.setHeader("Content-Range", "bytes */" + file.zise); // Required in 416.
+								$res.setStatusCode(codes.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+								return;
+							}
+		
+							// Add range.
+							ranges.push({
+								start:parseInt(start), 
+								end:parseInt(end),
+								length:parseInt(end) - parseInt(start) + 1,
+								total:file.size
+							});
+						})
+					}
+				}
+			}
+		}
+		//get content type
+		if (!options.contentType) {
+			options.contentType=$server.servlet
+							.getServletContext()
+							.getMimeType(file.javaFile.toString());
+			if (!options.contentType) {
+				options.contentType ="application/octet-stream";
+			}
+		}
+		
+		$res.setHeader("ETag", ETag); 
+		if (options.downloadName){
+			$res.setHeader("Content-disposition", 'attachment; filename="'+options.downloadName+'"');
+		}
+		$server.response.setDateHeader("Last-Modified", file.lastModified.getTime());
+		$res.setHeader("Accept-Ranges", "bytes");
+		
+		if (ranges.length){
+			var output = $server.response.getOutputStream();
+			var input = new java.io.RandomAccessFile(file.javaFile, "r");
+			ranges.forEach(function(r,index){
+				$res.setStatusCode(codes.SC_PARTIAL_CONTENT);
+				if (ranges.length ==1){
+					$res.setHeader("Content-Range", "bytes " + r.start + "-" + r.end + "/" + r.total);
+					$res.setHeader("Content-Length", r.length);
+					$res.setContentType(options.contentType);
+				} else {
+					var boundry="MULTIPART"
+					$res.setContentType("multipart/byteranges; boundary="+boundry);
+					output.println();
+					output.println("--" + boundry);
+					output.println("Content-Type: " + options.contentType);
+					output.println("Content-Range: bytes " + r.start + "-" + r.end + "/" + r.total);
+					
+				}
+				
+				var buffer = Myna.JavaUtils.createByteArray(4*1024);
+				var read=0;
+				var remaining = r.length;
+				input.seek(r.start)
+				while ((read = input.read(buffer)) > 0) {
+					if ((remaining -= read) > 0) {
+						output.write(buffer, 0, read);
+					} else {
+						output.write(buffer, 0, remaining + read);
+						break;
+					}
+				}
+				if (ranges.length >1){
+					output.println();
+					output.println(("--" + boundry + "--").toJava());
+				}
+				
+			})
+		} else {
+			$server.response.setContentLength(file.size);
+			$res.setContentType(options.contentType);
+			Myna.JavaUtils.streamCopy(
+				file.getInputStream(),
+				$server.response.getOutputStream(),
+				true
+			);
+		}
+		
+	
+	},	
+	
+	
 /* 	Function: setHeader
 		sets a header to return to the browser
 		
@@ -284,20 +491,21 @@ var $res = {
 							the binary data. If "" or null, the default will be used
 							
 			filename	-	*Optional, default null* if defined, a "Content-disposition"
-							reponse header is set to present the standard "Save or Open?" 
+							response header is set to present the standard "Save or Open?" 
 							dialog to the client. Use this if offering a file for download, 
 							but not if you expect the content to be rendered inline 
 		
 		Detail:
 			This function replaces the normal output of this response with the contents 
 			of _data_. Executing this function after a call to <$res.flush> will likely 
-			fail or currupt the file.
+			fail or corrupt the file.
 			
 		Example:
 			var bytes = new Myna.File("path_to_doc.pdf").readBinary();
 			$res.printBinary(bytes,"application/pdf","result.pdf");
 		
-		
+		See Also:
+			* <serveFile>
 	*/
 	printBinary:function(data,contentType,filename){
 		if (!contentType || contentType=="") contentType="appplication/octet-stream";

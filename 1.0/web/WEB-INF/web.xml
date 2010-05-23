@@ -12,26 +12,19 @@
 		<load-on-startup>1</load-on-startup>
 
 	</servlet>
-<!-- sjs -->
+<!-- map all to Myna -->
 	<servlet-mapping>
 		<servlet-name>JSServlet</servlet-name>
-		<url-pattern>*.sjs</url-pattern>
+		<url-pattern>/*</url-pattern>
 	</servlet-mapping>
-<!-- sjs with REST simulation -->
-	<servlet-mapping>
+	<!-- <servlet-mapping>
 		<servlet-name>JSServlet</servlet-name>
-		<url-pattern>/URL-MAP/*</url-pattern>
-	</servlet-mapping>
- <!-- ws web services -->
-	<servlet-mapping>
-		<servlet-name>JSServlet</servlet-name>
-		<url-pattern>*.ws</url-pattern>
-	</servlet-mapping> 
-<!-- ejs -->
-	<servlet-mapping>
-		<servlet-name>JSServlet</servlet-name>
-		<url-pattern>*.ejs</url-pattern>
-	</servlet-mapping>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping> -->
+	
+	
+
+	
 <!-- 404 handling -->
 	<error-page>
 		<error-code>404</error-code>

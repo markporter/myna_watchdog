@@ -146,7 +146,7 @@ var $server={
 			takes a url path relative to the request directory and returns an 
 			absolute URL, including the server part.
 		  
-			Partameters:
+			Parameters:
 				path					-	a url path relative to the request directory
 				 
 			Example:

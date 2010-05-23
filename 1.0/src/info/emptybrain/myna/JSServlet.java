@@ -90,6 +90,9 @@ public class JSServlet extends HttpServlet {
 				servletPath =(String) req.getAttribute("javax.servlet.forward.servlet_path"); 
 				thread.environment.put("requestURI", servletPath);
 			} else {
+				if (servletPath.length() ==0){
+					servletPath = req.getRequestURI().substring(req.getContextPath().length()); 	
+				}
 				thread.environment.put("requestURI",req.getRequestURI());
 			}
 			thread.environment.put("requestURL",req.getRequestURL());
@@ -137,25 +140,52 @@ public class JSServlet extends HttpServlet {
 						thread.environment.put("URL-MAP",url_map);
 						/* res.getWriter().print(context + "<br>" + parts[0].toString() +"<br>" + scriptPath + "<br>" + url_map.toString());
 						return; */
+				
 				} else {
 					scriptPath = thread.rootDir + servletPath.substring(1);
 				}
-				thread.handleRequest(scriptPath);
+				File file = new File(new URI(scriptPath));
+				if (
+					file.exists()
+					&& !file.isDirectory()
+					//&& false
+					&& !scriptPath.endsWith(".ws")
+					&& !scriptPath.endsWith(".ejs")
+					&& !scriptPath.endsWith(".sjs")
+				){
 				
-				//flush output
-				res.setContentLength(thread.generatedContent.length());
-				String ETag = new Integer(thread.generatedContent.toString().hashCode()).toString();
-				String IfNoneMatch  =null;
-				Enumeration IfNoneMatchHeaders = req.getHeaders("If-None-Match");
-				if (IfNoneMatchHeaders.hasMoreElements()){
-					IfNoneMatch = (String) IfNoneMatchHeaders.nextElement(); 
-				} 
-				res.setHeader("ETag",ETag);
-				if (IfNoneMatch != null && IfNoneMatch.equals(ETag)){
-					res.setStatus(304);		
+					if (scriptPath.matches("^.*WEB-INF.*$")){
+						res.sendError(403,"Access Denied.");	
+						return;
+					} else {
+						new net.balusc.webapp.FileServer(
+							file,
+							this,
+							req,
+							res
+						).serve(!this.type.equals("HEAD"));
+					}
+					
 				} else {
-					res.getWriter().print(thread.generatedContent);	
+					thread.handleRequest(scriptPath);
+					if (!thread.requestHandled){
+						//flush output
+						res.setContentLength(thread.generatedContent.length());
+						String ETag = new Integer(thread.generatedContent.toString().hashCode()).toString();
+						String IfNoneMatch  =null;
+						Enumeration IfNoneMatchHeaders = req.getHeaders("If-None-Match");
+						if (IfNoneMatchHeaders.hasMoreElements()){
+							IfNoneMatch = (String) IfNoneMatchHeaders.nextElement(); 
+						} 
+						res.setHeader("ETag",ETag);
+						if (IfNoneMatch != null && IfNoneMatch.equals(ETag)){
+							res.setStatus(304);		
+						} else {
+							res.getWriter().print(thread.generatedContent);	
+						}	
+					}	
 				}
+				
 				
 				
 			} catch(Exception e){
@@ -182,6 +212,13 @@ public class JSServlet extends HttpServlet {
 	public void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
 		this.type="POST";
 		doGet(req,res);	
+	}
+	
+	public void doHead(HttpServletRequest req, HttpServletResponse res)
+		throws ServletException, IOException
+	{
+		this.type="HEAD";
+		doGet(req,res);
 	}
 	
 	/**

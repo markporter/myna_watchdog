@@ -57,6 +57,7 @@
 	 
 	*/
 	String.prototype.after=function(count){
+		if (count<0 || count > this.length) return "";
 		return this.slice(count);
 	};
 /* Function: before 
@@ -76,6 +77,7 @@
 	 
 	*/
 	String.prototype.before=function(count){
+		if (count<0 || count > this.length) return "";
 		return this.substr(0,this.length-count);
 	};	
 /* Function: charToHtmlEntity

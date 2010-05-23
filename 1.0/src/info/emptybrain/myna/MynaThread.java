@@ -79,7 +79,8 @@ public class MynaThread {
 	static public String rootDir=null; // system path to the Myna deployment folder
 	static public String rootUrl; // url to the myna root directory from / , not including protocol and server
 	
-	public String requestDir; // system path to the directory containing the originally requested script 
+	public String requestDir; // system path to the directory containing the originally requested script
+	public boolean requestHandled=false; // if true, than this thread has handled all output management and parent should not modify output
 	
 	public String currentDir; // system path to the directory containing the currently running script
 	public String currentScript; // text of the currently running script
