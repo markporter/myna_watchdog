@@ -25,10 +25,11 @@ var $server={
 	get threadFunctionSource(){return $server_gateway.environment.get("threadFunctionSource") },
 	
 	
-/* property: instance_id 
+/* property: instanceId 
 	an identifier for this server instance 
 	*/
 	get instance_id(){return String($server_gateway.generalProperties.getProperty("instance_id"))},
+	get instanceId(){return String($server_gateway.generalProperties.getProperty("instance_id"))},
 /* property: purpose 
 	A short name that describes the purpose of this instance. Set in General 
 	Settings of Myna Administrator
@@ -242,6 +243,33 @@ var $server={
 	*/	
 	get hostName(){
 		return String(java.net.InetAddress.getLocalHost().getHostName());	
+	},
+/* 	property: ipAdresses
+	An array of the non-loopback ipv4 IP addresses on this machine
+	
+	
+	*/	
+	get ipAddresses(){
+		var addresses=[];
+		Myna.JavaUtils
+			.enumToArray(java.net.NetworkInterface.getNetworkInterfaces())
+			.forEach(function(addr){
+				Myna.JavaUtils
+					.enumToArray(addr.getInetAddresses())
+					.filter(function(addr){
+						return !addr.isLoopbackAddress()
+					})
+					.map(function(addr){
+						return addr.getHostAddress()
+					})
+					.filter(function(addr){
+						return addr.split(/\./).length == 4
+					})
+					.forEach(function(addr){
+						addresses.push(addr)
+					})
+			})	
+		return addresses;
 	},
 /* 	property: osName
 	String representing the host operating system type.

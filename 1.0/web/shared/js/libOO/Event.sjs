@@ -8,7 +8,27 @@
 		listeners to handle those events. All event handling is asynchronous and 
 		cannot send any content back to the browser.
 		
+		Example:
+		(code)
+		//on sender machine
+		var e = new Myna.Event("user_logged_in)
 		
+		e.fire($req.data);//this gets converted to JSON 
+		
+		
+		//on listening machine
+			//This should typically be set in application start or server start
+			//once a listener is registered, Myna remmebers to re-register it on 
+			//server start
+			event.listen({
+				server:$server.hostName,
+				purpose:$server.purpose,
+				instance:$server.instance_id,
+				handler:function(event){
+					Myna.log("debug","got event " + event.name ,Myna.dump(event));
+				}
+			})
+		(end)
 		
 */
 	if (!Myna) var Myna={}
@@ -134,7 +154,7 @@
 		})
 	(end)
 	*/
-	Myna.Event.prototype.listen=function(options){
+	Myna.Event.prototype.listen=Myna.sync(function(options){
 		if (options.server) options.server = options.server.toLowerCase();
 		if (options.purpose) options.purpose = options.purpose.toLowerCase();
 		if (options.instance) options.instance = options.instance.toLowerCase();
@@ -147,70 +167,102 @@
 		sig = new java.lang.String(sig.toJson()).hashCode();
 		
 		var shouldExit = false;
-		Myna.lock("event_listeners",0,function(){
-			var listeners = $server.get("event_listeners")
+		var $this = this;
+		var listeners = $server.get("event_listeners")
+	
+		//skip duplicate event listeners
+		if (sig in listeners) return;
+		Myna.lock("event_listeners",10,function(){
+			listeners = $server.get("event_listeners")
 		
 			//skip duplicate event listeners
-			if (sig in listeners) shouldExit = true;
+			if (sig in listeners) return;
+			
+			options.eventListenerObject =new com.hazelcast.core.MessageListener(
+				options.applyTo({
+					onMessage:function(msg){
+						var event = String(msg).parseJson();
+						//skip non-matching events
+						if (this.purpose && this.purpose != event.purpose) return;
+						if (this.server && this.server != event.server) return;
+						if (this.instance && this.instance != event.instance) return;
+		
+						var success=true;
+						var e={};
+						if (this.handler){
+							new Myna.Thread(function(event,obj){obj.handler(event)},[event,this])
+							//this.handler(event)
+						} else if (this.path){
+							new Myna.Thread(function(event,path){
+								Myna.include(path,event);
+							},[event,this.path])
+							
+						} else if (this.url){
+							event.data = event.data.toJson(); 
+							event.conn= new Myna.HttpConnection({
+								url:this.url,
+								method:"POST",
+								parameters:event,
+								username:this.username,
+								password:this.password
+							})
+							
+							try {
+								event.conn.connect();
+								if (event.conn.getStatusCode() != 200){
+									success=false;	
+								}
+							} catch(e){
+								success=false;
+							}
+						}
+						//java.lang.System.out.println("done event")
+					}
+				})
+			)
+			options.topic = $this.topic;
+			$this.topic.addMessageListener(
+				options.eventListenerObject
+			);
+
 			
 			listeners[sig] = options;
 			Myna.Event.persistListeners();
 		})
-		
-		if (shouldExit) return;
-		
-		this.topic.addMessageListener(new com.hazelcast.core.MessageListener(options.applyTo({
-			onMessage:function(msg){
-				
-				var event = String(msg).parseJson();
-				//skip non-matching events
-				if (this.purpose && this.purpose != event.purpose) return;
-				if (this.server && this.server != event.server) return;
-				if (this.instance && this.instance != event.instance) return;
-				/* java.lang.System.out.println(" event " + event.name +" passed the tests " + this.handler)
-				java.lang.System.out.println(" event " 
-					+ event.name +" passed the tests " 
-					+ typeof this.handler
-				) */
-				
-				var success=true;
-				var e={};
-				if (this.handler){
-					new Myna.Thread(function(event,obj){obj.handler(event)},[event,this])
-					//this.handler(event)
-				} else if (this.path){
-					new Myna.Thread(function(event,path){
-						Myna.include(path,event);
-					},[event,this.path])
-					
-				} else if (this.url){
-					event.data = event.data.toJson(); 
-					event.conn= new Myna.HttpConnection({
-						url:this.url,
-						method:"POST",
-						parameters:event,
-						username:this.username,
-						password:this.password
-					})
-					
-					try {
-						event.conn.connect();
-						if (event.conn.getStatusCode() != 200){
-							success=false;	
-						}
-					} catch(e){
-						success=false;
-					}
-				}
-				//java.lang.System.out.println("done event")
-			},
-		})));
+	})
+/* Function: getListeners
+	returns a tree of instance local event listeners 
+	
+	*/
+	Myna.Event.getListeners = function(){
+		return $server.get("event_listeners")
 	}
+	
+/* Function: removeListeners
+	removes listeners from this instance, and will not automatically re-register 
+	them during server start  
+	
+	Parameters:
+		list		-	array of listener keys
+		
+	See:
+		*	<getListeners>
+	*/
+	Myna.Event.removeListeners = Myna.sync(function(list){
+		var listeners =$server.get("event_listeners");
+		var $this =this;
+		list.forEach(function(key){
+			listeners[key].topic.removeMessageListener(listeners[key].eventListenerObject);
+			delete listeners[key] ;
+		})
+		this.persistListeners();
+	})
+	
 /* Function: persistListeners
 	internal function to save registered listeners 
 	
 	*/
-	Myna.Event.persistListeners = function(){
+	Myna.Event.persistListeners = Myna.sync(function(){
 		new Myna.Thread(function(){
 			var text = [];
 			$server.get("event_listeners").forEach(function(l){
@@ -232,4 +284,4 @@
 			new Myna.File("/WEB-INF/myna/registered_listeners.sjs")
 				.writeString(text.join(""))
 		},[])
-	}
+	})

@@ -649,10 +649,7 @@ if (!Myna) var Myna={}
 		return result;
 		
 	}
-/* deprecated */
-	Myna.enableServerJS=function Myna_enableServerJS(){
-      
-	}
+
 /* Function: formatError 
 	returns an html formatted string representing the supplied exception. 
 	 
@@ -1702,6 +1699,21 @@ if (!Myna) var Myna={}
 		
 		java.lang.Thread.sleep(time);
 	}	
+	
+/* Function sync
+	returns a synchronized version of a function that can only executed by one 
+	thread at a time.
+	
+	This is a shortcut for <Myna.JavaUtils.createSyncFunction>
+	
+	Parameters:
+		func		-	function to synchronize
+		
+	*/
+	Myna.sync=function(func){
+		return Myna.JavaUtils.createSyncFunction(func);
+	}
+
 /* Function: xmlToObject 
 	returns an XML object as a plain JavaScript Object
 	 
@@ -1791,3 +1803,7 @@ if (!Myna) var Myna={}
 			return node;
 		} else return "["+xml.nodeKind()+"]"
 	} 
+/* deprecated */
+	Myna.enableServerJS=function Myna_enableServerJS(){
+      
+	}

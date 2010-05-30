@@ -106,6 +106,26 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 	}
 	
 	db = new Myna.Database(ds);
+	/* cluster table */
+		table = db.getTable("cluster_members");
+		if (!table.exists){
+			table.create({
+				columns:[{
+					name:"id",
+					type:"VARCHAR",
+					maxLength:255,
+					isPrimaryKey:true
+				},{
+					name:"ip",
+					type:"VARCHAR",
+					maxLength:255
+				},{
+					name:"port",
+					type:"INTEGER",
+					maxLength:5
+				}]
+			});
+		}
 	/* apps table */
 		table = db.getTable("apps");
 		if (!table.exists){

@@ -170,6 +170,31 @@ if (!("JavaUtils" in Myna)) Myna.JavaUtils={}
 		keyword for Java functions
 	 
 	 
+	See Also:
+		*	<Myna.sync>
+	(code)
+		var s ={
+			string:"",
+			append:Myna.JavaUtils.createSyncFunction(function(val){
+				// This kind of multi-step string manipulation usually results in 
+				// thread collision, but "sync"ing the function ensures that all
+				// steps are completed before another thread can run the same 
+				// function
+				var s = this
+				var old =s.string
+				Myna.sleep(10); //gives another thread the chance to whomp our string
+				s.string= old+val;
+			})
+		}
+		
+		Array.dim(10).forEach(function(d,i){
+			new Myna.Thread(function(i,s){
+				s.append(i+",");
+			},[i,s])
+		})
+		Myna.Thread.joinAll();
+		Myna.printDump(s.string.split(/,/));
+	(end)
 	*/
 	Myna.JavaUtils.createSyncFunction=function(functionObject){	
 		return new Packages.org.mozilla.javascript.Synchronizer(functionObject)

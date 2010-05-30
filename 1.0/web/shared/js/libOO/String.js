@@ -405,7 +405,7 @@
 	
 	See Also:
 		<Myna.File.getLineIterator>
-*/
+	*/
 	String.prototype.getLineIterator = function(){
 	   var r = new java.io.StringReader(this)
 	   $application.addOpenObject(r);
