@@ -15,7 +15,7 @@ logfile=$server.log
 
 jvm_args="-server -Xmx256m -Dsun.io.useCanonCaches=false -XX:MaxPermSize=128m -XX:+UseParallelGC -Djava.awt.headless=true"
 
-args="--webroot=$webroot   --httpPort=$port --prefix=/dev"
+args="--webroot=$webroot   --httpPort=$port --prefix=/dev --ajp13Port=-1"
 
 #export JAVA_HOME=/usr/java/default/
 #export JRE_HOME=/usr/java/default/jre/

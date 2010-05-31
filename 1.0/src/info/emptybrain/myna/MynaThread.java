@@ -28,7 +28,7 @@ import org.openid4java.consumer.ConsumerManager;
 
 public class MynaThread {
 	//static public Log logger = LogFactory.getLog(MynaThread.class);
-	static public String version="1.0_beta_5-2";
+	static public String version=null;
 	static public Semaphore threadPermit;
 	static public Semaphore manageLocksPermit;
 	static public volatile CopyOnWriteArrayList runningThreads 	= new CopyOnWriteArrayList();
@@ -310,6 +310,12 @@ public class MynaThread {
 			} catch(Exception e){
 				handleError(e);
 			}
+			
+			if (MynaThread.version == null){
+				Properties version = new Properties();
+				version.load(getClass().getResourceAsStream("/version.properties"));
+				MynaThread.version = version.getProperty("version");
+			} 
 			
 			loadGeneralProperties();
 			
@@ -1014,7 +1020,7 @@ public class MynaThread {
 			propsChanged=true;
 		}
 		if (generalProperties.getProperty("version") == null 
-			|| !generalProperties.getProperty("version").equals(this.version)){
+			|| !generalProperties.getProperty("version").equals(MynaThread.version)){
 			generalProperties.setProperty("version",this.version);
 			propsChanged=true;
 		}

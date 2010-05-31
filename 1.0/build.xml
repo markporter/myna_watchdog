@@ -73,7 +73,7 @@
   affect where the build process stores its outputs.
 -->
 
-  <property name="app.version"   value="1.0_beta_5-2"/>
+  <!-- <property name="app.version"   value="1.0_beta_6"/> -->
   <property name="app.name"      value="myna"/>
   <property name="app.path"      value="/${app.name}"/>
   <property name="build.home"    value="${basedir}/build"/>
@@ -215,9 +215,11 @@
   <target name="dist" depends="compile,javadoc"
    description="Create binary distribution">
 
+   <input message="Please enter the build version number:" addproperty="build.version" />
+   <echo file="${build.home}/WEB-INF/classes/version.properties">version=${build.version}</echo>
    <!-- Create application JAR file -->
 	<mkdir dir="${dist.home}"/>
-   <jar jarfile="${dist.home}/${app.name}-${app.version}.war" basedir="${build.home}"/>
+   <jar jarfile="${dist.home}/${app.name}-${build.version}.war" basedir="${build.home}"/>
 
    <!-- copy build to myna_server -->
 	<mkdir dir="${myna_server.home}/myna"/>
@@ -230,7 +232,7 @@
 	</copy>
 	
 	<!-- make myna_server.zip zip -->
-	<zip destfile="${dist.home}/myna_server_${app.version}.zip"
+	<zip destfile="${dist.home}/myna_server_${build.version}.zip"
 		basedir="${myna_server.home}"
 		update="true"
 	/>
