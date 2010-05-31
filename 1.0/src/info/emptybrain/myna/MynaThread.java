@@ -57,7 +57,6 @@ public class MynaThread {
 	static public ConsumerManager openidConsumerManager; //initialized in init
 	
 	
-	
 /* End static resources */	
 	
 	public boolean isInitThread = false; //Is this the first thread after server restart?

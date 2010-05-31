@@ -1,7 +1,7 @@
 <hazelcast>
     <group>
-        <name>dev2</name>
-        <password>dev-pass</password>
+        <name>Myna</name>
+        <password>Myna-Temp-Pass</password>
     </group>
     <network>
         <port auto-increment="true">5701</port>

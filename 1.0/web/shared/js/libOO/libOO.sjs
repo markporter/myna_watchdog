@@ -26,7 +26,8 @@
 	"HttpConnection.sjs",
 	"WebService.sjs",
 	"Permissions.sjs",
-	"Event.sjs"
+	"Event.sjs",
+	"Cluster.sjs"
 	
 ].forEach(function(element){
 	try {

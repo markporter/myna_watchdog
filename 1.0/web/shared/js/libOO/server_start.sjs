@@ -24,7 +24,7 @@ keys.forEach(function(dsName){
 
 //set up HazelCast
 var Hazelcast = com.hazelcast.core.Hazelcast;
-var config = Hazelcast.getConfig();
+var config = new com.hazelcast.config.XmlConfigBuilder().build();
 var perms= $server.dataSources.myna_permissions;
 var password=Myna.Permissions.getAuthKey("cluster_key");
 //set groupname and password
@@ -32,14 +32,6 @@ var password=Myna.Permissions.getAuthKey("cluster_key");
 //add unicast addresses of cluster members
 	var tcpConfig = config.getNetworkConfig().getJoin().getTcpIpConfig()//new com.hazelcast.config.TcpIpConfig()
 	//add ourself if not already in there
-	var ipMan =new Myna.DataManager("myna_permissions").getManager("cluster_members");
-	var id = $server.hostName+"/"+$server.instance_id;
-	var localMember = com.hazelcast.core.Hazelcast.getCluster().getLocalMember().getInetSocketAddress();
-	ipMan.create({
-		id:id,
-		ip:localMember.getAddress().getHostAddress(),
-		port:localMember.getPort()
-	})
 	
 	new Myna.Query({
 		ds:"myna_permissions",
@@ -63,19 +55,15 @@ var password=Myna.Permissions.getAuthKey("cluster_key");
 	var cryptConfig = config.getNetworkConfig().getSymmetricEncryptionConfig();
 	cryptConfig.setPassword(password);
 
-
-/* $server.set("__MYNA_CLUSTER__",Hazelcast.newHazelcastInstance(config));*/
-//init default instance
-	Hazelcast.shutdown();
-	//config.setGroupConfig(new com.hazelcast.config.GroupConfig(perms.url+":"+$server.purpose,password));
 	Hazelcast.init(config);
-	Hazelcast.restart();
-//init Purpose instance
-	/* config.setGroupConfig(new com.hazelcast.config.GroupConfig(perms.url+":"+$server.purpose,password));
-	$server.set("__MYNA_CLUSTER_PURPOSE__",Hazelcast.newHazelcastInstance(config)); */
-//init host instance
-	/* config.setGroupConfig(new com.hazelcast.config.GroupConfig(perms.url+":"+$server.hostName,password));
-	$server.set("__MYNA_CLUSTER_HOST__",Hazelcast.newHazelcastInstance(config)); */
+	var ipMan =new Myna.DataManager("myna_permissions").getManager("cluster_members");
+	var id = $server.hostName+"/"+$server.instance_id;
+	var localMember = com.hazelcast.core.Hazelcast.getCluster().getLocalMember().getInetSocketAddress();
+	ipMan.create({
+		id:id,
+		ip:localMember.getAddress().getHostAddress(),
+		port:localMember.getPort()
+	})
 	
 //create global listeners variable
 $server.set("event_listeners",{})
