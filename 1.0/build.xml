@@ -217,6 +217,7 @@
 
    <input message="Please enter the build version number:" addproperty="build.version" />
    <echo file="${build.home}/WEB-INF/classes/version.properties">version=${build.version}</echo>
+   <echo file="${src.home}/version.properties">version=${build.version}</echo>
    <!-- Create application JAR file -->
 	<mkdir dir="${dist.home}"/>
    <jar jarfile="${dist.home}/${app.name}-${build.version}.war" basedir="${build.home}"/>

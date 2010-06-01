@@ -30,14 +30,13 @@ public class JSServlet extends HttpServlet {
 					MynaThread thread = new MynaThread();
 					thread.environment.put("servlet",this);
 					thread.rootDir = new File(sc.getRealPath("/")).toURI().toString();
-					Properties props = new Properties();
-					props.load(getClass().getResourceAsStream("/general.properties"));
-					if (props.getProperty("webroot") != null){
-						thread.rootDir = props.getProperty("webroot");
+					thread.loadGeneralProperties();
+					if (thread.generalProperties.getProperty("webroot") != null){
+						thread.rootDir = thread.generalProperties.getProperty("webroot");
 						
 					}
 					try {
-						String [] serverStartScripts = props.getProperty("server_start_scripts").split(",");
+						String [] serverStartScripts = thread.generalProperties.getProperty("server_start_scripts").split(",");
 						
 						URI sharedPath = new URI(thread.rootDir).resolve("shared/js/");
 						for (int x=0;x < serverStartScripts.length;++x){
@@ -57,7 +56,7 @@ public class JSServlet extends HttpServlet {
 					} catch(Exception threadException){
 						thread.handleError(threadException);
 					}
-					
+					sc.log("======================= myna "+thread.generalProperties.getProperty("version")+" init complete ===========================");
 				} catch (Exception e){
 					sc.log(e.toString());
 					System.out.println("============== Error ============");
@@ -68,7 +67,7 @@ public class JSServlet extends HttpServlet {
 					
 				}
 				
-				sc.log("======================= myna init complete ===========================");
+				
 		}
 
 	/**

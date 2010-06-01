@@ -74,7 +74,7 @@ try{
 							break;
 						}
 						curFile=new Myna.File($server.rootDir+dirStack.join("/"));
-						if (curFile.exists()) {
+						if (curFile.exists() && !curFile.isDirectory()) {
 							name= dirStack.pop();
 							dir=dirStack.join("/")
 							
