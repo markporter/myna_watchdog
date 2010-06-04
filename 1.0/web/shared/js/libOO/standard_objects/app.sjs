@@ -576,7 +576,11 @@ var $application={
 					}
 				
 				//get array of merged GET and POST parameters as key, value pairs
-				var params = Myna.JavaUtils.mapToObject($server.request.getParameterMap())
+				try {//this might blow up in Winstone
+					var params = Myna.JavaUtils.mapToObject($server.request.getParameterMap());
+				} catch(e){
+					params={}	
+				}
 									
 				var val; 		// value of $req.data.<parameter_name>
 				var curVal;		// temp val

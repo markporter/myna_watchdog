@@ -466,7 +466,9 @@ Myna.Query.prototype={
 			
 		});
 		
-		$application.addOpenObject(jdbcResultSet);
+		
+		//$application.addOpenObject(jdbcResultSet);
+		
 		var ResultSet = java.sql.ResultSet;
 		if (jdbcResultSet.getType() == ResultSet.TYPE_SCROLL_INSENSITIVE){
 			// Point to the last row in resultset.
@@ -485,7 +487,7 @@ Myna.Query.prototype={
 			if (this.maxRows >0 && this.data.length == this.maxRows ) break;
 			this.data.push(this.rowHandler(row));
 		}
-		
+		jdbcResultSet.close();
 		return this;
 	},
 	

@@ -261,23 +261,25 @@ if (!Myna) var Myna={}
 		*/
 		this.functions={};
 		var $this=this;
-		spec.functions.forEach(function(node,fname){
-			$this.functions[fname] = function(params){
-				return $this.executeFunctionHandler(
-					fname,
-					$this.spec.functions[fname],
-					$this.spec.functions[fname].params.map(
-						function(pnode){
-							if (pnode.name in params) {
-								return params[pnode.name];
-							} else {
-								return null;	
+		if ("functions" in spec){
+			spec.functions.forEach(function(node,fname){
+				$this.functions[fname] = function(params){
+					return $this.executeFunctionHandler(
+						fname,
+						$this.spec.functions[fname],
+						$this.spec.functions[fname].params.map(
+							function(pnode){
+								if (pnode.name in params) {
+									return params[pnode.name];
+								} else {
+									return null;	
+								}
 							}
-						}
+						)
 					)
-				)
-			}
-		})
+				}
+			})
+		}
 		
 	}
 	

@@ -467,6 +467,34 @@ Array.parse = function ParseArray(obj,accessFunction,lengthFunction){
 	return result;
 }
 
+/* Function: compact 
+	removes undefined values from an array
+	
+	Detail:
+		Modifies an array in place by removing values and renumbering the indexes
+	
+	Example:
+	(code)
+		//create an array with 50 null values
+		var a=Array.dim(50);
+		// now delete half of them
+		Array.dim(25).forEach(function(d,i){
+			delete a[i];
+		})
+		Myna.println(a.length);//prints 50
+		//now compact
+		a.compact();
+		Myna.println(a.length);//prints 25
+	(end)
+*/
+Array.prototype.compact = function compactArray(){
+	var a =this;
+	for (var i = a.length-1;i >=0;--i){
+		if (a[i] === undefined) a.splice(i,1);
+	}
+}
+
+
 
 if ("$server_gateway" in this){
 	(function(){

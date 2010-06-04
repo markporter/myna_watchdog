@@ -168,7 +168,7 @@
 	Detail:
 		This creates a function that will execute a chain of functions stored in 
 		the returned function's chainArray property. Before each function is 
-		called a chin property will be set on the function with metadata about 
+		called a chain property will be set on the function with metadata about 
 		the function chain. See "Chain Object Properties" below. The chain object 
 		can be used to manipulate the chain by altering the return value from 
 		previous functions in the chain, altering the arguments to the next 

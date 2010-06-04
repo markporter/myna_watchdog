@@ -271,7 +271,7 @@ Myna.Thread.prototype.releaseSubThread=function(){
 	returns true if this thread is still running
 */
 Myna.Thread.prototype.isRunning=function(){
-	if (this.mynaThread) return !this.mynaThread.environment.get("threadComplete"); 
+	//if (this.mynaThread) return !this.mynaThread.environment.get("threadComplete"); 
 	return this.javaThread && this.javaThread.isAlive();
 }
 
@@ -373,7 +373,11 @@ Myna.Thread.joinThreads =function(array,timeout,throwOnTimeout,killOnTimeout){
 		}
 		
 	})
+	//clean up arrays
+	array.compact();
+	Myna.Thread.getThreadArray().compact();
 	//java.lang.System.gc();//good time to collect released memory
+
 	if (timeExceeded && throwOnTimeout) {
 		throw new Error("Threads exceeded timeout of " + Date.formatInterval(timeout))
 	}
