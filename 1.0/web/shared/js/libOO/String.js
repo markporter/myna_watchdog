@@ -925,6 +925,67 @@
 		}
 		return array;
 	};
+/* Function: toFixedWidth 
+	returns this string padded/truncated to the specified length
+	 
+	Parameters: 
+		count 			-	number of characters to return. If this is 0 or negative an 
+							empty string will be returned
+		pad				-	*Optional, default " "*
+							Character to add to the right side of the string to pad to 
+							the fixed width
+		placeHolder		-	*Optional, default undefined*
+							If defined, this string will be used as the placeholder for 
+							text removed to make the string fit the the fixed length. 
+							The length of this string is subtracted from _count_ so that 
+							the resulting string will not exceed _count_
+		truncateFrom	-	*Opitional, default "end"*
+							This sets where the placholder will be placed in the string 
+							and from where characters will be removed. Valid values are
+							"start", "middle" and "end"
+							
+ 
+	Returns: 
+		returns a string forced to _count_ length, truncating or padding as 
+		necessary 
+		
+	Example:
+	(code)
+		var delim = " | ";
+		var str = "Description".toFixedWidth(15) + delim + "Price".toFixedWidth(5) + "\n";
+		data.forEach(function(row){
+			str += row.desc.toFixedWidth(15," ","...") + delim 
+					+ "$" + String(row.price).toFixedWidth(4)
+		})
+	(end)
+	 
+	*/
+	String.prototype.toFixedWidth=function(count,pad,placeHolder,truncateFrom){
+		var s = new String(this);
+		if (!pad) pad = " ";
+		if (!placeHolder) placeHolder = "";
+		if (!truncateFrom) truncateFrom = "end";
+		if (count < 0) count=0;
+		if (count ==0) return "";
+		if (s.length == count) return new String(this);
+		
+		if (s.length > count){
+			switch (truncateFrom.toLowerCase()){
+			case "start":
+				return placeHolder +s.right(count).after(placeHolder.length);
+			case "middle":
+				var half = (count - placeHolder.length)/2
+				var left = Math.floor(half);
+				var right = Math.ceil(half);
+				return s.left(left)+ placeHolder + s.right(right);
+			case "end":
+				return s.left(count).before(placeHolder.length) + placeHolder;
+			
+			}
+		} else {
+			return s + " ".repeat(count -s.length);	
+		}
+	};
 
 /* Function: parseJson 
 	Converts a JSON (http://www.json.org) string into an object 

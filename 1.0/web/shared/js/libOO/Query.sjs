@@ -613,7 +613,8 @@ Myna.Query.prototype={
 	execute:function(options){
 		var dsName = this.dataSource;
 		var sql = this.sql;
-		$profiler.begin("Executing Query '" + sql +"'")
+		var profilerKey="Executing Query '" + sql.replace(/\s+/g," ") +"'";
+		$profiler.begin(profilerKey)
 		
 		//if (!this.dataSource) throw new Error("A datasource is required to execute a query");
 		if (!this.sql) throw new Error("An SQL string is required to execute a query");
@@ -654,6 +655,7 @@ Myna.Query.prototype={
 			cacheQry.setDefaultProperties(qry)
 			
 			var result = new Myna.Cache(cache).call(cacheQry)
+			$profiler.end(profilerKey)
 			return result;
 		} else {
 			try {
@@ -714,8 +716,9 @@ Myna.Query.prototype={
 				e.query = qry;
 				qry.last_error = e;
 				throw e;
+			} finally {
+				$profiler.end(profilerKey)
 			}
-			$profiler.end("Executing Query '" + sql +"'")
 			/* 	let's give commiting a try, this will likely fail if the datasource
 				supports autoCommit
 			*/

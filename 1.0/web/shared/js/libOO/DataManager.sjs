@@ -536,6 +536,7 @@ Myna.DataManager.managerTemplate ={
 		criteria.push(getCriteria($this.db.isCaseSensitive?pkey:pkey.toLowerCase(),pattern));
 		}
 		var p = new Myna.QueryParams();
+		$profiler.begin("DataManager("+this.tableName+").find("+pattern.toJson()+")")
 		var qry = new Myna.Query({
 			dataSource:this.ds,
 			parameters:p,
@@ -552,6 +553,7 @@ Myna.DataManager.managerTemplate ={
 				</@loop>
 			</ejs>
 		})
+		$profiler.end("DataManager("+this.tableName+").find("+pattern.toJson()+")")
 		return qry.valueArray(pkey.toLowerCase());
 	},
 	/* Function: findBeans
@@ -673,6 +675,7 @@ Myna.DataManager.managerTemplate ={
 		* <ManagerObject.beanTemplate>
 		*/
 		getById:function(id){
+			$profiler.begin("loading "+this.tableName+" bean "+ id)
 			var manager = this;
 			var bean={};
 			var p = new Myna.QueryParams();
@@ -755,6 +758,7 @@ Myna.DataManager.managerTemplate ={
 			//bean.hideProperty("baseBean");
 			//bean.hideProperty("data");
 			bean.init();
+			$profiler.end("loading "+this.tableName+" bean "+ id)
 			return bean;
 		},
 }

@@ -182,12 +182,15 @@ Myna.Profiler.prototype.mark=function(label,time){
 		
 	Detail:
 		Each entry is an object with *begin* and *end* proerties, 
-		and optionaly *isMark* or *isAverage* properties.
+		and optionally *isMark* or *isAverage* properties.
 */
 Myna.Profiler.prototype.getSummaryArray = function(){
 	return this.times;
 }
-
+/* Function: getSummaryHtml
+	returns an HTML summary of all the entries. 
+		
+*/
 Myna.Profiler.prototype.getSummaryHtml = function(){
 	var msg="";
 		msg += "<style>";
@@ -239,3 +242,39 @@ Myna.Profiler.prototype.getSummaryHtml = function(){
 	return msg;
 }
 
+/* Function: getSummaryText
+	returns a text summary of all the entries. 
+		
+*/
+Myna.Profiler.prototype.getSummaryText = function(){
+	var delim = " | ";
+	var msg="";
+		msg += "Label".toFixedWidth(50) + delim + "Elapsed Millis".toFixedWidth(15) + delim + "Elapsed Total".toFixedWidth(15) + "\n"; 
+		msg += "-".repeat(50) + delim + "-".repeat(15) + delim + "-".repeat(15) + "\n";
+			
+	var total=0,entry,elapsed,label;
+	for (var x=0; x < this.times.length; ++x){
+		entry = this.times[x];
+		if (!entry.end) continue;
+		elapsed=entry.end - entry.begin;
+		total=entry.end - this.start;
+		label=entry.label
+		
+		if (entry.isMark) {
+			elapsed="";
+		}
+		
+		if (entry.isAverage){
+			elapsed=entry.average +" / " + entry.sum;
+			total="";
+			label +=" (Avg/Sum  of " + entry.numEntries +" entries)"
+		}
+		
+		msg += String(label).toFixedWidth(50," ","...","middle") + delim 
+		msg += String(elapsed).toFixedWidth(15) + delim 
+		msg += String(total).toFixedWidth(15) + "\n";
+		
+	}
+		
+	return msg;
+}

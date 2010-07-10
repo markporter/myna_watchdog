@@ -111,7 +111,6 @@ Myna.Database.prototype.init = function(){
 	*/
 	Myna.Database.prototype.__defineGetter__("schemas", function() {
 		return this._getCache("schemas",function(db){
-			
 			return db.functions.getSchemas(db);
 		});
 		

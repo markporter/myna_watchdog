@@ -260,7 +260,7 @@
 					if ("retval" in e){
 						state.lastReturn = e.retval;
 						state.exitChain=true
-					}else{
+					}else if (e){
 						throw e;	
 					}
 				}
