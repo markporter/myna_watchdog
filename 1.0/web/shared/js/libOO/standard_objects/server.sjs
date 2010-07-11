@@ -165,14 +165,14 @@ var $server={
 				path
 			).normalize().toString();
 	  },
-/* 	property: rootDir
+/* property: rootDir
 	<MynaPath> representing the Myna root directory.
 	
 	Example:
 	> file:/usr/share/tomcat/webapps/myna/
 	*/
 	get rootDir(){return String($server_gateway.rootDir)},
-/* 	property: rootUrl
+/* property: rootUrl
 	URL Path representing the Myna root directory.
 	
 	Example:
@@ -180,14 +180,14 @@ var $server={
 	*/	
 	get rootUrl(){return String($server_gateway.rootUrl)},
 
-/* 	property: currentDir
+/* property: currentDir
 	<MynaPath> representing the directory of the currently executing script.
 	
 	Example:
 	> file:/usr/share/tomcat/webapps/myna/myna/administrator/views/
 	*/
 	get currentDir(){ return String($server_gateway.currentDir)},
-/* 	property: currentUrl
+/* property: currentUrl
 	URL Path representing the directory of the currently executing script
 	
 	Example:
@@ -198,7 +198,7 @@ var $server={
 		
 		return String($server.rootUrl + cPath.substring($server.rootDir.length));
 	},
-/* 	property: globalScope
+/* property: globalScope
 	A reference to the Top Level Javascript scope in the current script  
 	
 	Detail:
@@ -208,25 +208,25 @@ var $server={
 	*/
 	get globalScope(){return $server_gateway.threadScope},
 
-/* 	property: servlet
+/* property: servlet
 	Reference to the servlet object. 
 	*/		
 	get servlet(){return $server_gateway.environment.get("servlet")},
-/* 	property: version
+/* property: version
 	String representing the running version of Myna.
 	
 	Example:
 	> 	1.0_alpha_9
 	*/		
 	get version(){return String($server_gateway.version)},
-/* 	property: scriptName
+/* property: scriptName
 	The name of the currently running script.
 	
 	Example:
 	> index.sjs
 	*/	
 	get scriptName(){ return String($server_gateway.scriptName)},
-/* 	property: tempDir
+/* property: tempDir
 	<MynaPath> of the JVM temp directory
 	
 	Example:
@@ -236,7 +236,7 @@ var $server={
 		var file = new java.io.File(java.lang.System.getProperty("java.io.tmpdir"));
 		return String(file.toURI());
 	},
-/* 	property: hostName
+/* property: hostName
 	the hostname of the server running myna
 	
 	
@@ -244,7 +244,7 @@ var $server={
 	get hostName(){
 		return String(java.net.InetAddress.getLocalHost().getHostName());	
 	},
-/* 	property: ipAdresses
+/* property: ipAdresses
 	An array of the non-loopback ipv4 IP addresses on this machine
 	
 	
@@ -271,28 +271,44 @@ var $server={
 			})	
 		return addresses;
 	},
-/* 	property: osName
+/* property: osName
 	String representing the host operating system type.
 	
 	Example:
 	> Linux
 	*/		
 	get osName(){return String(java.lang.System.getProperty("os.name"))},
-/* 	property: osArch
+/* property: osArch
 	String representing the host cpu architecture.
 	
 	Example:
 	> i386
 	*/	
 	get osArch(){return String(java.lang.System.getProperty("os.arch"))},
-/* 	property: osVersion
+/* property: osVersion
 	String representing the host operating system version.
 	
 	Example:
 	> 	2.6.20-16-386
 	*/		
 	get osVersion(){return String(java.lang.System.getProperty("os.version"))},
-/* 	property: memCurrent
+	
+/* property: properties
+	The general properties set in the gerneal Settings section of the Administrator
+	
+	
+	Example:
+	> 	var purpose = $server.properties.instance_purpose
+	
+	See Also:
+	*	<Myna.getGeneralProperties()>
+	
+	*/		
+	get properties(){
+		return Myna.getGeneralProperties();
+			
+	},
+/* property: memCurrent
 	The current heap size in bytes.
 	
 	for the maximum memory that could be allocated
@@ -309,7 +325,7 @@ var $server={
 		var rt = java.lang.Runtime.getRuntime();
 		return rt.totalMemory();
 	},
-/* 	property: memMax
+/* property: memMax
 	The maximum heap size
 	
 	See:
@@ -323,7 +339,7 @@ var $server={
 		var rt = java.lang.Runtime.getRuntime();
 		return rt.maxMemory();
 	},
-/* 	property: memFree
+/* property: memFree
 	The current number of free bytes on the heap. 
 	
 	For the total memory available for new objects, see <memAvailable>
@@ -339,7 +355,7 @@ var $server={
 		var rt = java.lang.Runtime.getRuntime();
 		return rt.freeMemory();
 	},
-/* 	property: memAvailable
+/* property: memAvailable
 	The number of free bytes on the heap + unallocaed heap space.
 	
 	See:
@@ -352,7 +368,7 @@ var $server={
 	get memAvailable(){
 		return $server.memMax - $server.memUsed
 	},
-/* 	property: memUsed
+/* property: memUsed
 	The number of used bytes on the heap
 	
 	See:
@@ -367,7 +383,7 @@ var $server={
 		return $server.memCurrent - $server.memFree;
 	},
 	
-/* 	property: get
+/* property: get
 	retrieves a server variable
 	
 	Parameters:
@@ -379,7 +395,7 @@ var $server={
 	get:function(key,value){
 		return $server_gateway.serverVarMap.get(key)
 	},
-/* 	property: set
+/* property: set
 	Sets a variable that is available across all requests. Server varaiables are 
 	not preserved across Myna restarts
 	

@@ -83,7 +83,10 @@
   <property name="src.home"      value="${basedir}/src"/>
   <property name="web.home"      value="${basedir}/web"/>
   <property name="jars.home"      value="${basedir}/jars"/>
-
+  <!-- sets the "version" property -->
+  <property prefix="current"  file="src/version.properties"/>
+  
+  
 
 <!--  ==================== Compilation Control Options ==================== -->
 
@@ -215,7 +218,7 @@
   <target name="dist" depends="compile,javadoc"
    description="Create binary distribution">
 
-   <input message="Please enter the build version number:" addproperty="build.version" />
+   <input message="Please enter the build version number:" addproperty="build.version" defaultvalue="${current.version}"/>
    <echo file="${build.home}/WEB-INF/classes/version.properties">version=${build.version}</echo>
    <echo file="${src.home}/version.properties">version=${build.version}</echo>
    <!-- Create application JAR file -->

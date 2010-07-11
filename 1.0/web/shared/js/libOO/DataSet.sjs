@@ -417,6 +417,12 @@ if (!Myna) var Myna={}
 						A compare function that takes 2 elements and returns either
 						1, 0, or -1 
 	
+		Example:
+		(code)
+			var files = new Myna.File("/").listFiles()
+			files.sortByCol("fileName",String.compareNatural)
+		(end)
+						
 	*/
 	Myna.DataSet.prototype.sortByCol = function(column,compare) {
 		if (!compare) compare=String.compareAlpha;

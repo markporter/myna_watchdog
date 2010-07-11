@@ -371,7 +371,7 @@ public class MynaEjsParser {
 		appendText();
 		
 		//script.append("var newContent=$res.clear();$res.print(originalContent);return newContent;}.apply(this)");
-		script.append("return ___EJS_BUFFER___.join('');}.call(this,$res,Myna)");
+		script.append("return ___EJS_BUFFER___.join('').trimIndent().trim();}.call(this,$res,Myna)");
 		textMode.pop();
 		if (textMode.size() == 0){
 			throw new EvaluatorException(

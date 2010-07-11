@@ -1371,7 +1371,36 @@
 	*/
 	String.prototype.trim=function(){
 		return  String(this).replace(/^\s+|\s+$/g,"");
-	};	
+	};
+/* Function: trimIndent
+	returns a new string with the initial white space on each line trimmed
+	
+	This is useful for out-denting the entire string in situations where every
+	line starts with the same unwanted whitespace. This is automatically applied 
+	to ejs blocks so that they can be indented with the code without adding 
+	unwanted whitespace to the string.
+	
+	Note: 
+		The string must start with an initial return (\n)  followed by the regular
+		whitespace (spaces and tabs) to replace.
+	
+	Example:
+	
+	(code)
+		var offsetString = "\n\t\tline1\n\t\tline2\n\t\t\tsubline a\n\t\tline3";
+		Myna.print("before<br><pre>" + offsetString + "</pre>")
+		Myna.print("after<br><pre>" + offsetString.trimIndent() + "</pre>")
+	(end)
+	*/
+	String.prototype.trimIndent=function(){
+		var string = this;
+		//initial white space
+		var iws = string.match(/^\n([ \t]+)/)
+		if (!iws) return string;
+		iws = new RegExp("\n" +iws[1],"g");
+	
+		return string.replace(iws,"\n");
+	};
 /* Function: unEscapeHtml 
 	reverses the replacements in <escapeHtml>  
 	 

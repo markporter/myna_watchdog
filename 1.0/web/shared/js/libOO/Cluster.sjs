@@ -96,7 +96,7 @@ Myna.Cluster.getList = function(name,instance,purpose){
 		
 	See:
 		* Hazelcast Queue <http://www.hazelcast.com/documentation.jsp#Queue>
-		* Java ConcurrentQueue <http://java.sun.com/j2se/1.5.0/docs/api/java/util/concurrent/BockingQueue.html>
+		* Java ConcurrentQueue <http://java.sun.com/j2se/1.5.0/docs/api/java/util/concurrent/BlockingQueue.html>
 */
 Myna.Cluster.getQueue = function(name,instance,purpose){
 	if (!name) throw new Error("name is required");

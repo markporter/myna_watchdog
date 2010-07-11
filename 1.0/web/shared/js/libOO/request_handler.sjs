@@ -94,6 +94,10 @@ try{
 						$server_gateway.environment.put("requestURL",serverUrl+$server.rootUrl + dir+"/"+name);
 						$req.$restParams = params;
 						Myna.includeOnce($server.rootDir +dir + "/"+name)
+					} else if ($server.scriptName == "" 
+							&& $server.properties.instance_purpose.toLowerCase() == "dev"
+							){
+						Myna.include("/myna/dir_listing.sjs")
 					} else {
 						$application._onError404();
 					}
