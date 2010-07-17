@@ -66,12 +66,22 @@ try{
 					var found = false;
 					if ($server_gateway.requestScriptName) dirStack.push($server_gateway.requestScriptName);
 					while (dirStack.length ){
-						curFile=new Myna.File($server.rootDir +dirStack.join("/") + "/index.sjs");
-						if (curFile.exists()) {
-							dir=dirStack.join("/")
-							name= "index.sjs";
-							found=true;
-							break;
+						if (!$server_gateway.requestScriptName){
+							curFile=new Myna.File($server.rootDir +dirStack.join("/") + "/index.ejs");
+							if (curFile.exists()) {
+								dir=dirStack.join("/")
+								name= "index.ejs";
+								found=true;
+								break;
+							} else {
+								curFile=new Myna.File($server.rootDir +dirStack.join("/") + "/index.sjs");
+								if (curFile.exists()) {
+									dir=dirStack.join("/")
+									name= "index.sjs";
+									found=true;
+									break;
+								} 
+							}
 						}
 						curFile=new Myna.File($server.rootDir+dirStack.join("/"));
 						if (curFile.exists() && !curFile.isDirectory()) {
@@ -95,7 +105,7 @@ try{
 						$req.$restParams = params;
 						Myna.includeOnce($server.rootDir +dir + "/"+name)
 					} else if ($server.scriptName == "" 
-							&& $server.properties.instance_purpose.toLowerCase() == "dev"
+							&& parseInt($server.properties.enable_directory_listings)
 							){
 						Myna.include("/myna/dir_listing.sjs")
 					} else {

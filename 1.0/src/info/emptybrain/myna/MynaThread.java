@@ -1043,6 +1043,11 @@ public class MynaThread {
 			generalProperties.setProperty("administrator_email_on_error","0");
 			propsChanged=true;
 		}
+		if (generalProperties.getProperty("enable_directory_listings") == null){
+			generalProperties.setProperty("enable_directory_listings","1");
+			propsChanged=true;
+		}
+		
 		if (generalProperties.getProperty("commonjs_paths") == null){
 			generalProperties.setProperty("commonjs_paths","/shared/js/commonjs/,/shared/js/narwhal/engines/rhino/lib,/shared/js/narwhal/engines/default/lib,/shared/js/narwhal/lib/,/");
 			propsChanged=true;

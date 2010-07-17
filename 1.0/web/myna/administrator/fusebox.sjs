@@ -712,6 +712,9 @@ var fusebox={
 		progress.isComplete=1;
 		progress.message = "Installation complete.";
 		$session.set("install_egg_progress",progress);
+		return {
+			url:appProps.postInstallUrl || false
+		}
 		
 	},
 	install_egg_progress:function(data){

@@ -1,83 +1,92 @@
-/* 	Class: $application
-	Global object for managing the current application.
+/* Class: $application
+	Global object for defining and managing a Myna application. See <Application Overview>
 	
-	Detail:
-		When a .ejs or .sjs file is requested, Myna examines every directory 
-		between the web root and the requested file, and includes any 
-		application.sjs file it finds, in the order found. Each of these files has 
-		an opportunity to:
+	Topic: Application Overview
+		General Description of application configuration
+	
+		What is an application?:
+			A Myna application is any collection of content whose top
+			level folder contains an application.sjs file. This file defines 
+			$application variables and workflow event handlers. It is possible for 
+			applications to overlap and override each other. 
+			In the case of web 
+			applications that are intended to be complete and stand-alone, the 
+			application.sjs will define properties such as appname and version. 
+			However, application.sjs file can also be used to set defaults and/or 
+			alter the behavior of applications in subfolders. This is considered an 
+			anonymous application and does not declare an appname. An example might be 
+			if you wanted to set a global error handler. You could place an anonymous 
+			application.sjs file in the webroot with an onError function defined that 
+			returns true to override the default error handler. Any nested 
+			applications that also define an onError handler can optionally override 
+			this global handler  
+			
 		
-		* declare application specific variables
-		* execute functions
-		* append or prepend $application.onXXX() event functions. 
-		  See <Object.before> and <Object.after>
-		
-		Once all the application.sjs files have been included, 
-		<$application.onRequestStart> is called. <$application.onApplicationStart> 
-		and <$application.onSessionStart> may be called as well.
-		
-		Next, the originally requested .sjs or .ejs file is executed.
-		
-		Finally <$application.onRequestEnd> is called.
-		
-		Applications can be named or anonymous. Named applications are registered 
-		in the permissions system and also have a variable cache accessed through
-		$application.set/get. 
-		
-		The application.sjs file should conform to this template:
-		
-		Template:
-		(code)
-		{
-			//--------- properties -----------------------------------------------
-			appname:"",// unique variable name of this application, omit this for anonymous applications
-			idleMinutes:60,// Lifetime of Application variable cache
-			//--------- app package properties
-				displayName:"",// "pretty" name used in labels and titles
-				description:<ejs>
-				
-				</ejs>.replace(/\t\t+/g," "),//short description of application
-				author:"", //name of app author
-				authorEmail:"",// email of app author
-				website:"",//website associated with this app
-				version:"", //app version. This should be a dot notation
-				minMynaVersion:null,// Minimum version of Myna the app might run on
-				postInstallUrl:null,// URL that should be visited first after deployment, relative to app install dir
+		$application and application.sjs:
+			The $application object is initialized via an application.sjs file in the 
+			current directory or any parent directory. When a Myna file is 
+			requested, Myna examines every directory between the web root and the 
+			requested file, and includes any application.sjs file it finds, in the 
+			order found. Each of these files has an opportunity to:
 			
-			//--------- local properties -----------------------------------------
-			myProp:"".
+			* declare application specific variables
+			* execute functions
+			* append or prepend $application.onXXX() event functions. 
+			  See <Object.before> and <Object.after> and examples below
 			
-			//--------- init method ----------------------------------------------
-			init:function(){	// this is run before any workflow methods to setup the application.
+			Once all the application.sjs files have been included, 
+			<$application.onRequestStart> is called. <$application.onApplicationStart> 
+			and <$application.onSessionStart> may be called as well.
 			
-			},
+			Next, the originally requested Myna file is executed.
 			
-			//--------- workflow methods -----------------------------------------
-			// Each workflow method is appended to the same named method in the 
-			// parent application. If you need to override the parent functions 
-			// or prepend instead of append, use init()
-			//
-			onApplicationStart:function(){ // run if application cache has expired
+			Finally <$application.onRequestEnd> is called.
 			
-			},
-			onRequestStart:function(){ // run directly before requested file
+		Named or Anonymous?:
+			Applications can be named or anonymous. Named applications are registered 
+			in the permissions system and also have a variable cache accessed through
+			$application.set/get. Named applications can be imported/exported/installed 
+			as Myna Eggs via the "Manage Applications" section of the Myna Adminstrator.
 			
-			},
-			onRequestEnd:function(){ // run directly after requested file
+			Anonymous applications allow you to define or override variables and alter 
+			the workflow of nested applications, i.e. any content in or below the 
+			folder that contains the anonymous application.sjs file.   
 			
-			},
-			onSessionStart:function(){ // run before a call to $session.get/set when session is expired 
+		Nested applications:
+			When there are multiple application.sjs file between the webroot and the 
+			requested Myna file, they are applied from the webroot inward such that 
+			each inner application.sjs overrides its parent. However, the workflow 
+			functions are handled a little differently. The workflow functions are 
+			actually chains (see <Function.createChainFunction> and <Object.before>/after).
+			This means that if onRequestStart is defined in both an inner and outer 
+			application.sjs file, both functions will be executed. The onAfterXX and 
+			onRequestStart are executed from the outside-in and all other workflow 
+			functions are executed from the inside-out. Like so
+			(code)
+				onRequestStart:outer
+					onRequestStart:inner
+						somefile.sjs
+					onRequestEnd:inner
+				onRequestEnd:outer
+			(end)
 			
-			},
-			onError:function(){ //run when an error occurs. Return true to cancel default. 
-				
-			},
-			onError404:function(){ //run when a call to a non-existent file is made. Return true to cancel default.
-				
-			},
-			rights:[], // an array of Myna.Permissions.Right definitions to be created 
-		}
-		(end)
+			The order is somewhat more complicated if the onBeforeXX and onAfterXX 
+			variants are used
+			(code)
+					onBeforeRequestStart:inner
+				onBeforeRequestStart:outer
+				onRequestStart:outer
+					onRequestStart:inner
+						somefile.sjs
+					onRequestEnd:inner
+				onRequestEnd:outer
+				onAfterRequestEnd:outer
+					onAfterRequestEnd:inner
+			(end)
+			
+			It is possible to terminate a chain early by calling 
+			arguments.callee.chain.exit() See <Function.createChainFunction> for more
+			detail on manipulating function chains.
 		
 		Note:
 			To maintain compatibility with older Myna code, an application.sjs file 
@@ -85,145 +94,200 @@
 			an "init" function and executed.
 		
 		Examples:
-		(code)
-		//from the Myna Adminstrator
-		{
-			appname:"myna_admin",
-			prettyName:"Myna Adminstrator",
-			noAuthFuses:["login","auth", "logout"],
-			defaultFuseAction:"login",
-			mainFuseAction:"main",
-			onRequestStart:function(){
-				Myna.applyTo($server.globalScope);
-				
-				
-				if (!$req.data.fuseaction) $req.data.fuseaction=this.defaultFuseAction; 
-				//is the user authenticated?
-				if (this.noAuthFuses.indexOf($req.data.fuseaction.toLowerCase()) != -1) return;	
-				if ( !$cookie.getAuthUserId() ){
-						$req.data.fuseaction=this.defaultFuseAction;
-				} else { //is the the user authorized for this fuseaction?
-					if ($cookie.getAuthUserId() == "myna_admin") return;
+			(code)
+			//from the Myna Adminstrator
+			{
+				appname:"myna_admin",
+				displayName:"Myna Adminstrator",
+				noAuthFuses:["login","auth", "logout"],
+				defaultFuseAction:"login",
+				mainFuseAction:"main",
+				onRequestStart:function(){
+					if (!$req.data.fuseaction) $req.data.fuseaction=this.defaultFuseAction; 
+					//is the user authenticated?
+					if (this.noAuthFuses.indexOf($req.data.fuseaction.toLowerCase()) != -1) return;	
+					if ( !$cookie.getAuthUserId() ){
+							$req.data.fuseaction=this.defaultFuseAction;
+					} else { //is the the user authorized for this fuseaction?
+						if ($cookie.getAuthUserId() == "myna_admin") return;
+						
+						var user = $cookie.getAuthUser();
+						if (user.hasRight("myna_admin","full_admin_access")) return;
+						
+						$req.data.fuseaction="no_access";
+						throw new Error("You do not have access to that feature")
+						
+					}
 					
-					var user = $cookie.getAuthUser();
-					if (user.hasRight("myna_admin","full_admin_access")) return;
 					
-					$req.data.fuseaction="no_access";
-					throw new Error("You do not have access to that feature")
+				},
+				onApplicationStart:function(){
+					var props =new Myna.File("/WEB-INF/classes/cron.properties") 
+					if (!props.exists()){
+						props.writeString("")
+					}
+				
+					//Load datasource driver properties 
+					var propFiles = new Myna.File("/shared/js/libOO/db_properties").listFiles("sjs");
+					var db_props={}
 					
-				}
-				
-				
-			},
-			onApplicationStart:function(){
-				Myna.applyTo($server.globalScope);
-				var props =new Myna.File("/WEB-INF/classes/cron.properties") 
-				if (!props.exists()){
-					props.writeString("")
-				}
+					propFiles.forEach(function(propFile){
+						if (!/[\w]+.sjs$/.test(propFile.getFileName())) return;
+						var vendor = propFile.getFileName().split(/\./)[0];
+						var obj={};
+						Myna.include(propFile,obj);
+						if (obj.dsInfo){
+							db_props[vendor] = obj.dsInfo;
+						}
+					});
+					$application.set("db_properties",db_props);
+					
+				},
+				rights:[{
+					name:"full_admin_access",
+					description:"Full access to all Administrator functions"
+				}]
+			}
+	
+	
+	
+			// an example of anonymous applications and altered workflow.
 			
-				//Load datasource driver properties 
-				var propFiles = new Myna.File("/shared/js/libOO/db_properties").listFiles("sjs");
-				var db_props={}
-				
-				propFiles.forEach(function(propFile){
-					if (!/[\w]+.sjs$/.test(propFile.getFileName())) return;
-					var vendor = propFile.getFileName().split(/\./)[0];
-					var obj={};
-					Myna.include(propFile,obj);
-					if (obj.dsInfo){
-						db_props[vendor] = obj.dsInfo;
+			// parent folder  
+			{
+				//$application.directory and $application.url are calcularted automatically
+				layoutFile:$application.directory +"layout/outer_template.ejs"
+				init:function(){
+					// This wraps all content generated in a layout file.
+					// By using "before" in this init function, we are reversing the 
+					// execution order to "inside-out" instead of the default "outside-in"
+					$application.before("onRequestEnd",function(){
+						if (Page.includeLayout) {
+							Myna.includeOnce(this.layoutFile,{content:$res.clear()})
+						}
+					})
+				},
+				onRequestStart:function(){
+					//decalres global variable that the request page can access
+					Page={
+						includeLayout:true,
+						title:"Parent content",
+						breadCrumbs:[{
+							url:$application.url,
+							label:"Parent"
+						}],
 					}
-				});
-				$application.set("db_properties",db_props);
-				
-			},
-			rights:[{
-				name:"full_admin_access",
-				description:"Full access to all Administrator functions"
-			}]
-		}
-
-
-
-		// an example of anonymous applications and altered workflow.
-		
-		// parent folder  
-		{
-			//$application.directory/url are set before this file is loaded
-			layoutFile:$application.directory +"layout/outer_template.ejs"
-			init:function(){
-				// this wraps all content generated in a layout file
-				// by using "before" in this init function we are reversing the 
-				// execution order to "inside-out" instead of the default "outside-in"
-				$application.before("onRequestEnd",function(){
-					if (Page.includeLayout) {
-						Myna.includeOnce(this.layoutFile,{content:$res.clear()})
-					}
-				})
-			},
-			onRequestStart:function(){
-				//decalres global variable that the request page can access
-				Page={
-					includeLayout:true,
-					title:"Parent content",
-					breadCrumbs:[{
+				},
+			}
+			
+			//child folder
+			{
+				layoutFile:$application.directory +"layout/inner_template.ejs"
+				init:function(){
+					// This wraps all content generated in a layout file, before the parent wrap.
+					// By using "before" in this init function, we are reversing the 
+					// execution order to "inside-out" instead of the default "outside-in"
+					$application.before("onRequestEnd",function(){
+						if (Page.includeLayout) {
+							Myna.includeOnce(this.layoutFile,{content:$res.clear()})
+						}
+					})
+				},
+				onRequestStart:function(){
+					//override page defaults
+					Page.title = "Child content"
+					Page.breadCrumbs.push({
 						url:$application.url,
-						label:"Parent"
-					}],
-				}
-			},
-		}
+						label:"Child"
+					})
+				},
+			}
+			
+			//outer_template layout file
+			<html>
+				<head><title><%=Page.title%></title></head>
+				<body>
+					<!-- Breadcrumbs -->
+					<div class="header-breadcrumbs">
+						<ul>
+						<@loop array="Page.breadCrumbs" element="bc">
+							<li><a href="<%=bc.url%>"><%=bc.label%></a></li>
+						</@loop>
+						</ul>
+					</div>
+					<div id="main_content"><%=this.content%></div>
+				</body>
+			</html>
+			
+			//inner_template layout file
+			
+			<div id="inner_content">
+				<h1> Here is the inner layout </h1>
+				<%=this.content%>
+			</div>
+			
+			(end)
 		
-		//child folder
-		{
-			layoutFile:$application.directory +"layout/inner_template.ejs"
-			init:function(){
-				// this wraps all content generated in a layout file, before the parent wrap
-				// by using "before" in this init function we are reversing the 
-				// execution order to "inside-out" instead of the default "outside-in"
-				$application.before("onRequestEnd",function(){
-					if (Page.includeLayout) {
-						Myna.includeOnce(this.layoutFile,{content:$res.clear()})
-					}
-				})
-			},
-			onRequestStart:function(){
-				//override page defaults
-				Page.title = "Child content"
-				Page.breadCrumbs.push({
-					url:$application.url,
-					label:"Child"
-				})
-			},
-		}
-		
-		//outer_template layout file
-		<html>
-			<head><title><%=Page.title%></title></head>
-			<body>
-				<!-- Breadcrumbs -->
-				<div class="header-breadcrumbs">
-					<ul>
-					<@loop array="Page.breadCrumbs" element="bc">
-						<li><a href="<%=bc.url%>"><%=bc.label%></a></li>
-					</@loop>
-					</ul>
-				</div>
-				<div id="main_content"><%=this.content%></div>
-			</body>
-		</html>
-		
-		//inner_template layout file
-		
-		<div id="inner_content">
-			<h1> Here is the inner layout </h1>
-			<%=this.content%>
-		</div>
-		
-		(end)
+		See:
+			*	<Application Template>
+		See also:
+			*	<Myna.loadAppProperties>
+*/
+
+/*
+	Topic: Application Template	
 		
 		
+		The application.sjs file should conform to this template:
+			
+			(code)
+			{
+				//--------- properties -----------------------------------------------
+					// you can access these properties from another app via Myna.loadAppProperties()
+				appname:"",// unique variable name of this application, omit this for anonymous applications
+				idleMinutes:60,// Lifetime of Application variable cache
+				//--------- app package properties
+					displayName:"",// "pretty" name used in labels and titles
+					description:<ejs>
+					
+					</ejs>,//short description of application
+					author:"", //name of app author
+					authorEmail:"",// email of app author
+					website:"",//website associated with this app
+					version:"", //app version. This should be a dot notation
+					minMynaVersion:null,// Minimum version of Myna the app might run on
+					postInstallUrl:null,// URL that should be visited first after deployment, relative to app install dir
+				
+				//--------- local properties -----------------------------------------
+				myProp:"",
+				
+				//--------- init method ----------------------------------------------
+				init:function(){	// this is run before any workflow methods to setup the application.
+				
+				},
+				
+				//--------- workflow methods -----------------------------------------
+				onApplicationStart:function(){ // run if application cache has expired
+				
+				},
+				onRequestStart:function(){ // run directly before requested file
+				
+				},
+				onRequestEnd:function(){ // run directly after requested file
+				
+				},
+				onSessionStart:function(){ // run before a call to $session.get/set when session is expired 
+				
+				},
+				onError:function(){ //run when an error occurs. Return true to cancel default. 
+					
+				},
+				onError404:function(){ //run when a call to a non-existent file is made. Return true to cancel default.
+					
+				},
+				rights:[], // an array of Myna.Permissions.Right definitions to be created 
+			}
+			(end)
 		
 		
 */
@@ -268,7 +332,8 @@ var $application={
 	get display_name(){return $application.displayName},
 	set display_name(val){$application.displayName = val},
 	/* Property: description
-		Short description of this application   
+		Short description of this application
+		
 		Example:
 		(code)
 			..
@@ -278,7 +343,8 @@ var $application={
 	*/
 	description:"",
 	/* Property: author
-		name of  the author of this application   
+		Name of  the author of this application  
+		
 		Example:
 		(code)
 			..
@@ -289,6 +355,7 @@ var $application={
 	author:"", 
 	/* Property: authorEmail
 		email of the author of this application   
+		
 		Example:
 		(code)
 			..
@@ -297,8 +364,9 @@ var $application={
 		(end)
 	*/
 	authorEmail:"",// email of app author
-	/* Property: authorEmail
-		website associated with this app   
+	/* Property: website
+		Website associated with this application   
+		
 		Example:
 		(code)
 			..
@@ -307,8 +375,8 @@ var $application={
 		(end)
 	*/
 	website:"",
-	/* Property: authorEmail
-		application version
+	/* Property: version
+		Application version
 		
 		This should be in dot notation such that <String.compareNatural> will sort 
 		the version properly. Here is an example for testing a version scheme:
@@ -340,7 +408,8 @@ var $application={
 	*/
 	version:"", 
 	/* Property: minMynaVersion
-		Minimum version of Myna this app is likely to work with   
+		Minimum version of Myna this application is likely to work with  
+		
 		Example:
 		(code)
 			..
@@ -462,6 +531,8 @@ var $application={
 		Returns:
 			The application variable associated with the supplied _key_.
 			
+		Note:
+			application variables are deleted after <idleMinutes> of inactivity
 		Example:
 		(code)
 			var lastUser = $application.get("lastUser")||$cookie.getAuthUser();
@@ -511,6 +582,8 @@ var $application={
 			key		-	String variable name
 			value	-	value to set
 			
+		Note:
+			application variables are deleted after <idleMinutes> of inactivity
 		Example:
 		(code)
 			$application.set("lastUser",$cookie.getAuthUser());
@@ -551,7 +624,7 @@ var $application={
 	
 	_initScopes:function(){
 		$profiler.mark("Runtime scripts included");
-		
+		$profiler.begin("Process Scopes");
 		$server_gateway.runtimeStats.put("currentTask","built-in onRequestStart");
 		var pThread=$server_gateway.environment.get("threadParent")
 		if (pThread){
@@ -596,6 +669,7 @@ var $application={
 					
 					var fileupload =Packages.org.apache.commons.fileupload; 
 					if (fileupload.servlet.ServletFileUpload.isMultipartContent($server.request)){
+						$profiler.begin("Process Uploads");
 						$session.set("$uploadProgress",{
 								fileNumber:"N/A",
 								bytesRead:-1,
@@ -704,6 +778,7 @@ var $application={
 						})
 						
 						$server_gateway.requestTimeout = oldTimeout + parseInt((new Date().getTime() - start)/1000); // reEnable  timeout after uploading
+						$profiler.end("Process Uploads");
 					}
 				params.forEach(function(valArray,key){
 					//for (keyId=0; keyId < keyValueArray.length; ++keyId){
@@ -744,9 +819,15 @@ var $application={
 				$req.data.applyTo($req.rawData)
 				$req.paramNames.forEach(function(name){
 					$req.data[name] = $req.data[name].escapeHtml();
-					$req.data[name+"$array"] = $req.data[name+"$array"].map(function(value){
-						return value.escapeHtml();
-					})
+					if ($req.data[name+"$array"].length=1) {
+						$req.data[name+"$array"] = [
+							$req.data[name]
+						]
+					} else {
+						$req.data[name+"$array"] = $req.data[name+"$array"].map(function(value){
+							return value.escapeHtml();
+						})
+					}
 				});
 			//import auth_token
 				if ("auth_token" in $req.data){
@@ -768,6 +849,7 @@ var $application={
 			
 			
 		}
+		$profiler.end("Process Scopes");
 	},
 	
 	_onApplicationStart:function(){
@@ -791,6 +873,35 @@ var $application={
 			$application._onError(e);
 		}
 	},
+/* Function: init
+		Called before any processing of the request
+		
+		Detail:
+			This function is called after loading the $application.sjs file, but 
+			before any nested application.sjs files. This is intended for more 
+			complicated configuration of the $application object.
+			
+			This function does nothing unless it is defined in an
+			application.sjs file.
+			
+		Example:
+		(code)
+			//in application.sjs
+			{
+				init:function(){
+					// Inits are always executed outside-in. This causes the DS to be  
+					// set by the outermost folder
+					if (!$application.ds){
+						if ($server.properties.instance_purpose.toLowerCase() == "dev"){
+							$application.ds="hr_dev"
+						} else {
+							$application.ds="hr_prod"
+						}
+					}
+				}
+			}
+		(end)
+	*/
 /* Function: onApplicationStart
 		Called when a new application scope is created, before 
 		<$application.onRequestStart>.

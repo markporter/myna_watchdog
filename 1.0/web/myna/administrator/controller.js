@@ -709,6 +709,7 @@ var C ={
 							{name:"instance_id"},
 							{name:"instance_purpose"},
 							{name:"administrator_email"},
+							{name:"enable_directory_listings"},
 							{name:"commonjs_paths"},
 							{name:"administrator_email_on_error"},
 							{name:"strict_error_checking"},
@@ -753,6 +754,22 @@ var C ={
 							xtype:"combo",
 							fieldLabel: 'Send email to adminstrator on uncaught exceptions?',
 							hiddenName: 'administrator_email_on_error',
+							store:new Ext.data.SimpleStore({
+								fields: ['id','text'],
+								data:[[0,"No"],[1,"Yes"]]
+							}),
+							displayField:'text',
+							valueField:'id',
+							mode: 'local',
+							triggerAction: 'all',
+							selectOnFocus:true,
+							editable:false,
+							width:50,
+							allowBlank:false
+						},{
+							xtype:"combo",
+							fieldLabel: 'Enable Directory Listings?',
+							hiddenName: 'enable_directory_listings',
 							store:new Ext.data.SimpleStore({
 								fields: ['id','text'],
 								data:[[0,"No"],[1,"Yes"]]

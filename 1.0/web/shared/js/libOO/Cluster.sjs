@@ -36,7 +36,7 @@ Myna.Cluster ={
 						"ANY" to enable all purposes
 		
 	Note: 
-		The returned object is an implementation of java.util.concurrent.CuncurrentMap
+		The returned object is an implementation of java.util.concurrent.ConcurrentMap
 		
 	See:
 		* Hazelcast Map <http://www.hazelcast.com/documentation.jsp#Map>

@@ -335,22 +335,23 @@
 		<$req.data>,<$req.rawData>,<unEscapeHtml> 
 	*/
 	String.prototype.escapeHtml=function(string){
-		var 
-			new_string = "",
+		var
+			$this=this,
+			new_string = [],
 			c,
 			x,
 			escapeIndex
 		;
-		for (x=0; x < this.length; ++x){
-			c= this.charAt(x);
-			escapeIndex =String.htmlEscapeChars.indexOf(c);
-			if (escapeIndex !== -1){
-				new_string+=String.charToHtmlEntity(c);
-			} else {
-				new_string+=c;
-			}
+		for (x=0; x < $this.length; ++x){
+		c= $this.charAt(x);
+		escapeIndex =String.htmlEscapeChars.indexOf(c);
+		if (escapeIndex !== -1){
+			new_string.push(String.charToHtmlEntity(c));
+		} else {
+			new_string.push(c);
 		}
-		return new_string;
+	}
+	return new_string.join("");
 	};
 /* Function: escapeRegex 
 	returns string with symbols that might be interpreted as regex escaped   

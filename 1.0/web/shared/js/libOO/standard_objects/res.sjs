@@ -11,7 +11,7 @@
 	buffer.
 */
 var $res = {
-/* 	Function: clear
+/* Function: clear
 		Clears response buffer and returns the previous contents.
 		
 		Returns:
@@ -31,7 +31,7 @@ var $res = {
 		return currentContent;
 		
 	},
-/* 	Function: getContent
+/* Function: getContent
 		Returns current response buffer contents.
 		
 		Returns:
@@ -49,7 +49,7 @@ var $res = {
 		return String($server_gateway.generatedContent.toString());
 		
 	},
-/* 	Function: flush
+/* Function: flush
 		Sends the current response buffer contents to the browser.
 		
 		Paramters:
@@ -80,7 +80,7 @@ var $res = {
 		$server.response.flushBuffer();
 		return $res.clear();
 	},
-/* 	Function: requestBasicAuth
+/* Function: requestBasicAuth
 		returns a "Basic" http auth request 
 		
 		Parameters: 
@@ -105,7 +105,7 @@ var $res = {
 			+ (realm||"Myna Application Server") + '"');
 		$res.setStatusCode(401,message||"")
 	},
-/* 	Function: setContentType
+/* Function: setContentType
 		sets the content MIME type of the response.
 		
 		Parameters: 
@@ -122,7 +122,7 @@ var $res = {
 	setContentType:function(type){
 		if ($server.response) $server.response.setContentType(java.lang.String(type));
 	},
-/* 	Function: setStatusCode
+/* Function: setStatusCode
 		returns an HTTP status code and optionally a message for this response
 		
 		Parameters: 
@@ -141,7 +141,7 @@ var $res = {
 			$server.response.setStatus(code);
 		}
 	},
-/* 	Function: metaRedirect
+/* Function: metaRedirect
 		Redirect this page using META HTTP-EQUIV="refresh" tag. 
 		
 		Note: 
@@ -158,7 +158,7 @@ var $res = {
 	metaRedirect:function(url){
 		this.print('<META HTTP-EQUIV="refresh" content="0; url=' + url + '">');	
 	},
-/* 	Function: redirect
+/* Function: redirect
 		Redirect this page using HTTP 302 temporary redirect. 
 		
 		Note: 
@@ -181,7 +181,7 @@ var $res = {
 		if ($server.response) $server.response.sendRedirect(url);
 		Myna.abort();		
 	},
-/* 	Function: redirectLogin
+/* Function: redirectLogin
 		Redirect this page to the central login page 
 		
 		
@@ -236,7 +236,7 @@ var $res = {
 		Myna.print("<a href ='" + url +"'>"+options.title+"</a>");
 		Myna.abort();
 	},
-/*  Function: redirectWithToken
+/* Function: redirectWithToken
 	redirect to a URL, including an auth_token for the current user.
 	
 	Parameters:
@@ -257,22 +257,28 @@ var $res = {
 			url + "?" + query
 		))
 	},	
-/* 	Function: serveFile
-		Efficiently serves a file on the filesystem
+/* Function: serveFile
+		Efficiently serves a file on the filesystem. 
 		
 		Parameters: 
-			file 		-  a Myna.File, java.io.File, or MynaPath to a file to serve 
-							to the client
-			
+			file 				-  a Myna.File, java.io.File, or MynaPath to a file to serve 
+									to the client
 		
 		Detail:
 			This function replaces the normal output of this response with the contents 
 			of _file_. Executing this function after a call to <$res.flush> will likely 
 			fail or corrupt the file. This function is appropriate for for large 
 			file downloads as it supports resuming.
+			
+		Note:
+			When this function returns, the file may not have been downloaded yet. 
+			This is because some browsers/dowloaders have advanced multi-threaded
+			download support, so you should plan for your download code the be 
+			called several times in parallel. Also if the client pauses and resumes 
+			the download you may get multiple calls. 
 		
 	*/
-	serveFile:function(file,options){
+	serveFile:function(file, shouldDelete){
 	
 		file = new Myna.File(file);
 		
@@ -295,6 +301,7 @@ var $res = {
 			$server.response
 		)
 		fs.serve($server_gateway.type != "HEAD");
+		
 		Myna.abort();
 	},
 	serveFile2:function(file,options){
@@ -464,7 +471,7 @@ var $res = {
 	},	
 	
 	
-/* 	Function: setHeader
+/* Function: setHeader
 		sets a header to return to the browser
 		
 		Parameters: 
@@ -480,7 +487,7 @@ var $res = {
 	setHeader:function(name,value){
 		if ($server.response) $server.response.setHeader(name,value);
 	},
-/* 	Function: printBinary
+/* Function: printBinary
 		sends binary data to the browser
 		
 		Parameters: 
@@ -518,7 +525,7 @@ var $res = {
 		var writer = $server.response.getOutputStream();
 		writer.write(data,0,data.length);
 	},
-/* 	Function: print
+/* Function: print
 		Appends content to the response buffer. 
 		
 		Parameters: 
