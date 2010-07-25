@@ -837,7 +837,7 @@ sub BuildMenu #(FileName sourceFile, TopicType indexType) -> string htmlMenu
                     . '{'
                     . 'if (menu != ' . join(' && menu != ', @$toExpand) . ')'
                         . '{'
-                        . 'document.getElementById("MGroupContent" + menu).style.display = "none";'
+                        . 'document.getElementById("MGroupContent" + menu).style.display = "block";'
                         . '};'
                     . '};'
                 }
@@ -847,7 +847,7 @@ sub BuildMenu #(FileName sourceFile, TopicType indexType) -> string htmlMenu
 
                 'for (var menu = 1; menu < ' . $menuGroupNumber . '; menu++)'
                     . '{'
-                    . 'document.getElementById("MGroupContent" + menu).style.display = "none";'
+                    . 'document.getElementById("MGroupContent" + menu).style.display = "block";'
                     . '};'
                 };
 

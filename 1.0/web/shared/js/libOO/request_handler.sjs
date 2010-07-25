@@ -48,10 +48,10 @@ try{
 		} else {
 			//request script
 			$req.scriptFile =new Myna.File($server.requestDir + $server.requestScriptName);
+			
 			// try to resolve mapping
 			
 			if ($req.scriptFile.exists() && $req.scriptFile.fileName.match(/\.(sjs|ejs|ws)$/)){
-				
 				Myna.includeOnce($server.requestDir + $server.requestScriptName)
 			} else {
 				//process REST params
@@ -61,11 +61,13 @@ try{
 					var params=[]
 					var dirStack = $server.requestDir.after($server.rootDir.length).split("/")
 						.filter(function(e){return e.length})
+					//Myna.abort("dirstack",$server)
 					var curFile;
 					var dir,name;
 					var found = false;
 					if ($server_gateway.requestScriptName) dirStack.push($server_gateway.requestScriptName);
-					while (dirStack.length ){
+					var rootIndex = !dirStack.length
+					while (dirStack.length || rootIndex){
 						if (!$server_gateway.requestScriptName){
 							curFile=new Myna.File($server.rootDir +dirStack.join("/") + "/index.ejs");
 							if (curFile.exists()) {
@@ -80,7 +82,13 @@ try{
 									name= "index.sjs";
 									found=true;
 									break;
-								} 
+								} else {
+									curFile=new Myna.File($server.rootDir +dirStack.join("/") + "/index.html");
+									if (curFile.exists()) {
+										$res.serveFile(curFile);
+										Myna.abort();
+									}	
+								}
 							}
 						}
 						curFile=new Myna.File($server.rootDir+dirStack.join("/"));

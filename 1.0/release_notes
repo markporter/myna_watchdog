@@ -31,10 +31,10 @@ Highlights
   * *Application  Request Workflow*
 
      Setting workflow functions on the application config object 
-     (onRequestStart,onError,etc) will now layer with any previously 
-     defined application configs automatically. See $application in 
-     the API docs for more detail on the order of nested application 
-     workflow functions.
+     (onRequestStart,onError,etc) will now create a function chain 
+     with any previously defined application configs automatically. 
+     See $application in the API docs for more detail on the order 
+     of nested application workflow function execution.
 
   * *Application  Metadata*
 
@@ -48,7 +48,7 @@ Highlights
      Although the old style of application.sjs files is now 
      deprecated, Myna will automatically detect this style of config 
      an processes it in the old manner. This means that this change 
-     should have no effect on current applications
+     should have no effect on current applications.
 
 * **Application import/export/install**
 

@@ -1,7 +1,7 @@
 /* 	Global: $profiler
 	Global instance of <Myna.Profiler>.
 	
-	This is used in serveral places to record performance metrics, e.g. 
+	This is used in several places to record performance metrics, e.g. 
 	page includes, queries, and WebService calls. You can also use this to time 
 	your own events.
 	

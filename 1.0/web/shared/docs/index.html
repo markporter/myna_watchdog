@@ -1,169 +1,682 @@
-<link rel="stylesheet" type="text/css" href="../../myna/ext/resources/css/ext-all.css" />
-<link rel="stylesheet" type="text/css" href="../../myna/ext/resources/css/xtheme-slate.css" />
-<link rel="stylesheet" type="text/css" href="docs_ext.css" />
-
-
-<script type="text/javascript" src="../../myna/ext/adapter/ext/ext-base.js"></script>
-<script type="text/javascript" src="../../myna/ext/ext-all.js"></script>
-<script type="text/javascript" src="../../shared/js/libOO/Array.js"></script>
-<script type="text/javascript" src="../../shared/js/libOO/ObjectLib.js"></script>
-<script type="text/javascript" src="../../shared/js/libOO/String.js"></script>
-<script type="text/javascript" src="../../shared/js/libOO/Function.js"></script>
-<script type="text/javascript" src="../../shared/js/libOO/Date.js"></script>
-<script type="text/javascript" src="../../shared/js/libOO/ValidationResult.js"></script>
-<script type="text/javascript" src="../../shared/js/libOO/Profiler.js"></script>
-<script type="text/javascript" src="../../shared/js/libOO/debug_window.js"></script>
-
-
-<script>
-	Ext.onReady(function(){
-		Ext.BLANK_IMAGE_URL = '../../myna/ext/resources/images/default/s.gif';
-		new Ext.Viewport({
-			layout:"fit",
-			items:[{
-				title:"Myna Application Server",
-				layout:"border",
-				items:[{
-					region:"west",
-					width:200,
-					xtype:"treepanel",
-					rootVisible:false,
-					root:(function(){
-						var parseNode = function(nodeDesc){
-							ObjectLib.setDefaultProperties(nodeDesc,{
-								expanded:true
-							})
-							var newNode = new Ext.tree.TreeNode(nodeDesc)
-							
-							if (nodeDesc.children){
-								newNode.leaf=false;
-								nodeDesc.children.forEach(function(childDesc){
-									newNode.appendChild(parseNode(childDesc))
-								})
-							} else{
-								//newNode.leaf=true;
-							}
-							return newNode;
-						}
-						
-						var desc={
-							text:"Navigation",
-							children:[{
-								text:"Documentation",
-								children:[{
-									text:"Overview",
-									children:[{
-										text:"About Myna",
-										id:"default",
-										url:"summary.html",
-										iconCls:"icon_page"
-									},{
-										text:"Licenses",
-										url:"license_ext.html?cb="+new Date().getTime()
-									},{
-										text:"Features",
-										url:"features_ext.html?cb="+new Date().getTime()
-									},{
-										text:"Deployment",
-										url:"deploy.html?cb="+new Date().getTime()
-										
-									}]
-								
-								},{
-									text:"API Docs",
-									children:[{
-										text:"JavaScript API",
-										url:"js/libOO/index.html?cb="+new Date().getTime()/* ,
-										hrefTarget:"js_api" */
-									},{
-										text:"Myna Java API",
-										url:"myna_api/index.html?cb="+new Date().getTime()/* ,
-										hrefTarget:"myna_api" */
-									},{
-										text:"Rhino Java API",
-										url:"rhino_api/index.html?cb="+new Date().getTime()/* ,
-										hrefTarget:"rhino_api" */
-										
-									}]
-								},{
-									text:"Tutorial",
-									children:[{
-										text:"JS Overview",
-										url:"http://developer.mozilla.org/en/docs/A_re-introduction_to_JavaScript"/* ,
-										hrefTarget:"tutorial" */
-									},{
-										text:"Hello World",
-										url:"tutorial/hello_world.html?cb="+new Date().getTime()
-									},{
-										text:"Standard Objects",
-										url:"tutorial/standard_objects.html?cb="+new Date().getTime()
-									}]
-								}]
-							},{
-								text:"Project",
-								children:[{
-									text:"Home Page",
-									href:"http://www.mynajs.org"
-								},{
-									text:"Myna on Google Groups",
-									href:"http://groups.google.com/group/mynajs-general?lnk=srg&hl=en&ie=UTF-8&oe=utf-8&pli=1"
-								},{
-									text:"Google Code",
-									href:"http://code.google.com/p/myna/",
-									hrefTarget:"project_page"
-								},{
-									text:"Download",
-									href:"http://code.google.com/p/myna/downloads/list",
-									hrefTarget:"download_page"
-								}]
-							}]
-						}
-						return parseNode(desc);
-					})(),
-					listeners:{
-						beforerender:function(tree){
-							
-							window.setTimeout(function(){
-								var defaultNode = tree.getNodeById("default");
-								tree.getSelectionModel().select(defaultNode)
-							 	var center_frame=document.getElementById("center_frame")
-									center_frame.src=defaultNode.attributes.url;
-							},100)
-						},
-						click:function(node,e){
-							if (node.attributes.url){
-								var center_frame=document.getElementById("center_frame")
-								center_frame.src=node.attributes.url;
-							}
-						}
-					}
-				},{
-					region:"center",
-					id:"center",
-					hidden:false,
-					autoDestroy:true,
-					/* autoScroll:true, */
-					layout:"fit",
-					html:[
-						'<iframe id="center_frame" \n',
-						'frameborder="no" style="width:100%;height:100%" \n',
-						'src="' + Ext.BLANK_IMAGE_URL+ '"></iframe>\n'
-					].join("\n")
-				}]
-			}]
-		})
-	});
-</script>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+	"http://www.w3.org/TR/html4/loose.dtd">
 <html>
-	<head>
-		<title>Myna Server-Side JavaScript Application Server - Main Page</title>
-		<meta name="description" content="Myna is a Server-Side JavaScript web development platform based on Java. It allows developers to access the full power of Java and the development speed of JavaScript." />
-		<meta name="keywords" content="SSJS, JavaScript, Java, AJAX, JSON" />
-	</head>
-	<body>
-		<noscript>
-			Please enable JavaScript for navigation.
-			or click <a href="noscript.ejs">here</a> for index-able page
-		</noscript>
-	</body>
+<head>
+	<title>Welcome To Myna</title>
+</head>
+<body>
+	<script type="text/javascript" src="../js/shjs/sh_main.js"></script>
+	<script type="text/javascript" src="../js/shjs/lang/sh_myna.js"></script>
+	<script type="text/javascript" src="../js/libOO/Function.js"></script>
+	<script type="text/javascript" src="../js/libOO/Array.js"></script>
+	<script type="text/javascript" src="../js/libOO/String.js"></script>
+	<script type="text/javascript" src="../js/libOO/debug_window.js"></script>
+	
+	<link type="text/css" rel="stylesheet" href="../js/shjs/css/sh_mild_white.css">
+	<script>
+		/* String.prototype.trimIndent=function(){
+		var string = this;
+		//initial white space
+		var iws = string.replace(/^\n+/,"").match(/^([ \t]+)/);
+		if (!iws) return string;
+		iws = new RegExp("^(\\n?)" +iws[1],"mg");
+		return string.replace(iws,"$1");
+	}; */
+		window.onload=function(){
+			var pre_tags = document.getElementsByTagName("pre");
+			pre_tags = Array.parse(pre_tags);
+			pre_tags.forEach(function(tag){
+				
+				if ("innerText" in tag){
+					tag.innerText = tag.innerText.trimIndent().replace(/\t/g,"    ");
+				} else {
+					tag.innerHTML = tag.innerHTML.trimIndent().replace(/\t/g,"    ");;
+				}
+			})
+			sh_highlightDocument();
+		}
+	</script>
+	<style>
+		body{
+			background-color:#485567;
+			/* font-family:sans-serif; */
+		}
+		.mainPanel{
+			background-color:#DDE5E9;
+			margin:25px;
+			-moz-border-radius: 25px; 
+			-webkit-border-radius: 25px;
+			border-radius: 25px;
+			border:2px solid #EFAB21;
+			width: 1000px ;
+			margin-left: auto ;
+			margin-right: auto ;
+			
+		}
+		
+		.header{
+			display:block;
+			height:100px;
+			background-image: url(../../shared/images/mynalogo.png);
+			background-repeat:no-repeat;
+			border-bottom:2px solid #EFAB21;
+			padding-left:350px;
+			padding-top:30px;
+			
+		}
+		.contentPanel{
+			padding:20px;
+			/* padding-right:20px; */
+			/* float:right; */
+		}
+		.menu{
+			padding:10px;
+			width:250px;
+			float:right;
+			background-color:#E0E3E3;
+			-moz-border-radius-bottomleft: 25px; 
+			-webkit-border-bottom-left-radius: 25px;
+			border-bottom-left-radius: 25px;
+			border:2px solid #EFAB21;
+			margin-left:10px;
+			margin-bottom:10px;
+			border-right:0;
+			border-top:0
+		}
+		
+		.title{
+			font-family:serif;
+			font-weight:bold;
+			font-size:40px;
+		}
+		pre.sh_myna,.quote{
+			/* font-family:monospace; */
+			background-color:#E2E5E5;
+			border: 1px solid #485567;
+			border-left:5px solid #485567;
+			/* width:100%; */
+			display:block;
+			margin:15px;
+			margin-right:30px;
+			padding:10px;
+		}
+	</style>
+	<a name="top" ></a>
+	<div class="mainPanel" name="top">
+		<div class="header"><span class="title">Getting Started</span><br></div>
+			<div>
+				<div class="menu">
+					<b>Tools and Docs:</b><br>
+					<br><a href="http://www.mynajs.org" target="admin">MynaJS website</a>
+					<br><a href="http://myna.googlecode.com" target="admin">Myna Source Code</a>
+					<br><a href="../../myna/administrator/index.sjs" target="admin">Myna Administrator</a>
+					<br><a href="../../shared/docs/js/libOO/index.html" target="jsapi">API docs</a>
+					<br><a href="../../examples/index.ejs" target="examples">Code Examples</a>
+					<br><a href="http://groups.google.com/group/mynajs-general" target="group">MynaJS Google Group</a>
+					<br><a href="http://developer.mozilla.org/en/docs/A_re-introduction_to_JavaScript" target="mdc">Mozilla: A re-introduction to JavaScript</a>
+				</div>
+				<div class="contentPanel">
+					
+					If you have not already, visit the 
+					<a href="../../myna/administrator/index.sjs" target="admin">Myna Administrator</a> 
+					and set an admin password. Go ahead, I'll wait.
+					<br><br>
+					Back? Great! Let's get started:
+					<ul>
+						<li><a href="#directories">Myna Directory Layout</a></li>
+						<li><a href="#hello_world">Hello, World</a></li>
+						<li><a href="#environment">Myna Environment</a></li>
+						
+					</ul>
+<!-- directories  -->					
+					<hr><a name="directories" href="#top">top</a>
+					<h1>Myna Directory Layout</h1>
+					
+					Myna is a Java Servlet application. This means it can be deployed like any servlet, 
+					on any servlet container. Once deployed, Myna should exist as a directory within your 
+					servlet container. Inside this directory you should see these files and directories:
+					<br><br>
+					<pre>
+						&lt;context root>
+						  |-shared/
+						  |  |-docs/
+						  |  |-js/
+						  |  |  |-libOO/
+						  |-myna/
+						  |-WEB-INF/
+						  |  |-myna/
+						  |-examples/
+						  |-index.html
+					</pre>
+					<table width="100%" height="1" cellpadding="3" cellspacing="0" border="" >
+						<tr>
+							<td>&lt;context root> or /</td>
+							<td>This is the directory into which your servlet container unpacked Myna</td> 
+						</tr>
+						<tr>
+							<td>/shared</td>
+							<td>This directory is for shared resources, both Myna's and your own</td>
+						</tr>
+						<tr>
+							<td>/shared/docs</td>
+							<td>This directory is for Myna's documentation, including this file</td>
+						</tr>
+						<tr>
+							<td>/shared/js/</td>
+							<td>This directory is for shared JavaScript resources, both server- and client-side</td>
+						</tr>
+						<tr>
+							<td>/shared/js/libOO</td>
+							<td>This directory is for Myna's Object Oriented library. These files for the core of Myna's standard library and get overwritten during upgrades.</td>
+						</tr>
+						<tr>
+							<td>/myna/</td>
+							<td>This directory contains Myna's internal applications, such as the Myna administrator. None of these are necessary for Myna's functionality. </td>
+						</tr>
+						<tr>
+							<td>/WEB-INF/</td>
+							<td>This directory contains Myna's Java code and other resources, such as datasource definitions</td>
+						</tr>
+						<tr>
+							<td>/examples/</td>
+							<td>This directory contains some code samples. Administrator privileges required. </td>
+						</tr>
+						<tr>
+							<td>/index.html</td>
+							<td>The default index.html just redirects to this file. Myna looks for index.ejs, index.sjs and then index.html if no file is specified in the URL </td>
+						</tr>
+					</table>
+					<br><br>
+					
+					You can place code files anywhere under the context root; however, 
+					files placed in /WEB-INF will not be served to browsers. You can use 
+					this behavior to create "internal" files that are readable from code
+					only. All of Myna's configuration files are in /WEB-INF/myna
+					for this reason. When upgrading Myna through the Administrator, Myna 
+					Takes care not to overwrite any files you create, and backs up every 
+					Myna file overwritten. 
+					<br><br>
+					Myna automatically expands any file path that begins with "/" to the 
+					context root. See <a href="js/libOO/files/MynaPath-txt.html" target="jsapi">MynaPath</a> 
+					for more details  
+<!-- hello_world -->					
+					<hr><a name="hello_world" href="#top">top</a>
+					<h1>Hello, World</h1>
+
+					Let's create the simplest possible web page:
+					<p>
+					<pre class="code sh_myna">
+						&lt;html>
+							&lt;body>
+							Hello, World!
+							&lt;/body>
+						&lt;/html>
+					
+					</pre>
+					
+					Ok that's maybe a little <b>too</b> simple, but it does illustrate that files 
+					ending in .ejs (EmbeddedJavaScript) are assumed to be plain text with the 
+					exception of Myna specific 
+					tags. Here is the same output created with a .sjs (ServersideJavaScript) file.
+					
+					<p>
+					<pre class="code sh_myna">
+						$res.print("&lt;html>");
+						$res.print("	&lt;body>");
+						$res.print("	Hello, World!");
+						$res.print("	&lt;/body>");
+						$res.print("&lt;/html>");
+					</pre>
+					
+					As you can see it can be cumbersome to write a lot of HTML in a .sjs file. In 
+					general, .ejs files work best for views where the majority of the code 
+					is HTML, and sjs works best when the majority of the code is server-side 
+					JavaScript.
+					<p>
+					Lets add a bit of dynamic content
+					<p>
+					<pre class="code sh_myna">
+						&lt;html>
+							&lt;body>
+								&lt;%-- Here is comment. these don't get sent to the browser at all --%>
+								&lt;% var today = new Date(); %>
+								Hello, World!&lt;br>
+								Today is is &lt;%=today%>
+							&lt;/body>
+						&lt;/html>
+					
+					</pre>
+					
+					Arbitrary JavaScript code can be placed within a &lt;%  %> tag. Javascript 
+					expressions can be directly output via a &lt;%=  %> tag. This works in a similar 
+					way to JSP.
+					<p>
+					Here is an example using a loop and an if statement:
+					<p>
+					<pre class="code sh_myna">
+						&lt;% 
+						   var books =[{
+							  title:"A Brief History of Time",
+							  author:"Stephan Hawking.",
+							  status:"unread"
+						   },{
+							  title:"The Elegant Universe",
+							  author:"Brian Greene",
+							  status:"read"
+						   },{
+							  title:"The Blank Slate",
+							  author:"Steven Pinker",
+							  status:"reading"
+						   },{
+							  title:"Brother Odd",
+							  author:"Dean Koontz",
+							  status:"reading"
+						   }];
+						%>
+						&lt;table cellpadding="5" cellspacing="0" border="1" >
+						   &lt;caption>My library&lt;/caption>
+						   &lt;tr>
+							  &lt;th>Book Number&lt;/th>
+							  &lt;th>Title&lt;/th>
+							  &lt;th>Author&lt;/th>
+							  &lt;th>status&lt;/th>
+						   &lt;/tr>
+						   &lt;@loop array="books" element="book" index="bookNum">
+							  &lt;tr >
+								 &lt;td>&lt;%=bookNum%>&lt;/td>
+								 &lt;td>
+								 &lt;@if book.status == "reading">
+									&lt;b>&lt;%=book.title%>&lt;/b>   
+								 &lt;@elseif book.status == "read">
+									&lt;strike>&lt;%=book.title%>&lt;/strike>
+								 &lt;@else> 
+									&lt;%=book.title%>
+								 &lt;/@if> 
+								 &lt;/td>
+								 
+								 &lt;td>&lt;%=book.author%>&lt;/td>
+								 &lt;td>&lt;%=book.status%>&lt;/td>
+							  &lt;/tr>
+						   &lt;/@loop>
+						&lt;/table>
+					
+					</pre>
+					
+					Note the new constructs &lt;@loop>, &lt;@if>, &lt;@elseif>, and &lt;@else>. These 
+					are shortcuts to avoid writing cumbersome code such as :
+					
+					<pre class="code sh_myna">
+						&lt;% 
+						for (var x = 0; x &lt; books.length; ++x) {
+						   var book = books[x];
+						%>
+						   ...
+						&lt;% } %>
+					</pre>
+					
+					&lt;@loop> takes up to 3 parameters:
+					<ul>
+					<li><b>array</b> REQUIRED reference to an array element, or an array literal
+					<li><b>element</b> OPTIONAL if defined, a variable of this name is created 
+										inside the loop to store the value of the current array item
+					<li><b>index</b> OPTIONAL if defined, a variable of this name is created 
+										inside the loop to store the value of the current array index
+					</ul>
+					Note that &lt;@loop> and &lt;@if> have end tags and &lt;@elseif> and &lt;@else> do
+					not.
+					
+					<p>
+<!-- environment -->					
+					<hr><a name="environment" href="#top">top</a>
+					<h1>Myna Environment</h1>
+					
+					Myna, by default, includes a set of Global Variables that all start with $. 
+					Myna also provides standard functions as extensions to JavaScript's base objects 
+					(
+						<a href="js/libOO/files/Object-js.html" target="jsapi">Object.js</a>,
+						<a href="js/libOO/files/Array-js.html" target="jsapi">Array.js</a>,
+						<a href="js/libOO/files/String-js.html" target="jsapi">String.js</a>,
+						<a href="js/libOO/files/Date-js.html" target="jsapi">Date.js</a>
+						<a href="js/libOO/files/Function-js.html" target="jsapi">Function.js</a>
+					)
+					and through the Global Myna Object (
+						<a href="js/libOO/files/Myna-sjs.html" target="jsapi">Myna.sjs</a>
+					), as well as several classes that provide more specific functionality (
+						<a href="js/libOO/files/Query-sjs.html" target="jsapi">Myna.Query</a>,
+						<a href="js/libOO/files/DataManager-sjs.html" target="jsapi">Myna.DataManager</a>,
+						<a href="js/libOO/files/WebService-sjs.html" target="jsapi">Myna.WebSevice</a>,
+						<a href="js/libOO/files/ValidationResult-js.html" target="jsapi">Myna.ValidationResult</a>,
+						<a href="js/libOO/files/File-sjs.html" target="jsapi">Myna.File</a>,
+						<a href="js/libOO/files/Profiler-js.html" target="jsapi">Myna.Profiler</a>,
+						<a href="js/libOO/files/Ldap-sjs.html" target="jsapi">Myna.Ldap</a>,
+						
+					). This tutorial is a quick tour of the standard objects and how Myna handles 
+					the normal web application workflow.
+					<P>
+					Let's start with one of the most useful functions in the library for debugging: 
+					<a href="js/libOO/files/Myna-sjs.html#Myna.dump" target="jsapi">Myna.dump</a>. Myna.dump 
+					returns nested HTML table representing the supplied object. Here is an example:
+					
+					<p>
+					<pre class="code sh_myna">
+						&lt;%=Myna.dump(this,"Global Scope")%>
+					</pre>
+					
+					
+					This shows all of the objects defined in the global scope. Clicking bold-ed title 
+					on the left side of a cell will collapse or expand that object. You may notice 
+					that some cells end in "[ max recursion ]". This is a safety mechanism that 
+					prevents infinite recursion. Sometimes the default maxRecursion of 4 is not 
+					enough, in which case you can pass a third parameter to extend the recursion depth.
+					
+					<p>
+					<pre class="code sh_myna">
+						&lt;%=Myna.dump(this,"Global Scope",6)%>
+					</pre>
+					<p>
+					When in an sjs file, you can use the <a href="js/libOO/files/Myna-sjs.html#Myna.printDump" target="jsapi">printDump</a> 
+					variant:
+					<pre class="code sh_myna">
+						Myna.printDump(this,"Global Scope",6);
+						//printDump is shorthand for
+						$res.print(Myna.dump(this,"Global Scope",6));
+					</pre>
+					<p>
+					Another useful function is <a href="js/libOO/files/Myna-sjs.html#Myna.log" target="jsapi">Myna.log()</a>, used like so:
+					
+					<pre class="code sh_myna">
+						Myna.log("debug","Request Data",Myna.dump($req.data));
+					</pre>
+					This creates a log entry in Myna's general log database of type "debug" with a title of 
+					"Request Data" and a dump of the request variables as the detail. You can read these logs 
+					in the Myna Administrator by clicking "View General Log"
+					
+					<P>
+					
+					Finally, there is <a href="js/libOO/files/Myna-sjs.html#Myna.printConsole" target="jsapi">Myna.printConsole()</a>. 
+					This function prints to standard output 
+					which is usually captured in your servlet container's log file. Finding this file can be tricky 
+					for some servlet containers, so Myna.log is usually the better choice. 
+					
+					
+					
+					<a name="env_var_top"></a>
+			<!-- Global Variables -->		
+					<h2>Here is a quick tour of Myna's Global Variables:</h2>
+					<ul>
+						<li><a href="#$req">$req</a></li>
+						<li><a href="#$res">$res</a></li>
+						<li><a href="#$session">$session</a></li>
+						<li><a href="#$cookie">$cookie</a></li>
+						<li><a href="#$server">$server</a></li>
+						<li><a href="#$profiler">$profiler</a></li>
+						<li><a href="#$application">$application</a></li>
+					</ul>
+					
+				<!-- req -->	
+					<a name="$req"><h3>$req</h3></a>
+					<a href="js/libOO/files/standard_objects/req-sjs.html" target="jsapi">$req</a> is a global 
+					object that contains information about the web request. It contains the 
+					properties "paramNames" and "data". The paramNames property is an array of the 
+					lower case parameter names passed to this request from either the url or a form post. The 
+					data property contains the values for the request parameters, keyed by fieldName.
+					From the <a href ="js/libOO/files/standard_objects/req-sjs.html#$req.data" target="jsapi">API documentation</a>:
+					<p>
+					<div class="quote">
+						Every parameter in the HttpServletRequest is copied as a 
+						lowercase property of the data object. 
+						<p>
+						If a parameter is passed multiple times, this property will be a 
+						comma-separated list of	each value of the parameter. In addition, 
+						a property called <i>parameter_name</i>$array is created. This property 
+						contains an array of all the values of that parameter name, in the 
+						order they were passed. This parameter is created even if only one 
+						value is passed
+						<p>
+						If a parameter value can be interpreted as JSON, a property 
+						called parameter_name$object is created by calling 
+						<a href="js/libOO/files/String-js.html#String.parseJson" target="jsapi">String.parseJson()</a> 
+						against the value. If there are multiple JSON valid objects, only the last will be stored in 
+						<i>parameter_name</i>$object, but a property called <i>parameter_name</i>$objectArray
+						is populated with every object created.
+						<p>
+						Every value in data.<i>parameter_name</i> and data.<i>parameter_name</i>$array 
+						is escaped via <a href="js/libOO/files/String-js.html#String.parseJson" target="jsapi">String.escapeHtml()</a>. 
+						This helps to protect 
+						against Cross-Site Scripting (XSS) and SQL injection. To access
+						un-altered parameter data, see 
+						<a href ="js/libOO/files/standard_objects/req-sjs.html#$req.rawData" target="jsapi">$req.data.rawData</a>
+						
+						<p>
+						File uploads produce an object in $req.data containing 
+						information about the upload that looks like this
+						<pre class="code sh_myna">
+							$req.data.<i>parameter_name</i> ={
+								diskItem: org.apache.commons.fileupload.disk.DiskFileItem,
+								stats:{
+									fieldName:String, name of field in form,
+									fileName:String, name of file on client side,
+									contentType:String, mime type,
+									isInMemory:boolean, true if file contents are in memory,
+									sizeInBytes:int, size in bytes,
+									diskLocation:String, the current location of the uploaded file
+								}
+							}
+						</pre>
+						multiple uploads with the same fieldname are stored in 
+						<i>parameter_name</i>$array.
+					</div>
+					
+					Here is an example of a page that posts a form to itself, and dumps the values in $req:
+					
+					<p>
+					<pre class="code sh_myna">
+						&lt;form method="post">
+						   First Name: &lt;input name="first_name">&lt;br>
+						   Favorite colors:&lt;br>
+						   &lt;input type="checkbox" name="favorite_colors" value="red">Red
+						   &lt;input type="checkbox" name="favorite_colors" value="orange">Orange
+						   &lt;input type="checkbox" name="favorite_colors" value="yellow">Yellow
+						   &lt;input type="checkbox" name="favorite_colors" value="green">Green
+						   &lt;input type="checkbox" name="favorite_colors" value="blue">Blue
+						   &lt;input type="checkbox" name="favorite_colors" value="indigo">Indigo
+						   &lt;input type="checkbox" name="favorite_colors" value="violet">Violet
+						   &lt;p>
+						   
+						   Some Json Code:&lt;br>
+						   &lt;textarea cols="60" rows="10" name="json">
+						   {
+							  "array":[
+								 "thing1",
+								 "thing2"],
+							  "number":12,
+							  "string":"some string",
+							  "sub_object":{
+								 "number":12,
+								 "string":"some string"
+							  }
+						   }
+						   &lt;/textarea>&lt;p>
+						   
+						   More Json Code with the same name:&lt;br>
+						   &lt;textarea cols="60" rows="3" name="json">
+						   {
+							  "phrase":"Dude, where's my car?"
+						   }
+						   &lt;/textarea>&lt;p>
+						   
+						   A Cross Site Scripting hack:&lt;br>
+						   &lt;textarea name="xss">';alert(String.fromCharCode(88,83,83))//\';
+						   alert(String.fromCharCode(88,83,83))//";alert(String.fromCharCode(88,83,83))//\";
+						   alert(String.fromCharCode(88,83,83))//-->&lt;/SCRIPT>">'>
+						   &lt;SCRIPT>alert(String.fromCharCode(88,83,83))&lt;/SCRIPT>&lt;/textarea>
+						   &lt;p>
+						   Display: &lt;select name="dump_data">
+							  &lt;option value="filtered">$req.data&lt;/option>
+							  &lt;option value="raw">$req.rawData&lt;/option>
+						   &lt;/select>&lt;p>
+						   &lt;button type="submit">submit&lt;/button>
+						&lt;/form>
+						
+						
+						&lt;@if $req.data.dump_data == "filtered">
+						   &lt;%=Myna.dump($req.data,"$req.data")%>
+						&lt;@elseif $req.data.dump_data == "raw">
+						   &lt;%=Myna.dump($req.rawData,"$req.rawData")%>
+						&lt;/@if>
+					</pre>
+					<br><a href="#env_var_top">Back to Global Variables</a>
+				<!-- res -->	
+					<a name="$res"><h3>$res</h3></a>
+					<a href="js/libOO/files/standard_objects/res-sjs.html" target="jsapi">$res</a> is the global 
+					response object. It is used to manipulate what text will be sent to the browser 
+					at the end of the request. Myna internally maintains a text buffer that represents
+					the output for the current request. 
+					<a href="js/libOO/files/standard_objects/res-sjs.html#$res.print" target="jsapi">$res.print()</a>,
+					<a href="js/libOO/files/Myna-sjs.html#Myna.print" target="jsapi">Myna.print()</a> and the ejs tag 
+					&lt;%=%> append to this 
+					buffer, 
+					<a href="js/libOO/files/standard_objects/res-sjs.html#$res.clear" target="jsapi">$res.clear()</a> deletes the buffer and 
+					returns it's content, and 
+					<a href="js/libOO/files/standard_objects/res-sjs.html#$res.getContent" target="jsapi">$res.getContent()</a> returns the 
+					buffer content without deleting it. These  
+					functions can be used to change the order of text in output, or even capture output
+					for storage in a file or database. 
+					
+					<p>
+					Here is an example of wrapping generated content: 
+					
+					<p>
+					<pre class="code sh_myna">
+					Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Suspendisse nec nisi 
+					nec nisi scelerisque vulputate. Nullam eu elit. Aenean eleifend. Donec ipsum metus, 
+					ultricies sed, tincidunt non, elementum in, lorem. Maecenas vitae massa eget nibh 
+					tempus mattis. Pellentesque dolor nulla, scelerisque a, gravida vitae, ullamcorper 
+					quis, ipsum. Vestibulum velit ligula, rhoncus id, varius nec, porttitor auctor, 
+					nisi. Praesent magna purus, pellentesque eu, ullamcorper eu, sodales in, odio. 
+					Fusce sollicitudin. Nam adipiscing metus id lacus.
+					
+					
+					&lt;% 
+					   if(!$req.data.width) $req.data.width=100
+					   var content = $res.clear();
+					%>
+					&lt;form method="post">
+					   set width to:&lt;input name="width" value="&lt;%=$req.data.width%>">
+					   &lt;button type="submit">resize&lt;/button>
+					&lt;/form>
+					&lt;table width="100%" height="1" cellpadding="10" cellspacing="0" border="0" >
+					   &lt;tr>
+						  &lt;td >
+							 
+						  &lt;/td>
+						  &lt;td bgcolor="linen" width="&lt;%=$req.data.width%>">
+							 &lt;%=content%>
+						  &lt;/td>
+						  &lt;td >
+							 
+						  &lt;/td>
+					   &lt;/tr>
+					&lt;/table>
+					
+					
+					</pre>
+					<br><a href="#env_var_top">Back to Global Variables</a>
+				<!-- session -->	
+					<a name="$session"><h3>$session</h3></a>
+					<a href="js/libOO/files/standard_objects/session-sjs.html" target="jsapi">$session</a> is 
+					the global session object. It represents temporary variables associated with a 
+					particular client. The get() and set() functions are used to store and retrieve 
+					values, and clear() is used to force the end of a session. Although useful for 
+					temporary values, be aware that sessions are not normally persisted and can be 
+					destroyed unexpectedly. This can be a problem if the session is used to store 
+					user information for the purposes of authentication.     
+					<br><a href="#env_var_top">Back to Global Variables</a>
+				<!-- cookie -->	
+					<a name="$cookie"><h3>$cookie</h3></a>
+					<a href="js/libOO/files/standard_objects/cookie-sjs.html" target="jsapi">$cookie</a> is for
+					reading and writing browser cookies. $cookie.data contains an array of 
+					<a href="http://java.sun.com/products/servlet/2.2/javadoc/javax/servlet/http/Cookie.html" 
+						target="javaapi">javax.servlet.http.Cookie</a>
+					objects. The set() and get() functions store and retrieve individual cookies. Note 
+					that you cannot send a cookie after content is sent to the browser. This is 
+					normally only an issue when using $res.flush() to send content before the end 
+					of the request
+					<br><a href="#env_var_top">Back to Global Variables</a>
+				<!-- server -->	
+					<a name="$server"><h3>$server</h3></a>
+					<a href="js/libOO/files/standard_objects/server-sjs.html" target="jsapi">$server</a> contains 
+					information about the server environment. Notable properties are:
+					<ul>
+						<li><b>globalScope</b> a reference to the top level scope. Setting 
+						properties on this object is the same as declaring global variables
+						
+						<li><b>servelet,request,response</b> references to the Java 
+						<a href="http://java.sun.com/products/servlet/2.2/javadoc/javax/servlet/http/HttpServlet.html" 
+							target="javapapi">servlet</a>, 
+						<a href="http://java.sun.com/products/servlet/2.2/javadoc/javax/servlet/http/HttpServletRequest.html" 
+							target="javapi">request</a>,
+						and <a href="http://java.sun.com/products/servlet/2.2/javadoc/javax/servlet/http/HttpServletResponse.html" 
+							target="javaapi">response</a> 
+						instances for this thread. 
+						
+						<li><b>currentDir,currentUrl,requestDir, requestUrl</b> the filesystem paths and 
+						url paths for the the currently executing script and the requested script.   
+					</ul>
+					<br><a href="#env_var_top">Back to Global Variables</a>
+				<!-- profiler -->	
+					<a name="$profiler"><h3>$profiler</h3></a>
+					<a href="js/libOO/files/standard_objects/profiler-sjs.html" target="jsapi">$profiler</a> is 
+					an instance of Myna.Profiler that is started at the beginning of 
+					the request.
+					
+					This is used in several places to record performance metrics, 
+					e.g. page includes, queries, and WebService calls.  You can 
+					also use this to time your own events.
+					
+					<p> Here is an example of using the global profiler:
+					
+					<pre class="code sh_myna">
+					<% $profiler.mark("before loop") %>
+					&lt;@loop array="new Array(10)" element="dummy">
+					   &lt;% $profiler.begin("creating a hash") %>
+					   &lt;%="thing's and stuff".toHash()%>&lt;br>
+					   &lt;% $profiler.end("creating a hash") %>
+					&lt;/@loop>
+					&lt;% 
+					   $profiler.mark("after loop")
+					   $profiler.calcAverages();
+					%>
+					&lt;%=$profiler.getSummaryHtml()%>
+					
+					</pre>
+					<br><a href="#env_var_top">Back to Global Variables</a>
+				<!-- application -->	
+					<a name="$application"><h3>$application</h3></a>
+					<a href="js/libOO/files/standard_objects/app-sjs.html" target="jsapi">$application</a> 
+					 stores the application definition created from an application.sjs file in the current 
+					or any parent directory. 
+					<p>
+					Applications can define app specific properties, and manipulate the request workflow 
+					by layering functions before and after a page request.
+					<p>
+					See the  
+					<a href="js/libOO/files/standard_objects/app-sjs.html#$application.Application_Overview" 
+						target="jsapi">Application Overview</a> for more details on how applications are defined.
+					
+					<br><a href="#env_var_top">Back to Global Variables</a>
+<hr><a href="#top">top</a>
+				</div>
+			</div>
+	</div>
+
+
+	
+</body>
 </html>
+
+
+
+<!-- <META HTTP-EQUIV="refresh" content="0; url=myna/administrator/index.sjs"> -->
+
+

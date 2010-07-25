@@ -230,6 +230,7 @@
 		
 		See:
 			*	<Application Template>
+			
 		See also:
 			*	<Myna.loadAppProperties>
 */
@@ -819,7 +820,7 @@ var $application={
 				$req.data.applyTo($req.rawData)
 				$req.paramNames.forEach(function(name){
 					$req.data[name] = $req.data[name].escapeHtml();
-					if ($req.data[name+"$array"].length=1) {
+					if ($req.data[name+"$array"].length==1) {
 						$req.data[name+"$array"] = [
 							$req.data[name]
 						]

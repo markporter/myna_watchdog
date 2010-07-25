@@ -1396,11 +1396,10 @@
 	String.prototype.trimIndent=function(){
 		var string = this;
 		//initial white space
-		var iws = string.match(/^\n([ \t]+)/)
+		var iws = string.replace(/^\n+/,"").match(/^([ \t]+)/);
 		if (!iws) return string;
-		iws = new RegExp("\n" +iws[1],"g");
-	
-		return string.replace(iws,"\n");
+		iws = new RegExp("^(\n?)" +iws[1],"mg");
+		return string.replace(iws,"$1");
 	};
 /* Function: unEscapeHtml 
 	reverses the replacements in <escapeHtml>  

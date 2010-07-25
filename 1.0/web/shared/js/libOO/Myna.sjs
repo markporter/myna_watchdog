@@ -1298,6 +1298,7 @@ if (!Myna) var Myna={}
 		app_name	-	*Optional, default $application.appName* A short text 
 						value representing the application that generated the 
 						log.  This value is forced lower case
+						
 	Detail:
 		This function logs to the myna_log_general table in the myna_log 
 		datasource. If you run multiple instances of Myna, it may be helpful to 
@@ -1582,7 +1583,7 @@ if (!Myna) var Myna={}
 		return st;
 	}
 /* Function: print 
-	This is an alias for <this.print>
+	This is an alias for <$res.print>
 	 
 	Parameters: 
 		string -  string to append to the output buffer
@@ -1596,7 +1597,7 @@ if (!Myna) var Myna={}
 		print(String(string));
 	}
 /* Function: printDump
-	shortcut for this.print(Myna.dump())
+	shortcut for $res.print(Myna.dump())
 	 
 	Parameters: 
 		obj			-	Object to dump

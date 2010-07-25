@@ -96,7 +96,6 @@ File: Number  (no auto-title, Number.js)
 File: Object  (Object.js)
 File: ObjectLib  (ObjectLib.js)
 File: String  (String.js)
-File: String  (String.sjs)
 
 Group: Index  {
 

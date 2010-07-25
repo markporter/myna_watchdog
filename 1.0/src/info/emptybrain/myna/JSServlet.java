@@ -110,7 +110,7 @@ public class JSServlet extends HttpServlet {
 				String originalURI = req.getRequestURI();
 				//extract URL-MAP
 				if (originalURI.indexOf("URL-MAP") != -1){
-						String nomap = originalURI.substring(originalURI.indexOf("URL-MAP/")+7);
+						String nomap = originalURI.substring(originalURI.indexOf("URL-MAP/")+7);	
 						String realPath = thread.rootDir + nomap.substring(thread.rootUrl.length());
 						if (new File(realPath).exists()){
 							this.getServletContext().getRequestDispatcher(nomap).forward(req,res);
@@ -141,10 +141,21 @@ public class JSServlet extends HttpServlet {
 						/* res.getWriter().print(context + "<br>" + parts[0].toString() +"<br>" + scriptPath + "<br>" + url_map.toString());
 						return; */
 				
-				} else {
+				} else if (servletPath.length() >0){
 					scriptPath = thread.rootDir + servletPath.substring(1);
+				} else {
+					scriptPath = thread.rootDir+"/";
 				}
 				File file = new File(new URI(scriptPath));
+			 	if (
+					file.exists() 
+					&& file.isDirectory() 
+					&& !((StringBuffer) thread.environment.get("requestURL")).toString().endsWith("/")
+				){
+					StringBuffer redirectUrl =(StringBuffer) thread.environment.get("requestURL"); 
+					res.sendRedirect(redirectUrl.append("/").toString());
+					return;
+				}
 				if (
 					file.exists()
 					&& !file.isDirectory()
