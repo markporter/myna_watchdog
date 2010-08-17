@@ -140,7 +140,7 @@ if (!Myna) var Myna={}
 			if (!dest.exists() || dest.isDirectory()){
 				FileUtils.copyDirectory(source,dest);
 			} else {
-				throw {message:"Cannot copy a directory to a file"};	
+				throw new Error("Cannot copy a directory to a file");	
 			}
 		} else if (source.isFile()){
 			/* now let's see what the destination is */
@@ -149,10 +149,10 @@ if (!Myna) var Myna={}
 			} else if (dest.isDirectory()){
 				FileUtils.copyFileToDirectory(source,dest);
 			} else {
-				throw {message:"Cannot copy a directory to a file"};	
+				throw new Error("Cannot copy a directory to a file");	
 			}
 		} else {
-			throw {message:"This File must represent a file or directory to copy"};	
+			throw new Error("This File ("+this.toString()+") must represent a file or directory to copy");	
 		}
 		
 	}

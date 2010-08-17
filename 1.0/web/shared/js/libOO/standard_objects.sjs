@@ -12,10 +12,4 @@ if ($server.requestScriptName == "__ERROR_404__.sjs" && $server.request){
 	path =String($server.request.attributes.get('javax.servlet.forward.servlet_path')).listBefore("/")
 	path = new Myna.File(path).toString(); 
 }  */
-try {
-	$application._mergeApplications();
-	$application._initScopes();
-	$application._onRequestStart();
-} catch (e){
-	$application.onError(e);
-}
+
