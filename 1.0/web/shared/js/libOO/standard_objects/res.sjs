@@ -70,15 +70,19 @@ var $res = {
 		
 	*/
 	flush:function (paddingSize){
-		if (!$server.response) return "";
-		if (paddingSize==undefined) paddingSize =250; 
-		var padding ="";
-		
-		new Array(paddingSize).forEach(function(){padding+=" "});
-		$server.response.getWriter().print(padding);
-		$server.response.getWriter().print($res.getContent());
-		$server.response.flushBuffer();
-		return $res.clear();
+		if ($server.isCommandline){
+			java.lang.System.out.print($res.getContent());
+			return $res.clear();
+		} else if ($server.response){
+			if (paddingSize==undefined) paddingSize =250; 
+			var padding ="";
+			
+			new Array(paddingSize).forEach(function(){padding+=" "});
+			$server.response.getWriter().print(padding);
+			$server.response.getWriter().print($res.getContent());
+			$server.response.flushBuffer();
+			return $res.clear();	
+		} else return ""
 	},
 /* Function: requestBasicAuth
 		returns a "Basic" http auth request 

@@ -133,7 +133,88 @@ try{
 		} else if ($req.scriptFile.exists() && $req.scriptFile.fileName.match(/\.(sjs|ejs|ws)$/)){
 			//request script
 			
-			Myna.includeOnce($server.requestDir + $server.requestScriptName)
+			// try to resolve mapping
+			
+			if (
+				$server_gateway.environment.get("isCommandline")
+				|| (
+					$req.scriptFile.exists() 
+					&& $req.scriptFile.fileName.match(/\.(sjs|ejs|ws)$/)
+				)
+			){
+				Myna.includeOnce($server.requestDir + $server.requestScriptName)
+			} else {
+				//process REST params
+				if (!$server_gateway.requestScriptName 
+					|| !new Myna.File($server_gateway.requestDir+"/"+$server_gateway.requestScriptName).exists()
+				){
+					var params=[]
+					var dirStack = $server.requestDir.after($server.rootDir.length).split("/")
+						.filter(function(e){return e.length})
+					//Myna.abort("dirstack",$server)
+					var curFile;
+					var dir,name;
+					var found = false;
+					if ($server_gateway.requestScriptName) dirStack.push($server_gateway.requestScriptName);
+					var rootIndex = !dirStack.length
+					while (dirStack.length || rootIndex){
+						if (!$server_gateway.requestScriptName){
+							curFile=new Myna.File($server.rootDir +dirStack.join("/") + "/index.ejs");
+							if (curFile.exists()) {
+								dir=dirStack.join("/")
+								name= "index.ejs";
+								found=true;
+								break;
+							} else {
+								curFile=new Myna.File($server.rootDir +dirStack.join("/") + "/index.sjs");
+								if (curFile.exists()) {
+									dir=dirStack.join("/")
+									name= "index.sjs";
+									found=true;
+									break;
+								} else {
+									curFile=new Myna.File($server.rootDir +dirStack.join("/") + "/index.html");
+									if (curFile.exists()) {
+										$res.serveFile(curFile);
+										Myna.abort();
+									}	
+								}
+							}
+						}
+						curFile=new Myna.File($server.rootDir+dirStack.join("/"));
+						if (curFile.exists() && !curFile.isDirectory()) {
+							name= dirStack.pop();
+							dir=dirStack.join("/")
+							
+							found=true;
+							break;
+						}
+						params.unshift(dirStack.pop());
+					}
+					if(found){
+						//reset pathing:
+						$server_gateway.currentDir = $server.rootDir+dir+"/";
+						$server_gateway.requestDir = $server_gateway.currentDir;
+						$server_gateway.scriptName = name
+						$server_gateway.requestScriptName = $server_gateway.scriptName;
+						var serverUrl = $server.serverUrl;
+						$server_gateway.environment.put("requestURI",$server.rootUrl + dir+"/"+name);
+						$server_gateway.environment.put("requestURL",serverUrl+$server.rootUrl + dir+"/"+name);
+						$req.$restParams = params;
+						Myna.includeOnce($server.rootDir +dir + "/"+name)
+					} else if ($server.scriptName == "" 
+							&& parseInt($server.properties.enable_directory_listings)
+							){
+						Myna.include("/myna/dir_listing.sjs")
+					} else {
+						$application._onError404();
+					}
+					
+				} else {
+					$res.serveFile($req.scriptFile,{headers:$req.headers});
+					Myna.abort();
+				}
+			}
 		}
 		/* dump translated code to /WEB-INF/parser_debug */
 		if (Myna.getGeneralProperties().debug_parser_output == "1"){

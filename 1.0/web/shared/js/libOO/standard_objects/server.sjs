@@ -17,7 +17,10 @@ var $server={
 	true if this is an independent thread with no access to session or servlet 
 	*/
 	get isThread(){return !!$server_gateway.environment.get("threadFunctionSource") },
-
+/* property: isCommandline
+	true if this code is running from the commandline 
+	*/
+	get isCommandline(){return $server_gateway.environment.get("isCommandline") },
 /* property: threadFunctionSource
 	the source of the function that the current subthread is executing, or null 
 	if this is not a subthread 

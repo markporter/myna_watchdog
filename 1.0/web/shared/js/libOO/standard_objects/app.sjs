@@ -849,6 +849,64 @@ var $application={
 				}
 			
 			
+		} else if ($server.isCommandline){
+			$req.data ={
+				arguments:[]
+			}
+			var args = $server_gateway.environment.get("commandlineArguments")
+			if (args && args.length){
+				var inString = false;
+				var stringChar ="";
+				var curval=[];
+				var curvar;
+				
+				for (var i=1;i< args.length;++i){
+					if (inString){
+						if (new RegExp(stringChar + "$").test(args[i])){
+							curval.push(args[i].before(1));
+							curval = curval.join(" ");
+							if (curvar){
+								$req.data[curvar] =curval;
+							} else {
+								$req.data.arguments.push(curval);
+							}
+							inString=false;
+							curvar=false;
+							curval=[];
+						} else {
+							curval.push(args[i])
+						}
+					} else {
+						if (args[i].charAt(0) == "-"){
+							var name = args[i].match(/^-+(.*)$/)[1];
+							if (args[i+1].charAt(0) == "-"){
+								$req.data[name] = true;
+								
+							} else {
+								if (/^['"]/.test(args[i+1])){
+									inString=true;
+									stringChar=args[i+1].charAt(0);
+									curval =[args[i+1].after(1)];
+									curvar=name;
+								} else {
+									$req.data[name] = args[i+1];
+									++i;
+								}
+							}
+						} else {
+							if (/^['"]/.test(args[i])){
+								inString=true;
+								stringChar=args[i].charAt(0)
+								curval=[args[i].after(1)];
+								curvar=false;
+							} else {
+								$req.data.arguments.push(args[i]);
+							}
+						}
+					}
+				}
+			}
+			$req.rawData = $req.data
 		}
 		$profiler.end("Process Scopes");
 	},
@@ -1030,6 +1088,7 @@ var $application={
 	*/
 	onRequestEnd:function(){},
 	_onError:function(exception){
+		var line,file,detail;
 		var 
 			isString=(typeof exception === "string"),
 			formattedError,
@@ -1081,7 +1140,20 @@ var $application={
 		var originalCurrentDir =$server_gateway.currentDir
 		$server_gateway.currentDir=$application.directory
 		if ((!this.onError || !this.onError(exception)) && formattedError){
-			$res.print(formattedError)
+			if ($server_gateway.environment.get("isCommandline")){
+				var error = Myna.normalizeError(exception);
+				Myna.printConsole("====== ERROR: " + error.message + " =====",<ejs>
+					File: <%=error.file%>
+					
+					Line: <%=error.line%>
+					
+					Stack:<@loop array="error.jsStack" element="line">
+					<%=line%>
+					</@loop>
+				</ejs>)	
+			} else {
+				$res.print(formattedError)
+			}
 		}
 		$server_gateway.currentDir=originalCurrentDir;
 	},

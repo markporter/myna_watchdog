@@ -78,7 +78,7 @@ public class JSServlet extends HttpServlet {
 	* @param  res Servlet response object
 	*/
 	public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
-    try{
+		try{
 			MynaThread thread = new MynaThread();
 			thread.environment.put("request",req);
 			thread.environment.put("response",res);

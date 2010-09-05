@@ -224,7 +224,7 @@ public class MynaThread {
           if (mcx.mynaThread != null)
           mcx.mynaThread.log("WARNING",message,"File: " + sourceURI + "<br>Line: " + line + "<br> column: " + lineOffset +"<br>Context:<br><br>" +lineText+"<hr>");
       } catch (Exception e){
-          System.out.println("WARNING"+":"+message+":"+"File: " + sourceURI + "<br>Line: " + line + "<br> column: " + lineOffset +"<br>Contaxt:<br><br>" +lineText); 
+          System.err.println("WARNING"+":"+message+":"+"File: " + sourceURI + "<br>Line: " + line + "<br> column: " + lineOffset +"<br>Contaxt:<br><br>" +lineText); 
       }
 				//throw runtimeError(message, sourceURI, line, lineText, lineOffset);
 			} else {
@@ -427,7 +427,6 @@ public class MynaThread {
 		
 		int lastSlash = scriptPath.lastIndexOf("/");
 		this.currentDir = new URI(scriptPath.substring(0,lastSlash+1)).toString();
-		//System.out.println(this.currentDir);
 		this.requestDir = this.currentDir;
 		
 		this.scriptName = scriptPath.substring(lastSlash+1);
@@ -666,7 +665,6 @@ public class MynaThread {
 				}
 			}
 		}
-		//System.out.println(Thread.currentThread().getId()+":"+this.hashCode());
 		new CustomContextFactory().call(new LocalContextAction(parentThread,this,f,args));  
 	}
 	/**
@@ -835,7 +833,6 @@ public class MynaThread {
 				compiled = cx.compileString(script, scriptPath, 1, null);
 				/*if (optimizationLevel > -1){*/
 					cache.put(key,compiled);
-					//System.out.println(scriptPath.toString() +" =  " + compiled);
 				/*}*/
 			} 
 			//Object server_gateway = Context.javaToJS(this,scope);
@@ -1158,9 +1155,9 @@ public class MynaThread {
 			}
 			
 		}catch (Exception e){
-			System.out.println("Error writing log:" + e.toString() );
+			System.err.println("Error writing log:" + e.toString() );
 			
-			System.out.println(eventTs 
+			System.err.println(eventTs 
 				+ ": " + instanceId 
 				+ ": " + appName 
 				+ ": " + label 
@@ -1338,9 +1335,7 @@ public class MynaThread {
 
 		translatedSources.put(scriptPath,translated);		
 		//log("TRANSLATED",scriptPath,translated);
-		//java.lang.System.out.println(scriptPath);
 		
-		//java.lang.System.out.println(translated);
 		return translated;
 	}
 		/**
@@ -1512,11 +1507,9 @@ public class MynaThread {
 					currentThread.environment.put("threadParent", this.parentThread);
 					currentThread.threadChain = new Vector(parentThread.threadChain);
 					currentThread.threadChain.add(f);
-					//java.lang.System.out.println("adding: "+ f.hashCode());
 					currentThread.callFunction(parentThread,f,args);
 					
 					String threadId = java.lang.Thread.currentThread().getName();
-					//java.lang.System.out.println("run: "+ threadId);
 					//parentThread.environment.put("subthread_" + threadId, currentThread);
 					
 					
@@ -1524,7 +1517,7 @@ public class MynaThread {
 					try {
 						handleError(e);
 					} catch (Exception e2){
-						java.lang.System.out.println(e2);	
+						java.lang.System.err.println(e2);	
 					}
 				}
 				

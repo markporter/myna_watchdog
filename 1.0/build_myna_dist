@@ -11,9 +11,9 @@ if [ ! -e  build.dev ]; then
 	echo "Moving dev build directory..."
 	mv build build.dev
 fi
-ant clean
-ant compile
-echo "copying ext files..."
+#ant clean
+#ant compile
+#echo "copying ext files..."
 
 #rsync -a ext_latest/ build/shared/js/ext_latest/
 #cp xtheme-slate.css build/shared/js/ext_latest/resources/css/

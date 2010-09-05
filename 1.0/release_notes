@@ -140,6 +140,12 @@ Highlights
      include a ClusterThread class, similar to Myna.Thread that is 
      automatically distributed across the Myna cluster
 
+
+* **New start page and document home**
+   This version includes a new start page that points to a new 
+   document home. This page contains links to the administrator and 
+   and API docs, and includes a "Getting Started" tutorial for 
+   working with Myna
 Other Features
 ---------------
 * Added Function.prototype.bind

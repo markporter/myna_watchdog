@@ -551,6 +551,117 @@ if (!Myna) var Myna={}
 		].join('\n')
 		return result;
 	}
+/* Function: dumpText 
+	returns ASCII tree representing the supplied object
+	 
+	Parameters: 
+		obj			-	Object to dump
+		label		-	*Optional* 
+						Caption for the dump table
+		maxDepth	-	*Optional, default=4* 
+						Maximum depth of recursion. This is	to protect against 
+						circular references and to speed performance. 
+	
+	*/	
+	Myna.dumpText=function Myna_dump(obj,label,maxDepth){
+		var result=[];
+		if (maxDepth == undefined) maxDepth=4;
+		var itemToken = "+-";
+		var lastItemToken = "\\-";
+		var levelToken = "| ";
+		var firstLevelToken = "  ";
+
+		var d=function(obj,maxDepth,padding){
+			var my = arguments.callee,		//referenence to this function for the purpose of accessing static variables
+				result,						// function local result object to hold the result of this call
+				keys,						// stores result of Myna.getKeys()
+				type,						// stores classname of object
+				x,							// loop counter
+				row,
+				col
+				
+			
+			
+			if (!maxDepth) return "[ max recursion ]";
+			 
+			if (!my["max_r"]) my.max_r=1;
+			
+			result=[];
+			try{
+				switch (ObjectLib.typeOf(obj)){
+					case "array":
+						result.push("[ Array ]")
+						obj.forEach(function(value,index){
+							
+							if (index +1 == obj.length){
+								result.push(padding + lastItemToken +"["+(index) +"] " + d(value,maxDepth-1,padding+firstLevelToken))	
+							} else {
+								result.push(padding + itemToken +"[" + (index) + "] " + d(value,maxDepth-1,padding+levelToken))
+							}
+							
+						})
+					break;
+					case "null":
+						result.push('NULL')
+					break;
+					case "date":
+						result.push( obj.toString());
+					break;
+					case "object":
+						keys = ObjectLib.getKeys(obj,true);
+						if (keys.length){
+							if (obj["getClass"]){
+								type =obj.getClass.toString(); 
+							} else {
+								 type ="Object"
+							}
+							result.push("[ " +type+" ]")
+							keys.forEach(function(key,index){
+								if (index +1 == keys.length){
+									result.push(padding + lastItemToken +"["+(key) +"] " + d(obj[key],maxDepth-1,padding+firstLevelToken))	
+								} else {
+									result.push(padding + itemToken +"[" + (key) + "] " + d(obj[key],maxDepth-1,padding+levelToken))
+								}
+							})
+						} else if (String(obj) == "[object Object]"){
+							result.push("[No Data Properties]");
+						} else {
+							result.push(String(obj));	
+						}
+					break;
+					
+					case "class":
+						result.push( obj.getClass() + ' = ' + obj.toString());
+							
+					break;
+					
+					
+					case "xml":
+						result .push("[XML Object] " + d(Myna.xmlToObject(obj),maxDepth,padding));
+					break;
+					
+					case "number":
+					case "string":
+					case "boolean":
+						result.push(String(obj));
+					break;
+					case "function":
+						result.push("[object Function]");
+					break;
+					default:
+						result.push( "[ " + typeof obj+" ]") 
+					break;
+					
+				}
+			} catch(e){ result.push(e.toJson())}
+				
+			return result.join("\n");
+		}
+		
+		if (label) result.push(label);
+		result.push(d(obj,maxDepth,"  "));		
+		return result.join("\n");
+	}
 /* Function: executeShell 
 	Executes a shell command/script
 	 
@@ -649,6 +760,7 @@ if (!Myna) var Myna={}
 		return result;
 		
 	}
+
 
 /* Function: formatError 
 	returns an html formatted string representing the supplied exception. 
@@ -936,13 +1048,17 @@ if (!Myna) var Myna={}
 	*/
 	Myna.include=function Myna_include(path,scope){
 		var file =new Myna.File(path); 
+		var isCommandline = $server_gateway.environment.get("isCommandline")
 		if (typeof $profiler !== "undefined") $profiler.begin("Include " + path);
 		var content =file.readString();
+		if (isCommandline) {
+			content = content.replace(/^#/,"//#");	
+		}
 		
 		if (/\.ejs$/.test(path)){
 			content = "<"+"%try{%" +">" + content 
 				+"<" +"%\n} catch(e) {if (__exception__ && !e.rhinoException) e.rhinoException=__exception__;if($application && $application._onError) {$application._onError(e)} else{throw(e)}}%" +">";
-		} else if (/\.s?js$/.test(path) || scope){
+		} else if (/\.s?js$/.test(path) || scope || isCommandline){
 			content = "try{" + content 
 				+"\n} catch(e) {if (__exception__ && !e.rhinoException) e.rhinoException=__exception__; if($application && $application._onError) {$application._onError(e)} else{throw(e)}}";
 		} else {
@@ -1510,6 +1626,60 @@ if (!Myna) var Myna={}
 		}
 		return result;
 	}
+/* Function: normalizeError 
+	analyzes an error object returns a "standard" error.  
+	 
+	
+	Parameters: 
+		e - a caught exception  
+ 
+	"standard" error properties:
+		message			-	Short error message
+		file				-	File containing the error
+		line				-	Line number of the error
+		javaStack		-	return from <parseJavaStack>
+		jsStack			-	return from <parseJsStack>
+		
+	*/
+	Myna.normalizeError=function Myna_normalizeError(e){
+		var result={
+			message:"",
+			file:"",
+			line:"",
+			javaStack:[],
+			jsStack:[]
+		}
+		try{
+			if (e.sourceName){
+				e = {rhinoException:e}	
+			}
+			
+			
+			if (e.rhinoException){
+				result.line = e.rhinoException.lineNumber();
+				result.file = e.rhinoException.sourceName();
+				result.message = e.rhinoException.details();
+			}
+			
+			e.rootIndex=0;
+			if (e.rhinoException && !$server.isThread){
+				var stack = result.jsStack =Myna.parseJsStack(e);
+				for (var x=0;x < stack.length;++x){
+					/* $server_gateway.currentDir + $server_gateway.scriptName */
+					if (String(stack[x]).indexOf("/shared/js/") ==-1 ){
+						var parts = stack[x].match(/at (.*?):(\d+)/);
+						result.file = parts[1];
+						result.line = parts[2]; 
+						e.rootIndex=x+1;
+						break;
+					} 
+				}	
+			} 
+			result.javaStack = Myna.parseJavaStack(e);
+		} finally {
+			return result;
+		}
+	}
 /* Function: parseJavaStack 
 	returns an array of strings representing each line of the Java stack 
 	in the supplied error object
@@ -1612,7 +1782,11 @@ if (!Myna) var Myna={}
 	 
 	*/
 	Myna.printDump=function Myna_printDump(obj,label,maxDepth){
-		this.print(Myna.dump(obj,label,maxDepth));
+		if ($server.isCommandline){
+			this.println(Myna.dumpText(obj,label,maxDepth));
+		} else {
+			this.print(Myna.dump(obj,label,maxDepth));
+		}
 	}
 /* Function: println
 	shortcut for this.print(<text> + "<br>")
@@ -1626,7 +1800,11 @@ if (!Myna) var Myna={}
 	 
 	*/
 	Myna.println=function Myna_println(text){
-		this.print(String(text) + "<br>\n");
+		if ($server.isCommandline){
+			Myna.print(String(text) + "\n");
+		}else {
+			Myna.print(String(text) + "<br>\n");
+		}
 	}
 /* Function: printConsole
 	prints text to java.lang.System.out
