@@ -861,6 +861,7 @@ var $application={
 				var curvar;
 				
 				for (var i=1;i< args.length;++i){
+					if (!args[i].length) continue;
 					if (inString){
 						if (new RegExp(stringChar + "$").test(args[i])){
 							curval.push(args[i].before(1));

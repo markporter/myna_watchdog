@@ -177,7 +177,7 @@ public class MynaEjsParser {
 				c2 = jsString.substring(++pointer,pointer+1);
 				/* end sjs */
 				if (c2.equals(">")){
-					if (pointer+2 < length && jsString.substring(pointer+1,pointer+2).equals("\n")){
+					if (pointer+1 < length && jsString.substring(pointer,pointer+1).equals("\n")){
 						pointer++;
 						text.append("\n");
 						

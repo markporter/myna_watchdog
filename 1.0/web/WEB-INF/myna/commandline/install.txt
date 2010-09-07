@@ -1,0 +1,78 @@
+Myna Commandline Installation and Usage
+================================================================================
+
+The Myna commandline invoker consists of an executable BASH script file for UNIX 
+("myna") or a command file for Windows ("myna.cmd"). This file is (re)created in
+MynaPath /WEB-INF/myna/commandline every time the Myna server is launched. If  
+the Myna installation is later moved, it will need to be launched at least once 
+to re-create the invoker file. 
+
+
+INSTALLATION
+================================================================================
+
+To install the Myna commandline, simply copy the invoker to a system path, or 
+modify the system path to include this location. 
+
+Common system folders:
+
+   Windows:
+   C:\WINDOWS
+   
+   UNIX:
+   /usr/local/bin
+
+Note:
+If there are multiple Myna installations on the system, then the invoker should 
+be renamed to indicate which installation it will use. Examples: myna_system, 
+myna_prod.cmd 
+
+USAGE
+================================================================================
+myna path [arg1 arg2 argN...]
+
+Call the Myna invoker with a file to execute, and any parameters to pass to that 
+file. The file does not ned to be inside the Myna installation, and does not 
+need a file extension.
+
+Example parameters:
+
+   -w
+   --error-level WARN
+   --long-arg "This is a long argument"
+   source.txt
+
+Parameters will be parsed and placed into $req.data. parameters that start with 
+"-" will be treated as named parameters and the next argument will be 
+considered the value of the parameter, unless it also begins with "-". Empty 
+named parameters have a value of true. Any arguments that are not part of a 
+named parameter are added to $req.data.arguments in the order they appear
+
+Here is an example script "dumpArgs":
+
+   Myna.print(Myna.dumpText($req.data));
+
+...called via: 
+   myna dumpArgs source.txt -w -error-level WARN --long-arg "This is a long argument" dest.txt
+
+Output:
+
+[ Object ]
+  +-[arguments] [ Array ]
+  | +-[0] source.txt
+  | \-[1] dest.txt
+  +-[error-level] WARN
+  +-[long-arg] This is a long argument
+  \-[w] true
+  
+
+UNIX Systems:
+
+On UNIX systems you can create an executable my script by including the 
+appropriate header, like so:
+
+   #!/usr/local/bin/myna
+   
+   Myna.print(Myna.dumpText($req.data));
+  
+  
