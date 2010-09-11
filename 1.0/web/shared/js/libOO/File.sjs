@@ -366,7 +366,7 @@ if (!Myna) var Myna={}
 	*/
 	Myna.File.prototype.getLastModified = function(){
 		var lm = this.javaFile.lastModified(); 
-		return lm?new Date(lm):null
+		return lm?new Date(lm):Date.parseDate("01/01/1900 00:00:00","m/d/Y H:i:s")
 	}
    
 /* Function: getLineIterator

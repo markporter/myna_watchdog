@@ -1,3 +1,32 @@
+Release Name: 1.0_beta_6-1
+Notes:
+
+Includes bug fixes and the experimental commandline feature
+
+New Feature: Commandline Mode
+--------------------------------
+
+The Myna commandline invoker consists of an executable BASH script file for UNIX 
+("myna") or a command file for Windows ("myna.cmd"). This file is (re)created in
+MynaPath /WEB-INF/myna/commandline every time the Myna server is launched. If  
+the Myna installation is later moved, it will need to be launched at least once 
+to re-create the invoker file. 
+
+See the [docs][commandline-docs] for more info.
+
+Other Changes:
+
+* Updated h2 DB engine to 1.2.142
+* Added Myna.dumpText to create an ASCII tree instead of HTML
+* Fixed formating bug in EJS eval blocks
+* fixed infinite loop bug when listing the webroot
+* "_index" as the last item in a URL will causes a file listing to be displayed even if there is a valid index file. 
+* added "null" date of 01/01/1900 as lastMofidied for files that do not have a lastModified time
+
+
+[commandline-docs]:http://www.mynajs.org/shared/docs/js/libOO/files/install-txt.html
+--------------------------------------------------------------------------------
+
 Release Name: 1.0_beta_6
 Notes:
 
