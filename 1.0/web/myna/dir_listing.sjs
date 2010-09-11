@@ -1,7 +1,7 @@
 var thisDir =new Myna.File($server.requestDir)
 if (
 	thisDir.exists() 
-	&& $server.scriptName == "" 
+	&& ($server.scriptName == "" || $server.scriptName == "_index")  
 	&& $server.properties.instance_purpose.toLowerCase() == "dev"
 	&& !/web-inf/i.test(thisDir.toString())
 ){

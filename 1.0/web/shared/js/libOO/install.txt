@@ -44,7 +44,7 @@ Example parameters:
    --long-arg "This is a long argument"
    source.txt
 
-Parameters will be parsed and placed into $req.data. parameters that start with 
+Parameters will be parsed and placed into $req.data. Parameters that start with 
 "-" will be treated as named parameters and the next argument will be 
 considered the value of the parameter, unless it also begins with "-". Empty 
 named parameters have a value of true. Any arguments that are not part of a 
@@ -70,7 +70,7 @@ Output:
 
 UNIX Systems:
 
-On UNIX systems you can create an executable my script by including the 
+On UNIX systems you can create an executable Myna script by including the 
 appropriate header, like so:
 (code)
    #!/usr/local/bin/myna

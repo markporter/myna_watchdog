@@ -23,41 +23,47 @@ try{
 			var curFile;
 			var dir,name;
 			var found = false;
-			if ($server_gateway.requestScriptName) dirStack.push($server_gateway.requestScriptName);
-			var rootIndex = !dirStack.length
-			while (dirStack.length || rootIndex){
-				if (!$server_gateway.requestScriptName){
-					curFile=new Myna.File($server.rootDir +dirStack.join("/") + "/index.ejs");
-					if (curFile.exists()) {
-						dir=dirStack.join("/")
-						name= "index.ejs";
-						found=true;
-						break;
-					} else {
-						curFile=new Myna.File($server.rootDir +dirStack.join("/") + "/index.sjs");
+			
+			if ($server_gateway.requestScriptName != "_index"){
+				if ($server_gateway.requestScriptName) dirStack.push($server_gateway.requestScriptName);
+				var rootIndex = !dirStack.length
+				while (dirStack.length || rootIndex){
+					$res.flush()
+					if (!$server_gateway.requestScriptName){
+						curFile=new Myna.File($server.rootDir +dirStack.join("/") + "/index.ejs");
 						if (curFile.exists()) {
 							dir=dirStack.join("/")
-							name= "index.sjs";
+							name= "index.ejs";
 							found=true;
 							break;
 						} else {
-							curFile=new Myna.File($server.rootDir +dirStack.join("/") + "/index.html");
+							curFile=new Myna.File($server.rootDir +dirStack.join("/") + "/index.sjs");
 							if (curFile.exists()) {
-								$res.serveFile(curFile);
-								Myna.abort();
-							}	
+								dir=dirStack.join("/")
+								name= "index.sjs";
+								found=true;
+								break;
+							} else {
+								curFile=new Myna.File($server.rootDir +dirStack.join("/") + "/index.html");
+								if (curFile.exists()) {
+									$res.serveFile(curFile);
+									Myna.abort();
+								}	
+							}
 						}
 					}
-				}
-				curFile=new Myna.File($server.rootDir+dirStack.join("/"));
-				if (curFile.exists() && !curFile.isDirectory()) {
-					name= dirStack.pop();
-					dir=dirStack.join("/")
+					curFile=new Myna.File($server.rootDir+dirStack.join("/"));
+					if (curFile.exists() && !curFile.isDirectory()) {
+						name= dirStack.pop();
+						dir=dirStack.join("/")
+						
+						found=true;
+						break;
+					}
+					params.unshift(dirStack.pop());
 					
-					found=true;
-					break;
+					if (rootIndex) break;
 				}
-				params.unshift(dirStack.pop());
 			}
 			if(found){
 				
@@ -73,9 +79,11 @@ try{
 				//Myna.printDump("got here")
 				//Myna.includeOnce($server.rootDir +dir + "/"+name)
 				$req.scriptFile =new Myna.File($server.requestDir + $server.requestScriptName);
-			} else if ($server.scriptName == "" 
-					&& parseInt($server.properties.enable_directory_listings)
-					){
+			} else if (
+				($server.scriptName == "" || $server.scriptName == "_index")   
+				&& parseInt($server.properties.enable_directory_listings)
+			){
+				$application._initScopes();
 				Myna.include("/myna/dir_listing.sjs")
 			} else {
 				$application._onError404();
