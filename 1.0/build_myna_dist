@@ -7,16 +7,14 @@ echo "shutting down dev myna"
 ./dev_server stop
 echo "building JS docs..."
 sh update_docs
-if [ ! -e  build.dev ]; then
-	echo "Moving dev build directory..."
-	mv build build.dev
-fi
-#ant clean
-#ant compile
-#echo "copying ext files..."
 
-#rsync -a ext_latest/ build/shared/js/ext_latest/
-#cp xtheme-slate.css build/shared/js/ext_latest/resources/css/
+if [ -e  build.dev ]; then
+	mv build.dev build.dev.`date  +%m-%d-%Y.%H.%M.%S`
+fi
+
+echo "Moving dev build directory..."
+mv build build.dev
+
 ant dist
 if [ -e  build.dev ]; then
 	echo "restoring dev build directory..."

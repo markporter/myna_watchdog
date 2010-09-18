@@ -159,7 +159,7 @@ if (!Myna) var Myna={}
 				rsColumns.close();
 				var result={}
 				columns.data.forEach(function(row,index){
-						//hack for H2 support
+						//hack for H2 support=
 						if (
 								!("column_size" in row) 
 								&& "character_maximum_length" in row
@@ -1079,6 +1079,16 @@ if (!Myna) var Myna={}
 	*/
 	Myna.Table.prototype.getTemplate = function(type){
 		return new Myna.XTemplate(this.db.templates[type])	
+	}
+/* Function: getSqlColumnName
+	returns requested column name properly formatted for the target database 
+	including quot characters  
+	
+	Parameters:
+		colname		-	case-insensitive column name
+	*/
+	Myna.Table.prototype.getSqlColumnName = function(colname){
+		return this.columns[colname.toLowerCase()].column_name.listQualify(this.qt);
 	}
 
 /* Function: create

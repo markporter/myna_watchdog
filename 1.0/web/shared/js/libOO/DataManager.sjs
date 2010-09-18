@@ -115,28 +115,82 @@ if (!Myna) var Myna={}
 		
    */
 	Myna.DataManager.prototype.getManager=function(tableName){
-		$profiler.begin("manager.getManager for " + tableName)
-		var $this = this;
-		var manager={};
-		var subClassName = tableName+"Manager";
+		$profiler.begin("getManager for " + tableName)
+		var tkey =tableName.toLowerCase(); 
+		if (!("_managers" in this)) this._managers={}
+		if ( tkey in this._managers){
+			$profiler.end("getManager for " + tableName)
+			return this._managers[tkey];	
+		} else {
+			
+			var $this = this;
+			var manager={};
+			
+			manager= ({}).setDefaultProperties( 
+				this.managerTemplate
+			)
 		
-		manager= ({}).setDefaultProperties( 
-			this.managerTemplate
-		)
-	
-		manager.ds = this.ds;
-		manager.db = this.db;
-		manager.qt = this.qt;
-		manager.dm = this
-		manager.beanTemplate =({}).setDefaultProperties( 
-			this.beanTemplate
-		)
-		
-		manager.table =this.db.getTable(tableName);
-		$profiler.end("manager.getManager for " + tableName)
-		manager.loadTableData(tableName);
-		manager.init();
-		return manager;
+			manager.ds = this.ds;
+			manager.db = this.db;
+			manager.qt = this.qt;
+			manager.dm = this
+			manager.beanTemplate =({}).setDefaultProperties( 
+				this.beanTemplate
+			)
+			
+			
+			manager.table =this.db.getTable(tableName);
+			
+			manager.loadTableData(tableName);
+			manager.init();
+			/* build bean class */
+				manager.beanClass=function(data){
+					this.id = data[manager.primaryKey]
+					this.data = data;
+					this.init();
+				}
+				manager.beanTemplate.setDefaultProperties(manager);
+				manager.beanClass.prototype = manager.beanTemplate	
+				manager.beanTemplate.manager=manager
+				
+				manager.columnNames.forEach(function(colname){
+					var fname = colname;
+					if (!("get_"+fname in manager.beanTemplate)){
+						manager.beanTemplate["get_"+fname] = function (){
+							return this.data[arguments.callee.fieldName];
+						}
+						if (colname !="id"){
+							manager.beanTemplate.__defineGetter__(fname, manager.beanTemplate["get_"+fname]);
+						}
+						
+					}
+					
+					manager.beanTemplate["get_"+fname].fieldName = colname;
+					
+					if (fname != manager.primaryKey){
+						if (!("set_"+fname in manager.beanTemplate)){
+							manager.beanTemplate["set_"+fname] = function (newval){
+								var result = new Myna.ValidationResult();
+								if (typeof newval === "undefined"){
+									result.addError("argument 'newval' required for set" +fname +".",fname);
+									return result;
+								}
+								result.merge(this.saveField(arguments.callee.fieldName,newval));
+								return result;
+							}
+						}
+						if (colname !="id"){
+							manager.beanTemplate.__defineSetter__(fname, manager.beanTemplate["set_"+fname]);
+						}
+						manager.beanTemplate["set_"+fname].fieldName = colname;
+					}
+					
+				}) 
+			
+			this._managers[tkey] = manager;
+			$profiler.end("getManager for " + tableName)
+			return manager;
+		}
 		
 	}
 	
@@ -698,9 +752,9 @@ Myna.DataManager.managerTemplate ={
 			}
 				
 			 
+			bean = new this.beanClass(qry.data[0])
 			
-			
-			bean.baseBean = ({}).setDefaultProperties( 
+			/* bean.baseBean = ({}).setDefaultProperties( 
 				this.beanTemplate
 			)
 			bean.manager=manager;
@@ -757,7 +811,7 @@ Myna.DataManager.managerTemplate ={
 			//bean.hideProperty("manager");
 			//bean.hideProperty("baseBean");
 			//bean.hideProperty("data");
-			bean.init();
+			bean.init(); */
 			$profiler.end("loading "+this.tableName+" bean "+ id)
 			return bean;
 		},
@@ -828,7 +882,49 @@ Myna.DataManager.beanTemplate ={
 			not match a "set" function are ignored 
 	*/
 	setFields:function(fields){
+		var result = new Myna.ValidationResult();
 		var bean = this;
+		try {
+			var p =new Myna.QueryParams();
+			var fieldArray = fields.getKeys().filter(function(colname){
+				//filter non column properties
+				return (
+					bean.columns[colname.toLowerCase()]
+					&& colname.toLowerCase() != bean.primaryKey
+				);
+			});
+			var qry = new Myna.Query({
+				dataSource:this.manager.ds,
+				parameters:p,
+				sql:<ejs>
+					UPDATE <%=this.sqlTableName%>
+					SET
+						<@loop array="fieldArray" element="fieldName" index="i">
+							<% 
+								var value = fields[fieldName];
+								var type = bean.columns[fieldName.toLowerCase()].data_type;
+								var isNull = (value === null);
+								var columnName=bean.columns[fieldName.toLowerCase()].column_name;
+							%>
+							<%=bean.manager.qt%><%=columnName%><%=bean.manager.qt%> = <%=p.addValue(value,type,isNull)%>
+							<@if i != fieldArray.length-1 >,</@if>
+						</@loop>
+						
+						
+					WHERE
+						<%=bean.manager.qt%><%=bean.columns[bean.primaryKey].column_name%><%=bean.manager.qt%> = 
+							<%=p.addValue(bean.id,bean.columns[bean.primaryKey].data_type)%>
+				</ejs>
+			});
+			//bean.data[fieldName] = newval;
+			
+		} catch (e){
+			Myna.log("error",e.message,Myna.formatError(e));
+			result.addError(e.message);
+		}
+		return result;
+		
+		/* var bean = this;
 		var result = new Myna.ValidationResult();
 			fields.getKeys().forEach(function(name){
 				if (bean["set_"+name]){
@@ -836,7 +932,7 @@ Myna.DataManager.beanTemplate ={
 				} 
 			})
 		
-		return result;
+		return result; */
 	},
 	/* Function: saveField
 		Persists a value to its underlying row
@@ -854,28 +950,30 @@ Myna.DataManager.beanTemplate ={
 	*/
 	saveField:function(fieldName,newval){
 		var result = new Myna.ValidationResult();
-		var bean = this;
-		try {
-			var columnName = this.columns[fieldName].column_name;
-			var p =new Myna.QueryParams();
-			var value = newval;
-			var type = this.columns[fieldName].data_type;
-			var isNull = (value === null);
-			
-			var qry = new Myna.Query({
-				dataSource:this.manager.ds,
-				parameters:p,
-				sql:<ejs>
-					UPDATE <%=this.sqlTableName%>
-					SET
-						<%=bean.manager.qt%><%=columnName%><%=bean.manager.qt%> = <%=p.addValue(value,type,isNull)%>
-					WHERE
-						<%=bean.manager.qt%><%=this.columns[this.primaryKey].column_name%><%=bean.manager.qt%> = <%=p.addValue(bean.id,this.columns[this.primaryKey].data_type)%>
-				</ejs>
-			});
-		} catch (e){
-			Myna.log("error",e.message,Myna.formatError(e));
-			result.addError(e.message,fieldName);
+		if (newval != this.data[fieldName]){
+			var bean = this;
+			try {
+				var columnName = this.columns[fieldName].column_name;
+				var p =new Myna.QueryParams();
+				var value = newval;
+				var type = this.columns[fieldName].data_type;
+				var isNull = (value === null);
+				var qry = new Myna.Query({
+					dataSource:this.manager.ds,
+					parameters:p,
+					sql:<ejs>
+						UPDATE <%=this.sqlTableName%>
+						SET
+							<%=bean.manager.qt%><%=columnName%><%=bean.manager.qt%> = <%=p.addValue(value,type,isNull)%>
+						WHERE
+							<%=bean.manager.qt%><%=this.columns[this.primaryKey].column_name%><%=bean.manager.qt%> = <%=p.addValue(bean.id,this.columns[this.primaryKey].data_type)%>
+					</ejs>
+				});
+				this.data[fieldName] = newval;
+			} catch (e){
+				Myna.log("error",e.message,Myna.formatError(e));
+				result.addError(e.message,fieldName);
+			}
 		}
 		return result;
 	},

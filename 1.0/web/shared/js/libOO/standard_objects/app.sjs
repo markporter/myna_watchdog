@@ -607,7 +607,44 @@ var $application={
 		return retval;
 			
 	},
-	
+/* Function: clear
+		Clears any data in the $application cache
+		
+		This causes the next load of a page in this application to trigger 
+		<onApplicationStart>
+		
+		Warning: 
+			This might causes errors if other threads are currently accessing the
+			$application cache. To reduce the chances of this, see <reload>
+		
+		Example:
+		(code)
+			$application.clear();
+		(end)
+	*/
+	clear:function(){
+		if (this.appName){
+			var cache =Packages.org.apache.jcs.JCS.getInstance("application");
+			cache.remove(this.appname)
+		} 	
+	},
+/* Function: reload
+		Clears any data in the $application cache, and re-runs <onApplicationStart>
+				
+		Warning: 
+			This might causes errors if other threads are currently accessing the
+			$application cache, and they try to access a parameter not set in 
+			<onApplicationStart>. 
+		
+		Example:
+		(code)
+			$application.reload();
+		(end)
+	*/
+	reload:function(){
+		$application.clear();
+		$application._initAppScope();
+	},	
 	_initAppScope:function(){
 		if (this.appName){
 			var cache =Packages.org.apache.jcs.JCS.getInstance("application");
