@@ -136,8 +136,8 @@ var fusebox={
 				fusebox.login(data);
 			}
 		} else {
-			var username = data.username || ""
-			var password = data.password || ""
+			var username = rawData.username || ""
+			var password = rawData.password || ""
 			var cb = rawData.callback;
 			var user = Myna.Permissions.getUserByAuth(username,password,data.provider);
 			if (user){
