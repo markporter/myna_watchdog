@@ -272,7 +272,7 @@ Date.createParser = function(format) {
             regex += Date.escape(ch);
         }
         else {
-            obj = Date.formatCodeToRegex(ch, currentGroup);
+            var obj = Date.formatCodeToRegex(ch, currentGroup);
             currentGroup += obj.g;
             regex += obj.s;
             if (obj.g && obj.c) {

@@ -125,8 +125,11 @@ function isCorrectPassword(username,password){
 		 dn = username +"@"+this.config.ad_domain;
 	} else {
 		 var dn = this.getDN(username);
-		 Myna.log("AUTH","LDAP: unable to find user " + username +" in LDAP",Myna.dump(this));
-		 if (!dn) return false;
+		 
+		 if (!dn) {
+		 	 Myna.log("AUTH","LDAP: unable to find user " + username +" in LDAP",Myna.dump(this));
+		 	 return false;
+		 }
 	}
 		 
 	//try to auth against the ldap server, and serch for this dn

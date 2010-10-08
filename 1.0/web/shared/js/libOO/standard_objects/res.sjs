@@ -138,11 +138,11 @@ var $res = {
 			$res.metaRedirect("some_other_page.ejs");
 	*/
 	setStatusCode:function(code,msg){
-		if (!$server.response) return;
+		if (!$server_gateway.environment.get("response")) return;
 		if (msg){
-			$server.response.sendError(code,msg);	
+			$server_gateway.environment.get("response").sendError(code,msg);	
 		} else {
-			$server.response.setStatus(code);
+			$server_gateway.environment.get("response").setStatus(code);
 		}
 	},
 /* Function: metaRedirect

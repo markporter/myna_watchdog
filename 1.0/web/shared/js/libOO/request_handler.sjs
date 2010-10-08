@@ -3,15 +3,20 @@
 try{
 	//standard objects
 	$server_gateway.includeOnce("/shared/js/libOO/standard_objects.sjs")
+	
 	// try to resolve mapping
 	$req.scriptFile =new Myna.File($server.requestDir + $server.requestScriptName);
 	if (
-			!$req.scriptFile.exists() 
-			|| (
-				!$req.scriptFile.fileName.match(/\.(sjs|ejs|ws)$/)
-				&& !$server_gateway.environment.get("isCommandline")
+			!$server.isThread
+			&&(
+				!$req.scriptFile.exists() 
+				|| (
+					!$req.scriptFile.fileName.match(/\.(sjs|ejs|ws)$/)
+					&& !$server_gateway.environment.get("isCommandline")
+				)
 			)
 	){
+		
 		//process REST params
 		if (!$server_gateway.requestScriptName 
 			|| !new Myna.File($server_gateway.requestDir+"/"+$server_gateway.requestScriptName).exists()
@@ -28,7 +33,6 @@ try{
 				if ($server_gateway.requestScriptName) dirStack.push($server_gateway.requestScriptName);
 				var rootIndex = !dirStack.length
 				while (dirStack.length || rootIndex){
-					$res.flush()
 					if (!$server_gateway.requestScriptName){
 						curFile=new Myna.File($server.rootDir +dirStack.join("/") + "/index.ejs");
 						if (curFile.exists()) {
@@ -87,6 +91,9 @@ try{
 				Myna.include("/myna/dir_listing.sjs")
 			} else {
 				$application._onError404();
+				
+				
+				Myna.abort();
 			}
 			
 		} else {

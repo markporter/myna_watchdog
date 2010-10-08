@@ -300,22 +300,21 @@ var fusebox={
 		var cron ={
 			name:data.name
 		}
-		cronProperties[data.name].split(/,/).forEach(function(tuple){
+		/* cronProperties[data.name].split(/,/).forEach(function(tuple){
 			var parts =tuple.split(/=/);
 			if (parts.length == 2){
 				cron[parts[0]] = parts[1]	
 			}
-		})
-		if (cron.start_date) {
+		}) */
+		cron = cronProperties[data.name].parseJson()
+		/* if (cron.start_date) {
 			cron.start_date = new Date(parseInt(cron.start_date));
 		} else {
 			cron.start_date = new Date();
-		}
-		cron.start_date_date = cron.start_date.format("m/d/Y");
-		cron.start_date_time = cron.start_date.format("H:i:s");
+		} */
 		return cron;
 	},
-	save_cron_job:function(data){
+	save_cron_job:function(data,rawData){
 		$req.returningJson=true;
 		data.checkRequired([
 			"name",
@@ -325,11 +324,20 @@ var fusebox={
 		data.name = data.name.unEscapeHtml();
 		
 		var cronProperties = Myna.loadProperties("/WEB-INF/classes/cron.properties");
-		//try{
-			data.start_date = Date.parseDate(data.start_date_date + " " + data.start_date_time,"m/d/Y H:i:s").getTime();
-		//} catch(e){}
 		var cron = 	fusebox.get_cron_job(data) || {};
-		[
+		try{
+			cron.start_date = Date.parseDate(data.start_date_date + " " + data.start_date_time,"m/d/Y H:i:s")
+		} catch(e){
+			cron.start_date =new Date()
+		}
+		
+		try{
+			cron.end_date = Date.parseDate(data.end_date_date + " " + data.end_date_time,"m/d/Y H:i:s").getTime();
+		} catch(e){
+			cron.end_date =""
+		}
+		
+		/* [
 			'name',
 			'description',
 			'is_active',
@@ -337,17 +345,42 @@ var fusebox={
 			'interval',
 			'scale',
 			'script'
-		].forEach(function(key){
+		] */
+		data.getKeys()
+		.filter(function(key){
+			if (
+				key == "fuseaction"
+				|| /\$/.test(key)
+			) return false
+			else return true
+			
+		})
+		.forEach(function(key){
 			if (data[key]){
-				if (data[key].unEscapeHtml) data[key] = data[key].unEscapeHtml();
-				cron[key] = data[key];
+				if (data[key+"$array"] &&data[key+"$array"].length >1){
+					cron[key] = rawData[key+"$array"].map(function(val){
+						if (!isNaN(parseInt(val)) && isFinite(val)){
+							return parseInt(val);
+						} else {
+							return val
+						}
+					});
+				} else {
+					if (!isNaN(parseInt(rawData[key])) && isFinite(rawData[key])){
+						cron[key] = parseInt(rawData[key]);
+					} else {
+						cron[key] = rawData[key];
+					}
+				}
 			}
 		})
 		
-		cronProperties[data.name] = cron.getKeys().map(function(key){
-				return key + "=" + cron[key] 
-		}).join();
-		
+		/* cronProperties[data.name] = cron.getKeys().map(function(key){
+			return key + "=" + cron[key] 
+		}).join(); */
+		cronProperties[data.name] = cron.toJson()
+		/* Myna.log("debug","cronProperties",Myna.dump(cronProperties));
+		Myna.log("debug","cron",Myna.dump(cron)); */
 		Myna.saveProperties(cronProperties,"/WEB-INF/classes/cron.properties");
 		new Packages.info.emptybrain.myna.CronThread();
 		//include("/shared/js/libOO/reload_cron.sjs")
@@ -363,6 +396,7 @@ var fusebox={
 		var cronProperties = Myna.loadProperties("/WEB-INF/classes/cron.properties");
 		delete cronProperties[data.name];
 		Myna.saveProperties(cronProperties,"/WEB-INF/classes/cron.properties");
+		new Packages.info.emptybrain.myna.CronThread();
 		return {success:true}
 	},
 	

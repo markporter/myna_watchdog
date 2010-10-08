@@ -139,24 +139,38 @@ var fusebox={
 			var username = rawData.username || ""
 			var password = rawData.password || ""
 			var cb = rawData.callback;
-			var user = Myna.Permissions.getUserByAuth(username,password,data.provider);
-			if (user){
-				if (rawData.callback.listLen("?")>1){
-					rawData.callback+="&"
+			try{
+				var user = Myna.Permissions.getUserByAuth(username,password,data.provider);
+				if (user){
+					if (rawData.callback.listLen("?")>1){
+						rawData.callback+="&"
+					} else {
+						rawData.callback+="?"
+					}
+					rawData.callback+="auth_token=" + Myna.Permissions.getAuthToken(user.user_id).escapeUrl()
+					//metaRedirect
+					$res.metaRedirect(rawData.callback);
+					
 				} else {
-					rawData.callback+="?"
+					//metaRedirect
+					$res.metaRedirect($server.serverUrl
+						+$server.requestUrl
+						+$server.requestScriptName
+						+"?fuseaction=login"
+						+"&message=" + escape("Authentication Failed")
+						+"&provider=" + escape(rawData.provider)
+						+"&providers=" + escape(rawData.providers)
+						+"&callback=" + escape(rawData.callback)
+					);
 				}
-				rawData.callback+="auth_token=" + Myna.Permissions.getAuthToken(user.user_id).escapeUrl()
-				//metaRedirect
-				$res.metaRedirect(rawData.callback);
-				
-			} else {
+			} catch(e){
+				Myna.log("error","auth failed for " + username,Myna.dump($req.data,"data") + Myna.dump($req.rawData,"rawData"));
 				//metaRedirect
 				$res.metaRedirect($server.serverUrl
 					+$server.requestUrl
 					+$server.requestScriptName
 					+"?fuseaction=login"
-					+"&message=" + escape("Authentication Failed")
+					+"&message=" + escape("Authentication Failed - Error " + e.message)
 					+"&provider=" + escape(rawData.provider)
 					+"&providers=" + escape(rawData.providers)
 					+"&callback=" + escape(rawData.callback)

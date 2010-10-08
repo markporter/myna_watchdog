@@ -25,7 +25,7 @@ public class JSServlet extends HttpServlet {
 				// Store the ServletConfig object and log the initialization
 				super.init(config);
 				ServletContext sc = config.getServletContext();
-				new CronThread();
+				
 				try{
 					MynaThread thread = new MynaThread();
 					thread.environment.put("servlet",this);
@@ -53,6 +53,7 @@ public class JSServlet extends HttpServlet {
 							thread.handleRequest(curUri.toString());
 						}
 						//thread.rootUrl = req.getContextPath() + "/";
+						new CronThread();
 					} catch(Exception threadException){
 						thread.handleError(threadException);
 					}
@@ -182,6 +183,7 @@ public class JSServlet extends HttpServlet {
 					if (!thread.requestHandled){
 						//flush output
 						res.setContentLength(thread.generatedContent.length());
+						
 						String ETag = new Integer(thread.generatedContent.toString().hashCode()).toString();
 						String IfNoneMatch  =null;
 						Enumeration IfNoneMatchHeaders = req.getHeaders("If-None-Match");

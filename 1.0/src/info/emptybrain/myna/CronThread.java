@@ -37,31 +37,14 @@ public class CronThread {
 			Enumeration keys = cronProps.keys();
 			while (keys.hasMoreElements()){
 					String name = (String) keys.nextElement();
-					Properties curProps = CronThread.parseCron(cronProps.getProperty(name));
-					if (curProps.getProperty("is_active").equals("0")){
-						continue;	
-					}
 					Timer curTimer =new java.util.Timer();
 					timers.put(name,curTimer);
-					
-					
-					long interval = Long.parseLong(curProps.getProperty("interval"));
-					
-					if (curProps.getProperty("scale").equals("seconds")){
-						interval *= CronThread.SECONDS;	
-					} else if (curProps.getProperty("scale").equals("minutes")){
-						interval *= CronThread.MINUTES;	
-					} else if (curProps.getProperty("scale").equals("hours")){
-						interval *= CronThread.HOURS;	
-					} else if (curProps.getProperty("scale").equals("days")){
-						interval *= CronThread.DAYS;	
-					} else if (curProps.getProperty("scale").equals("weeks")){
-						interval *= CronThread.WEEKS;	
-					} 	
-					Date startDate = new Date(Long.parseLong(curProps.getProperty("start_date")));
-					CronTimerTask curTask = new CronTimerTask(); 
-					curTask.url = curProps.getProperty("script");
-					curTimer.schedule(curTask,startDate,interval);
+									
+					long interval = CronThread.MINUTES/6;	
+					String config = cronProps.getProperty(name);
+					ScriptTimerTask curTask = new ScriptTimerTask();
+					curTask.config = config;
+					curTimer.schedule(curTask,new Date(),interval);
 			}
 		} catch (java.lang.NullPointerException missingFile){
 			//ignore missing cron.properties	
@@ -126,6 +109,52 @@ public class CronThread {
 		
 	}
 	
+	public static class ScriptTimerTask extends java.util.TimerTask{
+		public String config; 
+		public  void ScriptTimerTask(String config){
+			this.config = config;
+		}
+		public void run(){
+			try {
+				MynaThread thread = new MynaThread();
+				
+				try{
+					java.net.URI mynaRoot= JsCmd.class.getResource(".")
+							.toURI().resolve("../../../../../");
+					
+					File jsFile = new File(
+						mynaRoot
+							.resolve("shared/js/libOO/run_cron.sjs")
+					);
+					
+					
+					thread.rootDir = mynaRoot.toString();
+					thread.loadGeneralProperties();
+					thread.environment.put("isCommandline",true);
+					String[] args = {
+						"",
+						this.config
+					};
+					thread.environment.put("commandlineArguments",args);
+					
+					thread.handleRequest(jsFile.toURI().toString());
+				} catch (Exception e){
+					thread.handleError(e);
+				}
+				
+			} catch (Exception e){
+				System.err.println("============== Scheduled task error Error ============");
+				System.err.println(e.toString());
+				System.err.println("============== Stacktrace ============");
+				e.printStackTrace(System.err);
+				System.err.println("============== Config ============");
+				System.err.println(this.config);
+			}
+			
+				  
+		}	
+		
+	}
 	
 	public static Properties parseCron(String json){
 		Properties result = new Properties();

@@ -189,9 +189,10 @@ var C ={
 		
 		//C.applications.installEgg()
 		//C.applications.exportApp("myna_admin");
+		C.tasks.main();
 	}
 /* ================ helper functions ======================================== */
-	/* ---------------- addTab ----------------------------------------------- */
+	/* ---------------- addTab ---------------------------------------------- */
 		C.addTab = function(tabPanel,config,ordinal){
 			tabPanel.show();
 			if (ordinal != undefined){
@@ -209,7 +210,7 @@ var C ={
 			tabPanel.show();
 			C.body.unmask();
 		}
-	/* ---------------- infoMsg ---------------------------------------------- */
+	/* ---------------- infoMsg --------------------------------------------- */
 		C.infoMsg = function(message){
 			
 			C.msgCt.alignTo(document, 't-t');
@@ -223,7 +224,7 @@ var C ={
 				.pause(3)
 				.ghost("t",{remove:true});		
 		}
-	/* ---------------- disableUnchanged ------------------------------------- */
+	/* ---------------- disableUnchanged ------------------------------------ */
 		C.disableUnchanged = function(form,mask){
 			var disabledIndexes = form.items.items.filter(function(item,index){
 				item.setDisabled(!item.isDirty());
@@ -235,11 +236,11 @@ var C ={
 				})	
 			}
 		}
-	/* ---------------- defaultActionFailed ---------------------------------- */
+	/* ---------------- defaultActionFailed --------------------------------- */
 		C.defaultActionFailed = function(form,action){
 			C.showAjaxError(action.response.responseText)
 		}
-	/* ---------------- createStore ------------------------------------------ */
+	/* ---------------- createStore ----------------------------------------- */
 		/*	takes a standard store config and returns a store with
 			a listener for loadexcetion that calls showAjaxError.
 		*/
@@ -252,7 +253,7 @@ var C ={
 			}
 			return new Ext.data.Store(config);
 		}
-	/* ---------------- getUuid ---------------------------------------------- */
+	/* ---------------- getUuid --------------------------------------------- */
 		/*	retrieves a UUID from the server and then calls the supplied callback 
 			function with the UUID
 		*/
@@ -267,7 +268,7 @@ var C ={
 			})
 			
 		}	
-	/* ---------------- cbHandler -------------------------------------------- */
+	/* ---------------- cbHandler ------------------------------------------- */
 		/* 	returns a function that can be used as the callback funciton in 
 		   	an Ext.Ajax.request(). The passed in function should expect a 
 			result parameter that contains the decoded response.responseText,
@@ -296,7 +297,7 @@ var C ={
 				
 			}
 		}
-	/* ---------------- showAjaxError ---------------------------------------- */
+	/* ---------------- showAjaxError --------------------------------------- */
 		C.showAjaxError = function(responseText){
 			try{
 				var result = Ext.decode(responseText);
@@ -319,7 +320,7 @@ var C ={
 				return;
 			}
 		}
-	/* ---------------- renderControlField ----------------------------------- */
+	/* ---------------- renderControlField ---------------------------------- */
 		C.renderControlField = function(form_id,control_type,name,label,value,pageId){
 			if (!pageId) pageId=0;
 			
@@ -660,7 +661,7 @@ var C ={
 		}
 /* ================ Settings ================================================ */
 	C.settings={}
-	/* ---------------- main ------------------------------------------------- */
+	/* ---------------- main ------------------------------------------------ */
 		C.settings.main=function(){
 			var center_tabs = Ext.getCmp("center_tabs");
 			var tabId="settings_main";
@@ -939,7 +940,7 @@ var C ={
 		}
 /* ================ data sources ============================================ */
 	C.ds={}
-	/* ---------------- main ------------------------------------------------- */
+	/* ---------------- main ------------------------------------------------ */
 		C.ds.main=function(){
 			var center_tabs = Ext.getCmp("center_tabs");
 			var tabId="ds_main";
@@ -1146,7 +1147,7 @@ var C ={
 				
 			center_tabs.activate(tabId)
 		}
-	/* ---------------- edit ------------------------------------------------- */
+	/* ---------------- edit ------------------------------------------------ */
 		C.ds.edit=function(name){
 			var center_tabs = Ext.getCmp("center_tabs");
 			var tabId="ds_edit_" + name;
@@ -1492,7 +1493,7 @@ var C ={
 		}
 /* ================ log_general ============================================= */
 	C.log_general={}
-	/* ---------------- main ------------------------------------------------- */
+	/* ---------------- main ------------------------------------------------ */
 		C.log_general.main=function(){
 			var center_tabs = Ext.getCmp("center_tabs");
 			var tabId="tab_log_general";
@@ -1878,7 +1879,7 @@ var C ={
 		
 /* ================ threads ================================================= */
 	C.threads={}
-	/* ---------------- main ------------------------------------------------- */
+	/* ---------------- main ------------------------------------------------ */
 		C.threads.main=function(){
 			var center_tabs = Ext.getCmp("center_tabs");
 			var tabId="threads_main";
@@ -2128,7 +2129,7 @@ var C ={
 		}
 /* ================ upgrade ================================================= */
 	C.upgrade={}
-	/* ---------------- main ------------------------------------------------- */
+	/* ---------------- main ------------------------------------------------ */
 		C.upgrade.main=function(){
 			var center_tabs = Ext.getCmp("center_tabs");
 			var tabId="upgrade_main";
@@ -2284,10 +2285,11 @@ var C ={
 		}
 /* ================ tasks =================================================== */
 	C.tasks={}
-	/* ---------------- main ------------------------------------------------- */
+	/* ---------------- main ------------------------------------------------ */
 		C.tasks.main=function(){
 			var center_tabs = Ext.getCmp("center_tabs");
 			var tabId="tasks_main";
+			var schedulePanels={}
 			if (!center_tabs.findById(tabId)){
 				var config ={
 					id:tabId,
@@ -2307,6 +2309,11 @@ var C ={
 								var formPanel = this.getFormPanel();
 								this.getStore().reload();
 								formPanel.show();
+								var cbArray = formPanel.findByType("checkbox")
+								cbArray.forEach(function(cb){
+									cb.setValue(false)
+								})
+								
 								formPanel.ownerCt.doLayout();
 							},
 							getStore:function(){
@@ -2340,14 +2347,35 @@ var C ={
 								reader: new Ext.data.JsonReader({
 									id: 'name'
 								}, [
-									{name: 'name'},
-									{name: 'description'},
-									{name: 'is_active'},
-									{name: 'start_date_date'},
-									{name: 'start_date_time'},
-									{name: 'interval'},
-									{name: 'scale'},
-									{name: 'script'}
+									"daily_repeat",
+									"daily_time",
+									"description",
+									"end_date",
+									"hourly_minutes",
+									"hourly_repeat",
+									"is_active",
+									"monthly_by_date_day",
+									"monthly_by_date_repeat",
+									"monthly_by_date_time",
+									"monthly_by_weekday_day",
+									"monthly_by_weekday_daycount",
+									"monthly_by_weekday_repeat",
+									"monthly_by_weekday_time",
+									"name",
+									"script",
+									"scale",
+									"interval",
+									"start_date",
+									"start_date_date",
+									"start_date_time",
+									"type",
+									"weekly_days",
+									"weekly_repeat",
+									"weekly_time",
+									"yearly_date",
+									"yearly_repeat",
+									"yearly_time"
+
 								]),
 								remoteSort: false
 							}),
@@ -2383,7 +2411,8 @@ var C ={
 									xtype:"button",
 									text:"Create new task",
 									handler:function(){
-										config.task.getForm().setValues({
+										config.task.getForm().reset()
+										/* setValues({
 											name:"New Task",
 											description:'',
 											'is_active':1,
@@ -2392,7 +2421,7 @@ var C ={
 											'interval':5,
 											'scale':'hours',
 											'script':''
-										});
+										}); */
 										config.task.showForm()
 									}
 								}
@@ -2407,6 +2436,10 @@ var C ={
 									var form = config.task.getForm();
 										config.task.showForm();
 										form.setValues(row.data)
+										var cbArray = config.task.getFormPanel().findByType("checkbox")
+										cbArray.forEach(function(cb){
+											cb.setValue(!!(row.data.weekly_days.indexOf(cb.inputValue)+1))
+										})
 										//form.loadRecord(row);
 										
 								}
@@ -2416,13 +2449,15 @@ var C ={
 							region:"east",
 							id:"task_form",
 							xtype:"form",
-							width:300,
-							hidden:true,
+							autoScroll:true,
+							width:320,
+							//hidden:true,
 							labelAlign:"top",
-							bodyStyle:"padding:3px",
+							//bodyStyle:"padding:3px",
+							frame:true,
 							title:"Edit Task",
-							trackResetOnLoad:true,
-							reader:new Ext.data.JsonReader({
+							//trackResetOnLoad:true,
+							/* reader:new Ext.data.JsonReader({
 							},[
 								{name: 'name'},
 								{name: 'description'},
@@ -2432,16 +2467,21 @@ var C ={
 								{name: 'interval'},
 								{name: 'scale'},
 								{name: 'script'}
-							]),
+							]), */
 							defaults:{
 								xtype:"textfield",
-								width:100
+								width:100,
+								defaults:{
+									xtype:"textfield",
+									width:100
+								}
 							},
 							items:[{
 							/* name */
 								fieldLabel:"Name",
 								maxLength:30,
 								name:"name",
+								value:"New Task",
 								width:290
 							},{
 							/* desciption */
@@ -2449,6 +2489,7 @@ var C ={
 								fieldLabel:"Description",
 								maxLength:255,
 								name:"description",
+								value:"",
 								grow:true,
 								width:290,
 								height:79
@@ -2456,63 +2497,446 @@ var C ={
 							/* script */
 								fieldLabel:"URL",
 								name:"script",
+								value:"",
 								width:290
 							},{
-								/* active */
-								fieldLabel:"Active?",
-								hiddenName:"is_active",
-								xtype:"combo",
-								store: new Ext.data.SimpleStore({
-									fields: ['label','value'],
-									data:[
-										["Yes",1],
-										["No",0]
-									] 
-								}),
-								displayField:'label',
-								valueField:'value',
-								mode: 'local',
-								triggerAction: 'all',
-								forceSelection:true
-							},{
-							/* start_date_date */
-								fieldLabel:"Start Date",
-								name:"start_date_date",
-								xtype:"datefield",
-								format:"m/d/Y"
-							},{
-							/* start_date_time */
-								fieldLabel:"Start Time",
-								name:"start_date_time",
-								xtype:"textfield"//,format:"H:i:s"
-							},{
-							/* interval */
-								fieldLabel:"Run Every",
-								name:"interval"
-							},{
-							/* scale */
-								hideLabel:true,
-								name:"scale",
-								xtype:"combo",
-								store: new Ext.data.SimpleStore({
-									fields: ['scale'],
-									data:[
-										["milliseconds"],
-										["seconds"],
-										["minutes"],
-										["hours"],
-										["days"],
-										["weeks"]
-									] 
-								}),
-								displayField:'scale',
-								mode: 'local',
-								triggerAction: 'all',
-								forceSelection:true
+								xtype:"panel",
+								width:290,
+								layout:"column",
+								layoutConfig:{
+									columns:2
+								},
+								defaults:{
+									columnWidth:.5,
+									width:130,
+									layout:"form",
+									defaults:{
+										width:125,
+										layout:"form",
+										defaults:{
+											xtype:"textfield",
+											width:100
+										}
+									}
+								},
+								items:[{
+									items:[{
+									/* active */
+										fieldLabel:"Active?",
+										hiddenName:"is_active",
+										name:"is_active",
+										xtype:"combo",
+											store: new Ext.data.SimpleStore({
+											fields: ['label','value'],
+											data:[
+												["Yes",1],
+												["No",0]
+											] 
+										}),
+										displayField:'label',
+										valueField:'value',
+										value:1,
+										mode: 'local',
+										triggerAction: 'all',
+										forceSelection:true
+									},{
+									/* start_date_date */
+										fieldLabel:"Start Date",
+										name:"start_date_date",
+										xtype:"datefield",
+										format:"m/d/Y",
+										value:new Date().format("m/d/Y")
+									},{
+									/* start_date_time */
+										fieldLabel:"Start Time",
+										name:"start_date_time",
+										xtype:"textfield",
+										value:new Date().format("H:i:s")
+									},{
+									/* end_date_date */
+										fieldLabel:"End Date",
+										name:"end_date_date",
+										xtype:"datefield",
+										format:"m/d/Y"
+									},{
+									/* end_date_time */
+										fieldLabel:"End Time",
+										name:"end_date_time",
+										xtype:"textfield"//,format:"H:i:s"
+									}]
+								},{
+									items:[{
+									/* type */
+										hideLabel:false,
+										fieldLabel:"Schedule Type",
+										name:"type",
+										xtype:"combo",
+										store: new Ext.data.SimpleStore({
+											fields: ['type'],
+											data:[
+												["Simple"],
+												["Hourly"],
+												["Daily"],
+												["Weekly"],
+												["MonthlyByDate"],
+												["MonthlyByWeekday"],
+												["Yearly"]
+											] 
+										}),
+										displayField:'type',
+										mode: 'local',
+										triggerAction: 'all',
+										forceSelection:true,
+										editable:false,
+										value:"Simple",
+										listeners:{
+											render:r=function(combo){
+												[
+													"Simple",
+													"Hourly",
+													"Daily",
+													"Weekly",
+													"MonthlyByDate",
+													"MonthlyByWeekday",
+													"Yearly"
+												].forEach(function(type){
+													var panel = Ext.getCmp("schedule" + type)
+													if (combo.getValue() == type){
+														panel.show()
+													} else {
+														panel.hide()
+													}
+												})
+											},
+											change:r,
+											select:r
+										},
+										setValue:function(val){
+											Ext.form.ComboBox.prototype.setValue.call(this,val)
+											r(this)	
+										}, 
+									},{
+									//Simple Panel
+										xtype:"fieldset",
+										id:"scheduleSimple",
+										height:120,
+										width:125,
+										title:"Simple Schedule",
+										layout:"form",
+										items:[{
+										/* interval */
+											fieldLabel:"Run Every",
+											name:"interval",
+											value:1
+										},{
+										/* scale */
+											hideLabel:true,
+											name:"scale",
+											xtype:"combo",
+											width:80,
+											store: new Ext.data.SimpleStore({
+												fields: ['scale'],
+												data:[
+													["milliseconds"],
+													["seconds"],
+													["minutes"],
+													["hours"],
+													["days"],
+													["weeks"]
+												] 
+											}),
+											value:"hours",
+											displayField:'scale',
+											mode: 'local',
+											editable:false,
+											triggerAction: 'all',
+											forceSelection:true
+										}]
+									},{
+									//Hourly Panel
+										xtype:"fieldset",
+										id:"scheduleHourly",
+										height:160,
+										width:125,
+										title:"Hourly Schedule",
+										items:[{
+											xtype:"panel",
+											html:" Repeat every "
+										},{	
+										/* hourly_repeat */
+											hideLabel:true,
+											name:"hourly_repeat",
+											value:1
+										},{
+											xtype:"panel",
+											html:" hours at "
+										},{
+										/* hourly_minutes */
+											hideLabel:true,
+											name:"hourly_minutes",
+											value:0
+										},{
+											xtype:"panel",
+											html:" minutes after the hour "
+										}]
+									},{
+									//Daily Panel
+										xtype:"fieldset",
+										id:"scheduleDaily",
+										height:150,
+										width:125,
+										title:"Daily Schedule",
+										items:[{
+											xtype:"panel",
+											html:" Repeat every "
+										},{	
+
+										/* daily_repeat */
+											hideLabel:true,
+											name:"daily_repeat",
+											value:1
+										},{
+											xtype:"panel",
+											html:" days at  "
+										},{	
+										/* daily_time */
+											hideLabel:true,
+											name:"daily_time",
+											value:new Date().format("H:i")
+										}]	
+									},{
+									//Weekly Panel
+										xtype:"fieldset",
+										id:"scheduleWeekly",
+										height:190,
+										width:125,
+										title:"Weekly Schedule",
+										items:[{
+										
+											xtype:"panel",
+											html:" Repeat every "
+										},{	
+										/* weekly_repeat */
+											hideLabel:true,
+											name:"weekly_repeat",
+											value:1
+										},{
+											xtype:"panel",
+											html:" weeks on "
+										},{
+											xtype:"panel",
+											layout:"table",
+											layoutConfig:{
+												columns:7	
+											},
+											defaults:{
+												xtype:"panel",
+												layout:"form",
+												
+												defaults:{
+													labelSeparator:"",
+													labelStyle:"padding-left:2px",
+												}
+											},
+											items:[
+												{items:[{
+													xtype:"checkbox",
+													name:"weekly_days",
+													fieldLabel:"S",
+													inputValue:0
+												}]},{items:[{
+													xtype:"checkbox",
+													name:"weekly_days",
+													fieldLabel:"M",
+													inputValue:1
+												}]},{items:[{
+													xtype:"checkbox",
+													name:"weekly_days",
+													fieldLabel:"T",
+													inputValue:2
+												}]},{items:[{
+													xtype:"checkbox",
+													name:"weekly_days",
+													fieldLabel:"W",
+													inputValue:3
+												}]},{items:[{
+													xtype:"checkbox",
+													name:"weekly_days",
+													fieldLabel:"T",
+													inputValue:4
+												}]},{items:[{
+													xtype:"checkbox",
+													name:"weekly_days",
+													fieldLabel:"F",
+													inputValue:5
+												}]},{items:[{
+													xtype:"checkbox",
+													name:"weekly_days",
+													fieldLabel:"S",
+													inputValue:6
+												}]}
+											]
+											
+													
+										},{
+											xtype:"panel",
+											html:" at "	
+										},{	
+										/* weekly_time */
+											hideLabel:true,
+											name:"weekly_time",
+											value:new Date().format("H:i")
+										}]
+									},{
+									//MonthlyByDate Panel
+										xtype:"fieldset",
+										id:"scheduleMonthlyByDate",
+										height:190,
+										width:125,
+										title:"Monthly By Date",
+										items:[{
+											xtype:"panel",
+											html:" Repeat every "
+										},{	
+
+										/* monthly_by_date_repeat */
+											hideLabel:true,
+											name:"monthly_by_date_repeat",
+											value:1
+										},{
+											xtype:"panel",
+											html:" months on the "
+										},{	
+										/* monthly_by_date_day */
+											hideLabel:true,
+											name:"monthly_by_date_day",
+											value:new Date().format("d")
+										},{
+											xtype:"panel",
+											html:" day of the month at "
+										},{	
+										/* monthly_by_date_time */
+											hideLabel:true,
+											name:"monthly_by_date_time",
+											value:new Date().format("H:i")
+										}]
+									},{
+									//MonthlyByWeekday Panel
+										xtype:"fieldset",
+										id:"scheduleMonthlyByWeekday",
+										height:200,
+										width:125,
+										title:"Monthly By Weekday",
+										items:[{
+											xtype:"panel",
+											html:" Repeat every "
+										},{	
+
+										/* monthly_by_weekday_repeat */
+											hideLabel:true,
+											name:"monthly_by_weekday_repeat",
+											value:1
+										},{
+											xtype:"panel",
+											html:" months on the "
+										},{
+										/* monthly_by_weekday_daycount */
+											hideLabel:true,
+											hiddenName:"monthly_by_weekday_daycount",
+											xtype:"combo",
+											width:80,
+											store: new Ext.data.SimpleStore({
+												fields: ['key','value'],
+												data:[
+													["First",1],
+													["Second",2],
+													["Third",3],
+													["Fourth",4],
+													["Fifth",5]
+												] 
+											}),
+											displayField:'key',
+											valueField:'value',
+											mode: 'local',
+											triggerAction: 'all',
+											editable:false,
+											value:parseInt(new Date().getDate()/7),
+											forceSelection:true
+										},{
+										/* monthly_by_weekday_day */
+											hideLabel:true,
+											hiddenName:"monthly_by_weekday_day",
+											xtype:"combo",
+											width:80,
+											store: new Ext.data.SimpleStore({
+												fields: ['key','value'],
+												data:[
+													["Sunday",0],
+													["Monday",1],
+													["Tuesday",2],
+													["Wednesday",3],
+													["Thursday",4],
+													["Friday",5],
+													["Saturday",6],
+												] 
+											}),
+											displayField:'key',
+											valueField:'value',
+											mode: 'local',
+											triggerAction: 'all',
+											editable:false,
+											value:new Date().format("w"),
+											forceSelection:true
+										},{	
+											xtype:"panel",
+											html:" of the month at "
+										},{
+										/* monthly_by_date_time */
+											hideLabel:true,
+											name:"monthly_by_weekday_time",
+											value:new Date().format("H:i")
+										}]
+									},{
+									//Yearly Panel
+										xtype:"fieldset",
+										id:"scheduleYearly",
+										height:190,
+										width:125,
+										title:"Yearly Schedule",
+										items:[{
+											xtype:"panel",
+											html:" Repeat every "
+										},{	
+
+										/* yearly_repeat */
+											hideLabel:true,
+											name:"yearly_repeat",
+											value:1
+										},{
+											xtype:"panel",
+											html:" years on "
+										},{	
+										/* yearly_date */
+											hideLabel:true,
+											name:"yearly_date",
+											value:new Date().format("m/d")
+										},{
+											xtype:"panel",
+											html:" at "
+										},{
+										/* yearly_time */
+											hideLabel:true,
+											name:"yearly_time",
+											value:new Date().format("H:i")
+										}]	
+									}]
+								}]
 							}],
 							buttons:[{
 								text:"Save",
 								handler:function(){
+									/* debug_window(config.task.getForm().getValues())
+									return */
 									config.task.getForm().submit({
 										url:"?fuseaction=save_cron_job",
 										waitMsg:"Saving...",
@@ -2578,9 +3002,9 @@ var C ={
 				
 			center_tabs.activate(tabId)
 		}
-/* ================ applications ================================================= */
+/* ================ applications ============================================ */
 	C.applications={}
-	/* ---------------- main ------------------------------------------------- */
+	/* ---------------- main ------------------------------------------------ */
 		C.applications.main=function(){
 			var center_tabs = Ext.getCmp("center_tabs");
 			var tabId="applications_main";
@@ -2608,7 +3032,7 @@ var C ={
 				
 			center_tabs.activate(tabId)
 		}
-		/* ---------------- cmp_app_grid ------------------------------------------------- */
+		/* ---------------- cmp_app_grid ------------------------------------ */
 			C.applications.main.cmp_app_grid=function(tabId){
 				var thisPanel = function(){
 					return Ext.getCmp("app_grid");	
@@ -2722,7 +3146,7 @@ var C ={
 					
 				}
 			}
-	/* ---------------- importApp ------------------------------------------------- */		
+	/* ---------------- importApp ----------------------------------------- */		
 		C.applications.importApp=function(){
 			Ext.Msg.prompt(
 				"Importing Application",
@@ -2759,7 +3183,7 @@ var C ={
 				}
 			)
 		}
-	/* ---------------- installEgg ------------------------------------------------- */		
+	/* ---------------- installEgg ---------------------------------------- */		
 		C.applications.installEgg=function(){
 			var win = new Ext.Window({
 				title:"Install a Myna Egg",
@@ -2884,7 +3308,7 @@ var C ={
 				}
 			) */
 		}
-	/* ---------------- exportApp ------------------------------------------------- */		
+	/* ---------------- exportApp ----------------------------------------- */		
 		C.applications.exportApp=function(appname){
 			Ext.Msg.prompt(
 				"Exporting Application",
@@ -2922,9 +3346,9 @@ var C ={
 			)
 		}
 /* ================ Permissions ============================================= */
-	/* ================ Rights =============================================== */
+	/* ================ Rights ============================================== */
 		C.rights={}
-		/* ---------------- main ---------------------------------------------- */
+		/* ---------------- main -------------------------------------------- */
 			C.rights.main=function(){
 				var center_tabs = Ext.getCmp("center_tabs");
 			var tabId="manage_rights_main";
@@ -3177,9 +3601,9 @@ var C ={
 		
 
 
-	/* ================ Users ================================================ */
+	/* ================ Users =============================================== */
 		C.users={}
-		/* ---------------- main ---------------------------------------------- */
+		/* ---------------- main -------------------------------------------- */
 			C.users.main=function(){
 				var center_tabs = Ext.getCmp("center_tabs");
 			var tabId="manage_users_main";
@@ -3450,9 +3874,9 @@ var C ={
 			}
 		
 
-	/* ================ User Logins ========================================== */
+	/* ================ User Logins ========================================= */
 		C.user_logins={}
-		/* ---------------- main ---------------------------------------------- */
+		/* ---------------- main -------------------------------------------- */
 			C.user_logins.main=function(user_id){
 				var center_tabs = Ext.getCmp("center_tabs");
 				var tabId="manage_user_logins_main";
@@ -3722,9 +4146,9 @@ var C ={
 			}
 		
 
-	/* ================ User Groups ========================================== */
+	/* ================ User Groups ========================================= */
 		C.user_groups={}
-		/* ---------------- main ---------------------------------------------- */
+		/* ---------------- main -------------------------------------------- */
 			C.user_groups.main=function(){
 				var center_tabs = Ext.getCmp("center_tabs");
 			var tabId="manage_user_groups_main";

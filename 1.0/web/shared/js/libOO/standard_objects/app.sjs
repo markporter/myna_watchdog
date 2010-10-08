@@ -847,7 +847,7 @@ var $application={
 									}
 									$req.data[key + "$objectArray"].push(curObj);
 									$req.data[key + "$object"] = curObj;
-								}catch(e if e instanceof SyntaxError){}
+								}catch(e){}
 							}
 						}
 					}
@@ -1211,15 +1211,17 @@ var $application={
 	},
 	
 	_onError404:function(){
-		$res.clear();
+		//$res.clear();
 		var originalCurrentDir =$server_gateway.currentDir;
 		$server_gateway.currentDir=$application.directory
 		if (!this.onError404 || !this.onError404()){
 			Myna.print("The file you requested is not available at that location.")
+			$server_gateway.currentDir=originalCurrentDir;
+			$res.setStatusCode(404);
+			$res.flush();
+			Myna.abort();
 		}
-		$server_gateway.currentDir=originalCurrentDir;
-		$res.setStatusCode(404);
-		$res.flush();
+		
 	},
 /* Function: onError404
 		Called when a request for a non-existent file occurs. 

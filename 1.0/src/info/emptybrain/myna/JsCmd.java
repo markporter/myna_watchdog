@@ -55,9 +55,5 @@ public class JsCmd{
 			if (thread != null)	System.out.print(thread.generatedContent);
 		}
 	}
-	public static void init() throws Exception{
-		
-		
-		
-	}
+	
 }
