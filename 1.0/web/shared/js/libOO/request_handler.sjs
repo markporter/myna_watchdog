@@ -88,7 +88,8 @@ try{
 				&& parseInt($server.properties.enable_directory_listings)
 			){
 				$application._initScopes();
-				Myna.include("/myna/dir_listing.sjs")
+				$req._DIR_LISTING_ELIGIBLE_=true;
+				//Myna.include("/myna/dir_listing.sjs")
 			} else {
 				$application._onError404();
 				
@@ -110,6 +111,10 @@ try{
 	}
 	//if the application.sjs has not already handled this request
 	if (!$req.handled){
+		if ($req._DIR_LISTING_ELIGIBLE_){
+			Myna.include("/myna/dir_listing.sjs");
+			Myna.abort()
+		}
 		//server start scripts, if necessary
 		if ($server_gateway.isInitThread){
 			/* This is now handled in the JSServlet init */

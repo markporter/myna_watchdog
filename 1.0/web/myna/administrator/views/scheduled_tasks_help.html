@@ -9,8 +9,14 @@
 	A brief description of what this task does and why.
 	<br><br>
 	
-	<b>URL</b><br>
-	URL to run. No output is captured from this script.
+	<b>URL or script path</b><br>
+		If a URL, then this URL will be called and considered successful if the 
+		return status code is "200"
+		<br><br>
+		If a script path, then the normal Myna Path translations apply. The 
+		script will be executed in a standalone thread. Scripts stored in 
+		/shared/js/cron or /WEB-INF/ are not accessible via URL which makes 
+		those directories good choices for sensitive cron scripts. 
 	<br><br>
 	
 	<b>Active?</b><br>
@@ -25,8 +31,10 @@
 	The first time this script will run in hours(24):minutes:seconds format
 	<br><br>
 	
-	<b>Run Every</b><br>
-	This is the interval and and scale of the task 
+	<b>End Date</b><br>
+	This is the last date the URL or script should run. All normal times the 
+	script would run are executed but no forther executions will be preformed 
+	after this date  
 	<br><br>
 	
 </div>

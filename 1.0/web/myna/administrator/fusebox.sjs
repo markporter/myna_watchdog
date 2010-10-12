@@ -300,18 +300,8 @@ var fusebox={
 		var cron ={
 			name:data.name
 		}
-		/* cronProperties[data.name].split(/,/).forEach(function(tuple){
-			var parts =tuple.split(/=/);
-			if (parts.length == 2){
-				cron[parts[0]] = parts[1]	
-			}
-		}) */
 		cron = cronProperties[data.name].parseJson()
-		/* if (cron.start_date) {
-			cron.start_date = new Date(parseInt(cron.start_date));
-		} else {
-			cron.start_date = new Date();
-		} */
+		
 		return cron;
 	},
 	save_cron_job:function(data,rawData){
@@ -326,13 +316,13 @@ var fusebox={
 		var cronProperties = Myna.loadProperties("/WEB-INF/classes/cron.properties");
 		var cron = 	fusebox.get_cron_job(data) || {};
 		try{
-			cron.start_date = Date.parseDate(data.start_date_date + " " + data.start_date_time,"m/d/Y H:i:s")
+			cron.start_date = Date.parseDate(data.start_date_date + " " + data.start_date_time,"m/d/Y H:i")
 		} catch(e){
 			cron.start_date =new Date()
 		}
 		
 		try{
-			cron.end_date = Date.parseDate(data.end_date_date + " " + data.end_date_time,"m/d/Y H:i:s").getTime();
+			cron.end_date = Date.parseDate(data.end_date_date,"m/d/Y");
 		} catch(e){
 			cron.end_date =""
 		}

@@ -189,7 +189,7 @@ var C ={
 		
 		//C.applications.installEgg()
 		//C.applications.exportApp("myna_admin");
-		C.tasks.main();
+		//C.tasks.main();
 	}
 /* ================ helper functions ======================================== */
 	/* ---------------- addTab ---------------------------------------------- */
@@ -2451,7 +2451,7 @@ var C ={
 							xtype:"form",
 							autoScroll:true,
 							width:320,
-							//hidden:true,
+							hidden:true,
 							labelAlign:"top",
 							//bodyStyle:"padding:3px",
 							frame:true,
@@ -2495,7 +2495,7 @@ var C ={
 								height:79
 							},{
 							/* script */
-								fieldLabel:"URL",
+								fieldLabel:"URL or script path",
 								name:"script",
 								value:"",
 								width:290
@@ -2550,19 +2550,25 @@ var C ={
 									/* start_date_time */
 										fieldLabel:"Start Time",
 										name:"start_date_time",
-										xtype:"textfield",
-										value:new Date().format("H:i:s")
+										xtype:"timefield",
+										format:"H:i",
+										altFormats:"H:i:s",
+										width:50,
+										value:new Date().format("H:i")
 									},{
 									/* end_date_date */
 										fieldLabel:"End Date",
 										name:"end_date_date",
 										xtype:"datefield",
 										format:"m/d/Y"
-									},{
+									//},{
 									/* end_date_time */
-										fieldLabel:"End Time",
+										/* fieldLabel:"End Time",
 										name:"end_date_time",
-										xtype:"textfield"//,format:"H:i:s"
+										xtype:"timefield",
+										format:"H:i",
+										altFormats:"H:i:s",
+										width:50 */
 									}]
 								},{
 									items:[{
@@ -2586,6 +2592,7 @@ var C ={
 										displayField:'type',
 										mode: 'local',
 										triggerAction: 'all',
+										listWidth:150,
 										forceSelection:true,
 										editable:false,
 										value:"Simple",
@@ -2637,8 +2644,8 @@ var C ={
 											store: new Ext.data.SimpleStore({
 												fields: ['scale'],
 												data:[
-													["milliseconds"],
-													["seconds"],
+													/* ["milliseconds"],
+													["seconds"], */
 													["minutes"],
 													["hours"],
 													["days"],
@@ -2684,7 +2691,7 @@ var C ={
 										xtype:"fieldset",
 										id:"scheduleDaily",
 										height:150,
-										width:125,
+										width:135,
 										title:"Daily Schedule",
 										items:[{
 											xtype:"panel",
@@ -2702,6 +2709,10 @@ var C ={
 										/* daily_time */
 											hideLabel:true,
 											name:"daily_time",
+											xtype:"timefield",
+											format:"H:i",
+											altFormats:"H:i:s",
+											width:50,
 											value:new Date().format("H:i")
 										}]	
 									},{
@@ -2785,6 +2796,10 @@ var C ={
 										/* weekly_time */
 											hideLabel:true,
 											name:"weekly_time",
+											xtype:"timefield",
+											format:"H:i",
+											altFormats:"H:i:s",
+											width:50,
 											value:new Date().format("H:i")
 										}]
 									},{
@@ -2818,13 +2833,17 @@ var C ={
 										/* monthly_by_date_time */
 											hideLabel:true,
 											name:"monthly_by_date_time",
+											xtype:"timefield",
+											format:"H:i",
+											altFormats:"H:i:s",
+											width:50,
 											value:new Date().format("H:i")
 										}]
 									},{
 									//MonthlyByWeekday Panel
 										xtype:"fieldset",
 										id:"scheduleMonthlyByWeekday",
-										height:200,
+										height:225,
 										width:125,
 										title:"Monthly By Weekday",
 										items:[{
@@ -2860,7 +2879,7 @@ var C ={
 											mode: 'local',
 											triggerAction: 'all',
 											editable:false,
-											value:parseInt(new Date().getDate()/7),
+											value:Math.ceil(new Date().getDate()/7),
 											forceSelection:true
 										},{
 										/* monthly_by_weekday_day */
@@ -2894,6 +2913,10 @@ var C ={
 										/* monthly_by_date_time */
 											hideLabel:true,
 											name:"monthly_by_weekday_time",
+											xtype:"timefield",
+											format:"H:i",
+											altFormats:"H:i:s",
+											width:50,
 											value:new Date().format("H:i")
 										}]
 									},{
@@ -2927,6 +2950,10 @@ var C ={
 										/* yearly_time */
 											hideLabel:true,
 											name:"yearly_time",
+											xtype:"timefield",
+											format:"H:i",
+											altFormats:"H:i:s",
+											width:50,
 											value:new Date().format("H:i")
 										}]	
 									}]

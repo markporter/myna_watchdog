@@ -1,11 +1,11 @@
 
 /* 
 	Class: Myna.Profiler
-		Stores executiion times between begin() and end() functions
+		Stores execution times between begin() and end() functions
 	
 	Detail:
 		The Profiler class is for tracking execution time. More than one 
-		Profiler can be active at a time, but generally it is most convenient 
+		 Myna.Profiler can be active at a time, but generally it is most convenient 
 		to use the global <$profiler> instance. 
 		
 	Example:
@@ -60,6 +60,54 @@ Myna.Profiler=function (start){
 }
 
 Myna.Profiler.prototype.start=0;
+ 
+/* Function: calcAverages (deprecated)
+	(deprecated) see detail 
+	
+	This function has been replaced by:
+	* <getAveragesArray>
+	* <getAveragesHtml>
+	* <getAveragesText>
+		
+	*/
+	Myna.Profiler.prototype.calcAverages = function(){
+		this.times = this.times.filter(function(element,index,array){
+			//first we need someplace to store our times. 
+			//A function property is a convenient place
+			var my = arguments.callee;
+			if (!my["times"]) my.times = {} 
+			var curLabel = element.label;
+			
+			//if we've averaged this element already, then lets skip this repeat
+			if (my.times[curLabel]) return false;
+			
+			my.times[curLabel]=[];
+			var curTimes = my.times[curLabel]; 
+				
+			array.slice(index).forEach(function(element,index,array){
+				if (curLabel == element.label
+					&& parseInt(element.end) == element.end
+					&& parseInt(element.start) == element.start
+				){
+					curTimes.push(element.end - element.begin);
+				}
+			});
+			
+			if (curTimes.length > 1){
+				element.sum=0;
+				element.numEntries = curTimes.length;
+				curTimes = curTimes.filter(function(time){
+					return parseInt(time ) == time;
+				})
+				curTimes.forEach(function(time){element.sum+=parseInt(time)})
+				
+				element.average = Math.round(parseInt(element.sum)/curTimes.length);
+				element.isAverage=true;
+			}
+			
+			return true;
+		})
+	}
 
 /* Function: begin
 	Sets begin point for a given label. 
@@ -69,70 +117,54 @@ Myna.Profiler.prototype.start=0;
 		time		- 	*Optional, default new Date().getTime()*
 						Time to record for this entry
 	
+	Returns:
+		A function that can be used to set the end time. This functions can 
+		be called with no parameters to set the end time to "now" or you can 
+		pass a millisecond timestamp to set a specific end time. This can be 
+		useful for asynchronous operations to make sure that correct entry 
+		is updated
+		
 	Detail:
 		If an entry with this label was already pending, it is closed 
-		and a new entry is started. 
-*/
-Myna.Profiler.prototype.begin = function(label,time){
-	var key=label.replace(/[\W]*/,""),
-		entry={
-			label:label,
-			begin:time || new Date().getTime()
+		and a new entry is started.
+		
+	Example:
+	(code)
+		$profiler.begin("Doin' Stuff")
+		doStuff();
+		$profiler.end("Doin' Stuff")
+		
+		var endFunction =$profiler.begin("Doin' Stuff Asynchronously")
+		var doStuffWithCallback(args,callback) {
+			callAsyncFunction()
 		}
-	this.times.push(entry);
-	if (this.labels[key] && !this.labels[key].end){
-		this.end(key,entry.begin);	
-	}
-	this.labels[key] = entry;
-}
-
-/* Function: calcAverages
-	Calculates average time for duplicates. 
+		var doStuffWithCallback(args,function(result){
+			// use encosed end function to set end time on the correct begin()
+			endFunction()
+			... handle result ...
+		})
+		
+	(end)
 	
-	Detail:
-		Replaces duplicate entries (by label) with a single summary entry
-		with the *isAverage* property set. Also appends " (Avg of X entries)" 
-		to the label where X is the number of duplicate entries.
-		
-*/
-Myna.Profiler.prototype.calcAverages = function(){
-	this.times = this.times.filter(function(element,index,array){
-		//first we need someplace to store our times. 
-		//A function property is a convenient place
-		var my = arguments.callee;
-		if (!my["times"]) my.times = {} 
-		var curLabel = element.label;
-		
-		//if we've averaged this element already, then lets skip this repeat
-		if (my.times[curLabel]) return false;
-		
-		my.times[curLabel]=[];
-		var curTimes = my.times[curLabel]; 
-			
-		array.slice(index).forEach(function(element,index,array){
-			if (curLabel == element.label
-				&& parseInt(element.end) == element.end
-				&& parseInt(element.start) == element.start
-			){
-				curTimes.push(element.end - element.begin);
+	See:
+	* <end>
+	*/
+	 Myna.Profiler.prototype.begin = function(label,time){
+		var key=label.replace(/[\W]*/,""),
+			entry={
+				label:label,
+				begin:time || new Date().getTime()
 			}
-		});
-		
-		if (curTimes.length > 1){
-			element.sum=0;
-			element.numEntries = curTimes.length;
-			curTimes = curTimes.filter(function(time){
-				return parseInt(time ) == time;
-			})
-			curTimes.forEach(function(time){element.sum+=parseInt(time)})
-			
-			element.average = Math.round(parseInt(element.sum)/curTimes.length);
-			element.isAverage=true;
+		this.times.push(entry);
+		if (this.labels[key] && !this.labels[key].end){
+			this.end(key,entry.begin);	
 		}
-		
-		return true;
-	})
-}
+		this.labels[key] = entry;
+		return function(time){
+			entry.end=time||new Date().getTime()
+		}
+	}
+
 
 /* Function: end
 	Sets end point for a given label. 
@@ -145,16 +177,16 @@ Myna.Profiler.prototype.calcAverages = function(){
 	Detail:
 		If no entry is pending for this label, one is created with the same time, 
 		and the entries *isMark* property is set to true; 
-*/
-Myna.Profiler.prototype.end = function(label,time){
-	var now=time||new Date().getTime(),
-		key=label.replace(/[\W]*/,"");
-	if (!this.labels[key]){
-		this.begin(label,now);
-		this.labels[key].isMark=true;
+	*/
+	 Myna.Profiler.prototype.end = function(label,time){
+		var now=time||new Date().getTime(),
+			key=label.replace(/[\W]*/,"");
+		if (!this.labels[key]){
+			this.begin(label,now);
+			this.labels[key].isMark=true;
+		}
+		this.labels[key].end=now;
 	}
-	this.labels[key].end=now;
-}
 /* Function: mark
 	Sets a bookmark entry. 
 	
@@ -167,114 +199,200 @@ Myna.Profiler.prototype.end = function(label,time){
 		This is the same behavior as <end> when there is no <begin>. 
 		An entry is created with both begin and end set to _time_ and 
 		the entry's *isMark* property is set.  
-*/
-Myna.Profiler.prototype.mark=function(label,time){
-	label =String(label);
-	var now=time||new Date().getTime(),
-		key=label.replace(/[\W]*/,"");
-	this.begin(label,now);
-	this.labels[key].isMark=true;
-	this.labels[key].end=now;
-}
-
+	*/
+	 Myna.Profiler.prototype.mark=function(label,time){
+		
+		label =String(label);
+		this.end(label)
+		///var now=time||new Date().getTime(),
+		//	key=label.replace(/[\W]*/,"");
+		//this.end(label)
+		// this.begin(label,now);
+		//this.labels[key].isMark=true;
+		//this.labels[key].end=now; */
+	}
+/* Function: getAveragesArray
+	returns an array of tasks with average execution time in milliseconds
+	
+	Note: 
+	This will only return entries with a "begin" and "end".
+	
+	See:
+	* <getAveragesHtml>
+	*/
+	 Myna.Profiler.prototype.getAveragesArray = function(){
+		var tasks ={}
+		
+		this.times.filter(function(t){
+			return !t.isMark;
+		}).forEach(function(t){
+			if (!(t.label in tasks)){
+				tasks[t.label] = []
+			}
+			tasks[t.label].push(t.end - t.begin)
+		})
+		
+		return ObjectLib.getKeys(tasks).sort().map(function(label){
+			return {
+				label:label,
+				averageMs:tasks[label].avg(),
+				numEntries:tasks[label].length
+			}
+		})
+	}
+/* Function: getAveragesHtml
+	returns <getTaskAverages> in an HTML table. 
+	*/
+	 Myna.Profiler.prototype.getAveragesHtml = function(){
+		var msg=[
+			'<style>',
+				'.profiler_table {',
+					'border:1px solid black;',
+				'}',
+				'.profiler_table th{',
+					'font-weight:bold;',
+				'}',
+				'.profiler_table td{',
+					'border:1px solid black;',
+				'}',
+				'.profiler_table .alt_row td{',
+					'background-color:silver',
+				'}',
+			'</style>',
+			'<table class=profiler_table>',
+			'<tr>',
+			'<th>Label</th><th>Num Entries</th><th>Average Ms</th>',
+			'</tr>'
+		];
+		this.getAveragesArray().forEach(function(t,index){
+			var alt_row = (index%2==0) ? "alt_row":"";
+			msg.push("<tr class='" +alt_row + "'>");
+			msg.push("<td>" + String(t.label) +"</td>");
+			msg.push("<td>" + String(t.numEntries) +"</td>");
+			msg.push("<td>" + String(t.averageMs) +"</td>");
+			msg.push("</tr>");
+		});
+		
+		msg.push("</table>") ;
+			
+		return msg.join("\n");
+	}
+/* Function: getAveragesText
+	returns a text table of average times. 
+		
+	*/
+	 Myna.Profiler.prototype.getAveragesText = function(){
+		var delim = " | ";
+		var msg=[
+			"Label".toFixedWidth(50) + delim + "Num Entires".toFixedWidth(15)+ delim + "Average Ms".toFixedWidth(15), 
+			"-".repeat(50) + delim + "-".repeat(15)+ delim + "-".repeat(15)
+		]
+		this.getAveragesArray().forEach(function(t,index){
+			msg.push(String(t.label).toFixedWidth(50," ","...","middle") 
+				+ delim + String(t.numEntries).toFixedWidth(15)
+				+ delim + String(t.averageMs).toFixedWidth(15)
+			); 
+		});		
+			
+		return msg.join("\n");
+	}
 /* Function: getSummaryArray
 	returns an array of all the entries. 
 		
 	Detail:
 		Each entry is an object with *begin* and *end* proerties, 
 		and optionally *isMark* or *isAverage* properties.
-*/
-Myna.Profiler.prototype.getSummaryArray = function(){
-	return this.times;
-}
+	*/
+	 Myna.Profiler.prototype.getSummaryArray = function(){
+		return this.times;
+	}
 /* Function: getSummaryHtml
 	returns an HTML summary of all the entries. 
 		
-*/
-Myna.Profiler.prototype.getSummaryHtml = function(){
-	var msg="";
-		msg += "<style>";
-		msg += ".profiler_table {";
-			msg += "border:1px solid black;	";
-		msg += "}";
-		msg += ".profiler_table th{";
-			msg += "font-weight:bold;	";
-		msg += "}";
-		msg += ".profiler_table td{";
-			msg += "border:1px solid black;";
-		msg += "}";
-		msg += ".profiler_table .alt_row td{";
-			msg += "background-color:silver";
-		msg += "}";
-		msg += "</style>";
-		msg +="<table class='profiler_table'>";
-		msg += "<tr>" ;
-		msg += "<th>Label</th><th>Elapsed Millis</th><th>Elapsed Total Millis</th>";
-		msg += "</tr>" ;
-	
-	var total=0,entry,elapsed,label;
-	for (var x=0; x < this.times.length; ++x){
-		entry = this.times[x];
-		if (!entry.end) continue;
-		elapsed=entry.end - entry.begin;
-		total=entry.end - this.start;
-		label=entry.label
+	*/
+	 Myna.Profiler.prototype.getSummaryHtml = function(){
+		var msg="";
+			msg += "<style>";
+			msg += ".profiler_table {";
+				msg += "border:1px solid black;	";
+			msg += "}";
+			msg += ".profiler_table th{";
+				msg += "font-weight:bold;	";
+			msg += "}";
+			msg += ".profiler_table td{";
+				msg += "border:1px solid black;";
+			msg += "}";
+			msg += ".profiler_table .alt_row td{";
+				msg += "background-color:silver";
+			msg += "}";
+			msg += "</style>";
+			msg +="<table class='profiler_table'>";
+			msg += "<tr>" ;
+			msg += "<th>Label</th><th>Task Ms</th><th>Elapsed Total Ms</th>";
+			msg += "</tr>" ;
 		
-		if (entry.isMark) {
-			elapsed="&nbsp;";
+		var total=0,entry,elapsed,label;
+		for (var x=0; x < this.times.length; ++x){
+			entry = this.times[x];
+			if (!entry.end) continue;
+			elapsed=entry.end - entry.begin;
+			total=entry.begin - this.start;
+			label=entry.label
+			
+			if (entry.isMark) {
+				elapsed="&nbsp;";
+				label = "MARK: " + label
+			} else {
+				label = "TASK: " + label
+			}
+			
+			
+			var alt_row = (x%2==0) ? "alt_row":"";
+			msg += "<tr class='" +alt_row + "'>" ;
+			msg += "<td>" + String(label) +"</td>";
+			msg += "<td>" + String(elapsed) +"</td>";
+			msg += "<td>" + String(total) +"</td>";
+			msg += "</tr>" ;
 		}
-		
-		if (entry.isAverage){
-			elapsed=entry.average +" / " + entry.sum;
-			total="&nbsp;";
-			label +=" (Avg/Sum  of " + entry.numEntries +" entries)"
-		}
-		
-		var alt_row = (x%2==0) ? "alt_row":"";
-		msg += "<tr class='" +alt_row + "'>" ;
-		msg += "<td>" + String(label) +"</td>";
-		msg += "<td>" + String(elapsed) +"</td>";
-		msg += "<td>" + String(total) +"</td>";
-		msg += "</tr>" ;
+		msg += "</table>" ;
+			
+		return msg;
 	}
-	msg += "</table>" ;
-		
-	return msg;
-}
+
 
 /* Function: getSummaryText
 	returns a text summary of all the entries. 
 		
-*/
-Myna.Profiler.prototype.getSummaryText = function(){
-	var delim = " | ";
-	var msg="";
-		msg += "Label".toFixedWidth(50) + delim + "Elapsed Millis".toFixedWidth(15) + delim + "Elapsed Total".toFixedWidth(15) + "\n"; 
-		msg += "-".repeat(50) + delim + "-".repeat(15) + delim + "-".repeat(15) + "\n";
+	*/
+	 Myna.Profiler.prototype.getSummaryText = function(){
+		var delim = " | ";
+		var msg="";
+			msg += "Label".toFixedWidth(50) + delim + "Elapsed Millis".toFixedWidth(15) + delim + "Elapsed Total".toFixedWidth(15) + "\n"; 
+			msg += "-".repeat(50) + delim + "-".repeat(15) + delim + "-".repeat(15) + "\n";
+				
+		var total=0,entry,elapsed,label;
+		for (var x=0; x < this.times.length; ++x){
+			entry = this.times[x];
+			if (!entry.end) continue;
+			elapsed=entry.end - entry.begin;
+			total=entry.begin - this.start;
+			label=entry.label
 			
-	var total=0,entry,elapsed,label;
-	for (var x=0; x < this.times.length; ++x){
-		entry = this.times[x];
-		if (!entry.end) continue;
-		elapsed=entry.end - entry.begin;
-		total=entry.end - this.start;
-		label=entry.label
-		
-		if (entry.isMark) {
-			elapsed="";
+			if (entry.isMark) {
+				elapsed="";
+			}
+			
+			if (entry.isAverage){
+				elapsed=entry.average +" / " + entry.sum;
+				total="";
+				label +=" (Avg/Sum  of " + entry.numEntries +" entries)"
+			}
+			
+			msg += String(label).toFixedWidth(50," ","...","middle") + delim 
+			msg += String(elapsed).toFixedWidth(15) + delim 
+			msg += String(total).toFixedWidth(15) + "\n";
+			
 		}
-		
-		if (entry.isAverage){
-			elapsed=entry.average +" / " + entry.sum;
-			total="";
-			label +=" (Avg/Sum  of " + entry.numEntries +" entries)"
-		}
-		
-		msg += String(label).toFixedWidth(50," ","...","middle") + delim 
-		msg += String(elapsed).toFixedWidth(15) + delim 
-		msg += String(total).toFixedWidth(15) + "\n";
-		
+			
+		return msg;
 	}
-		
-	return msg;
-}
