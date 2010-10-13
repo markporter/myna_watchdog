@@ -1,4 +1,5 @@
 var now = new Date();
+//now = Date.parseDate("07/01/2011 00:30","m/d/Y H:i")
 var config = $req.data.arguments[0]
 //check for new style
 if (/^\s*\{/.test(config)){
@@ -58,7 +59,7 @@ try{
 	var targetmonth;
 	//Myna.printConsole(config.name,Myna.dumpText(config));
 	if (config.is_active){
-		if (config.start_date < now){
+		if (config.start_date <= now){
 			if (
 				!(config.end_date instanceof Date) 
 				|| config.end_date.clearTime(true) >= now.clearTime(true)
@@ -110,13 +111,14 @@ try{
 					break;
 					case "monthlybydate":
 						if (!elapsed || elapsed >= times.days*28*config.monthly_by_date_repeat){
+							
 							if (now.format("j H:i") ==parseInt(config.monthly_by_date_day)+" "+config.monthly_by_date_time){
 								shouldRun = true;
 								
 								//one last sanity check if there is lock file
 								if (elapsed){
-									targetMonth = parseInt(lock.lastModified.format("n")) + config.monthly_by_weekday_repeat
-									if (parseInt(now.format("n")) !=  targetMonth){
+									var elapsedMonths = Date.monthsBetween(config.start_date,now);
+									if (elapsedMonths%config.monthly_by_date_repeat != 0){
 										shouldRun = false;
 									}
 								}
@@ -131,8 +133,8 @@ try{
 									
 									//one last sanity check if there is lock file
 									if (elapsed){
-										targetMonth = parseInt(lock.lastModified.format("n")) + config.monthly_by_weekday_repeat
-										if (parseInt(now.format("n")) !=  targetMonth){
+										var elapsedMonths = Date.monthsBetween(config.start_date,now);
+										if (elapsedMonths%config.monthly_by_weekday_repeat != 0){
 											shouldRun = false;
 										}
 									}

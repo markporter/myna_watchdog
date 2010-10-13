@@ -913,3 +913,32 @@ Date.formatInterval = function(interval, value){
 	return result.join(", ")
 	
 };
+/* Function: monthsBetween
+	 [static] returns the number of whole calendar months between two dates   
+	 
+	Parameters:
+		d1		-	first date
+		d2		-	second date
+		
+	Note:
+		if d1 > d2 the answer will be negative
+	
+ */
+Date.monthsBetween = function(d1,d2){
+	var coefficient=1
+	if (d1 > d2) {
+		[d1,d2] =[d2,d1];
+		coefficient=-1
+	}
+	var count =0
+	Myna.println(d1.getMonth()+" < "+d2.getMonth())
+	while (d1.getYear() < d2.getYear()){
+		d1 = d1.add("y",1)
+		count+=12
+	}
+	while (d1.getMonth() < d2.getMonth()){
+		d1 = d1.add("mo",1)
+		count++
+	}
+	return coefficient *count;
+}

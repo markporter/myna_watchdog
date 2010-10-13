@@ -71,6 +71,7 @@ if (!Myna) var Myna={}
 						then a java.net.SocketTimeoutException or 
 						org.apache.commons.httpclient.ConnectTimeoutException is 
 						thrown
+						
 	
 	Returns:							
 		Reference to HttpConnection instance
@@ -94,6 +95,8 @@ Myna.HttpConnection = function(options){
 	//var conMan = new MultiThreadedHttpConnectionManager();
 
 	this.client = new HttpClient();
+	this.client.getParams().setBooleanParameter("http.protocol.allow-circular-redirects", true);
+	
 	if (this.timeout){
 		var conMan =this.client.getHttpConnectionManager(); 
 		var p = conMan.getParams()

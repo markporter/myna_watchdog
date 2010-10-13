@@ -2479,7 +2479,7 @@ var C ={
 							items:[{
 							/* name */
 								fieldLabel:"Name",
-								maxLength:30,
+								//maxLength:30,
 								name:"name",
 								value:"New Task",
 								width:290
