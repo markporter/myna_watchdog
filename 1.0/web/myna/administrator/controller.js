@@ -17,8 +17,7 @@ var C ={
 		var oldDecode = Ext.util.JSON.decode;
 		Ext.decode = Ext.util.JSON.decode = function(text){
 			try{
-				console.dir(text.parseJson())
-				return text.parseJson();
+				return oldDecode(text);
 			} catch(e){
 				new Ext.Window({
 					id:"decode_error",

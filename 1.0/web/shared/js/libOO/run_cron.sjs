@@ -57,6 +57,7 @@ try{
 		weeks:1000*60*60*24*7,
 	}
 	var targetmonth;
+	var elapsedMonths
 	//Myna.printConsole(config.name,Myna.dumpText(config));
 	if (config.is_active){
 		if (config.start_date <= now){
@@ -117,7 +118,7 @@ try{
 								
 								//one last sanity check if there is lock file
 								if (elapsed){
-									var elapsedMonths = Date.monthsBetween(config.start_date,now);
+									elapsedMonths = Date.monthsBetween(config.start_date,now);
 									if (elapsedMonths%config.monthly_by_date_repeat != 0){
 										shouldRun = false;
 									}
@@ -133,7 +134,7 @@ try{
 									
 									//one last sanity check if there is lock file
 									if (elapsed){
-										var elapsedMonths = Date.monthsBetween(config.start_date,now);
+										elapsedMonths = Date.monthsBetween(config.start_date,now);
 										if (elapsedMonths%config.monthly_by_weekday_repeat != 0){
 											shouldRun = false;
 										}

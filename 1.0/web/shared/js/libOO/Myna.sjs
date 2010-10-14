@@ -1892,7 +1892,80 @@ if (!Myna) var Myna={}
 	Myna.sync=function(func){
 		return Myna.JavaUtils.createSyncFunction(func);
 	}
-
+/* Function threadSafeSet
+	sets a property on an object, if not already set, in a thread-safe manner
+		
+	Parameters:
+		scope 		-	either a simple JS object, or any object with get() and 
+						set() functions. If _scope_ has get/set, then those will 
+						be used.
+		prop		-	String name of property to set
+		func		-	a function that returns the value to be set
+		
+	Returns:
+		The value of _scope_[_prop_] or _scope_.get(_prop_) if it exists, or the 
+		result of _func_() if the property did not exist.
+		
+	Detail:
+		The primary use of this function is to create singleton instances of 
+		objects by storing them in a shared scope. Because the scope is shared, 
+		you want make sure that concurrent threads do not try to set the object 
+		at the same time, overwriting each other. 
+		   
+	Examples:
+	(code)
+		//simple objects
+		Myna.threadSafeSet($application,"settings",function(){
+			return Myna.include("app_settings.sjs",{})
+		})
+		
+		//singleton constructor
+		// calls to new MyClass(ds) will return the singleton instance 
+		var MyClass = function(ds){
+			return Myna.threadSafeSet($server,"MyClassSingleton",function(){
+				this.dataSource = ds;
+				return this;
+			})
+		}
+		MyClass.prototype.dataSource=""
+		
+	(end)
+	*/
+	Myna.threadSafeSet = function(scope,prop,func){
+		if ("set" in scope && "get" in scope){
+			var o = scope.get(prop);
+			if (o !== null) {
+				return o;
+			} else {
+				Myna.lock(func.toSource(),10,function(){
+					// see if there is a singleton defined by another thread
+					// before we got our lock    
+					o = scope.get(prop);
+					if (o === null){
+						o=func()
+						scope.set(prop,o);
+					}
+				})    
+			}
+		} else {
+			
+			if (prop in scope) {
+				o=scope[prop];
+			} else {
+				Myna.lock(func.toSource(),10,function(){
+					// see if there is a singleton defined by another thread
+					// before we got our lock
+					if (prop in scope) {
+						o=scope[prop];
+					}else {
+						o=func();
+						scope[prop] =o;
+					}
+				})    
+			}
+		}
+		return o;
+	}
 /* Function: xmlToObject 
 	returns an XML object as a plain JavaScript Object
 	 
