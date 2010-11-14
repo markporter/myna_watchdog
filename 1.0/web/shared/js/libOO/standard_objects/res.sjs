@@ -145,6 +145,23 @@ var $res = {
 			$server_gateway.environment.get("response").setStatus(code);
 		}
 	},
+/* Function: setExitCode
+		Sets an exit code (commandline mode only), and optionally sends a message 
+		to standard err
+		
+		Parameters: 
+			code 		- 	Numeric exit code. 0 is considered "OK", -1 will prevent 
+							exiting 
+			msg		-	*Optional default null*
+							A string message print on standard error output
+		
+		Example:
+			$res.seExitCode("1","Incorrect number of parameters")
+	*/
+	setExitCode:function(code,msg){
+		if (msg) java.lang.System.err.println(msg)
+		$server_gateway.environment.put("exitCode",String(code))
+	},	
 /* Function: metaRedirect
 		Redirect this page using META HTTP-EQUIV="refresh" tag. 
 		

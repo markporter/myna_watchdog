@@ -44,7 +44,13 @@ public class JsCmd{
 			thread.handleRequest(jsFile.toURI().toString());
 			
 			System.out.print(thread.generatedContent);
-			System.exit(0);
+			String exitCode = (String)thread.environment.get("exitCode");
+			if (exitCode == null){
+				System.exit(0);
+			} else if (!exitCode.equals("-1")){
+				System.exit(Integer.parseInt(exitCode));
+			}
+			
 		} catch (Exception e){
 			System.err.println("============== Error ============");
 			System.err.println(e.toString());
