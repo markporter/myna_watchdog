@@ -201,6 +201,8 @@ if (!Array.dim)
   };
 }
 
+
+
 /* Function: reduce
 	Apply a function simultaneously against two values of the array (from left-to-right) as to reduce it to a single value.
 	
@@ -494,7 +496,51 @@ Array.prototype.compact = function compactArray(){
 	}
 }
 
-
+/* Function: contains 
+	searches an array and returns true if one or more are found
+	
+	Parameters:
+		search	-	a simple value or a function to identify a matching entry. If 
+						this is function, it will be called with a the current array 
+						item and should return *true* if this is a matching item
+	
+	Note:
+		unlike <indexOf> This function does a loose comparison. This means that 
+		if, for instance you search for *false*, you will match entries with values
+		of null, undefined, "",0,etc
+		
+	Examples:
+	(code)
+		//does the array contain "woot" ?
+		return someArray.contains("woot");
+		
+		//does the array contain an entry that contains "woot" ?
+		return someArray.contains(function(entry){
+			return /woot/.test(entry)
+		});
+		
+		//does the array contain "woot" and "dude"?
+		return ["woot","dude"].every(someArray.contains)
+		
+		//does the array contain an entry that contains "woot" OR "dude"?
+		return ["woot","dude"].some(function(term){
+			return someArray.contains(function(entry){
+				return new RegExp(term).test(entry);
+			})
+		})
+		
+	(end)
+*/
+Array.prototype.contains = function contains(search){
+	for (var x=0; x<this.length;++x){
+		if (typeof search === "function"){
+			if (search(this[x])) return true;	
+		} else {
+			if (this[x] == search) return true	
+		}
+	}
+	return false;
+}
 
 if ("$server_gateway" in this){
 	(function(){
