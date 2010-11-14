@@ -477,7 +477,21 @@ if (!Myna) var Myna={}
 			return []	
 		}
 	})
-
+/* Property: hasIndex
+	returns true is the specified index exists 
+	
+	Parameters:
+		colnames		-	array of column names in the index
+		isUnique		-	true, if the index is unique
+		
+	*/
+	Myna.Table.prototype.hasIndex = function(colnames,isUnique) {
+		var t = this;
+		return t.indexInfo.contains(function(index){
+			return index.unique == isUnique 
+				&& colnames.every(index.columns.contains) 
+		})
+	}
 
 /* Function: addColumn
 	Adds a column to an existing table
