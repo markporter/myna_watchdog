@@ -10,7 +10,117 @@
 	This allows for a more representative definition of the GUI hierarchy.
 	
 	Here is a quick example:
+	(code)
+	var MS = Myna.Swing;
+	var config = {
+		//Special Property: Swing class to create
+		cls:"JFrame",
+		//any property that has setter is set on the resulting object
+		title:"HelloWorldSwing",
+		//getConst returns the value of the passed constant Value.
+		defaultCloseOperation:$server.isCommandline?MS.getConst("JFrame.EXIT_ON_CLOSE"):MS.getConst("WindowConstants.DISPOSE_ON_CLOSE"),
+		//any property not already defined by the class, will be added to the resulting object
+		center:function(){
+			this.setLocationRelativeTo(null)
+		},
+		//Special Property: elements to add to this Swing object
+		items:[{
+			cls:"JPanel",
+			
+			//Special Property: layout specific positioning hint for this control
+			layoutPos:MS.getConst("BorderLayout.CENTER"),
+			
+			//this is equivalent to setLayout(new java.awt.GridBagLayout()) 
+			layout:{
+				cls:"GridBagLayout"
+			},
+			//MS.BorderFactory is a shortcut to java.swing.BorderFactory
+			border:MS.BorderFactory.createCompoundBorder(
+				MS.BorderFactory.createTitledBorder("Text Fields"),
+				MS.BorderFactory.createEmptyBorder(5,5,5,5)
+			),
+			//Special Property: properties of "defaults" are copied to each item in "items". 
+			//Nested "defaults" will applied to nested "items"
+			defaults:{
+				cls:"JLabel",
+				layoutPos:{
+					cls:"GridBagConstraints",
+					anchor:MS.getConst("GridBagConstraints.WEST"),
+					gridwidth:MS.getConst("GridBagConstraints.RELATIVE"), //next-to-last
+					fill:MS.getConst("GridBagConstraints.NONE"),      //reset to default
+					weightx:0, // don't expand to fill space   
+				}
+			},
+			items:[{
+				//all other properties are coming from "defaults" above
+				text:"JTextField:"
+			},{
+				cls:"JTextField",
+				preferredSize:MS.getDimension(100,22),
+				layoutPos:{
+					anchor:MS.getConst("GridBagConstraints.EAST"),
+					gridwidth:MS.getConst("GridBagConstraints.REMAINDER"),     //end row
+					fill:MS.getConst("GridBagConstraints.HORIZONTAL"),	//expand horizontally
+					weightx:1.0, // expand to fill extra space
+				},
+				handler:function(event){
+					var src =event.getSource(); 
+					//getCmp is custom extension for each component that searches 
+					// recusively through its children looking for a component by name
+					src.getParent().getCmp("OutputField").setText("JTextField set to: " + src.getText())
+				}
+			},{
+				text:"JPasswordField:",
+			},{
+				cls:"JPasswordField",
+				layoutPos:{
+					anchor:MS.getConst("GridBagConstraints.EAST"),
+					gridwidth:MS.getConst("GridBagConstraints.REMAINDER"),     //end row
+					fill:MS.getConst("GridBagConstraints.HORIZONTAL"),	//expand horizontally
+					weightx:1.0, // expand to fill extra space
+				},
+				handler:function(event){
+					var src =event.getSource(); 
+					src.getParent().getCmp("OutputField").setText("JPasswordField set to: " + src.getText())
+				}
+			},{
+				text:"JFormattedTextField:",
+			},{
+				cls:"JFormattedTextField",
+				value:new java.util.Date(new Date().getTime()),
+				layoutPos:{
+					anchor:MS.getConst("GridBagConstraints.EAST"),
+					gridwidth:MS.getConst("GridBagConstraints.REMAINDER"),     //end row
+					fill:MS.getConst("GridBagConstraints.HORIZONTAL"),	//expand horizontally
+					weightx:1.0, // expand to fill extra space
+				},
+				//Special Property: automatically adds an ActionListener for this component
+				handler:function(event){
+					var src =event.getSource(); 
+					
+					src.getParent().getCmp("OutputField").setText("JFormattedTextField set to: " + src.getText())
+				}
+			},{
+				text:"Type text in a field and press Enter.",
+				border:MS.BorderFactory.createEmptyBorder(10,0,0,0),
+				name:"OutputField",//this is how we find this component later with getCmp(name)
+				layoutPos:{
+					anchor:MS.getConst("GridBagConstraints.WEST"),
+					gridwidth:MS.getConst("GridBagConstraints.REMAINDER"),     //end row
+					fill:MS.getConst("GridBagConstraints.HORIZONTAL"),	//expand horizontally
+					weightx:1.0, // expand to fill extra space
+				},
+			}]
+		}]
+			
 	
+	}
+	
+	var panel = new MS.build(config);
+	
+	panel.center();
+	panel.show()
+	(end)
 	
 */	
 if (!Myna) var Myna={}

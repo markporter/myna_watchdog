@@ -95,6 +95,7 @@ Group: Myna Object  {
    File: Myna.Permissions  (Permissions.sjs)
    File: Myna.Profiler  (Profiler.js)
    File: Myna.Query  (Query.sjs)
+   File: Myna.Swing  (Swing.sjs)
    File: Myna.Table  (Table.sjs)
    File: Myna.Template  (Template.sjs)
    File: Myna.Thread  (Thread.sjs)
