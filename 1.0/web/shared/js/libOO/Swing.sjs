@@ -156,13 +156,13 @@ Myna.Swing={
 	alert:function(text,title,type){
 		switch((type||"").toLowerCase()){
 		case "error":
-			type = G.getConst("JOptionPane.ERROR_MESSAGE");
+			type = Myna.Swing.getConst("JOptionPane.ERROR_MESSAGE");
 			break;
 		case "warning":
-			type = G.getConst("JOptionPane.WARNING_MESSAGE");
+			type = Myna.Swing.getConst("JOptionPane.WARNING_MESSAGE");
 			break;
 		default:
-			type = G.getConst("JOptionPane.INFORMATION_MESSAGE");
+			type = Myna.Swing.getConst("JOptionPane.INFORMATION_MESSAGE");
 		}
 		javax.swing.JOptionPane.showMessageDialog(null, text,title||"Alert", type);
 		
@@ -173,7 +173,7 @@ Myna.Swing={
 				null,
 				prompt,
 				"",
-				G.getConst("JOptionPane.QUESTION_MESSAGE"), 
+				Myna.Swing.getConst("JOptionPane.QUESTION_MESSAGE"), 
 				null,
 				options, 
 				options[defaultIndex]
@@ -183,27 +183,60 @@ Myna.Swing={
 				null,
 				prompt,
 				"",
-				G.getConst("JOptionPane.QUESTION_MESSAGE")
+				Myna.Swing.getConst("JOptionPane.QUESTION_MESSAGE")
 				
 			);
 		}
 	},
-	confirm:function(prompt,options,defaultIndex){
-		if (!options){
-			options=["OK","Cancel"]	
+	confirm:function(prompt,buttons,defaultIndex){
+		if (!buttons){
+			buttons=["OK","Cancel"]	
 		}
 		if (defaultIndex === undefined) defaultIndex=0
 		return javax.swing.JOptionPane.showOptionDialog(
 			null,
 			prompt,
 			"",
-			G.getConst("JOptionPane.OK_CANCEL_OPTION"),
-			G.getConst("JOptionPane.QUESTION_MESSAGE"),
+			Myna.Swing.getConst("JOptionPane.OK_CANCEL_OPTION"),
+			Myna.Swing.getConst("JOptionPane.QUESTION_MESSAGE"),
 			null,
-			options,
-			options[defaultIndex] 
-		) == G.getConst("JOptionPane.OK_OPTION");
+			buttons,
+			buttons[defaultIndex] 
+		) == Myna.Swing.getConst("JOptionPane.OK_OPTION");
 		
+	},
+	showDialog:function(fields,title,buttons,defaultIndex){
+		if (!buttons){
+			buttons=["OK","Cancel"]	
+		}
+		if (defaultIndex === undefined) defaultIndex=-1
+		var fArray = Myna.JavaUtils.createClassArray("java.lang.Object",fields.length);
+		result =[]
+		fields.forEach(function(f,i){
+			result.push(fArray[i] = MS.build(f))
+			if (f.name) result[f.name] =result[result.length-1]
+		})
+		
+		var jop = new javax.swing.JOptionPane(fArray,
+		  MS.getConst("JOptionPane.QUESTION_MESSAGE"),
+		  MS.getConst("JOptionPane.OK_CANCEL_OPTION"),
+		  null,
+		  buttons,
+		  defaultIndex > -1?buttons[defaultIndex]:0
+		);
+		
+		var dialog = jop.createDialog(title||"")
+		/* dialog.addComponentListener(
+			java.awt.event.ComponentAdapter({
+				componentShown:function(e){
+					fArray[1].requestFocusInWindow()
+				}
+			})
+		); */
+		dialog.setVisible(true);
+		
+		if (jop.getValue() != MS.getConst("JOptionPane.OK_OPTION")) return false;
+		return result;
 	},
 	build:function(config){
 		var component;
@@ -235,25 +268,6 @@ Myna.Swing={
 		//Myna.println(code)
 		eval(code);
 		
-		/* component.getCmp=function(name){
-			var search = function(obj,name){
-				var result= obj.getComponents().reduce(function(found,cmp){
-					if (found) return found;
-					if (cmp.getName() == name) return cmp
-				},null)
-				if (result) {
-					return result;
-				} else {
-					return obj.getComponents().reduce(function(found,cmp){
-						if (found) return found;
-						return search(cmp,found)
-					},null)
-				}
-			}
-			return search(this,name)
-			
-		} */
-		
 		config.getProperties().forEach(function(property){
 			var value = config[property];
 			switch(property){
@@ -264,6 +278,40 @@ Myna.Swing={
 				component.addActionListener(new JavaAdapter(java.awt.event.ActionListener,{
 					actionPerformed:value.bind(component)
 				}))
+				break;
+			case "listeners":
+				value.forEach(function(handler,eventName){
+					switch(eventName){
+					case "onShown":
+						component.addComponentListener(
+							java.awt.event.ComponentAdapter({
+								componentShown:handler.bind(component)
+							})
+						)
+						break;
+					case "onHidden":
+						component.addComponentListener(
+							java.awt.event.ComponentAdapter({
+								componentHidden:handler.bind(component)
+							})
+						)
+						break;
+					case "onResized":
+						component.addComponentListener(
+							java.awt.event.ComponentAdapter({
+								componentResized:handler.bind(component)
+							})
+						)
+						break;
+					case "onMoved":
+						component.addComponentListener(
+							java.awt.event.ComponentAdapter({
+								componentMoved:handler.bind(component)
+							})
+						)
+						break;
+					}
+				})
 				break;
 			default:
 				var setter = Myna.Swing._getSetterFName(property);

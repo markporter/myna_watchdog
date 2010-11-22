@@ -760,7 +760,94 @@ if (!Myna) var Myna={}
 		return result;
 		
 	}
-
+/* Function: executeWinBatch 
+	Executes a Windows batch file
+	 
+	Parameters: 
+		script			-	String of commands to execute in the shell
+		waitForOutput	-	*Optional, default=true* If true, this function will 
+							wait for the script to complete and return a result object 
+							with stderr, stdout, and the exit code. If False returns  
+							empty result object immediately
+							
+	Returns: 
+		A JavaScript object that looks like this:
+		
+		(code)
+		{
+			output:"here is the stdout",
+			errors:"here is the stderr",
+			exitCode:-1
+		}
+		(end)
+		
+	Detail: 
+		This function attempts to execute the supplied script as a Windows batch file. 
+		This is obviously platform dependent, so you may want to consult <$server.osName>. 
+		It saves _script_ to a tempfile and then executes that file at a windows batch file
+		
+	See Also: <executeShell>
+	
+	Examples:
+	(code)
+		Myna.executeWinBatch("notepad.exe i:\\custom\\mpages\\applist.js")
+	(end)
+	*/
+	Myna.executeWinBatch=function Myna_executeWinBatch(script,waitForOutput){
+		var
+			runtime = java.lang.Runtime.getRuntime(),
+			process, 		//holds java.lang.Process object returned by exec
+			curLine,		// current line of process output
+			reader,			//buffered reader for process output
+			systemPath, 	//filesystem path to script file
+			scriptFile,		// java.io.File of script file
+			result={output:"",errors:"",exitCode:-1},		//output object to store output, errors, and exitCode
+			scriptPath = Myna.File.createTempFile("shl");	//URI of script file
+			
+		if (waitForOutput === undefined) waitForOutput=true;
+		
+		
+		
+		//write the script to the temp file
+		scriptFile = new Myna.File(scriptPath);
+		scriptFile.renameTo(scriptPath.listLast("/") + ".cmd")
+		systemPath = scriptFile.javaFile.getAbsolutePath();
+		scriptFile.writeString(script);
+		result.file=scriptFile.toString();
+		result.script=script;
+		process = runtime.exec(systemPath,null,scriptFile.javaFile.getParentFile());
+		
+		
+		
+		if (waitForOutput){
+			result.output = Myna.JavaUtils.streamToString(process.getInputStream());
+			result.errors = Myna.JavaUtils.streamToString(process.getErrorStream());
+			
+			process.waitFor();
+			result.exitCode = process.exitValue();
+		}
+		if (result.exitCode ==0 && String(result.errors).length ==0){
+			scriptFile.forceDelete();
+		} else {
+			Myna.log("Error","Error in Myna.executeWinBatch",<ejs>
+				<b>Shell Command:</b><br>
+				
+				<b>Script:</b><br>
+				<pre><%=script%></pre><p>
+				
+				<b>Errors:</b><br>
+				<pre><%=result.errors%></pre><p>
+				
+				<b>Output:</b><br>
+				<pre><%=result.output%></pre><p>
+				
+				<b>ScriptPath:</b><br>
+				<pre><%=result.file%></pre><p>
+			</ejs>);	
+		}
+		return result;
+		
+	}
 
 /* Function: formatError 
 	returns an html formatted string representing the supplied exception. 
@@ -1025,7 +1112,7 @@ if (!Myna) var Myna={}
 	executes a .js, .sjs, or .ejs file in the current thread
 	 
 	Parameters: 
-		path	-	<MynaPath> representing location of file 
+		path	-	<MynaPath> or <Myna.File> representing location of file 
 		scope 	-	*Optional, default <$server.globalScope>* 
 					This is the object that will be passed as the "this" object to 
 					the script. any "global" variables created in the script will be
@@ -1307,12 +1394,12 @@ if (!Myna) var Myna={}
 			true if a lock was acquired and _func_ was executed
 		
 		Detail:
-		If more than one thread calls lock() near the same time, the first call 
-		will get access and the other call will be placed in a FIFO queue until 
-		the first thread calls release() on the returned lock object. For this 
-		reason it is best to "return" from _func_ as soon as possible. If your 
-		function throws an exception, its lock will be released. If _timeout_ is 
-		exceeded while waiting for a lock, then <Myna.lock> will return false
+			If more than one thread calls lock() near the same time, the first call 
+			will get access and the other call will be placed in a FIFO queue until 
+			the first thread lock finishes. For this reason it is best to 
+			"return" from _func_ as soon as possible. If your function throws an 
+			exception, its lock will be released. If _timeout_ is exceeded while 
+			waiting for a lock, then <Myna.lock> will return false
 		
 		Example:
 		(code)

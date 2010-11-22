@@ -806,7 +806,27 @@ Date.prototype.add = function(interval, value){
 */
 
 
-
+/* Function: diff
+	 returns returns the time between two date objects
+	 
+	 Parameters:
+		d1		-	First date if less than _d2_ result will be positive
+		d2		-	Second date
+		scale	-	*Optional, default Date.MILLI*
+					The result will be divided by this interval to produce 
+					a result in this scale
+					
+	 Example:
+	 (code)
+		//return the difference in the d1 and d2 to the nearest week
+		Myna.println("Age: " + Math.round(Date.diff(create_date,new Date(),Date.WEEK)) );
+		
+	 (end)
+ */
+Date.diff=function(d1,d2,scale){
+	if (!scale) scale = Date.MILLI
+	return (d2.getTime() -d1.getTime())/Date.getInterval(scale) 
+};
 /* Function: getInterval
 	 returns a time interval in milliseconds. This can be used with <Date.add>
 	 instead of specifying the type and length
@@ -815,10 +835,8 @@ Date.prototype.add = function(interval, value){
 		interval		-	Either a Date Interval Type (see below) or a time in 
 							milliseconds to add to this date (see <Date.getInterval>). 
 							If this is a negative time, it will be subtracted
-		value			-	*Optional default 0*
-							This is only necessary if _interval_ is a Date Interval 
-							Type (see below). In that case this the number of units to 
-							add. If this is a negative value it will be subtracted 
+		count			-	*Optional default 1*
+							Number of _interval_ values to return 
 	
 	Date Interval Types:
 		Date.MILLI 	-	"ms"
@@ -845,23 +863,24 @@ Date.prototype.add = function(interval, value){
 	
 	(end)
  */
-Date.getInterval = function(interval, value){
-	if (!interval || !value) return 0;
+Date.getInterval = function(interval, count){
+	if (!count) count=1;
+	if (!interval) return 0;
 	switch(interval.toLowerCase()){
 	case Date.MILLI:
-		return value
+		return count
 	case Date.SECOND:
-		return value * 1000;
+		return count * 1000;
 	case Date.MINUTE:
-		return value * 1000 * 60;
+		return count * 1000 * 60;
 	case Date.HOUR:
-		return value * 1000 * 60 *60;
+		return count * 1000 * 60 *60;
 	case Date.DAY:
-		return value * 1000 * 60 *60 *24;
+		return count * 1000 * 60 *60 *24;
 	case Date.MONTH:
-		return value * 1000 * 60 *60 *24*30;
+		return count * 1000 * 60 *60 *24*30;
 	case Date.YEAR:
-		return value * 1000 * 60 *60 *24*365;
+		return count * 1000 * 60 *60 *24*365;
 	}
   return 0;
 };
@@ -872,9 +891,13 @@ Date.getInterval = function(interval, value){
 	 
 	Parameters:
 		interval		-	an interval in milliseconds to format
-	
+		precision 		-	*Optional, default Date.MILLI*
+							Level of precision to use. This defines the smallest 
+							unit to be returned
  */
-Date.formatInterval = function(interval, value){
+Date.formatInterval = function(interval,precision){
+	if (!precision) precision = Date.MILLI
+	interval = Math.floor(interval/Date.getInterval(precision))*Date.getInterval(precision);
 	var second = 1000;
 	var minute = second*60;
 	var hour = minute*60;
