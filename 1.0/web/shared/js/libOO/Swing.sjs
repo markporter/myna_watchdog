@@ -126,9 +126,9 @@
 if (!Myna) var Myna={}
 Myna.Swing={
 	getColor:function(r,g,b){
-		if (r = parseInt(r)) r= r/256;
-		if (g = parseInt(g)) g= g/256;
-		if (b = parseInt(b)) b= b/256;
+		if (r == parseInt(r)) r= r/256;
+		if (g == parseInt(g)) g= g/256;
+		if (b == parseInt(b)) b= b/256;
 		return new java.awt.Color(r,g,b);
 	},
 	BorderFactory:javax.swing.BorderFactory,

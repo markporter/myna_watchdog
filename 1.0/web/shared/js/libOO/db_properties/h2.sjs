@@ -66,6 +66,14 @@ var templates = {
 			'<tpl if="onDelete.length"> ON DELETE {onDelete} </tpl>',
 		'</tpl>',
 	],
+	maxRows:[
+		'{query}\n',
+		'LIMIT {maxRows}\n',
+	],
+	offsetRows:[
+		'{query}\n',
+		'LIMIT {offset},{maxRows}\n',
+	]
 	/* foreignKeyConstraint:[
 		'<tpl for="references">',
 			'ALTER TABLE {parent.tableName} ADD CONSTRAINT {parent.id} FOREIGN KEY ({parent.name}) REFERENCES {table}({column})',

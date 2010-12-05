@@ -735,6 +735,7 @@ if (!Myna) var Myna={}
 		},true)
 		//copy properties to this 
 		dao	.applyTo(this);
+		
 		//get rid of set_user_id. It is unnecessary and dangerous
 		delete this.set_user_id
 		//copy user properties to this object
@@ -1124,7 +1125,7 @@ if (!Myna) var Myna={}
 	Myna.Permissions.UserGroup = function(dao){
 		this.dao = dao;
 		//copy properties to this 
-		dao	.applyTo(this);
+		dao.applyTo(this);
 		//get rid of set_user_group_id. It is unnecessary and dangerous
 		delete this.set_user_group_id ;
 	}

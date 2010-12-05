@@ -44,6 +44,8 @@
 		}
 		return result
 	}
+if (!Function.prototype.bind)
+{
 /* Function: bind
 	returns a version of this function bound to a specific scope object
 	
@@ -98,7 +100,7 @@
 			  return self.apply(o, args);
 		 };
 	};
-
+}
 /* Function: createCallback
 	returns a callback function that will execute this function with the 
 	supplied arguments 

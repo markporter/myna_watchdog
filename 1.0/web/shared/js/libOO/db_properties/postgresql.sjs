@@ -64,6 +64,15 @@ var templates = {
 			'<tpl if="onDelete.length"> ON DELETE {onDelete} </tpl>',
 		'</tpl>',
 	],
+	maxRows:[
+		'{query}\n',
+		'LIMIT {maxRows}\n',
+	],
+	offsetRows:[
+		'{query}\n',
+		'LIMIT {maxRows}\n',
+		'OFFSET {offset}\n',
+	],
 	
 }
 var types={

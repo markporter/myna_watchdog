@@ -321,74 +321,102 @@ public class MynaThread {
 			this.threadHistorySize = Integer.parseInt(generalProperties.getProperty("thread_history_size"));
 			
 			loadDataSources();
-			createSharedScope();
+			//createSharedScope();
 			this.isInitialized = true;
 		
 		}
 	}
 	
 	public  Scriptable createSharedScope() throws Exception{
-		synchronized (MynaThread.class){
-			runtimeStats.put("currentTask","Building Shared Scope");
-			if (Integer.parseInt(this.generalProperties.getProperty("optimization.level")) != -1
+		long startTime = System.currentTimeMillis();
+		boolean recreateScope = Integer.parseInt(this.generalProperties.getProperty("optimization.level")) == -1;
+		try{
+			if (!recreateScope
 					&& MynaThread.sharedScope_ != null)
 			{
+				//System.err.println(Integer.parseInt(this.generalProperties.getProperty("optimization.level")));
 				return MynaThread.sharedScope_;
-			}
-			
-			Context cx = this.threadContext = new CustomContextFactory().enter();
-			((MynaContext) (cx)).mynaThread =this;
-			
-			cx.setErrorReporter(new MynaErrorReporter());
-			
-			try{
-				Scriptable sharedScope = MynaThread.sharedScope_ = this.threadScope =  new ImporterTopLevel(cx);
-				Object server_gateway = Context.javaToJS(this,sharedScope);
-			
-			
-				ScriptableObject.putProperty(sharedScope, "$server_gateway", server_gateway);
-				
-				String standardLibs = MynaThread.generalProperties.getProperty("standard_libs");
-				Object[] existingObjectsArray = ((ScriptableObject)sharedScope).getAllIds();
-				HashSet existingObjects = new HashSet(Arrays.asList(existingObjectsArray));
-				
-				
-				
-				if (standardLibs != null){
-					String[] libPaths=standardLibs.split(",");
-					URI sharedPath = new URI(this.rootDir).resolve("shared/js/"); 
-					URI curUri;
-					for (int x=0; x < libPaths.length;++x){
-						curUri = new URI(libPaths[x]);
-						if (!curUri.isAbsolute()){
-							curUri = sharedPath.resolve(new URI(libPaths[x]));
-						}
-						boolean exists =false;
-						try{exists=new File(curUri).exists();}catch(Exception e_exists){}
-						if (!curUri.isAbsolute() || !exists){
-							throw new IOException("Cannot find '" +libPaths[x] +"'  in system root directory or in '"+sharedPath.toString() +"'. See standard_libs in WEB-INF/classes/general.properties.");	
-						}
-						
-						String scriptPath = curUri.toString();
-						int lastSlash = scriptPath.lastIndexOf("/");
-						this.currentDir = new URI(scriptPath.substring(0,lastSlash+1)).toString();
-						String script = readScript(scriptPath);
-						script = translateString(script,scriptPath); 
-						cx.evaluateString(sharedScope, script, scriptPath, 1, null);
-					}
+			}else {
+				if (recreateScope ){
+					synchronized (MynaThread.class){
+						return buildScope();
+					} 
+				} else {
+					
+					return buildScope();
 				}
+			}
+		} finally {
+			long elapsed = System.currentTimeMillis() - startTime;
+			//System.err.println("created scope in " + elapsed +"ms");
+		}
+		
+	}
+	
+	public  Scriptable buildScope() throws Exception{
+		//save state
+		
+		String currentDir = this.currentDir;
+		String currentScript = this.currentScript;
+		String scriptName = this.scriptName;
+		String requestScriptName = this.requestScriptName;
+		
+		runtimeStats.put("currentTask","Building Shared Scope");
+		
+		//System.err.println("re-creating scope");
+		Context cx = this.threadContext = new CustomContextFactory().enter();
+		((MynaContext) (cx)).mynaThread =this;
+		
+		cx.setErrorReporter(new MynaErrorReporter());
+		
+		try{
+			Scriptable sharedScope = MynaThread.sharedScope_ = this.threadScope =  new ImporterTopLevel(cx);
+			Object server_gateway = Context.javaToJS(this,sharedScope);
+		
+		
+			ScriptableObject.putProperty(sharedScope, "$server_gateway", server_gateway);
 			
-				Object[] sharedIds = ((ScriptableObject)sharedScope).getAllIds();
-				
-				//add some other ids we're concerned about
-				Object[] moreIds = {"Array","Object","Date"};
-				int totalIds = sharedIds.length + moreIds.length; 
-				Object[] ids = new Object[totalIds];
-				System.arraycopy(sharedIds, 0, ids, 0, sharedIds.length);
-				System.arraycopy(moreIds, 0, ids, sharedIds.length, moreIds.length);
+			String standardLibs = MynaThread.generalProperties.getProperty("standard_libs");
+			Object[] existingObjectsArray = ((ScriptableObject)sharedScope).getAllIds();
+			HashSet existingObjects = new HashSet(Arrays.asList(existingObjectsArray));
+			
+			
+			
+			if (standardLibs != null){
+				String[] libPaths=standardLibs.split(",");
+				URI sharedPath = new URI(this.rootDir).resolve("shared/js/"); 
+				URI curUri;
+				for (int x=0; x < libPaths.length;++x){
+					curUri = new URI(libPaths[x]);
+					if (!curUri.isAbsolute()){
+						curUri = sharedPath.resolve(new URI(libPaths[x]));
+					}
+					boolean exists =false;
+					try{exists=new File(curUri).exists();}catch(Exception e_exists){}
+					if (!curUri.isAbsolute() || !exists){
+						throw new IOException("Cannot find '" +libPaths[x] +"'  in system root directory or in '"+sharedPath.toString() +"'. See standard_libs in WEB-INF/classes/general.properties.");	
+					}
+					
+					String scriptPath = curUri.toString();
+					int lastSlash = scriptPath.lastIndexOf("/");
+					this.currentDir = new URI(scriptPath.substring(0,lastSlash+1)).toString();
+					String script = readScript(scriptPath);
+					script = translateString(script,scriptPath); 
+					cx.evaluateString(sharedScope, script, scriptPath, 1, null);
+				}
+			}
+		
+			Object[] sharedIds = ((ScriptableObject)sharedScope).getAllIds();
+			
+			//add some other ids we're concerned about
+			Object[] moreIds = {"Array","Object","Date"};
+			int totalIds = sharedIds.length + moreIds.length; 
+			Object[] ids = new Object[totalIds];
+			System.arraycopy(sharedIds, 0, ids, 0, sharedIds.length);
+			System.arraycopy(moreIds, 0, ids, sharedIds.length, moreIds.length);
 
-				
-				
+			
+			if (Integer.parseInt(this.generalProperties.getProperty("optimization.level")) != -1){
 				for (int x=0;x<ids.length;++x){
 					if (!existingObjects.contains(ids[x])){
 						try{
@@ -403,17 +431,20 @@ public class MynaThread {
 					}
 				}
 				MynaThread.sharedScope_ = sharedScope;
-				return sharedScope;
-			} catch (Exception e){
-				this.handleError(e);
-				return MynaThread.sharedScope_; //should never get here but if we do...
-			} finally {
-				cx.exit();
-				
 			}
-		} //end synchronized
+			
+			return sharedScope;
+		} catch (Exception e){
+			this.handleError(e);
+			return MynaThread.sharedScope_; //should never get here but if we do...
+		} finally {
+			cx.exit();
+			this.currentDir = currentDir;
+			this.currentScript = currentScript;
+			this.scriptName = scriptName;
+			this.requestScriptName = requestScriptName;
+		}
 	}
-	
 	
 	/**
 	* entry point for MynaThread
@@ -459,8 +490,8 @@ public class MynaThread {
 				try {
 					//bind the current MynaThread to this context
 					((MynaContext) (cx)).mynaThread =mt;
-					Scriptable sharedScope = mt.sharedScope_;
-					
+					//Scriptable sharedScope = mt.sharedScope_;
+					Scriptable sharedScope = mt.createSharedScope();
 					//this means there was an error creating the scope, and we just need
 					//to get out of the way and let the error display
 					 
@@ -522,6 +553,7 @@ public class MynaThread {
 				}
 			}
 		}
+		
 		new CustomContextFactory().call(new LocalContextAction(this));  
 	
 		 
@@ -624,14 +656,10 @@ public class MynaThread {
 					ScriptableObject scope = threadScope = (ScriptableObject) cx.newObject(sharedScope);
 					scope.setPrototype(sharedScope);
 					scope.setParentScope(null);
-					//f.setParentScope(scope);
-					//f.setParentScope(null);
-					//f.setParentScope(pt.threadScope);
 					isWaiting=false;
 					try{
 						Object server_gateway = Context.javaToJS(this.mt,scope);
 						ScriptableObject.putProperty(scope, "$server_gateway", server_gateway);
-						//ScriptableObject.putProperty(f.getParentScope(), "$server_gateway", server_gateway);
 						URI sharedPath = new URI(rootDir).resolve("shared/js/");
 						//execute script file
 						try{

@@ -71,6 +71,14 @@ var templates = {
 			'<tpl if="onDelete.length"> ON DELETE {onDelete} </tpl>',
 		'</tpl>',
 	], */
+	maxRows:[
+		'{query}\n',
+		'LIMIT {maxRows}\n',
+	],
+	offsetRows:[
+		'{query}\n',
+		'LIMIT {offset},{maxRows}\n',
+	]
 }
 var types={
 	BIGINT:"BIGINT",

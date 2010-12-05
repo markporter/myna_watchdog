@@ -64,6 +64,7 @@ var templates = {
 			'<tpl if="onDelete.length"> ON DELETE {onDelete} </tpl>',
 		'</tpl>',
 	],
+	
 	/* foreignKeyConstraint:[
 		'<tpl for="references">',
 			'ALTER TABLE {parent.tableName} ADD CONSTRAINT {parent.id} FOREIGN KEY ({parent.name}) REFERENCES {table}({column})',

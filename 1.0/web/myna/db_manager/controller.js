@@ -466,7 +466,7 @@ var C ={
 															var table_alias = node.attributes.table_name.split(/_/).map(function(part){
 																return part.left(1).toLowerCase()
 															}).join("")
-															C.new_sql_window([
+															var sql=[
 																"select",
 																result.map(function(col,index,array){
 																	var result=C.editorTab + table_alias +"." +col.text
@@ -474,7 +474,16 @@ var C ={
 																	return result;
 																}).join("\n"),
 																"from " + (node.attributes.schema.length?node.attributes.schema + ".":"") + node.attributes.table_name + " " + table_alias
-															].join("\n"))
+															].join("\n")
+															var tpls = dbProperties[C.currentDbType].templates
+															if ("maxRows" in tpls){
+																sql= new Ext.XTemplate(tpls.maxRows).apply({
+																	query:sql,
+																	maxRows:100
+																})
+															}
+															
+															C.new_sql_window(sql)
 													})
 												})
 												
@@ -731,21 +740,10 @@ var C ={
 					}
 					var sql;
 					var thisTab = Ext.getCmp(tabId);
-						sql= Ext.getCmp("sql"+tabId).getValue().replace(/\n/g," ");
+					sql= Ext.getCmp("sql"+tabId).getValue()//.replace(/\n/g," ");
+		
+					thisTab.setTitle("SQL: " + sql.replace(/\n/g," ").left(20))
 					
-					
-					/* sql = sql.replace(/&nbsp;/gi," ")
-					.replace(/<br[\/]?>/gi,"\n")
-					.replace(/<p[\/]?>/gi,"\n")
-					.replace(/<[\/]?[^\/>]*[\/]?>/gi,"")
-					.replace(/&gt;/gi,">")
-					.replace(/&lt;/gi,"<")
-					.trim() */
-					
-					thisTab.setTitle("SQL: " + sql.left(20))
-					
-					
-					//alert(result_panel.getInnerHeight())
 					var pageSize =  (result_panel.getInnerHeight()-75)/21;
 					if (result_panel.body){
 						result_panel.body.mask("Executing Query...")
@@ -759,7 +757,6 @@ var C ={
 							page:page?page:1,
 							return_all:return_all?"true":"false"
 						},
-						/* waitMsg:"Executing Query...", */
 						callback:C.cbHandler(function(result){
 							result_panel.body.unmask()
 							if (!result.hasOwnProperty("success") || result.success === false) return false;
@@ -954,21 +951,58 @@ var C ={
 					layout:"fit",
 					xtype:"panel",
 					items:[editor={
-						xtype:"textarea",
+						xtype:"panel",
 						id:"sql"+tabId,
 						value:sql,
 						enableKeyEvents:true,
+						tempValue:sql,
+						setValue:function(val){
+							if (this.bespin){
+								this.bespin.buffer.model.setValue(val);
+							} else this.tempValue=val
+						},
+						getValue:function(){
+							if (this.bespin){
+								return this.bespin.buffer.model.getValue();
+							} else return this.tempValue || ""
+						},
+						insertAtCursor:function(text){
+							console.debug(this.bespin)
+							this.bespin.editor.replace(this.bespin.editor.selection,text)
+							window.setTimeout(function(){
+								this.bespin.view.focus()
+							},100)
+							
+						},
 						listeners:{
-							render:function(ta){
-								//hack for wrapping on textareas to "off"
-								textarea =ta.el.dom;
-								textarea.setAttribute("wrap", "off");
-								var parentNode = textarea.parentNode;
-								var nextSibling= textarea.nextSibling;
-								parentNode.removeChild(textarea); 
-								parentNode.insertBefore(textarea, nextSibling);
+							resize:function(ta){
+								if (ta.bespin) {
+									ta.bespin.editor.dimensionsChanged.call(ta.bespin.editor)
+								}
 							},
-							keydown:function(ta,evt){
+							render:function(ta){
+								window.setTimeout(function(){
+									bespin.useBespin(ta.body.dom,
+										{ 
+											 settings:{ 
+												tabstop: 4, 
+												//theme:"white"
+												
+											},
+											syntax:"sql",
+											stealFocus: true 
+										}
+									).then(function(bespin){
+										bespin.tabId = tabId;
+										if (ta.tempValue) bespin.buffer.model.setValue(ta.tempValue)
+										ta.bespin = bespin	
+										//console.debug(ta,"SQL control")
+										//console.debug("console.debug(Ext.getCmp(\"" +ta.id+"\") )")
+										
+									});
+								},100)
+							},
+							keydown2:function(ta,evt){
 								var t = ta.el.dom;
 								var kc = evt.getKey();
 								if ("9,8,37,39,46,13,119".listContains(kc) ) {

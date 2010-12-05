@@ -119,10 +119,11 @@ if (!Myna) var Myna={}
 		var tkey =tableName.toLowerCase(); 
 		if (!("_managers" in this)) this._managers={}
 		if ( tkey in this._managers){
+			//Myna.printConsole("got here first")
 			$profiler.end("getManager for " + tableName)
 			return this._managers[tkey];	
 		} else {
-			
+			//Myna.printConsole("got here")
 			var $this = this;
 			var manager={};
 			
@@ -139,6 +140,7 @@ if (!Myna) var Myna={}
 			)
 			
 			
+			
 			manager.table =this.db.getTable(tableName);
 			
 			manager.loadTableData(tableName);
@@ -147,12 +149,16 @@ if (!Myna) var Myna={}
 				manager.beanClass=function(data){
 					this.id = data[manager.primaryKey]
 					this.data = data;
+					//this.hideProperty("data")
 					this.init();
 				}
 				manager.beanTemplate.setDefaultProperties(manager);
+				
 				manager.beanClass.prototype = manager.beanTemplate	
 				manager.beanTemplate.manager=manager
-				
+				for (var prop in manager.beanTemplate){
+					//manager.beanTemplate.hideProperty(prop)
+				}
 				manager.columnNames.forEach(function(colname){
 					var fname = colname;
 					if (!("get_"+fname in manager.beanTemplate)){
@@ -187,6 +193,8 @@ if (!Myna) var Myna={}
 					
 				}) 
 			
+				
+				
 			this._managers[tkey] = manager;
 			$profiler.end("getManager for " + tableName)
 			return manager;

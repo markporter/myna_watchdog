@@ -129,7 +129,7 @@ var ObjectLib = {}
 	*/
 	ObjectLib.appendFunction=ObjectLib.after;
 /* Function: applyTo 
-	Copies all properties (including Function properties) of an object to another
+	Copies all properties (including Function properties and "hidden") of an object to another
 	 
 	Parameters: 
 		obj					-	object to copy from
@@ -247,11 +247,14 @@ var ObjectLib = {}
 		
 	*/
 	ObjectLib.hideProperty = function(obj, property){
-      java.lang.Class.forName("org.mozilla.javascript.ScriptableObject")
+		Object.defineProperty(obj,property,{
+			enumerable:false
+		})
+      /* java.lang.Class.forName("org.mozilla.javascript.ScriptableObject")
          .getMethod("setAttributes", java.lang.String, java.lang.Integer.TYPE)
          .invoke(obj, property, new java.lang.Integer(
             org.mozilla.javascript.ScriptableObject.DONTENUM)
-          );
+          ); */
 	}   
 /* Function: checkRequired 
 	Ensures that certain properties defined.

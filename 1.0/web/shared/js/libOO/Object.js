@@ -490,8 +490,68 @@
 			return this.applyTo({});
 		}
 	}
-
+/* Function: createProxy
+	returns a proxy object where the functions and properties actually refer to 
+	this object
+	
+	Parameters:
+		target		-	*Optional, default {}*
+							If defined, properties and functions will be overlaid on 
+							the _target_ object instead of creating a new object. 
+		overwrite	-	*Optional,default false*
+							Only applies if _target_ is defined. if true, then existing
+							properties on _target will be overwritten by this proxy
+							versions.
+	
+	Detail:
+	This purpose of this function is to make composting easier. A great example 
+	is if you want to extend a DAO without using inheritance, like so:
+	
+	(code)
+	
+	(end)
+	*/	
+	Object.prototype.createProxy=function Object_createProxy(target,overwrite){
+		var outer = target;
+		var inner = this;
+		if (!outer) outer ={}
+		var buildGetter = function(propname){
+			return function(){
+				//uses closure to hide "inner"
+				return inner[propname]
+			}
+		}
+		var buildSetter = function(propname){
+			return function(value){
+				//uses closure to hide "inner"
+				inner[propname] = value
+			}
+		}
+		//proxy each property
+		inner.getProperties()
+		.filter(function(propname){
+			if (!overwrite){
+				return !(propname in outer)
+			} else return true
+		})
+		.forEach(function(propname){
+			var value = inner[propname];
+			if (typeof value =="function"){
+				//creates a bound function that always executes against "inner"
+				outer[propname] =inner[propname].bind(inner)
+			} else {
+				// here is the important bit, you can define your own functions for getting and setting
+				outer.__defineGetter__(propname, buildGetter(propname));
+				outer.__defineSetter__(propname, buildSetter(propname));
+			}
+				
+		})
+		return outer;      
+	}
 if ("$server_gateway" in this){
+
+	
+	
 	(function(){
 		var hide = function (o, p) {
 		 java.lang.Class.forName ("org.mozilla.javascript.ScriptableObject")

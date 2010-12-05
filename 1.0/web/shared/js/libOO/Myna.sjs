@@ -871,7 +871,7 @@ if (!Myna) var Myna={}
 			}
 			
 			e.rootIndex=0;
-			if (e.rhinoException && !$server.isThread){
+			if ((e.rhinoException || e.stack) && !$server.isThread){
 				var stack =Myna.parseJsStack(e);
 				for (var x=0;x < stack.length;++x){
 					/* $server_gateway.currentDir + $server_gateway.scriptName */
@@ -932,7 +932,12 @@ if (!Myna) var Myna={}
 					'\n\tERROR: {message}',
 					'\n\tFILE: {fileName}',
 					'\n\tLINE:{lineNumber}',
+					'\n\tSTACK:\n',
+					'<tpl for="jsStack">\n',
+						'{[ xindex == parent.rootIndex? "***":"" ]}{.}\n',
+					'</tpl>\n',
 				'\n-->\n\n\n\n',
+				
 				'<table width="100%" height="1" cellpadding="5" cellspacing="0" border="0" >',
 					'<tr><th >Message:</th><td>{message}</td></tr>',
 					'<tr><th >File:</th><td>{fileName}</td></tr>',
@@ -1552,7 +1557,11 @@ if (!Myna) var Myna={}
 		if (!type) throw new Error("Type Required")
 		if (!detail) detail = " ";
 		if (String(type).toLowerCase() == "error"){
-			java.lang.System.err.println("Error: " + label );
+			java.lang.System.err.println("Error2: " + label );
+			Myna.printConsole(
+				"Error: " + label,
+				detail.listBefore("-->").listAfter("<!--")
+			)
 		}
 		if (typeof $server != "undefined" && !$server.isThread){
 			var reqId = $req.id;
@@ -1813,12 +1822,16 @@ if (!Myna) var Myna={}
 			originalTrace,
 			pw,
 			lines,
-			st
+			st,
+			stack = e.stack||""
 		;
 		
+		if (!e.stack && e.rhinoException){
+			stack = String(e.rhinoException.getScriptStackTrace())
+		}
 			
 			
-		st = String(e.rhinoException.getScriptStackTrace())
+		st = stack
 			.split(/\n/).filter(function(e){
 				return e.length;
 			})
