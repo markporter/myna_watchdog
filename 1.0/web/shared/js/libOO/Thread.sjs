@@ -1,8 +1,5 @@
-/* 
-	Class: Myna.Thread
+/*	Class: Myna.Thread
 		Executes code in a separate thread
-	
-		
 */
 if (!Myna) var Myna={}
 
@@ -112,91 +109,89 @@ if (!Myna) var Myna={}
 	
 	
 	(end)
-*/
-Myna.Thread=function(f,args,priority){
-	
-	
-	if (!args) args = [];
-	
-	var parent = this;
-	/* this.functionSource = f.toSource();
-	$server_gateway.environment.put("threadSource", this.functionSource); */
-	try{
-		if ($cookie) $cookie.setAuthUserId($cookie.getAuthUserId());
-	}catch(e){
-		$req={}
-	}
-	var source = typeof f == "string"?f:f.toSource()
-	source=source.replace(/^\((.*)\)$/,"$1");
-	if ($server_gateway.threadChain.size() > 5){
-		Myna.logSync("ERROR","thread chains cannot descend more than 5 levels.",Myna.dump($server_gateway.threadChain,"Thread Chain") + Myna.dump($server,"$server")+ Myna.dump($req.data,"$req.data"));
-		throw new Error("thread chains cannot descend more than 5 levels.");
-	}
-	var result = $server_gateway.spawn(source,args)
-	result = Myna.JavaUtils.mapToObject(result)
-	/* Property: javaThread
-		a local instance of java.lang.Thread
 	*/
-	this.javaThread=result.javaThread;
-	/* Property: releaseOnJoin
-		should this thread's memory be released when <join> or <joinAll> is 
-		called? (Default: false) 
+	Myna.Thread=function(f,args,priority){
+		if (!args) args = [];
 		
-		Setting this to true will cause the subThread to be released when <join>
-		or <joinAll> is called. If <captureOutput> is also true, then output is 
-		cached before releasing the the subThread
-	*/
-	this.releaseOnJoin=false;
-	/* Property: deleteOnJoin
-		should this thread's metadata be deleted when <join> or <joinAll> is 
-		called? (Default: false) 
-		
-		Setting this to true will cause the subThread's metadata to be deleted when <join>
-		or <joinAll> is called. This makes any return value or captured output unavailable.
-		
-		This is a good choice for maximum memory efficiency
-	*/
-	this.deleteOnJoin=false;
-	/* Property: captureOutput
-		should this thread capture generated content and return value from the 
-		subThread? (Default: true) 
-		
-		Setting this to false will set <mynaThread> to null. Setting this value 
-		to true has no effect
-	*/
-	var _captureOutput=true
-	this.__defineGetter__("captureOutput", function() {
-		return _captureOutput;
-	});
-	this.__defineSetter__("captureOutput", function(val) {
-		if (!val){
-			_captureOutput=false;
-			//this.releaseSubThread()
+		var parent = this;
+		/* this.functionSource = f.toSource();
+		$server_gateway.environment.put("threadSource", this.functionSource); */
+		try{
+			if ($cookie) $cookie.setAuthUserId($cookie.getAuthUserId());
+		}catch(e){
+			$req={}
 		}
-	});
-	
-	/* Property: mynaThread
-		a reference to the running MynaThread instance. 
-		
-		Setting this to null will prevent access to subThread output 
-		(see <Thread.getContent> and <Thread.getReturnValue>) but will also allow the 
-		subThread's memory to be garbage collected immediately on completion
-	*/
-	this.mynaThread=result.mynaThread;
-	result=null;
-	
-	if (this.javaThread){
-		var p = java.lang.Thread.NORM_PRIORITY;
-		if (priority > 0){
-			p += (priority/100) * (java.lang.Thread.MAX_PRIORITY - p);
-		} else if (priority < 0){
-			p += (priority/100) * (p - java.lang.Thread.MIN_PRIORITY);
+		var source = typeof f == "string"?f:f.toSource()
+		source=source.replace(/^\((.*)\)$/,"$1");
+		if ($server_gateway.threadChain.size() > 5){
+			Myna.logSync("ERROR","thread chains cannot descend more than 5 levels.",Myna.dump($server_gateway.threadChain,"Thread Chain") + Myna.dump($server,"$server")+ Myna.dump($req.data,"$req.data"));
+			throw new Error("thread chains cannot descend more than 5 levels.");
 		}
-		this.javaThread.setPriority(p)
-		Myna.Thread.getThreadArray().push(this);
+		var result = $server_gateway.spawn(source,args)
+		result = Myna.JavaUtils.mapToObject(result)
+		/* Property: javaThread
+			a local instance of java.lang.Thread
+		*/
+		this.javaThread=result.javaThread;
+		/* Property: releaseOnJoin
+			should this thread's memory be released when <join> or <joinAll> is 
+			called? (Default: false) 
+			
+			Setting this to true will cause the subThread to be released when <join>
+			or <joinAll> is called. If <captureOutput> is also true, then output is 
+			cached before releasing the the subThread
+		*/
+		this.releaseOnJoin=false;
+		/* Property: deleteOnJoin
+			should this thread's metadata be deleted when <join> or <joinAll> is 
+			called? (Default: false) 
+			
+			Setting this to true will cause the subThread's metadata to be deleted when <join>
+			or <joinAll> is called. This makes any return value or captured output unavailable.
+			
+			This is a good choice for maximum memory efficiency
+		*/
+		this.deleteOnJoin=false;
+		/* Property: captureOutput
+			should this thread capture generated content and return value from the 
+			subThread? (Default: true) 
+			
+			Setting this to false will set <mynaThread> to null. Setting this value 
+			to true has no effect
+		*/
+		var _captureOutput=true
+		this.__defineGetter__("captureOutput", function() {
+			return _captureOutput;
+		});
+		this.__defineSetter__("captureOutput", function(val) {
+			if (!val){
+				_captureOutput=false;
+				//this.releaseSubThread()
+			}
+		});
+		
+		/* Property: mynaThread
+			a reference to the running MynaThread instance. 
+			
+			Setting this to null will prevent access to subThread output 
+			(see <Thread.getContent> and <Thread.getReturnValue>) but will also allow the 
+			subThread's memory to be garbage collected immediately on completion
+		*/
+		this.mynaThread=result.mynaThread;
+		result=null;
+		
+		if (this.javaThread){
+			var p = java.lang.Thread.NORM_PRIORITY;
+			if (priority > 0){
+				p += (priority/100) * (java.lang.Thread.MAX_PRIORITY - p);
+			} else if (priority < 0){
+				p += (priority/100) * (p - java.lang.Thread.MIN_PRIORITY);
+			}
+			this.javaThread.setPriority(p)
+			Myna.Thread.getThreadArray().push(this);
+		}
+		 
 	}
-	 
-}
 
 /* Function: join
 	Pauses the current thread until this thread exits, and then returns thread function result
@@ -213,31 +208,31 @@ Myna.Thread=function(f,args,priority){
 		throwOnTimeout	-	*Optional, default true*
 							If the thread has not finished before the timeout, 
 							throw an Error.
-*/
-Myna.Thread.prototype.join=function(timeout,throwOnTimeout){
-	var $this = this;
-	if (throwOnTimeout === undefined) throwOnTimeout=true;
-	if (timeout === undefined) timeout = 30*1000; //30 seconds
-	if (this.isRunning()){
-		this.javaThread.join(timeout);
+	*/
+	Myna.Thread.prototype.join=function(timeout,throwOnTimeout){
+		var $this = this;
+		if (throwOnTimeout === undefined) throwOnTimeout=true;
+		if (timeout === undefined) timeout = 30*1000; //30 seconds
 		if (this.isRunning()){
-			if (throwOnTimeout){
-				Myna.log("error","Thread ("+this.javaThread.toString()+") Timeout detail",Myna.dump(this,"thread detail",15));
-				throw new Error("Thread ("+this.javaThread.toString()+") still running after "+timeout+" miliseconds. See log for thread detail.")	
-			} else return undefined 
+			this.javaThread.join(timeout);
+			if (this.isRunning()){
+				if (throwOnTimeout){
+					Myna.log("error","Thread ("+this.javaThread.toString()+") Timeout detail",Myna.dump(this,"thread detail",15));
+					throw new Error("Thread ("+this.javaThread.toString()+") still running after "+timeout+" miliseconds. See log for thread detail.")	
+				} else return undefined 
+			} else {
+				if (this.releaseOnJoin || !this.captureOutput){
+					this.releaseSubThread();	
+				} 
+				return this.getReturnValue();
+			}
 		} else {
 			if (this.releaseOnJoin || !this.captureOutput){
 				this.releaseSubThread();	
 			} 
-			return this.getReturnValue();
+			return this.getReturnValue();	
 		}
-	} else {
-		if (this.releaseOnJoin || !this.captureOutput){
-			this.releaseSubThread();	
-		} 
-		return this.getReturnValue();	
 	}
-}
 
 /* Function: releaseSubThread
 	releases this Thread's subThread so that its memory can be recovered
@@ -247,66 +242,66 @@ Myna.Thread.prototype.join=function(timeout,throwOnTimeout){
 		is true, this function will first cache the subThread's return value and 
 		generated content. If you call this function a second time after setting 
 		<Thread.captureOutput> to false, then any cached values will be cleared
-*/
-Myna.Thread.prototype.releaseSubThread=function(){
-	if (this.captureOutput && this.mynaThread){
-		this._content = String(this.mynaThread.generatedContent)
-		this.getContent = function(){
-			return this._content	
+	*/
+	Myna.Thread.prototype.releaseSubThread=function(){
+		if (this.captureOutput && this.mynaThread){
+			this._content = String(this.mynaThread.generatedContent)
+			this.getContent = function(){
+				return this._content	
+			}
+			this._returnValue = this.mynaThread.environment.get("threadReturn")
+			this.getReturnValue = function(){
+				return this._returnValue	
+			}
+		} else {
+			this.content=""
+			this.returnValue=undefined
 		}
-		this._returnValue = this.mynaThread.environment.get("threadReturn")
-		this.getReturnValue = function(){
-			return this._returnValue	
-		}
-	} else {
-		this.content=""
-		this.returnValue=undefined
+		this.mynaThread=null;
+		this.javaThread=null;
 	}
-	this.mynaThread=null;
-	this.javaThread=null;
-}
 
 
 /* Function: isRunning
 	returns true if this thread is still running
-*/
-Myna.Thread.prototype.isRunning=function(){
-	//if (this.mynaThread) return !this.mynaThread.environment.get("threadComplete"); 
-	return this.javaThread && this.javaThread.isAlive();
-}
+	*/
+	Myna.Thread.prototype.isRunning=function(){
+		//if (this.mynaThread) return !this.mynaThread.environment.get("threadComplete"); 
+		return this.javaThread && this.javaThread.isAlive();
+	}
 
 /* Function: getContent
 	returns content generated by this thread
 	
 	Don't expect to see anything while <isRunning> returns true
-*/
-Myna.Thread.prototype.getContent=function(){
-	return this.mynaThread?String(this.mynaThread.generatedContent):""	
-}
+	*/
+	Myna.Thread.prototype.getContent=function(){
+		return this.mynaThread?String(this.mynaThread.generatedContent):""	
+	}
 
 /* Function: getReturnValue
 	returns the value returned by the thread function.
 	
 	Don't expect to see anything while <isRunning> returns true
-*/
-Myna.Thread.prototype.getReturnValue=function(){
-	return this.mynaThread?this.mynaThread.environment.get("threadReturn"):"";
-}
+	*/
+	Myna.Thread.prototype.getReturnValue=function(){
+		return this.mynaThread?this.mynaThread.environment.get("threadReturn"):"";
+	}
 
 
 /* Function: stop
 	stops this thread.
-*/
-Myna.Thread.prototype.stop=function(){
-	return this.javaThread.interrupt();
-}
+	*/
+	Myna.Thread.prototype.stop=function(){
+		return this.javaThread.interrupt();
+	}
 
 /* Function: kill
 	kills this thread.
-*/
-Myna.Thread.prototype.kill=function(){
-	return this.javaThread.stop();
-}
+	*/
+	Myna.Thread.prototype.kill=function(){
+		return this.javaThread.stop();
+	}
 /* Function: joinAll 
 	Static function that calls <join> on all threads spawned from the current 
 	thread, and returns an array of their return values
@@ -332,10 +327,10 @@ Myna.Thread.prototype.kill=function(){
 	})
 	Myna.printDump(Myna.Thread.joinAll())
 	(end)
-*/
-Myna.Thread.joinAll = function(timeout,throwOnTimeout,killOnTimeout){
-	return Myna.Thread.joinThreads(Myna.Thread.getThreadArray(),timeout,throwOnTimeout,killOnTimeout);
-}
+	*/
+	Myna.Thread.joinAll = function(timeout,throwOnTimeout,killOnTimeout){
+		return Myna.Thread.joinThreads(Myna.Thread.getThreadArray(),timeout,throwOnTimeout,killOnTimeout);
+	}
 
 Myna.Thread.joinThreads =function(array,timeout,throwOnTimeout,killOnTimeout){
 	var result =[];
@@ -387,14 +382,13 @@ Myna.Thread.joinThreads =function(array,timeout,throwOnTimeout,killOnTimeout){
 /* Function: getThreadArray 
 	Static function that returns an array of all the threads spawned in the 
 	current thread
-*/
-Myna.Thread.getThreadArray = function(){
-	if (!("__MYNA_THREADS__" in $req)) $req.__MYNA_THREADS__=[];
-	return $req.__MYNA_THREADS__
-}
+	*/
+	Myna.Thread.getThreadArray = function(){
+		if (!("__MYNA_THREADS__" in $req)) $req.__MYNA_THREADS__=[];
+		return $req.__MYNA_THREADS__
+	}
 
-/* 
-	Class: Myna.ThreadGroup
+/*	Class: Myna.ThreadGroup
 		manages a collection of threads
 		
 */
@@ -495,28 +489,28 @@ Myna.Thread.getThreadArray = function(){
 	var result = workers.join();
 	
 	(end)
-*/
-Myna.ThreadGroup=function(options){
-	options.applyTo(this);	 
-	this.threadArray = [];
-}
+	*/
+	Myna.ThreadGroup=function(options){
+		options.applyTo(this);	 
+		this.threadArray = [];
+	}
 
 /* Function: getThreadArray 
 	returns an array of all the threads spawned by this group
-*/
-Myna.ThreadGroup.prototype.getThreadArray=function(){
-	return this.threadArray;	
-}
+	*/
+	Myna.ThreadGroup.prototype.getThreadArray=function(){
+		return this.threadArray;	
+	}
 
 
 /* Function: getThreadArray 
 	join all the threads in this group. 
 	
 	Takes the same parameters as <Myna.Thread.joinAll>
-*/
-Myna.ThreadGroup.prototype.join=function(timeout,throwOnTimeout,killOnTimeout){
-	return Myna.Thread.joinThreads(this.threadArray,timeout,throwOnTimeout,killOnTimeout);	
-}
+	*/
+	Myna.ThreadGroup.prototype.join=function(timeout,throwOnTimeout,killOnTimeout){
+		return Myna.Thread.joinThreads(this.threadArray,timeout,throwOnTimeout,killOnTimeout);	
+	}
 
 /* Function: spawn 
 	calls <ThreadGroup.add> using this this group's defaults and returns the generated thread.
@@ -525,31 +519,31 @@ Myna.ThreadGroup.prototype.join=function(timeout,throwOnTimeout,killOnTimeout){
 	
 	<ThreadGroup.fn> must be defined. Any arguments passed to this function 
 	will be passed to the generated thread  
-*/
-Myna.ThreadGroup.prototype.spawn=function(){
-	var args = Array.parse(arguments);
-	if ((!args || !args.length) && this.args && this.args.length){
-		args = this.args;
+	*/
+	Myna.ThreadGroup.prototype.spawn=function(){
+		var args = Array.parse(arguments);
+		if ((!args || !args.length) && this.args && this.args.length){
+			args = this.args;
+		}
+		if (!args) args=[]
+		if (!this.fn || typeof this.fn !== "function"){
+			throw new Error("the 'fn' property must be set to a function before calling spawn");	
+		}
+		return this.add(this.fn,args)
+		
 	}
-	if (!args) args=[]
-	if (!this.fn || typeof this.fn !== "function"){
-		throw new Error("the 'fn' property must be set to a function before calling spawn");	
-	}
-	return this.add(this.fn,args)
-	
-}
 
 
 /* Function: getRunningThreads() 
 	returns an array of the threads in this ThreadGroup that are still running 
 	  
-*/
-Myna.ThreadGroup.prototype.getRunningThreads=function(){
-	return this.getThreadArray().filter(function(t){
-		return t.isRunning();
-	})
-	
-}
+	*/
+	Myna.ThreadGroup.prototype.getRunningThreads=function(){
+		return this.getThreadArray().filter(function(t){
+			return t.isRunning();
+		})
+		
+	}
 
 /* Function: add 
 	creates a thread, adds it to this group, and returns the generated thread
@@ -569,34 +563,34 @@ Myna.ThreadGroup.prototype.getRunningThreads=function(){
 						Priority -10 would be 10% LESS likely than normal 
 						requests to run during a given time slice
 	
-*/
-Myna.ThreadGroup.prototype.add=function(func,args,priority){
-	if (!func) func = this.fn;
-	if (!args) args = this.args||[];
-	if (!priority) priority = 0;
-	
-	var t= new Myna.Thread(
-		func,
-		args,
-		priority
-	)
-	if ("releaseOnJoin" in this) t.releaseOnJoin = this.releaseOnJoin;
-	if ("deleteOnJoin" in this) t.deleteOnJoin = this.deleteOnJoin;
-	if ("captureOutput" in this) t.captureOutput = this.captureOutput;
-	
-	while (this.getRunningThreads().length >= this.joinEvery){
-		Myna.sleep(100);	
-	}
-	this.getThreadArray().forEach(function(t){
-		if (!t.isRunning()) t.join()
-	})
-	
-	this.getThreadArray().push(t)
-	
-	
-	/* if (this.joinEvery && this.getRunningThreads().length >= this.joinEvery) {
-		this.join(0);
-	} */
-	return t;
+	*/
+	Myna.ThreadGroup.prototype.add=function(func,args,priority){
+		if (!func) func = this.fn;
+		if (!args) args = this.args||[];
+		if (!priority) priority = 0;
 		
-}
+		var t= new Myna.Thread(
+			func,
+			args,
+			priority
+		)
+		if ("releaseOnJoin" in this) t.releaseOnJoin = this.releaseOnJoin;
+		if ("deleteOnJoin" in this) t.deleteOnJoin = this.deleteOnJoin;
+		if ("captureOutput" in this) t.captureOutput = this.captureOutput;
+		
+		while (this.getRunningThreads().length >= this.joinEvery){
+			Myna.sleep(100);	
+		}
+		this.getThreadArray().forEach(function(t){
+			if (!t.isRunning()) t.join()
+		})
+		
+		this.getThreadArray().push(t)
+		
+		
+		/* if (this.joinEvery && this.getRunningThreads().length >= this.joinEvery) {
+			this.join(0);
+		} */
+		return t;
+			
+	}

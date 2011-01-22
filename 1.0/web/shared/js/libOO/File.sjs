@@ -438,12 +438,14 @@ if (!Myna) var Myna={}
 	 
 	Parameters:
 		filter		-	*Optional, default: null* 
-							Either a comma separated list of file extensions to list, 
-							ex: "css,js", OR a filter function. If null all files are 
-                     returned.
-      recursive   -  *Optional, default: false* 
-							If true, all sub-directories will be searched 
-							as well
+						Either a comma separated list of file extensions to list, 
+						ex: "css,js", OR a filter function. If null all files are 
+						returned.
+		recursive	-  *Optional, default: false* 
+						If true, all sub-directories will be searched 
+						as well. If this is a filter function, then only 
+						directories for which this function returns true 
+						will be recursed
 	Examples:
 	(code)
 		//Find all the files and directories, but not sub-directories in the Myna root:
@@ -457,6 +459,12 @@ if (!Myna) var Myna={}
 			var isOld =f.lastModified < new Date().add(Date.DAY,-30);
 			return isOld && !f.isDirectory();
 		},true);
+		
+		//Find all code files, in all subdirectories except for in .svn directories 
+		var files = new Myna.File(".").listFiles("sjs,ejs,ws",function(d){
+			return d.fileName != ".svn";
+		});
+		
 	(end)
 	
 	See:
@@ -477,7 +485,16 @@ if (!Myna) var Myna={}
 				})
 			}
 		}
-		recursive = !!recursive; //force a boolean value
+		if (recursive){
+			if (typeof recursive == "function"){
+				shouldRecurse=recursive;
+			} else {
+				shouldRecurse=function(f){return true}
+			}
+		}else {
+			shouldRecurse=function(f){return false}	
+		}
+		
 		
 		/* make sure this file exists */
 		if (!this.exists){
@@ -496,7 +513,7 @@ if (!Myna) var Myna={}
 		this.javaFile.listFiles()
 			.map(function(jf){
 				var f = new Myna.File(jf.toURI());
-				if (recursive && f.isDirectory()){
+				if (f.isDirectory() && shouldRecurse(f)){
 					subDirs.push(f)
 				}
 				return f

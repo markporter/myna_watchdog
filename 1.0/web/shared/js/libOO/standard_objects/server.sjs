@@ -2,6 +2,17 @@
 	Global object that stores information about the server environment.
 */
 var $server={
+/* property: commandPath
+		OS path to the commandline invoker
+	*/	
+	get commandPath(){
+		if (/windows/i.test($server.osName)){
+			return new Myna.File("/WEB-INF/myna/commandline/myna.cmd").javaFile.toString(); 	
+		} else {
+			return new Myna.File("/WEB-INF/myna/commandline/myna").javaFile.toString()
+		}
+	},
+	
 /* property: dataSources
 		A structure of DS information
 	*/	

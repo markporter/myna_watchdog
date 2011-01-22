@@ -156,7 +156,7 @@ var $res = {
 							A string message print on standard error output
 		
 		Example:
-			$res.seExitCode("1","Incorrect number of parameters")
+			$res.setExitCode("1","Incorrect number of parameters")
 	*/
 	setExitCode:function(code,msg){
 		if (msg) java.lang.System.err.println(msg)
