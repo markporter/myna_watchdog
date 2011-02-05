@@ -98,6 +98,7 @@ File: Number  (no auto-title, Number.js)
 File: Object  (Object.js)
 File: ObjectLib  (ObjectLib.js)
 File: String  (String.js)
+File: XML  (E4X.js)
 
 Group: Index  {
 

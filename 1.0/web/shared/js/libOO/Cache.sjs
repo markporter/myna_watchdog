@@ -274,13 +274,16 @@ if (!Myna) var Myna={}
 		} else {
 			cacheObj = $this.refresh(args);
 		}
+		$profiler.mark("got here 277")
 		if (($server.memAvailable/$server.memMax) < .2){
 			c.remove(key); //don't cache this result
 			delete $this.cacheKeys[key]
 		}
+		$profiler.mark("got here 282")
 		//try to free memory in the background
-			new Myna.Thread(function(){
-				Myna.lock("MYNA:cacheFree",0,function(c){
+			/* new Myna.Thread(function(){
+				Myna.lock("MYNA:cacheFree",0,function(){
+					var c = org.apache.jcs.JCS.getInstance("value")
 					while (true){
 						if (
 							($server.memAvailable/$server.memMax) > .2
@@ -291,10 +294,11 @@ if (!Myna) var Myna={}
 						})	
 					}
 				})
-			},[c])
+			},[],.9) */
 		if (!cacheObj) {
 			throw new Error("Unable to create or retrieve cache value for cache '" +this.name+ "'");
 		}
+		$profiler.mark("got here 299")
 		if (cacheObj.content) Myna.print(cacheObj.content)
 		return cacheObj.value
 	}

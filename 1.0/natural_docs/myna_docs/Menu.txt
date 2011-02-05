@@ -63,6 +63,7 @@ Group: JavaScript Global Objects  {
    File: Number  (no auto-title, Number.js)
    File: Object  (Object.js)
    File: String  (String.js)
+   File: XML  (E4X.js)
    }  # Group: JavaScript Global Objects
 
 Group: Myna Global Objects  {

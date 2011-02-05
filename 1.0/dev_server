@@ -13,7 +13,7 @@ webroot=../build
 pidfile=$server.pid
 logfile=$server.log
 
-jvm_args="-server -Xmx256m -Dsun.io.useCanonCaches=false -XX:MaxPermSize=128m -XX:+UseParallelGC -Djava.awt.headless=false"
+jvm_args="-server -Xmx128m -Dsun.io.useCanonCaches=false -XX:MaxPermSize=64m -XX:+UseParallelGC -Djava.awt.headless=false"
 
 args="--webroot=$webroot   --httpPort=$port --prefix=/dev --ajp13Port=-1"
 
