@@ -1648,6 +1648,26 @@ if ("$server_gateway" in this){
 		
 		return new XML(xml);
 	};
+/* Function: toXmlDoc 
+	returns an org.w3c.dom.Document object from this string, or throws an 
+	exception if not possible 
+	 
+	See:
+	*	http://download.oracle.com/javase/1.5.0/docs/api/org/w3c/dom/Document.html
+	*  http://download.oracle.com/javase/1.5.0/docs/api/javax/xml/parsers/DocumentBuilder.html
+	
+	*/
+	String.prototype.toXmlDoc=function(){
+		var xml = String(this).trim();
+		for (var i=0; !/<[^\?!]/.test(xml.substr(i,2)) ;++i){}
+		if (i) xml = xml.substr(i);
+		
+		var is = new java.io.StringBufferInputStream(xml.toJava())
+		var doc =javax.xml.parsers.DocumentBuilderFactory.newInstance()
+			.newDocumentBuilder().parse(is);
+		is.close()
+		return doc;
+	};
 /* Function: escapeUrl 
 	returns a URL encoded version of this string 
 	 

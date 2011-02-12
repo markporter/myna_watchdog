@@ -2155,6 +2155,171 @@ if (!Myna) var Myna={}
 			return node;
 		} else return "["+xml.nodeKind()+"]"
 	} 
+/* Function: xmlToPdf
+	Converts an xml/xhtml object into a PDF file
+
+	Parameters:
+		input		-	Input XML. See *Input Types* below
+		output	-	*optional, default null*
+						Output location. See *Output Types* below
+		baseUrl	-	*Optional, default null*
+						Only necessary for input types that don't include a path, but 
+						do refer to images or css via relative paths. 
+	Input Types:
+		* XML string			- 	May require _baseUrl_
+		* E4X <XML> instance	- 	May require _baseUrl_
+		* Java InputStream	- 	May require _baseUrl_. _xmlToPdf_ will not close 
+										this stream
+		* <MynaPath> 			- 	to an XML/XHTML file
+		* <Myna.File> 			- 	to an XML/XHTML file
+		* URL string			- 	to an XML/XHTML File
+	
+	Output Types:
+		* null					- 	A byte array containing the PDF content will be returned
+		* Java OutputStream	- 	_xmlToPdf_ will not close this stream 
+		* <MynaPath>			-	PDF output will be written to this file.
+		* <Myna.File>				-	PDF output will be written to this file.
+		
+	Detail:
+		This function uses Flying Saucer (xhtmlrenderer) to convert XML/XHTML 
+		content, resolving embedded stylesheets and images.
+		
+		Flying Saucer understands most CSS 2.1 definitions.
+		
+		For XHTML, STYLE tags need to be in the HEAD section. External stylesheets
+		need to be in a LINK tag in the HEAD section
+		
+		For raw XML, a <?xml-stylesheet href='' type='text/css'?> definition is 
+		necessary
+
+		
+	Examples:
+	(code)
+		//Transform any page to a PDF (assuming it is valid XHTML)
+		//at the bottom of a page
+		...
+		if ($req.data.asPDF=="true"){
+			$res.printBinary(Myna.xmlToPdf($res.clear()),"application/pdf","WebPage.pdf");
+		}
+	(end)
+	
+		
+	See:
+		* Using Fying Saucer: http://today.java.net/pub/a/today/2007/06/26/generating-pdfs-with-flying-saucer-and-itext.html
+		* <Myna.htmlToXhtml>
+		* "print" a page to PDF in the examples folder 
+	*/
+	Myna.xmlToPdf= function(input,output,baseUrl){
+		
+		var is,doc,type,url;
+		
+		if (typeof input == "string"){
+			input = input.trim();
+			if (/^\</.test(input)){//assume XML String
+				doc = input.toXmlDoc();
+				type = "doc"
+				
+			} else if (/^\w+:\//.test(input)){ //assume url 
+				type = "url"
+				url=input;
+			} else { // assume MynaPath
+				url = new Myna.File(input).toString();
+				type = "url"
+			}
+		} else if (input instanceof XML){
+			type = "doc";
+			doc =input.toXMLString().toXmlDoc()
+		} else if (input instanceof org.w3c.dom.Document){
+			type = "doc";
+			doc = input;
+		} else if (input instanceof java.io.InputStream){
+			type="doc";
+			doc =javax.xml.parsers.DocumentBuilderFactory.newInstance()
+				.newDocumentBuilder().parse(input);
+		} else if (input instanceof Myna.File){
+			type="url";
+			input = input.toString()
+		}
+		
+		if (!type){
+			throw new Error("input '"+String(input).left(25)+"' is not a valid XML source")
+		}
+		
+		var r = new org.xhtmlrenderer.pdf.ITextRenderer();
+		if (type == "doc"){
+			r.setDocument(doc,baseUrl||null)	
+		} else {
+			r.setDocument(url)
+		}
+		r.layout();
+		
+		if (!output){
+			var baos = new java.io.ByteArrayOutputStream()
+			r.createPDF(baos)
+			return  baos.toByteArray()
+		} else if (output instanceof java.io.OutputStream){
+			r.createPDF(output);
+		} else{
+			os = new Myna.File(output).getOutputStream();
+			r.createPDF(os)
+			os.close()
+		}
+		return null;
+	}	
+/* Function: htmlToXhtml
+	Converts an HTML string into an XHTML string
+
+	Parameters:
+		html			-	HTML string. Can be a whole document or a fragment
+		isFragment	-	*optional, default false*
+							set to true to treat _html_ as a fragment and not create 
+							missing HTML and BODY tags
+		
+	Detail:
+		HTML allows a lot of sloppiness that is not valid in XHTML. Start tags 
+		with no end tag, mis-matched case, missing parent tags like body and HTML. 
+		Also, to properly display XHTML in browsers, it is necessary to both 
+		escape SCRIPT and STYLE tag contents in CDATA tags, but also comment those 
+		CDATA sections. 
+		
+		This function takes an HTML string, and attempts to transform it into valid 
+		XHTML. Missing end tags are guessed and case is normalized. SCRIPT and 
+		STYLE sections are escaped properly, and well-formed, indented XHTML is 
+		returned.
+		
+	Note:
+		The returned XHTML string will not include a ?xml? or DOCTYPE header. If 
+		you want those things, you will need to prepend them yourself. 
+	*/
+	Myna.htmlToXhtml =function(html,isFragment){
+		var is = new java.io.StringBufferInputStream(String(html).toJava())
+		
+		var config = new org.cyberneko.html.HTMLConfiguration()
+		config.setFeature("http://cyberneko.org/html/features/balance-tags/document-fragment",!!isFragment);
+		config.setProperty("http://cyberneko.org/html/properties/names/elems", "lower");
+		config.setFeature("http://xml.org/sax/features/namespaces", false);
+		config.setFeature("http://cyberneko.org/html/features/scanner/fix-mswindows-refs",true);
+		
+		var cleaner = new org.apache.xerces.parsers.DOMParser(config)
+		
+		cleaner.parse(new org.xml.sax.InputSource(is))
+			
+		var t = javax.xml.transform.TransformerFactory.newInstance().newTransformer();
+		var OutputKeys=javax.xml.transform.OutputKeys;
+		t.setOutputProperty(OutputKeys.INDENT, "yes");
+		t.setOutputProperty(OutputKeys.METHOD, "xml");
+		t.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+		t.setOutputProperty(OutputKeys.CDATA_SECTION_ELEMENTS,"SCRIPT STYLE script style")
+		
+		var result = new javax.xml.transform.stream.StreamResult(new java.io.StringWriter());
+		var source = new javax.xml.transform.dom.DOMSource(cleaner.getDocument());
+		t.transform(source, result);
+		var xmlString = result.getWriter().toString();
+		return xmlString
+			.replace(/<(STYLE|SCRIPT)><!\[CDATA\[/ig,"<$1>/*<![CDATA[*/")
+			.replace(/\]\]><.(STYLE|SCRIPT)>/ig,"/*]]>*/</$1>");
+		
+	}
 /* deprecated */
 	Myna.enableServerJS=function Myna_enableServerJS(){
       

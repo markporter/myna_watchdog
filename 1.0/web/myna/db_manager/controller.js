@@ -718,6 +718,7 @@ var C ={
 	}
 /* ---------------- new_sql_window ------------------------------------------ */
 	C.new_sql_window=function(sql){
+		var editor;
 		if (!sql) sql="";
 		var center_tabs = Ext.getCmp("center_tabs");
 		
@@ -950,211 +951,7 @@ var C ={
 					height:200,
 					layout:"fit",
 					xtype:"panel",
-					items:[editor={
-						xtype:"panel",
-						id:"sql"+tabId,
-						value:sql,
-						enableKeyEvents:true,
-						tempValue:sql,
-						setValue:function(val){
-							if (this.bespin){
-								this.bespin.buffer.model.setValue(val);
-							} else this.tempValue=val
-						},
-						getValue:function(){
-							if (this.bespin){
-								return this.bespin.buffer.model.getValue();
-							} else return this.tempValue || ""
-						},
-						insertAtCursor:function(text){
-							console.debug(this.bespin)
-							this.bespin.editor.replace(this.bespin.editor.selection,text)
-							window.setTimeout(function(){
-								this.bespin.view.focus()
-							},100)
-							
-						},
-						listeners:{
-							resize:function(ta){
-								if (ta.bespin) {
-									ta.bespin.editor.dimensionsChanged.call(ta.bespin.editor)
-								}
-							},
-							render:function(ta){
-								window.setTimeout(function(){
-									bespin.useBespin(ta.body.dom,
-										{ 
-											 settings:{ 
-												tabstop: 4, 
-												//theme:"white"
-												
-											},
-											syntax:"sql",
-											stealFocus: true 
-										}
-									).then(function(bespin){
-										bespin.tabId = tabId;
-										if (ta.tempValue) bespin.buffer.model.setValue(ta.tempValue)
-										ta.bespin = bespin	
-										//console.debug(ta,"SQL control")
-										//console.debug("console.debug(Ext.getCmp(\"" +ta.id+"\") )")
-										
-									});
-								},100)
-							},
-							keydown2:function(ta,evt){
-								var t = ta.el.dom;
-								var kc = evt.getKey();
-								if ("9,8,37,39,46,13,119".listContains(kc) ) {
-									// hack for ie
-									if (Ext.isIE){
-										var range = document.selection.createRange();
-										var stored_range = range.duplicate();
-										stored_range.moveToElementText(t);
-										stored_range.setEndPoint('EndToEnd', range);
-										t.selectionStart = stored_range.text.length - range.text.length;
-										t.selectionEnd = t.selectionStart + range.text.length;
-										t.setSelectionRange = function(start, end){
-											var range = this.createTextRange();
-											range.collapse(true);
-											range.moveStart("character", start);
-											range.moveEnd("character", end - start);
-											range.select();
-										}
-									}
-																	
-									// Set desired tab- defaults to four space softtab
-									var tab = C.editorTab;
-									var ss = t.selectionStart;
-									var se = t.selectionEnd;
-									// Tab key - insert tab expansion
-									if (kc == 9) {
-										evt.stopEvent();
-										// Special case of multi line selection
-										if (ss != se && t.value.slice(ss,se).indexOf("\n") != -1 ) {
-											if (!Ext.isGecko) {
-												Ext.Msg.alert("Error:","Mullt-line indent is only supported on Gecko based browsers (e.g. Firefox)");
-												return
-											}
-											//first, normalize selection to whole lines
-											for(;ss > 0;--ss){
-												if (t.value.charAt(ss-1) == "\n") break;
-											}
-											t.selectionStart=ss;
-											for(;se < t.value.length-1;++se){
-												if (t.value.charAt(se+1) == "\n") break;
-												
-											}
-											t.selectionEnd=se;
-											
-											
-											var pre	= t.value.left(ss);
-											var post = (t.value.length > se ? t.value.right(t.value.length -se): "")
-											var tab_count = 1;
-											
-											var selection = t.value.slice(ss,se)
-											selection = tab+selection.replace(/\n/g,function(str,p1){
-												++tab_count
-												return "\n"+tab
-											});
-											t.value = pre+selection+post;
-											 t.selectionStart = ss
-											t.selectionEnd = se + (tab.length * tab_count);
-											
-										}
-										// "Normal" case (no selection or selection on one line only)
-										else {
-											if (Ext.isIE) {
-												document.selection.createRange().text = tab
-											} else {
-												if (t.value.charAt(ss+1) == "\n") ++ss;
-												
-												t.value = t.value.left(ss) + tab + t.value.right(t.value.length-ss);
-												if (ss == se) {
-													t.selectionStart = t.selectionEnd = ss + tab.length;
-												}
-												else {
-													t.selectionStart = ss + tab.length;
-													t.selectionEnd = se + tab.length;
-												}
-											}
-										}
-									
-									}
-									// Backspace key - delete preceding tab expansion, if exists
-									else if (evt.keyCode == 8 && t.value.slice(ss - tab.length,ss) == tab) {
-										evt.stopEvent();
-										t.value = t.value.slice(0,ss - 4).concat(t.value.slice(ss,t.value.length));
-										t.selectionStart = t.selectionEnd =ss= ss - tab.length;
-										
-										
-										if (Ext.isIE){
-											var crChars = t.value.slice(0,ss).match(/(\r)/g);
-											if (crChars) t.selectionEnd =t.selectionStart -= crChars.length;
-											setTimeout(function(){
-												t.setSelectionRange(t.selectionStart,t.selectionEnd)
-											},100)
-										}
-									}
-									
-									// Enter key - align with previous line
-									else if (evt.keyCode ==13 && ss != 0) {
-										evt.stopEvent();
-										var pre	= t.value.left(ss);
-										var post = (t.value.length > se ? t.value.right(t.value.length -se): "")
-										
-										var start,end;
-										
-										for(start=ss;start > 0;--start){
-											if (t.value.charAt(start-1) == "\n") break;
-										}
-										for(end=start;end < t.value.length;++end){
-											if (t.value.charAt(end) != " ") break;
-										}
-										var white_space = "\n"+t.value.slice(start,end);
-										t.value = pre+white_space+post;
-										//t.value = pre+"bob"+"\n"+post;
-										t.selectionStart = t.selectionEnd = ss+white_space.length ;
-										if (Ext.isIE){
-											var crChars = t.value.slice(0,ss).match(/(\r)/g);
-											if (crChars) t.selectionEnd =t.selectionStart -= crChars.length;
-											setTimeout(function(){
-												t.setSelectionRange(t.selectionStart,t.selectionEnd)
-											},100)
-										}
-									}
-									// Left/right arrow keys - move across the tab in one go
-									else if (evt.keyCode == 37 && t.value.slice(ss - tab.length,ss) == tab) {
-										evt.stopEvent();
-										t.selectionStart = t.selectionEnd = ss - tab.length;
-										if (Ext.isIE){
-											setTimeout(function(){
-												t.setSelectionRange(t.selectionStart,t.selectionEnd)
-											},100)
-										}
-									}
-									else if (evt.keyCode == 39 && t.value.slice(ss,ss + tab.length) == tab) {
-										evt.stopEvent();
-										t.selectionStart = t.selectionEnd = ss + tab.length;
-										if (Ext.isIE){
-											setTimeout(function(){
-												t.setSelectionRange(t.selectionStart,t.selectionEnd)
-											},100)
-										}
-									}
-									else if (evt.keyCode == 119 && t.value.trim().length) {
-										config.execute_function()
-									} else {
-										
-									}
-	
-									
-								}
-								
-							}
-						}
-					}]
-					
+					items:[editor={}]
 				
 				},{
 					/* center (button bar) and grid */
@@ -1204,7 +1001,235 @@ var C ={
 				}
 			}
 			
-			
+			if (Ext.isIE){
+				ObjectLib.applyTo({
+					xtype:"textarea",
+					id:"sql"+tabId,
+					value:sql,
+					enableKeyEvents:true,
+					listeners:{
+						render:function(ta){
+							//hack for wrapping on textareas to "off"
+							textarea =ta.el.dom;
+							textarea.setAttribute("wrap", "off");
+							var parentNode = textarea.parentNode;
+							var nextSibling= textarea.nextSibling;
+							parentNode.removeChild(textarea); 
+							parentNode.insertBefore(textarea, nextSibling);
+						},
+						keydown:function(ta,evt){
+							var t = ta.el.dom;
+							var kc = evt.getKey();
+							if ("9,8,37,39,46,13,119".listContains(kc) ) {
+								// hack for ie
+								if (Ext.isIE){
+									var range = document.selection.createRange();
+									var stored_range = range.duplicate();
+									stored_range.moveToElementText(t);
+									stored_range.setEndPoint('EndToEnd', range);
+									t.selectionStart = stored_range.text.length - range.text.length;
+									t.selectionEnd = t.selectionStart + range.text.length;
+									t.setSelectionRange = function(start, end){
+										var range = this.createTextRange();
+										range.collapse(true);
+										range.moveStart("character", start);
+										range.moveEnd("character", end - start);
+										range.select();
+									}
+								}
+																
+								// Set desired tab- defaults to four space softtab
+								var tab = C.editorTab;
+								var ss = t.selectionStart;
+								var se = t.selectionEnd;
+								// Tab key - insert tab expansion
+								if (kc == 9) {
+									evt.stopEvent();
+									// Special case of multi line selection
+									if (ss != se && t.value.slice(ss,se).indexOf("\n") != -1 ) {
+										if (!Ext.isGecko) {
+											Ext.Msg.alert("Error:","Mullt-line indent is only supported on Gecko based browsers (e.g. Firefox)");
+											return
+										}
+										//first, normalize selection to whole lines
+										for(;ss > 0;--ss){
+											if (t.value.charAt(ss-1) == "\n") break;
+										}
+										t.selectionStart=ss;
+										for(;se < t.value.length-1;++se){
+											if (t.value.charAt(se+1) == "\n") break;
+											
+										}
+										t.selectionEnd=se;
+										
+										
+										var pre = t.value.left(ss);
+										var post = (t.value.length > se ? t.value.right(t.value.length -se): "")
+										var tab_count = 1;
+										
+										var selection = t.value.slice(ss,se)
+										selection = tab+selection.replace(/\n/g,function(str,p1){
+											++tab_count
+											return "\n"+tab
+										});
+										t.value = pre+selection+post;
+										 t.selectionStart = ss
+										t.selectionEnd = se + (tab.length * tab_count);
+										
+									}
+									// "Normal" case (no selection or selection on one line only)
+									else {
+										if (Ext.isIE) {
+											document.selection.createRange().text = tab
+										} else {
+											if (t.value.charAt(ss+1) == "\n") ++ss;
+											
+											t.value = t.value.left(ss) + tab + t.value.right(t.value.length-ss);
+											if (ss == se) {
+												t.selectionStart = t.selectionEnd = ss + tab.length;
+											}
+											else {
+												t.selectionStart = ss + tab.length;
+												t.selectionEnd = se + tab.length;
+											}
+										}
+									}
+								
+								}
+								// Backspace key - delete preceding tab expansion, if exists
+								else if (evt.keyCode == 8 && t.value.slice(ss - tab.length,ss) == tab) {
+									evt.stopEvent();
+									t.value = t.value.slice(0,ss - 4).concat(t.value.slice(ss,t.value.length));
+									t.selectionStart = t.selectionEnd =ss= ss - tab.length;
+									
+									
+									if (Ext.isIE){
+										var crChars = t.value.slice(0,ss).match(/(\r)/g);
+										if (crChars) t.selectionEnd =t.selectionStart -= crChars.length;
+										setTimeout(function(){
+											t.setSelectionRange(t.selectionStart,t.selectionEnd)
+										},100)
+									}
+								}
+								
+								// Enter key - align with previous line
+								else if (evt.keyCode ==13 && ss != 0) {
+									evt.stopEvent();
+									var pre = t.value.left(ss);
+									var post = (t.value.length > se ? t.value.right(t.value.length -se): "")
+									
+									var start,end;
+									
+									for(start=ss;start > 0;--start){
+										if (t.value.charAt(start-1) == "\n") break;
+									}
+									for(end=start;end < t.value.length;++end){
+										if (t.value.charAt(end) != " ") break;
+									}
+									var white_space = "\n"+t.value.slice(start,end);
+									t.value = pre+white_space+post;
+									//t.value = pre+"bob"+"\n"+post;
+									t.selectionStart = t.selectionEnd = ss+white_space.length ;
+									if (Ext.isIE){
+										var crChars = t.value.slice(0,ss).match(/(\r)/g);
+										if (crChars) t.selectionEnd =t.selectionStart -= crChars.length;
+										setTimeout(function(){
+											t.setSelectionRange(t.selectionStart,t.selectionEnd)
+										},100)
+									}
+								}
+								// Left/right arrow keys - move across the tab in one go
+								else if (evt.keyCode == 37 && t.value.slice(ss - tab.length,ss) == tab) {
+									evt.stopEvent();
+									t.selectionStart = t.selectionEnd = ss - tab.length;
+									if (Ext.isIE){
+										setTimeout(function(){
+											t.setSelectionRange(t.selectionStart,t.selectionEnd)
+										},100)
+									}
+								}
+								else if (evt.keyCode == 39 && t.value.slice(ss,ss + tab.length) == tab) {
+									evt.stopEvent();
+									t.selectionStart = t.selectionEnd = ss + tab.length;
+									if (Ext.isIE){
+										setTimeout(function(){
+											t.setSelectionRange(t.selectionStart,t.selectionEnd)
+										},100)
+									}
+								}
+								else if (evt.keyCode == 119 && t.value.trim().length) {
+									config.execute_function()
+								} else {
+									
+								}
+
+								
+							}
+							
+						}
+					}
+				},editor)	
+			} else {
+				ObjectLib.applyTo({
+					xtype:"panel",
+					id:"sql"+tabId,
+					value:sql,
+					enableKeyEvents:true,
+					tempValue:sql,
+					setValue:function(val){
+						if (this.bespin){
+							this.bespin.buffer.model.setValue(val);
+						} else this.tempValue=val
+					},
+					getValue:function(){
+						if (this.bespin){
+							return this.bespin.buffer.model.getValue();
+						} else return this.tempValue || ""
+					},
+					insertAtCursor:function(text){
+						//console.debug(this.bespin)
+						this.bespin.editor.replace(this.bespin.editor.selection,text)
+						window.setTimeout(function(){
+							this.bespin.view.focus()
+						},100)
+						
+					},
+					listeners:{
+						resize:function(ta){
+							if (ta.bespin) {
+								ta.bespin.editor.dimensionsChanged.call(ta.bespin.editor)
+							}
+						},
+						render:function(ta){
+							if (Ext.isIE){
+							} else {
+								window.setTimeout(function(){
+										
+									bespin.useBespin(
+										ta.body.dom,
+										{ 
+											settings:{
+												//theme:"white",
+												tabstop: 4 
+											},
+											syntax:"sql",
+											stealFocus: true 
+										}
+									).then(function(bespin){
+										bespin.tabId = tabId;
+										if (ta.tempValue) bespin.buffer.model.setValue(ta.tempValue)
+										ta.bespin = bespin	
+										//console.debug(ta,"SQL control")
+										//console.debug("console.debug(Ext.getCmp(\"" +ta.id+"\") )")
+										
+									});
+								},100)
+							}
+						}
+						
+					}
+				},editor)	
+			}
 			 
 			C.addTab(center_tabs,config);
 			
@@ -1964,7 +1989,7 @@ var C ={
 													id: "text"            
 												},
 												[
-													{name:'text'},
+													{name:'text'}
 												])
 												
 											}), */
@@ -2006,7 +2031,7 @@ var C ={
 													id: "text"            
 												},
 												[
-													{name:'text'},
+													{name:'text'}
 												])
 												
 											}),
@@ -2046,7 +2071,7 @@ var C ={
 													id: "text"            
 												},
 												[
-													{name:'text'},
+													{name:'text'}
 												])
 												
 											}),

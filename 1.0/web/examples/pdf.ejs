@@ -1,0 +1,84 @@
+<%
+	var rows = new Myna.Query({
+		ds:"myna_log",
+		sql:<ejs>
+			select 
+				*
+			from
+				myna_log_general
+			where 1=1
+			order by event_ts asc
+		</ejs>,
+		maxRows:10
+	});
+%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<title>Log Files</title>
+		<style type="text/css">/*<![CDATA[*/
+			body, td{
+				font-family:sans-serif;
+			}
+			table.rows{
+				border:1px solid black;
+				page-break-after: always;
+			}
+			tr.header td{
+				font-weight:bold;
+				border-bottom:2px solid black;
+			}
+			.alt{
+			  background-color:silver;
+			}
+			.detail{
+				padding-left:20px;
+				background-color:#DFDFDF;
+				page-break-inside: avoid;
+				border-left:3px solid gray;
+			}
+			.detail_label{
+				border-bottom:3px solid gray;
+				padding-left:10px;
+				font-size:18pt;
+				margin-bottom:5px;
+				color:white;
+				background-color:black;
+				
+			}
+			@media print {
+				.noprint { display: none; }
+			}
+
+		/* ]]> */</style>
+	</head>
+	<body>
+		<a class="noprint" href="?print=true">Download PDF</a>
+	   <table class="rows" border="0">
+		 	<tr class="header">
+		 		<td>Type</td>
+		 		<td>Label</td>
+		 		<td>Detail</td>
+		 	</tr>
+		 	<@loop array="rows.data" element="row" index="rowNum">
+		 		<tr class="<%=(rowNum%2==0?"alt":"")%>">
+					<td><%=row.type%></td>
+					<td><%=Myna.htmlToXhtml(row.label.left(100),true)%></td>
+					<td><@if row.detail><a href="#log_id_<%=row.log_id%>"> Detail</a></@if></td>
+				</tr>
+		 	</@loop>
+		 </table>
+		 <@loop array="rows.data" element="row">
+			 <@if row.detail>
+				 <a name="log_id_<%=row.log_id%>"/>
+				 <div class="detail_label"><%=Myna.htmlToXhtml(row.label,true)%></div>
+				 <div class="detail"><%=Myna.htmlToXhtml(row.detail,true)%></div>
+			 </@if>
+		 </@loop>
+	</body>
+</html>
+<%
+	if ($req.data.print=="true"){
+		$res.printBinary(Myna.xmlToPdf($res.clear()),"application/pdf","log.pdf");
+	}
+%>

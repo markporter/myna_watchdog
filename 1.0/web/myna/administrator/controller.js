@@ -2620,7 +2620,7 @@ var C ={
 										setValue:function(val){
 											Ext.form.ComboBox.prototype.setValue.call(this,val)
 											r(this)	
-										}, 
+										} 
 									},{
 									//Simple Panel
 										xtype:"fieldset",
@@ -2745,7 +2745,7 @@ var C ={
 												
 												defaults:{
 													labelSeparator:"",
-													labelStyle:"padding-left:2px",
+													labelStyle:"padding-left:2px"
 												}
 											},
 											items:[
@@ -2895,7 +2895,7 @@ var C ={
 													["Wednesday",3],
 													["Thursday",4],
 													["Friday",5],
-													["Saturday",6],
+													["Saturday",6]
 												] 
 											}),
 											displayField:'key',

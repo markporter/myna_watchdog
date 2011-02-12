@@ -893,34 +893,9 @@ var C ={
 				frame:false,
 				layout:"border",
 				border:false,
-				items:[{
-					region:"center",
-					id:"center_tabs",
-					hidden:true,
-					plain:"true",
-					enableTabScroll:true,
-					xtype:"tabpanel",
-					deferredRender:false,
-					layoutOnTabChange:true,
-					autoDestroy:true
-					
-				}]
-				
-			},{
-				/* north titlebar*/
-				region:"north",
-				height:25,
-				layout:"border",
-				defaults:{
-					border:false,
-					layout:"fit"
-				},
-				items:[{
-					region:"center", 
-					xtype:"toolbar",
-					items:[{
-						xtype:"tbtext",
-						text:prettyName
+				/* tbar:[{
+					xtype:"tbtext",
+					text:prettyName
 					},{
 						
 						xtype:"tbfill"
@@ -955,21 +930,100 @@ var C ={
 							xtype:"tbspacer"	
 						}
 					}(),{
-						text:"logout",
-						handler:function(){
-							Ext.Ajax.request({
-								url:'permissions.ws?json-myna&method=logout',
-								waitMsg:"Logging out...",
-								callback:function(){
-									location.href=location.href;
-								}
-							})	
+					text:"logout",
+					handler:function(){
+						Ext.Ajax.request({
+							url:'permissions.ws?json-myna&method=logout',
+							waitMsg:"Logging out...",
+							callback:function(){
+								location.href=location.href;
+							}
+						})	
+					}
+				}], */
+				items:[{
+					region:"center",
+					id:"center_tabs",
+					hidden:true,
+					plain:"true",
+					enableTabScroll:true,
+					xtype:"tabpanel",
+					deferredRender:false,
+					layoutOnTabChange:true,
+					autoDestroy:true
+					
+				}]
+				
+			},{
+				/* north titlebar*/
+				region:"north",
+				height:40,
+				//autoHeight:true,
+				frame:true,
+				layout:{
+					type:"hbox",
+					defaultMargins:"2",//{top:0, right:2, bottom:0, left:2}
+				},
+				defaults:{
+					xtype:"button",
+					border:false,
+					bodyStyle:"padding:2px"
+				},
+				items:[{
+						xtype:"panel",
+						html:prettyName,
+						bodyStyle:{
+							"font-weight":"bold",
+							"font-style":"italic",
+							"font-size":"14pt"
+						},
+						flex:1
+					},function(){
+						if (appname=="myna_admin") return {
+							text:"Manage Apps",
+							handler:C.apps_main
 						}
-					}]
+						else return {
+							xtype:"tbspacer"
+							
+						}
+					}(),function(){
+						if (appname=="myna_admin") return {
+							text:"Manage Users",
+							handler:C.edit_users
+						}
+						else return {
+							xtype:"tbspacer"
+							
+						}
+					}()
+					,{
+						text:"Manage User Groups",
+						handler:C.user_groups_main
+					},function(){
+						if (appname=="myna_admin") return {
+							text:"Manage Rights",
+							handler:C.rights_main
+						}
+						else return {
+							xtype:"tbspacer"	
+						}
+					}(),{
+					text:"logout",
+					handler:function(){
+						Ext.Ajax.request({
+							url:'permissions.ws?json-myna&method=logout',
+							waitMsg:"Logging out...",
+							callback:function(){
+								location.href=location.href;
+							}
+						})	
+					}
 				}]
 			}]
 		}
 		viewport = new Ext.Viewport(config);	
+		
 	}
 /* ---------------- apps_main --------------------------------------------- */
 	C.apps_main=function(){

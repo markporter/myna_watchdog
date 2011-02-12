@@ -34,6 +34,7 @@ var fusebox={
 		includeTemplate("views/dsp_main.html",{
 			version:$server.version,
 			extUrl:$application.extUrl,
+			bespinUrl:$application.bespinUrl,
 			prettyName:$application.prettyName,
 			rootUrl:$server.rootUrl,
 			startDs:data.ds,

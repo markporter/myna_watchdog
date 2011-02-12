@@ -881,8 +881,8 @@ var $application={
 					
 					$res.metaRedirect($server.requestUrl+$server.requestScriptName + queryVars)
 					$res.flush();
-					Myna.abort();
 					$req.handled = true;
+					return;
 				}
 			
 			

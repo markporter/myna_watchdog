@@ -472,6 +472,7 @@ if (!Myna) var Myna={}
 	
 	*/
 	Myna.File.prototype.listFiles=function(filter,recursive){
+		var shouldRecurse;
 		if (!filter){
 			filter = function(){return true}
 		}

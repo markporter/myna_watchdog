@@ -529,9 +529,10 @@ var $res = {
 			fail or corrupt the file.
 			
 		Example:
+			(code)
 			var bytes = new Myna.File("path_to_doc.pdf").readBinary();
 			$res.printBinary(bytes,"application/pdf","result.pdf");
-		
+			(end)
 		See Also:
 			* <serveFile>
 	*/
