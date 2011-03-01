@@ -893,59 +893,11 @@ var C ={
 				frame:false,
 				layout:"border",
 				border:false,
-				/* tbar:[{
-					xtype:"tbtext",
-					text:prettyName
-					},{
-						
-						xtype:"tbfill"
-					},function(){
-						if (appname=="myna_admin") return {
-							text:"Manage Apps",
-							handler:C.apps_main
-						}
-						else return {
-							xtype:"tbspacer"
-							
-						}
-					}(),function(){
-						if (appname=="myna_admin") return {
-							text:"Manage Users",
-							handler:C.edit_users
-						}
-						else return {
-							xtype:"tbspacer"
-							
-						}
-					}()
-					,{
-						text:"Manage User Groups",
-						handler:C.user_groups_main
-					},function(){
-						if (appname=="myna_admin") return {
-							text:"Manage Rights",
-							handler:C.rights_main
-						}
-						else return {
-							xtype:"tbspacer"	
-						}
-					}(),{
-					text:"logout",
-					handler:function(){
-						Ext.Ajax.request({
-							url:'permissions.ws?json-myna&method=logout',
-							waitMsg:"Logging out...",
-							callback:function(){
-								location.href=location.href;
-							}
-						})	
-					}
-				}], */
 				items:[{
 					region:"center",
 					id:"center_tabs",
 					hidden:true,
-					plain:"true",
+					//plain:"true",
 					enableTabScroll:true,
 					xtype:"tabpanel",
 					deferredRender:false,
@@ -957,30 +909,16 @@ var C ={
 			},{
 				/* north titlebar*/
 				region:"north",
-				height:40,
-				//autoHeight:true,
-				frame:true,
-				layout:{
-					type:"hbox",
-					defaultMargins:"2",//{top:0, right:2, bottom:0, left:2}
-				},
-				defaults:{
-					xtype:"button",
-					border:false,
-					bodyStyle:"padding:2px"
-				},
-				items:[{
-						xtype:"panel",
-						html:prettyName,
-						bodyStyle:{
-							"font-weight":"bold",
-							"font-style":"italic",
-							"font-size":"14pt"
-						},
-						flex:1
+				tbar:[{
+						xtype:"tbtext",
+						text:"<div class='app_title'>" + prettyName +"</div>"
+					},{
+						xtype:"tbfill"
+					
 					},function(){
 						if (appname=="myna_admin") return {
 							text:"Manage Apps",
+							iconCls:"icon_manage_apps",
 							handler:C.apps_main
 						}
 						else return {
@@ -990,6 +928,7 @@ var C ={
 					}(),function(){
 						if (appname=="myna_admin") return {
 							text:"Manage Users",
+							iconCls:"icon_manage_users",
 							handler:C.edit_users
 						}
 						else return {
@@ -999,10 +938,12 @@ var C ={
 					}()
 					,{
 						text:"Manage User Groups",
+						iconCls:"icon_manage_groups",
 						handler:C.user_groups_main
 					},function(){
 						if (appname=="myna_admin") return {
 							text:"Manage Rights",
+							iconCls:"icon_manage_rights",
 							handler:C.rights_main
 						}
 						else return {
@@ -1010,6 +951,7 @@ var C ={
 						}
 					}(),{
 					text:"logout",
+					icon:"images/door_out.png",
 					handler:function(){
 						Ext.Ajax.request({
 							url:'permissions.ws?json-myna&method=logout',
@@ -1033,6 +975,7 @@ var C ={
 			var config ={
 				id:tabId,
 				closable:true,
+				iconCls:"icon_manage_apps",
 				title:"Manage Apps",
 				layout:"border",
 				items:[{
@@ -1046,7 +989,7 @@ var C ={
 							var tb = Ext.getCmp("manage_apps_grid").getBottomToolbar()
 							store.baseParams.search=field.getValue();
 							store.baseParams.start=0;
-							tb.onClick("refresh");
+							tb.doRefresh();
 						}
 					},
 					stripeRows:true,
@@ -1280,6 +1223,7 @@ var C ={
 		if (!center_tabs.findById(tabId)){
 			var config ={
 				id:tabId,
+				iconCls:"icon_manage_users",
 				closable:true,
 				title:"Manage Users",
 				layout:"border",
@@ -1294,7 +1238,7 @@ var C ={
 							var store = Ext.StoreMgr.get("manage_users_grid")
 							store.baseParams.search=field.getValue();
 							store.baseParams.start=0;
-							tb.onClick("refresh");
+							tb.doRefresh();
 						}
 					},
 					stripeRows:true,
@@ -1602,7 +1546,7 @@ var C ={
 							var store = Ext.StoreMgr.get("manage_user_logins_grid")
 							store.baseParams.search=field.getValue();
 							store.baseParams.start=0;
-							tb.onClick("refresh");
+							tb.doRefresh();
 						}
 					},
 					stripeRows:true,
@@ -1886,6 +1830,7 @@ var C ={
 				id:tabId,
 				closable:true,
 				title:"Manage User Groups",
+				iconCls:"icon_manage_groups",
 				layout:"border",
 				items:[{
 					region:"center",
@@ -1898,7 +1843,7 @@ var C ={
 							var store = Ext.StoreMgr.get("manage_user_groups_grid")
 							store.baseParams.search=field.getValue();
 							store.baseParams.start=0;
-							tb.onClick("refresh");
+							tb.doRefresh();
 						}
 					},
 					stripeRows:true,
@@ -2157,7 +2102,7 @@ var C ={
 									var tb = Ext.getCmp("manage_user_group_members_grid").getBottomToolbar()
 									store.baseParams.search=field.getValue();
 									store.baseParams.start=0;
-									tb.onClick("refresh");
+									tb.doRefresh();
 								},
 								add:function(record){
 									var form = Ext.getCmp("form" + tabId).form;
@@ -2190,7 +2135,7 @@ var C ={
 														C.body.unmask();
 														C.infoMsg("removed '" + name + "'");
 														Ext.getCmp("manage_user_group_members_grid")
-															.getBottomToolbar().onClick("refresh")
+															.getBottomToolbar().doRefresh()
 													} else return false
 												})
 											})
@@ -2343,7 +2288,7 @@ var C ={
 									var tb = Ext.getCmp("manage_assigned_rights_grid").getBottomToolbar()
 									store.baseParams.search=field.getValue();
 									store.baseParams.start=0;
-									tb.onClick("refresh");
+									tb.doRefresh();
 								},
 								add:function(right_id){
 									var form = Ext.getCmp("form" + tabId).form;
@@ -2377,7 +2322,7 @@ var C ={
 														C.body.unmask();
 														C.infoMsg("Removed '" + name + "'");
 														Ext.getCmp("manage_assigned_rights_grid")
-															.getBottomToolbar().onClick("refresh")
+															.getBottomToolbar().doRefresh()
 													} else return false
 												})
 											})
@@ -2526,6 +2471,7 @@ var C ={
 	}		
 /* ---------------- rights_main --------------------------------------------- */
 	C.rights_main=function(){
+		var $this = this;
 		var center_tabs = Ext.getCmp("center_tabs");
 		var tabId="manage_rights_main";
 		if (!center_tabs.findById(tabId)){
@@ -2533,8 +2479,9 @@ var C ={
 				id:tabId,
 				closable:true,
 				title:"Manage Rights",
+				iconCls:"icon_manage_rights",
 				layout:"border",
-				items:[{
+				items:[{//center - grid
 					region:"center",
 					xtype:"grid",
 					id:"manage_rights_grid",
@@ -2545,7 +2492,7 @@ var C ={
 							var tb = Ext.getCmp("manage_rights_grid").getBottomToolbar()
 							store.baseParams.search=field.getValue();
 							store.baseParams.start=0;
-							tb.onClick("refresh");
+							tb.doRefresh();
 						}
 					},
 					stripeRows:true,
@@ -2575,7 +2522,7 @@ var C ={
 						{id:"description", header: "Description", dataIndex:'description', width: 100, sortable: true}
 						
 					],
-					autoExpandColumn:0,
+					autoExpandColumn:'description',
 					sm: new Ext.grid.RowSelectionModel({singleSelect:true}),
 					loadMask: true,
 					tbar:[{
@@ -2645,7 +2592,7 @@ var C ={
 							
 						}
 					}
-				},{
+				},{// east form
 					region:"east",
 					width:300,
 					title:"Edit Details",

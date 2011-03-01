@@ -401,19 +401,17 @@ var C ={
 					border:false,
 					layout:"fit"
 				},
-				items:[{
-					html:"<div class='app_title'>" + prettyName +"</div>",
-					region:"west",
-					width:400
-				},{
-					region:"center", 
-					html:""
-				},{
-					region:"east",
-					html:' <a class="link" href="?fuseaction=logout">Logout</a>',
-					bodyStyle:"padding-right:10px;text-align:right",
-					width:200
+				tbar:[{
+						xtype:"tbtext",
+						text:"<div class='app_title'>" + prettyName +"</div>"
+					},{
+						xtype:"tbfill"
 					
+					},{
+						text:"Logout",
+						handler:function(){
+							location.href="?fuseaction=logout"
+						}
 				}]
 			},{
 				/* west objects */
