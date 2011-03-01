@@ -1557,7 +1557,7 @@ if (!Myna) var Myna={}
 		if (!type) throw new Error("Type Required")
 		if (!detail) detail = " ";
 		if (String(type).toLowerCase() == "error"){
-			java.lang.System.err.println("Error2: " + label );
+			java.lang.System.err.println("Error Logged: " + label );
 			Myna.printConsole(
 				"Error: " + label,
 				detail.listBefore("-->").listAfter("<!--")

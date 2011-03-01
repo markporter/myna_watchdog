@@ -25,7 +25,7 @@
 		* https://developer.mozilla.org/en/E4X_Tutorial
 		* http://www.ecma-international.org/publications/standards/Ecma-357.htm
 	
-*/
+	*/
 
 /* Topic: Constructing XML
 	Methods for constructing an XML object
@@ -71,7 +71,7 @@
 		* <String.toXml>
 		* <Myna.HttpConnection.getResponseXml>
 		* <Myna.xmlToObject>
-*/
+	*/
 
 /* Topic: Accessing Nodes
 	how to work with XML content
@@ -90,11 +90,43 @@
 		var firstphone = c.phone[0];
 	(end)
 	
+	(code)
+		var person = <person>
+		  <name>Bob Smith</name>
+		  <likes>
+			<os>Linux</os>
+			<browser>Firefox</browser>
+			<language>JavaScript</language>
+			<language>Python</language>
+		  </likes>
+		</person>;
+		 
+		Myna.println(person.name); // Bob Smith
+		Myna.println(person['name']); // Bob Smith
+		Myna.println(person.likes.browser); // Firefox
+		Myna.println(person['likes'].browser); // Firefox
+		
+		//a special construct is needed for looping over E4X XMLLists
+		
+		for each(var lang in person.language){
+			Myna.println(lang)
+		}
+		
+		//As a convenience, <Array.parse> understands XMLLists so you can use this 
+		alternative:
+		
+		Array.parse(person.language).forEach(function(lang){
+			Myna.println(lang);
+		})
+		
+	(end)
+	
 	See:
+		* https://developer.mozilla.org/En/E4X/Processing_XML_with_E4X
 		* https://developer.mozilla.org/en/E4X_Tutorial/Accessing_XML_children
 		* https://developer.mozilla.org/en/E4X_Tutorial/Descendants_and_Filters
 
-*/
+	*/
 
 /* Topic: Working With Namespaces 
 		
@@ -169,10 +201,10 @@
 	See:
 		* https://developer.mozilla.org/en/E4X_Tutorial/Namespaces
 
-*/
+	*/
 
 /* Topic: Common Issues
-Common issues with XML objects:
+	Common issues with XML objects:
 	
 	The <?xml ?> tag:
 		There is a known bug in Rhino that E4X cannot parse XML content that 
@@ -206,7 +238,7 @@ Common issues with XML objects:
 		(end)	
 	
 
-*/
+	*/
 
 /* Property: addNameSpace 
 
@@ -217,7 +249,7 @@ Common issues with XML objects:
 	is set to undefined.
 	
 	
-*/
+	*/
 
 /* Function: appendChild
 	 Adds child as a new child of the element, after all other children.
@@ -225,7 +257,7 @@ Common issues with XML objects:
 	Parameters:
 		child	-	XMLNode to append
 
-*/
+	*/
 
 /* Function: attribute
 	 Returns the attribute of with the requested name.
@@ -233,11 +265,11 @@ Common issues with XML objects:
 	Parameters:
 		attributeName - attribute to return
 
-*/
+	*/
 
 /* Function: attributes
 	 Returns the attributes of this element.
-*/
+	*/
 
 /* Function: child
 	 Returns the child element with the given tag name, or if _propertyName_ is 
@@ -246,25 +278,25 @@ Common issues with XML objects:
 	Parameters:
 		propertyName	-	tag name or ordinal position of child element to return	
 
-*/
+	*/
 
 /* Function: childIndex
 	 Returns the index of this element among its siblings.
-*/
+	*/
 
 /* Function: children
 	 Returns an XMLNodeList all the children of this object.
-*/
+	*/
 
 /* Function: comments
 	 Returns all the comments that are children of this XML object.
-*/
+	*/
 
 
 /* Function: copy
 	 Returns a deep copy of the element. The parent property of the copy will be 
 	 set to null.
-*/
+	*/
 
 /* Function: descendants
 	 Returns the descendant elements (children, grandchildren, etc.). If a name 
@@ -274,7 +306,7 @@ Common issues with XML objects:
 		name	-	*Optional, default all*
 					tagname to filter descendants.
 
-*/
+	*/
 
 /* Function: elements
 	 Returns the direct child elements (not grandchildren). If a name is provided, 
@@ -284,21 +316,21 @@ Common issues with XML objects:
 		name	-	*Optional, default all*
 					tagname to filter descendants.
 
-*/
+	*/
 
 /* Function: hasComplexContent
 	 Returns true for elements with child elements, otherwise false.
 
-*/
-
+	*/
+	
 /* Function: hasSimpleContent
 	 Returns true for attributes, text nodes, or elements without child elements, otherwise false.
 
-*/
+	*/
 
 /* Function: inScopeNamespaces
 	 Returns an array of Namespace objects representing the namespaces in scope for this object.
-*/
+	*/
 
 /* Function: insertChildAfter
 	 Inserts child2 immediately after child1 in the XML object's children list.
@@ -307,7 +339,7 @@ Common issues with XML objects:
 		child1	- existing child element
 		child2	-	new element to be inserted
 
-*/
+	*/
 
 /* Function: insertChildBefore
 	 Inserts child2 immediately prior to child1 in the XML object's children list.
@@ -316,20 +348,20 @@ Common issues with XML objects:
 		child1	- existing child element
 		child2	-	new element to be inserted
 
-*/
+	*/
 
 /* Function: length
 	 Returns 1 for XML objects (allowing an XML object to be treated like an XML 
 	 List with a single item.)
-*/
+	*/
 /* Function localName
 	Returns the local (tag)name of this object.
-*/
+	*/
 
 /* Function: name
 	 Returns the qualified name of this object.
 
-*/
+	*/
 
 /* Function: namespace
 	 Returns the namespace associated with this object, or if a prefix is 
@@ -338,23 +370,23 @@ Common issues with XML objects:
 	Parameters:
 		prefix	-	namespace alias 
 
-*/
+	*/
 
 /* Function: namespaceDeclarations
 	 An array of Namespace objects representing the namespace declarations associated with this object.
-*/
+	*/
 
 /* Function: nodeKind
 	 A string representing the kind of object this is (e.g. "element").
-*/
+	*/
 
 /* Function: normalize
 	 Merge adjacent text nodes and eliminate empty ones.
-*/
+	*/
 
 /* Function: parent
 	 The parent of this object. For an XML List object, this returns undefined unless all the items of the list have the same parent.
-*/
+	*/
 
 /* Function: processingInstructions
 	 A list of all processing instructions that are children of this element. If 
@@ -364,7 +396,7 @@ Common issues with XML objects:
 	Parameters:
 		name	-	tag name for filtering
 
-*/
+	*/
 
 /* Function: prependChild
 	 Add a new child to an element, prior to all other children.
@@ -372,7 +404,7 @@ Common issues with XML objects:
 	Parameters:
 		value	-	new element to add to this node
 
-*/
+	*/
 
 /* Function: removeNamespace
 	 Removes a namespace from the in-scope namespaces of the element.
@@ -380,7 +412,7 @@ Common issues with XML objects:
 	Parameters:
 		namespace	-	Namespace to remove
 
-*/
+	*/
 
 /* Function: replace
 	 Replace a child with a new one.
@@ -389,7 +421,7 @@ Common issues with XML objects:
 		propertyName	-	tagname or or ordinal position of element to replace, 
 		value				-	new element to insert
 
-*/
+	*/
 
 /* Function: setChildren
 	 Replace the children of the object with the value (typically an XML List).
@@ -397,7 +429,7 @@ Common issues with XML objects:
 	Parameters:
 		value	-	XMList of child elements to replace current children 
 
-*/
+	*/
 
 /* Function: setLocalName
 	 Sets the local name of the XML object to the requested value.
@@ -405,7 +437,7 @@ Common issues with XML objects:
 	Parameters:
 		name	-	new tag name for the element
 
-*/
+	*/
 
 /* Function: setName
 	 Sets the name of the XML object to the requested value (possibly qualified).
@@ -413,7 +445,7 @@ Common issues with XML objects:
 	Parameters:
 		name	-	new tag name for the element 
 
-*/
+	*/
 
 /* Function: setNamespace
 	 Sets the namespace of the XML object to the requested value.
@@ -421,19 +453,19 @@ Common issues with XML objects:
 	Parameters:
 		ns	-	Namespace object to set
 
-*/
+	*/
 
 /* Function: text
 	 Concatenation of all text node children.
-*/
+	*/
 
 /* Function: toString
 	 For elements without element children, returns the values of the text node 
 	 children. For elements with element children, returns same as toXMLString. 
 	 For other kinds of objects, the value of the object.
-*/
+	*/
 
 /* Function: toXMLString
 	 Serializes this XML object as parseable XML.
-*/
+	*/
 

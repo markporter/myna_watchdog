@@ -560,21 +560,20 @@ Myna.Query.prototype={
 		{
 			st = $req["__CACHE__STATEMENT"].get(qry.dataSource+sql);	
 		} else {
-			if(/^\s*insert/.test(sql.toLowerCase())){
+			/* if(false && /^\s*insert/.test(sql.toLowerCase())){
 				try{
-				/* if (db.md.supportsGetGeneratedKeys()){ */
 					st =  con.prepareStatement(sql,java.sql.Statement.RETURN_GENERATED_KEYS);
 				} catch(e) { 
 					st =  con.prepareStatement(sql,ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);
 				}
-			} else{ 
+			} else{ */ 
 				try{
 					st =  con.prepareStatement(sql,ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);
 				} catch(e){
 					st =  con.prepareStatement(sql);
 					Myna.log("error","Error creating scrollable statement",Myna.formatError(__exception__));
 				}
-			}
+			/* } */
 			$req["__CACHE__STATEMENT"].put(qry.dataSource +sql,st); 
 			$application.addOpenObject(st);
 		}

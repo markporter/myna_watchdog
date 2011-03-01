@@ -456,12 +456,26 @@
 		})
 	)
 	(end)
+	
+	Note: 
+		Built-in handling exisits for E4X nodes, such that these are valid syntax:
+		
+		(code)
+			var array = Array.parse(xml.entry.title)
+			var array = Array.parse(xml..*)
+		(end)
 	*/
 	Array.parse = function ParseArray(obj,accessFunction,lengthFunction){
+		var result =[];
+		if (typeof XML != "undefined" && obj instanceof XML){
+			accessFunction =  function(obj,index){return obj[index]}
+			lengthFunction =function(obj){return obj.length()}
+		}
 		if (!accessFunction) accessFunction = function(obj,index){return obj[index]}
 		if (!lengthFunction) lengthFunction = function(obj){return obj.length}
 		
-		var result =[];
+			
+		
 		for (var x=0; x < lengthFunction(obj); ++x){
 			result.push(accessFunction(obj,x));	
 		}
