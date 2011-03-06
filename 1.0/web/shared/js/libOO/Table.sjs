@@ -61,40 +61,7 @@ if (!Myna) var Myna={}
 
 
 
-/* Function: init 
-	(re)loads table metadata
-	
-	*/
-	Myna.Table.prototype.init = function(){
-		var table = this;
-		var db = this.db; //My database 
-		var md = this.db.md; //My database metadata
-		
-		db.init();
-		
-		var rsTables = table.db.md.getTables(
-			table.db.catalog,
-			table.schema||table.db.defaultSchema,
-			"%",
-			null
-		)
-		var tables = new Myna.Query(rsTables).data
-		rsTables.close();
-		
-		for (var x =0; x<tables.length; ++x){
-			if (tables[x].table_name.toLowerCase() == this.tableName.toLowerCase()){
-				this.tableName = tables[x].table_name;
-				break;
-			}  
-		}
-		this.mdArgs = {
-			md:md,
-			cat:db.catalog,
-			schema:table.schema,
-			tableName:table.tableName
-		}
-		table.clearMetadataCache();
-	}
+
 
 /* Property: columns 
 	Structure representing the defined columns in this table, keyed by
@@ -492,7 +459,43 @@ if (!Myna) var Myna={}
 				&& colnames.every(index.columns.contains) 
 		})
 	}
-
+/* Property: _cacheKey
+	(private) cache key base for internal metadata caching 
+	*/
+/* Function: init 
+	(re)loads table metadata
+	
+	*/
+	Myna.Table.prototype.init = function(){
+		var table = this;
+		var db = this.db; //My database 
+		var md = this.db.md; //My database metadata
+		
+		db.init();
+		
+		var rsTables = table.db.md.getTables(
+			table.db.catalog,
+			table.schema||table.db.defaultSchema,
+			"%",
+			null
+		)
+		var tables = new Myna.Query(rsTables).data
+		rsTables.close();
+		
+		for (var x =0; x<tables.length; ++x){
+			if (tables[x].table_name.toLowerCase() == this.tableName.toLowerCase()){
+				this.tableName = tables[x].table_name;
+				break;
+			}  
+		}
+		this.mdArgs = {
+			md:md,
+			cat:db.catalog,
+			schema:table.schema,
+			tableName:table.tableName
+		}
+		table.clearMetadataCache();
+	}
 /* Function: addColumn
 	Adds a column to an existing table
 	
@@ -1023,7 +1026,7 @@ if (!Myna) var Myna={}
 					+String(new Date().getTime()).right(5)
 		}
 			
-		qry =new Myna.Query({
+		var qry =new Myna.Query({
 			dataSource:table.db.ds,
 			sql:table.getTemplate("addConstraint").apply(options),
 			deferExec:this.deferExec
@@ -1399,9 +1402,7 @@ if (!Myna) var Myna={}
 		table.init();
 		table.clearMetadataCache()
 	}
-/* Property: _cacheKey
-	(private) cache key base for internal metadata caching 
-	*/
+
 /* Function: _getCache
 	(private) internal function for caching metadata
 	

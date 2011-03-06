@@ -19,6 +19,9 @@ if (!Myna) var Myna={}
 			path = path.toURI();
 		}
 		
+		if (!(this instanceof arguments.callee)){
+			throw new Error("Myna.File must be called with the 'new' keyword")
+		}
 		/* Property: javaFile
 			the underlying java.io.File object 
 		*/
@@ -394,8 +397,11 @@ if (!Myna) var Myna={}
 		
 	*/
 	Myna.File.prototype.getSize = function(){
-		
-		return this.javaFile.length();
+		if (this.exists() && !this.isDirectory()){
+			return this.javaFile.length();
+		} else {
+			return null	
+		}
 	}	
 /* Function: isDirectory
 	returns true if this file exists and represents a directory
@@ -498,7 +504,7 @@ if (!Myna) var Myna={}
 		
 		
 		/* make sure this file exists */
-		if (!this.exists){
+		if (!this.exists()){
 			throw new Error(String(this) +" does not exist");
 		}
 		/* make sure this is a directory */
@@ -511,7 +517,9 @@ if (!Myna) var Myna={}
 			columns:"directoryPath,fileName,type,size,lastModified"
 		});
 		var subDirs=[];
-		this.javaFile.listFiles()
+		var files = this.javaFile.listFiles()
+		if (!files) return result;
+		files
 			.map(function(jf){
 				var f = new Myna.File(jf.toURI());
 				if (f.isDirectory() && shouldRecurse(f)){

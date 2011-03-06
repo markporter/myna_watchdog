@@ -246,6 +246,11 @@ if (!Function.prototype.bind)
 	Function.createChainFunction=function(initialChain){
 		var f = function(){
 			var functions = arguments.callee.chainArray;
+			//preserve chain state in case this is a recursive call
+			var stateCache =functions.map(function(f){
+				return f.chain
+			})
+			
 			var $this = this;
 			//var args = Array.parse(arguments);
 			var finalState=functions.reduce(function(state,f,index,array){
@@ -272,6 +277,11 @@ if (!Function.prototype.bind)
 				exitChain:false,
 				lastReturn:undefined,
 				args:Array.parse(arguments)
+			})
+			
+			//restore chain state
+			functions.forEach(function(f,index){
+				f.chain = stateCache[index]
 			})
 			
 			return finalState.lastReturn;

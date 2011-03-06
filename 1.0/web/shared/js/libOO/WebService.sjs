@@ -256,18 +256,19 @@ if (!Myna) var Myna={}
 		this.xsi		= new Namespace("xsi","http://www.w3.org/2001/XMLSchema-instance");
 		this.authData={}
 		
-		/*
-		TODO: map functions so that they can be directly called against this object
-		*/
+		
 		this.functions={};
 		var $this=this;
 		if ("functions" in spec){
-			spec.functions.forEach(function(node,fname){
+			spec.functions.forEach(function(functionDef,fname){
+				if (!(fname in $this)) {
+					$this[fname]=functionDef.handler;
+				}
 				$this.functions[fname] = function(params){
 					return $this.executeFunctionHandler(
 						fname,
-						$this.spec.functions[fname],
-						$this.spec.functions[fname].params.map(
+						functionDef,
+						functionDef.params.map(
 							function(pnode){
 								if (pnode.name in params) {
 									return params[pnode.name];
@@ -280,7 +281,6 @@ if (!Myna) var Myna={}
 				}
 			})
 		}
-		
 	}
 	
 	/* Function: generateQueryType
@@ -374,7 +374,7 @@ if (!Myna) var Myna={}
 			this.printExtApi(req);
 		} else if ("ext-route" in req.data){
 			this.executeExtRoute();
-		} else { //TODO: display help
+		} else { 
 			this.printHelp()
 		}
 	}

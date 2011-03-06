@@ -82,7 +82,7 @@ if (!("JavaUtils" in Myna)) Myna.JavaUtils={}
 		for (x in bean){
 			if (/^get./.test(x)){
 				try{ 
-					property=x.replace(/^get/,"");
+					property=x.replace(/^get_?/,"");
 					property=property.substr(0,1).toLowerCase() + property.substr(1);
 					result[property] = bean[x]();
 					if (result[property] instanceof java.lang.String){

@@ -66,6 +66,16 @@ if (!Myna) var Myna={}
 		* <DataManager.beanTemplate>
 		* <ManagerObject.beanTemplate>
 		
+		The DataManager can also manage MPTT organized tree tables. This is a 
+		method of storing hierarchical data in flat database tables. 
+		
+		For more on this see:
+		
+		* <DataManager.getTreeManager>
+		* <DataManager.TreeManagerObject>
+		* <DataManager.TreeNodeObject>
+		* Examples -> Ext.Direct -> Routing Ext Tree
+		
 		
 		
 		Also check out empManager.columns for metadata about each column in the 
@@ -113,6 +123,10 @@ if (!Myna) var Myna={}
 									The column that contains the "id" values
 				parentCol	-	*Optional, default "parent_id" *
 									The column that contains the "parent" values
+				depthCol		-	*Optional, default null *
+									The column that contains the "depth" values. If this 
+									is null, then this TreeManager will not manage a 
+									depth column
 									
 					
 			See:
@@ -368,9 +382,11 @@ if (!Myna) var Myna={}
 			generates a primary key value
 			
 			Detail:
-				By default this returns the maximum value of the primary key 
-				column + 1. This is not the ideal algorithm and should be replaced 
-				with a database specific means of generating a primary key. 
+				By default this function checks the type of the primary key and 
+				returns <Myna.createUuid> for text keys or returns the maximum value 
+				of the primary key column + 1 for numeric keys. This is not the 
+				ideal algorithm and should be replaced with a database specific 
+				means of generating a primary key.   
 				
 					
 				This function can be replaced in <Myna.DataManager.managerTemplate>
@@ -522,26 +538,39 @@ if (!Myna) var Myna={}
 			
 			*/
 		/* Function: remove
-			removes a row in the table optionally deleting or moving child nodes
+			removes a row in the table and also deletes any descending nodes
 			
 			Parameters:
 				id					-	primary key value of node to delete
-				childOptions	-	*Optional*
-										JS object defining how to treat an children of 
-										this node. See "Child Options" below
-				
-			Child Options:
-				delete	-	*Optional, default false*
-								If true, any children of this node will be deleted
-				moveTo	-	*Optional, default this node's parent*
-								Any children of this node will be appended to the 
-								children of the node defined in _moveTo_
-								 
+			
+			
+			Note:
+				When removing the root node of the tree the entire tree will be 
+				deleted
 			
 						
 			See:
 				* <ManagerObject.remove>
 			
+			*/
+		/* Function: hasRootNode
+			returns true if there is a root node in this table.
+			*/
+		/* Function: getRootNode
+			returns the root node of this table, or throws an exception
+			*/	
+		/* Function: rebuildTree
+			recalculates left, right, and depth values based on  parent ids
+			
+			If an MPTT organized table has correct parent ids defined but 
+			inaccurate or missing right, left and depth values, this function will 
+			rebuild them. This is useful for converting an existing table to an 
+			MPTT organized table, or if an non-MPTT aware process modifies the 
+			table.
+			
+			Note:
+				This is a recursive function and may run out of memory for very 
+				large trees
 			*/
 	/* Class: BeanObject
 		Row data access object generated and returned by <ManagerObject.getById>
@@ -643,30 +672,7 @@ if (!Myna) var Myna={}
 				Myna.print("Orders Total: " +orders.sumByCol("order_total"));
 			(end)
 			*/
-		/* Function: moveNode
-			Moves this node to another location in the tree, only applies to nodes access through <ManagerObject.getTreeManager>
-			
-			Parameters:
-				location		-	*Optional*
-									JS object defining where to move this node. See 
-									"Location" below
-				
-			Location:
-				underNode	-	*Optional, default null*
-									The id of the parent node to insert under. This is 
-									unused if _beforeNode_ is defined. Will append as the last 
-									child of _underNode_
-				beforeNode	-	*Optional, default null*
-									The id of the node before which this node should be 
-									inserted 
-			Returns:
-				this node
-				
-			Note:
-			If both _underNode_ and _beforeNode_ are null, then this node will be 
-			moved to the last child of the root node.
-			
-			*/
+		
 		/* Property: manager
 			The <ManagerObject> that created this bean
 		
@@ -694,6 +700,69 @@ if (!Myna) var Myna={}
 		/* Property: columnNames
 			The columnNames array from <Myna.Table.columnNames> for this table
 		*/
+	/* Class: TreeNodeObject
+		Sub-class of <BeanObject> generated and returned by <TreeManagerObject.getById>
+		
+		This class has all the properties of <BeanObject>, plus tree specific 
+		functions 
+		*/
+		/* Function: moveNode
+			Moves this node to another location in the tree, only applies to nodes access through <ManagerObject.getTreeManager>
+			
+			Parameters:
+				location		-	*Optional*
+									JS object defining where to move this node. See 
+									"Location" below
+				
+			Location:
+				underNode	-	*Optional, default null*
+									The id of the parent node to insert under. This is 
+									unused if _beforeNode_ is defined. Will append as the last 
+									child of _underNode_
+				beforeNode	-	*Optional, default null*
+									The id of the node before which this node should be 
+									inserted 
+			Returns:
+				this node
+				
+			Note:
+			If both _underNode_ and _beforeNode_ are null, then this node will be 
+			moved to the last child of the root node.
+			
+			*/
+		/* Function: getLeft
+			returns the value of this node's "left" property. 
+			*/
+		/* Function: getRight
+			returns the value of this node's "right" property. 
+			*/
+		/* Function: getParentId
+			returns the value of this node's "parent" property. 
+			*/
+		/* Function: getParentNode
+			returns this node's parent node 
+			*/
+		/* Function: isRootNode
+			returns true if this node is the root node 
+			*/
+		/* Property: childIds
+				an array of the node ids of this node's direct children  
+			*/
+		/* Property: childNodes
+				an array of the TreeNodes of this node's direct children  
+			*/
+		/* Property: descendantIds
+				an array of the node ids of all of this node's descendants  
+			*/
+		/* Property: descendantNodes
+				an array of the TreeNodes of all of this node's descendants  
+			*/
+		/* Property: ancestorIds
+				an array of the node ids of this node's ancestors  
+			*/
+		/* Property: ancestorNodes
+				an array of the TreeNodes of this node's ancestors  
+			*/
 /* ========== code ========================================================== */
 	/* ---------- Constructor ------------------------------------------------ */
 		Myna.DataManager = function (dataSource){ 
@@ -713,7 +782,12 @@ if (!Myna) var Myna={}
 		}
 
 	/* ---------- getManager ------------------------------------------------- */
-		Myna.DataManager.prototype.getManager=function(tableName){
+		Myna.DataManager.prototype.getManager=function(table){
+			var tableName = table
+			if (table instanceof Myna.Table) {
+				tableName = table.tableName;
+			}
+				
 			$profiler.begin("getManager for " + tableName)
 			var tkey =tableName.toLowerCase(); 
 			if (!("_managers" in this)) this._managers={}
@@ -801,14 +875,15 @@ if (!Myna) var Myna={}
 			
 		}
 	/* ---------- getTreeManager --------------------------------------------- */
-		Myna.DataManager.prototype.getTreeManager = function (dataSource,options){
-			var man =this.getManager.call(this,dataSource);
+		Myna.DataManager.prototype.getTreeManager = function (tableName, options){
+			var man =this.getManager.call(this,tableName);
 			if (!options) options ={}
 			options.setDefaultProperties({
 				leftCol:"lft",
 				rightCol:"rgt",
 				idCol:man.primaryKey,
-				parentCol:"parent_id"
+				parentCol:"parent_id",
+				depthCol:null
 			})
 			//translate the col names into DB specific syntax
 			
@@ -817,8 +892,8 @@ if (!Myna) var Myna={}
 			/* function overrides */
 				/* create */
 					man.before("create",function(data,location){
+						var chain = arguments.callee.chain;
 						arguments.callee.args =[data];
-						Myna.log("debug","chain",Myna.dump(arguments.callee.array));
 						if (!location) location = {
 							beforeNode:false,
 							underNode:false
@@ -828,13 +903,15 @@ if (!Myna) var Myna={}
 						var leftCol = man.table.getSqlColumnName(options.leftCol);
 						if (location.beforeNode){
 							//see if the beforeNode element really exists
-							var anchorNode = man.findBeans(location.beforeNode)
-							if (!anchorNode.length){//node does not exist
+							anchorNode = man.findBeans(location.beforeNode)
+							if (!anchorNode.length || anchorNode[0].isRootNode()){//node does not exist
 								//treat this as a top level insert   
+								
 								return arguments.callee(data);
 							} else {
 								anchorNode = anchorNode[0];
 								data[options.parentCol] = anchorNode[options.parentCol]
+								if (options.depthCol) data[options.depthCol] = anchorNode[options.depthCol]
 								data[options.leftCol] = anchorNode[options.leftCol]+1;
 								data[options.rightCol] = anchorNode[options.leftCol]+2;
 								
@@ -849,6 +926,7 @@ if (!Myna) var Myna={}
 							} else {
 								anchorNode = anchorNode[0];
 								data[options.parentCol] = anchorNode[options.idCol]
+								if (options.depthCol) data[options.depthCol] = anchorNode[options.depthCol] +1
 								data[options.leftCol] = anchorNode[options.rightCol];
 								data[options.rightCol] = anchorNode[options.rightCol]+1;
 								
@@ -865,9 +943,11 @@ if (!Myna) var Myna={}
 								var id = anchorNode.data[options.idCol]
 								return arguments.callee(data,{
 									underNode:id
-								});
+								})
+								
 							} else {//insert root node
 								data[options.parentCol] = null
+								if (options.depthCol) data[options.depthCol] = 1
 								data[options.leftCol] = 1;
 								data[options.rightCol] = 2;
 							}
@@ -875,10 +955,296 @@ if (!Myna) var Myna={}
 						
 						//now we fall thorough to ManagerObject.create(data)
 					})
-				/* remove */
-					man.before("remove",function(id,childOptions){
-						
+					
+				/* getById */
+					man.after("getById",function(id){
+						var chain = arguments.callee.chain;
+						var newProps ={
+							isRootNode:function(){return this.getParentId() === null},
+							getLeft:function(){return this.data[options.leftCol]},
+							getRight:function(){return this.data[options.rightCol]},
+							getParentId:function(){return this.data[options.parentCol]},
+							getParentNode:function(){
+								return this.manager.getById(this.getParentId())
+							},
+							moveNode:function(location){
+								var $this = this;
+								if (!location) location = {
+									beforeNode:false,
+									underNode:false
+								}
+								var anchorNode;
+								var rightCol = man.table.getSqlColumnName($this.manager.rightCol);
+								var leftCol = man.table.getSqlColumnName($this.manager.leftCol);
+								var myRight = $this.data[$this.manager.rightCol];
+								var myLeft = $this.data[$this.manager.leftCol];
+								var subTreeSize = (myRight - myLeft) +1
+								var newOffset;
+								$profiler.mark("removing subtree")
+								/* 
+								first, remove this sub-tree from the world by 
+								setting negative sides 
+								*/ 
+								new Myna.Query({
+									ds:man.ds,
+									sql:<ejs>
+										update <%=this.table.sqlTableName%> set 
+											<%=rightCol%> = <%=rightCol%> * -1,
+											<%=leftCol%> = <%=leftCol%> * -1
+										where
+										<%=rightCol%> <= {myRight:bigint}
+										and <%=leftCol%> >= {myLeft:bigint}
+									</ejs>,
+									values:{
+										myRight:myRight,
+										myLeft:myLeft,
+									}
+								})
+								$profiler.mark("backfilling")
+								/* 
+								re-order the downstream tree to backfill
+								*/
+								new Myna.Query({
+									ds:man.ds,
+									sql:<ejs>
+										update <%=this.table.sqlTableName%> set 
+										<%=rightCol%> = <%=rightCol%> - {size:bigint},
+										<%=leftCol%> = <%=leftCol%> - {size:bigint}
+										where
+										<%=leftCol%> > {myRight:bigint}
+									</ejs>,
+									values:{
+										myRight:$this.data[$this.manager.rightCol],
+										size:subTreeSize,
+									}
+								})
+								/* 
+								re-order parentNodes to backfill
+								*/
+								new Myna.Query({
+									ds:man.ds,
+									sql:<ejs>
+										update <%=this.table.sqlTableName%> set 
+										<%=rightCol%> = <%=rightCol%> - {size:bigint}
+										where
+										<%=leftCol%> < {myLeft:bigint}
+										and <%=rightCol%> > {myRight:bigint}
+									</ejs>,
+									values:{
+										myRight:$this.data[$this.manager.rightCol],
+										myLeft:$this.data[$this.manager.leftCol],
+										size:subTreeSize,
+									}
+								})
+								
+								$profiler.mark("preocessing before")
+								if (location.beforeNode != undefined){
+									//see if the beforeNode element really exists
+									anchorNode = man.findBeans(location.beforeNode)
+									if (!anchorNode.length || anchorNode[0].isRootNode()){//node does not exist
+										//treat this as a top level insert   
+										// by falling through
+										location.beforeNode = false;
+									} else {
+										anchorNode = anchorNode[0];
+										
+										$this["set_" +$this.manager.parentCol](anchorNode.data[$this.manager.parentCol]);
+										if ($this.manager.depthCol) {
+											$this["set_" +$this.manager.depthCol](anchorNode.data[$this.manager.depthCol]);
+										}
+										newOffset = anchorNode.data[$this.manager.leftCol] - myLeft						
+										$this.manager.renumberForInsert(location.beforeNode,"before",subTreeSize)
+									}
+								}
+								$profiler.mark("processing under")
+								if (location.underNode != undefined){
+									//see if the underNode element really exists
+									anchorNode = man.findBeans(location.underNode)
+									if (!anchorNode.length){//node does not exist
+										//treat this as a top level insert   
+										//by falling through
+										location.underNode = false;
+									} else {
+										anchorNode = anchorNode[0];
+										$this["set_" +$this.manager.parentCol](anchorNode[$this.manager.idCol]);
+										if ($this.manager.depthCol) {
+											$this["set_" +$this.manager.depthCol](anchorNode.data[$this.manager.depthCol] + 1);
+										}
+										newOffset = anchorNode.data[$this.manager.rightCol] - myLeft				
+										$this.manager.renumberForInsert(location.underNode,"under",subTreeSize)
+									}
+								} 
+								$profiler.mark("preocessing else")
+								if (!(location.beforeNode || location.underNode)){
+									var search = {}
+									//search for root node
+									search[$this.manager.parentCol] = null;
+									anchorNode = man.findBeans(search)
+									if (anchorNode.length){//there is a root node
+										anchorNode=anchorNode[0]
+										$this["set_" +$this.manager.parentCol](anchorNode[$this.manager.idCol]);
+										if ($this.manager.depthCol) {
+											$this["set_" +$this.manager.depthCol](2);
+										}
+										newOffset = anchorNode.data[$this.manager.rightCol] - myLeft				
+										$this.manager.renumberForInsert(anchorNode.data[$this.manager.idCol],"under",subTreeSize)
+									} else {//insert root node
+										throw new Error("cannot move a node when the is no root node!")
+									}
+								}
+								
+								$profiler.mark("inserting tree")
+								//insert  the subTree
+								new Myna.Query({
+									ds:man.ds,
+									sql:<ejs>
+										update <%=this.table.sqlTableName%> set 
+										<%=rightCol%> = <%=rightCol%> * -1 + ({offset:bigint}),
+										<%=leftCol%> = <%=leftCol%> * -1 + ({offset:bigint})
+										where
+											<%=leftCol%> < 0 
+									</ejs>,
+									values:{
+										offset:newOffset
+									}
+								})
+								
+								//Myna.printDump(anchorNode)
+								return $this;
+							}
+						}
+						newProps.applyTo(chain.lastReturn,true)
+						chain.lastReturn.__defineGetter__("childIds",function (){
+							var parentCol = man.table.getSqlColumnName(options.parentCol);
+							var leftCol = man.table.getSqlColumnName(options.leftCol);
+							var rightCol = man.table.getSqlColumnName(options.rightCol);
+							var idCol = options.idCol;
+							var idColType = man.table.columns[idCol].date_type;
+							var p = new Myna.QueryParams();
+							var result =  new Myna.Query({
+								ds:man.ds,
+								sql:<ejs>
+									select  
+										<%=idCol%>
+									from <%=man.table.sqlTableName%>
+									where
+									<%=parentCol%> =  <%=p.addValue(id,idColType)%>
+									order by <%=leftCol%> ASC	 
+								</ejs>,
+								parameters:p
+							})
+							return result.valueArray(idCol)
+						})
+						chain.lastReturn.__defineGetter__("childNodes",function (){
+							return this.childIds.map(function(nodeId){
+								return man.getById(nodeId);
+							})
+						})
+						chain.lastReturn.__defineGetter__("descendantIds",function (){
+							var parentCol = man.table.getSqlColumnName(options.parentCol);
+							var leftCol = man.table.getSqlColumnName(options.leftCol);
+							var rightCol = man.table.getSqlColumnName(options.rightCol);
+							var idCol = options.idCol;
+							var idColType = man.table.columns[idCol].date_type;
+							
+							var result =  new Myna.Query({
+								ds:man.ds,
+								sql:<ejs>
+									select  
+										<%=idCol%>
+									from <%=man.table.sqlTableName%>
+									where
+									<%=leftCol%> >  {left:bigint}
+									and <%=rightCol%> <  {right:bigint}
+									order by <%=leftCol%> ASC	 
+								</ejs>,
+								values:{
+									left:this.getLeft(),
+									right:this.getRight()
+								}
+							})
+							return result.valueArray(idCol)
+						})
+						chain.lastReturn.__defineGetter__("descendantNodes",function (){
+							return this.descendantIds.map(function(nodeId){
+								return man.getById(nodeId);
+							})
+						})
+						chain.lastReturn.__defineGetter__("ancestorIds",function (){
+							var parentCol = man.table.getSqlColumnName(options.parentCol);
+							var leftCol = man.table.getSqlColumnName(options.leftCol);
+							var rightCol = man.table.getSqlColumnName(options.rightCol);
+							var idCol = options.idCol;
+							var idColType = man.table.columns[idCol].date_type;
+							
+							var result =  new Myna.Query({
+								ds:man.ds,
+								sql:<ejs>
+									select  
+										<%=idCol%>
+									from <%=man.table.sqlTableName%>
+									where
+									<%=leftCol%> <  {left:bigint}
+									and <%=rightCol%> >  {right:bigint}
+									order by <%=leftCol%> ASC	 
+								</ejs>,
+								values:{
+									left:this.getLeft(),
+									right:this.getRight()
+								}
+							})
+							return result.valueArray(idCol)
+						})
+						chain.lastReturn.__defineGetter__("ancestorNodes",function (){
+							return this.ancestorIds.map(function(nodeId){
+								return man.getById(nodeId);
+							})
+						})
+						return chain.lastReturn
 					})
+				/* remove */
+					man.before("remove",function(id){
+						var thisNode = this.getById(id);
+						var $this = this;
+						var chain = arguments.callee.chain;
+						
+						
+						//recursively delete child nodes
+							thisNode.childIds.forEach(function(childId){
+								man.remove(childId)
+							})
+					})
+				/* rebuildTree */
+					man.rebuildTree = function(){
+						var rootNode = man.getRootNode();
+						
+						var calcRight = function(node,left,depth){
+							var right = left +1;
+							node["set_" + options.leftCol](left)
+							if (options.depthCol) node["set_" + options.depthCol](depth)
+							node.childNodes.forEach(function(child){
+								right = calcRight(child,right,depth+1);
+							})
+							
+							node["set_" + options.rightCol](right)
+							
+							return right +1
+						}
+						calcRight(rootNode,1,1)
+						
+					}
+				/* hasRootNode */
+					man.hasRootNode = function(){
+						var search = {}
+						search[options.parentCol] = null;
+						return !!man.find(search).length	
+					}
+				/* getRootNode */
+					man.getRootNode = function(){
+						var search = {}
+						search[options.parentCol] = null;
+						return man.findBeans(search)[0]
+					}
 				/* renumberForInsert */
 					man.renumberForInsert = function(target,type,size){
 						var $this = this;
@@ -950,285 +1316,298 @@ if (!Myna) var Myna={}
 	/* ---------- managerTemplate -------------------------------------------- */
 		Myna.DataManager.managerTemplate ={
 			init:function(){},
-				loadTableData:function(tableName){
-					var manager = this;
-					var con = manager.db.con;
-					//var tables = manager.db.tables;
+			loadTableData:function(tableName){
+				var manager = this;
+				var con = manager.db.con;
+				//var tables = manager.db.tables;
+				
+				
+				manager.tableName = manager.table.tableName;
+				manager.sqlTableName = manager.table.sqlTableName;
+				
+				
+				if (!manager.table.exists){
+					throw new Error("No table '" + tableName +"' found in data source '" + manager.ds +"' \nTables: " + manager.db.tables.join());
+				}
+				
+				manager.columns = manager.table.columns;
+				manager.columnNames = manager.table.columnNames;
+				 
+				
+				if (manager.table.primaryKeys.length != 1){
+					throw new Error("getManager can only handle tables with exactly one primary key");	
+				} 
+				if (manager.table.primaryKeys.length == 1){
+					manager.primaryKey=manager.table.primaryKeys[0]
+				} else {
+					manager.primaryKey=null;
+				}
+				return manager;
+			},
+			remove:function(id){
+				var manager = this;
+				var p = new Myna.QueryParams();
+				var qry = new Myna.Query({
+					dataSource:this.ds,
+					sql:<ejs>
+						delete from <%=this.sqlTableName%>
+						where <%=manager.qt%><%=this.columns[this.primaryKey].column_name%><%=manager.qt%> = 
+							<%=p.addValue(id,this.columns[this.primaryKey].data_type)%>
+					</ejs>,
+					parameters:p
+				});
+				Myna.printDump("removing id " + id)
+			},
+			create:function(requiredFields){
+				var manager = this;
+				if (!requiredFields) requiredFields={}
+				if (this.primaryKey	 && !requiredFields[this.primaryKey]){
+					/* if (this.columns[this.primaryKey].column_def.length ==0) { */
+						requiredFields[this.primaryKey] = this.genKey();
+					/* } */
+				}
+				
+				if (!requiredFields) requiredFields={}
+				
+				requiredFields.checkRequired(this.columnNames.filter(function(colName){
+						return (manager.columns[colName].is_nullable == "NO" 
+							&& !manager.columns[colName].column_def
+							&& colName != manager.primaryKey);
 					
-					
-					manager.tableName = manager.table.tableName;
-					manager.sqlTableName = manager.table.sqlTableName;
-					
-					
-					if (!manager.table.exists){
-						throw new Error("No table '" + tableName +"' found in data source '" + manager.ds +"' \nTables: " + manager.db.tables.join());
+				}))
+				
+				//update if exists instead of creating
+				if (this.primaryKey){
+					var exists =this.findBeans(requiredFields[this.primaryKey]);
+					if (exists.length) {
+						exists[0].setFields(requiredFields);
+						return exists[0];
 					}
-					
-					manager.columns = manager.table.columns;
-					manager.columnNames = manager.table.columnNames;
-					 
-					
-					if (manager.table.primaryKeys.length != 1){
-						throw new Error("getManager can only handle tables with exactly one primary key");	
-					} 
-					if (manager.table.primaryKeys.length == 1){
-						manager.primaryKey=manager.table.primaryKeys[0]
-					} else {
-						manager.primaryKey=null;
-					}
-					return manager;
-				},
-				remove:function(id){
-					var manager = this;
-					var p = new Myna.QueryParams();
-					var qry = new Myna.Query({
-						dataSource:this.ds,
-						sql:<ejs>
-							delete from <%=this.sqlTableName%>
-							where <%=manager.qt%><%=this.columns[this.primaryKey].column_name%><%=manager.qt%> = 
-								<%=p.addValue(id,this.columns[this.primaryKey].data_type)%>
-						</ejs>,
-						parameters:p
-					});
-				},
-				create:function(requiredFields){
-					var manager = this;
-					if (!requiredFields) requiredFields={}
-					if (this.primaryKey	 && !requiredFields[this.primaryKey]){
-						/* if (this.columns[this.primaryKey].column_def.length ==0) { */
-							requiredFields[this.primaryKey] = this.genKey();
-						/* } */
-					}
-					
-					if (!requiredFields) requiredFields={}
-					
-					requiredFields.checkRequired(this.columnNames.filter(function(colName){
-							return (manager.columns[colName].is_nullable == "NO" 
-								&& !manager.columns[colName].column_def
-								&& colName != manager.primaryKey);
-						
-					}))
-					
-					//update if exists instead of creating
-					if (this.primaryKey){
-						var exists =this.findBeans(requiredFields[this.primaryKey]);
-						if (exists.length) {
-							exists[0].setFields(requiredFields);
-							return exists[0];
-						}
-					}
-					
-					var columnArray = requiredFields.getKeys().filter(function(colName){
-						//ignore columns that don't exist
-						return manager.columns[colName];
-					}); 
-					//Myna.printDump(columnArray)
-					var fieldArray = columnArray.map(function(colName){
-						return  manager.qt + manager.columns[colName].column_name + manager.qt;
-					});
-					
-					var p = new Myna.QueryParams();
-					var qry = new Myna.Query({
-						dataSource:this.ds,
-						parameters:p,
-						sql:<ejs>
-							insert into <%=this.sqlTableName%>(<%=fieldArray.join()%>) 
-							values (
-							<% 
-								columnArray.forEach(function(colName,index){
-									var value = requiredFields[colName];
-									var type = manager.columns[colName].data_type;
-									var isNull = (value === null);
-									Myna.print(p.addValue(value,type,isNull))
-									if (index < columnArray.length -1) Myna.print(",")
-								});
-								
-							%>
-							)
+				}
+				
+				var columnArray = requiredFields.getKeys().filter(function(colName){
+					//ignore columns that don't exist
+					return manager.columns[colName];
+				}); 
+				//Myna.printDump(columnArray)
+				var fieldArray = columnArray.map(function(colName){
+					return  manager.qt + manager.columns[colName].column_name + manager.qt;
+				});
+				
+				var p = new Myna.QueryParams();
+				var qry = new Myna.Query({
+					dataSource:this.ds,
+					parameters:p,
+					sql:<ejs>
+						insert into <%=this.sqlTableName%>(<%=fieldArray.join()%>) 
+						values (
+						<% 
+							columnArray.forEach(function(colName,index){
+								var value = requiredFields[colName];
+								var type = manager.columns[colName].data_type;
+								var isNull = (value === null);
+								Myna.print(p.addValue(value,type,isNull))
+								if (index < columnArray.length -1) Myna.print(",")
+							});
 							
-						</ejs>
-					});
-					if (this.primaryKey 
+						%>
+						)
 						
-					 && (this.columns[this.primaryKey].column_def ==null ||this.columns[this.primaryKey].column_def.length !=0)  
-					 && !requiredFields[this.primaryKey]){
-						 requiredFields[this.primaryKey] = qry.generatedKey
-					}
-					return this.getById(requiredFields[this.primaryKey]);
-				},
-				find:function(pattern,caseSensitive){
-					var criteria=[];
-					var $this= this;
-					var pkey =this.columns[this.primaryKey].column_name;
-					var colNameSql;
-					var op;
+					</ejs>
+				});
+				if (this.primaryKey 
 					
-					var getCriteria=function(colName,pattern){
-						var col = {
-							column:colName,
-							op:"=",
-							isNull:false,
-							type:$this.columns[colName].data_type,
-							pattern:pattern
-						}
-						
-			
-						if (/%/.test(String(pattern))){
-							col.op =" like ";
-						}
-						
-						if (pattern === null){
-							col.isNull = true;
-						} else if (Myna.Database.dbTypeToJs($this.columns[colName].data_type) == "string"){
-							if (caseSensitive){
-								col.pattern = col.patter.toLowerCase();
-								col.column = colName.toLowerCase();
-							}
-						}
-						
-						return col
-						
+				 && (this.columns[this.primaryKey].column_def ==null ||this.columns[this.primaryKey].column_def.length !=0)  
+				 && !requiredFields[this.primaryKey]){
+					 requiredFields[this.primaryKey] = qry.generatedKey
+				}
+				return this.getById(requiredFields[this.primaryKey]);
+			},
+			find:function(pattern,caseSensitive){
+				var criteria=[];
+				var $this= this;
+				var pkey =this.columns[this.primaryKey].column_name;
+				var colNameSql;
+				var op;
+				
+				var getCriteria=function(colName,pattern){
+					var col = {
+						column:colName,
+						op:"=",
+						isNull:false,
+						type:$this.columns[colName].data_type,
+						pattern:pattern
 					}
 					
-					if (typeof pattern == "object"){
-						var myColumnList = this.columnNames.join()
-						pattern.getKeys().filter(function(colName){
-							return myColumnList.listContains(colName.toLowerCase())
-						}).forEach(function(colName){
-							criteria.push(getCriteria(colName,pattern[colName]))
-						})
-					} else{
-					criteria.push(getCriteria($this.db.isCaseSensitive?pkey:pkey.toLowerCase(),pattern));
-					}
-					var p = new Myna.QueryParams();
-					$profiler.begin("DataManager("+this.tableName+").find("+pattern.toJson()+")")
-					var qry = new Myna.Query({
-						dataSource:this.ds,
-						parameters:p,
-						sql:<ejs>
-							select <%=pkey%>
-							from <%=this.sqlTableName%>
-							where 1=1
-							<@loop array="criteria" element="col" >
-								<@if col.isNull>
-								and <%=col.column%> is null
-								<@else>
-								and <%=col.column%> <%=col.op%> <%=p.addValue(col.pattern,col.type,!!col.pattern)%>
-								</@if>
-							</@loop>
-						</ejs>
-					})
-					$profiler.end("DataManager("+this.tableName+").find("+pattern.toJson()+")")
-					return qry.valueArray(pkey.toLowerCase());
-				},
-				findBeans:function(pattern,caseSensitive){
-					var $this = this;
-					return new Myna.DataSet({
-						columns:$this.columnNames,
-						data:this.find(pattern,caseSensitive).map(function(id){
-							return $this.getById(id);
-						})
-					})
-				},
-				genKey:function(){
-					var manager=this;
-					var maxId =new Myna.Query({
-						dataSource:this.ds,
-						sql:'select max('+manager.qt+  this.columns[this.primaryKey].column_name+ manager.qt+') as id from ' + this.sqlTableName 
-					}).data[0].id;
-					if (!maxId) {
-						return 1;
-					} else {
-						return maxId +1;
-					}
-				},
-				getById:function(id){
-					$profiler.begin("loading "+this.tableName+" bean "+ id)
-					var manager = this;
-					var bean={};
-					var p = new Myna.QueryParams();
-					var qry = new Myna.Query({
-						dataSource:this.ds,
-						sql:<ejs>
-							select
-								<@loop array="manager.columnNames" element="name" index="i">
-									<%=manager.qt%><%=manager.columns[name].column_name%><%=manager.qt%> <@if i < manager.columnNames.length - 1 >,</@if>
-								</@loop>
-								
-							from <%=this.sqlTableName%>
-							where <%=manager.qt%><%=this.columns[this.primaryKey].column_name%><%=manager.qt%> = 
-								<%=p.addValue(id,this.columns[this.primaryKey].data_type)%>
-						</ejs>,
-						parameters:p
-					});
-					if (!qry.data.length) {
-						throw new Error("Unable to find '" + this.sqlTableName + "' by id '" + id +"'.");
-					}
-						
-					 
-					bean = new this.beanClass(qry.data[0])
-					
-					/* bean.baseBean = ({}).setDefaultProperties( 
-						this.beanTemplate
-					)
-					bean.manager=manager;
-					bean.dm = manager.dm;
-					bean.ds = manager.ds;
-					bean.data=qry.data[0];
-					bean.id=id;
-					
-					
-					//for (var p in bean) bean.hideProperty(p);
-					//print(dump(qry,"bean query"))
-					this.columnNames.forEach(function(colname){
-						var fname = colname;
-						if (!("get_"+fname in bean.baseBean)){
-							bean.baseBean["get_"+fname] = function (){
-								return this.data[arguments.callee.fieldName];
-							}
-						}
-						bean.__defineGetter__(fname, bean.baseBean["get_"+fname]);
-						
-						bean.baseBean["get_"+fname].fieldName = colname;
-						//bean.hideProperty("get_"+fname);
 		
-						
-						if (fname != manager.primaryKey){
-							if (!("set_"+fname in bean.baseBean)){
-								bean.baseBean["set_"+fname] = function (newval){
-									var result = new Myna.ValidationResult();
-									if (typeof newval === "undefined"){
-										result.addError("argument 'newval' required for set" +fname +".",fname);
-										return result;
-									}
-									if (newval != this.data[arguments.callee.fieldName]){
-										result.merge(this.saveField(arguments.callee.fieldName,newval));
-										this.data[arguments.callee.fieldName] = newval;
-									}
+					if (/%/.test(String(pattern))){
+						col.op =" like ";
+					}
+					
+					if (pattern === null){
+						col.isNull = true;
+					} else if (Myna.Database.dbTypeToJs($this.columns[colName].data_type) == "string"){
+						if (caseSensitive){
+							col.pattern = col.patter.toLowerCase();
+							col.column = colName.toLowerCase();
+						}
+					}
+					
+					return col
+					
+				}
+				
+				if (typeof pattern == "object"){
+					var myColumnList = this.columnNames.join()
+					pattern.getKeys().filter(function(colName){
+						return myColumnList.listContains(colName.toLowerCase())
+					}).forEach(function(colName){
+						criteria.push(getCriteria(colName,pattern[colName]))
+					})
+				} else{
+				criteria.push(getCriteria($this.db.isCaseSensitive?pkey:pkey.toLowerCase(),pattern));
+				}
+				var p = new Myna.QueryParams();
+				$profiler.begin("DataManager("+this.tableName+").find("+pattern.toJson()+")")
+				var qry = new Myna.Query({
+					dataSource:this.ds,
+					parameters:p,
+					sql:<ejs>
+						select <%=pkey%>
+						from <%=this.sqlTableName%>
+						where 1=1
+						<@loop array="criteria" element="col" >
+							<@if col.isNull>
+							and <%=col.column%> is null
+							<@else>
+							and <%=col.column%> <%=col.op%> <%=p.addValue(col.pattern,col.type,!!col.pattern)%>
+							</@if>
+						</@loop>
+					</ejs>
+				})
+				$profiler.end("DataManager("+this.tableName+").find("+pattern.toJson()+")")
+				return qry.valueArray(pkey.toLowerCase());
+			},
+			findBeans:function(pattern,caseSensitive){
+				var $this = this;
+				return new Myna.DataSet({
+					columns:$this.columnNames,
+					data:this.find(pattern,caseSensitive).map(function(id){
+						return $this.getById(id);
+					})
+				})
+			},
+			genKey:function(){
+				var manager=this;
+				var pktype =Myna.Database.dbTypeToJs(
+					manager.table.columns[
+						manager.primaryKey
+					].data_type
+				);
+				switch (pktype){
+					case "string":
+						return Myna.createUuid();
+					case "numeric":
+						var maxId =new Myna.Query({
+							dataSource:this.ds,
+							sql:'select max('+manager.qt+  this.columns[this.primaryKey].column_name+ manager.qt+') as id from ' + this.sqlTableName 
+						}).data[0].id;
+						if (!maxId) {
+							return 1;
+						} else {
+							return maxId +1;
+						}
+					default:
+						throw new Error("genKey must be overloaded for primary keys of type" + pktype )
+				}
+			},
+			getById:function(id){
+				$profiler.begin("loading "+this.tableName+" bean "+ id)
+				var manager = this;
+				var bean={};
+				var p = new Myna.QueryParams();
+				var qry = new Myna.Query({
+					dataSource:this.ds,
+					sql:<ejs>
+						select
+							<@loop array="manager.columnNames" element="name" index="i">
+								<%=manager.qt%><%=manager.columns[name].column_name%><%=manager.qt%> <@if i < manager.columnNames.length - 1 >,</@if>
+							</@loop>
+							
+						from <%=this.sqlTableName%>
+						where <%=manager.qt%><%=this.columns[this.primaryKey].column_name%><%=manager.qt%> = 
+							<%=p.addValue(id,this.columns[this.primaryKey].data_type)%>
+					</ejs>,
+					parameters:p
+				});
+				if (!qry.data.length) {
+					throw new Error("Unable to find '" + this.sqlTableName + "' by id '" + id +"'.");
+				}
+					
+				 
+				bean = new this.beanClass(qry.data[0])
+				
+				/* bean.baseBean = ({}).setDefaultProperties( 
+					this.beanTemplate
+				)
+				bean.manager=manager;
+				bean.dm = manager.dm;
+				bean.ds = manager.ds;
+				bean.data=qry.data[0];
+				bean.id=id;
+				
+				
+				//for (var p in bean) bean.hideProperty(p);
+				//print(dump(qry,"bean query"))
+				this.columnNames.forEach(function(colname){
+					var fname = colname;
+					if (!("get_"+fname in bean.baseBean)){
+						bean.baseBean["get_"+fname] = function (){
+							return this.data[arguments.callee.fieldName];
+						}
+					}
+					bean.__defineGetter__(fname, bean.baseBean["get_"+fname]);
+					
+					bean.baseBean["get_"+fname].fieldName = colname;
+					//bean.hideProperty("get_"+fname);
+	
+					
+					if (fname != manager.primaryKey){
+						if (!("set_"+fname in bean.baseBean)){
+							bean.baseBean["set_"+fname] = function (newval){
+								var result = new Myna.ValidationResult();
+								if (typeof newval === "undefined"){
+									result.addError("argument 'newval' required for set" +fname +".",fname);
 									return result;
 								}
+								if (newval != this.data[arguments.callee.fieldName]){
+									result.merge(this.saveField(arguments.callee.fieldName,newval));
+									this.data[arguments.callee.fieldName] = newval;
+								}
+								return result;
 							}
-							bean.__defineSetter__(fname, bean.baseBean["set_"+fname]);
-							bean.baseBean["set_"+fname].fieldName = colname;
-							//bean.hideProperty("set_"+fname);
 						}
-						
-					})
+						bean.__defineSetter__(fname, bean.baseBean["set_"+fname]);
+						bean.baseBean["set_"+fname].fieldName = colname;
+						//bean.hideProperty("set_"+fname);
+					}
 					
-					
-					bean.setDefaultProperties(bean.baseBean);
-					//for (var p in bean.baseBean) bean.hideProperty(p);
-					  
-					
-					bean.setDefaultProperties(this);
-					//for (var p in this) bean.hideProperty(p);
-					//bean.hideProperty("manager");
-					//bean.hideProperty("baseBean");
-					//bean.hideProperty("data");
-					bean.init(); */
-					$profiler.end("loading "+this.tableName+" bean "+ id)
-					return bean;
-				},
+				})
+				
+				
+				bean.setDefaultProperties(bean.baseBean);
+				//for (var p in bean.baseBean) bean.hideProperty(p);
+				  
+				
+				bean.setDefaultProperties(this);
+				//for (var p in this) bean.hideProperty(p);
+				//bean.hideProperty("manager");
+				//bean.hideProperty("baseBean");
+				//bean.hideProperty("data");
+				bean.init(); */
+				$profiler.end("loading "+this.tableName+" bean "+ id)
+				return bean;
+			},
 		}
 	/* ---------- beanTemplate ----------------------------------------------- */
 		Myna.DataManager.beanTemplate ={
@@ -1348,143 +1727,5 @@ if (!Myna) var Myna={}
 				search[fkrow.fkcolumn_name.toLowerCase()] = this.id;
 				return this.manager.dm.getManager(fkrow.fktable_name).findBeans(search)
 			},
-			moveNode:function(location){
-				$this = this;
-				if (!location) location = {
-					beforeNode:false,
-					underNode:false
-				}
-				var anchorNode;
-				
-				
-				
-				var rightCol = man.table.getSqlColumnName($this.manager.rightCol);
-				var leftCol = man.table.getSqlColumnName($this.manager.leftCol);
-				
-				var myRight = $this.data[$this.manager.rightCol];
-				var myLeft = $this.data[$this.manager.leftCol];
-				var subTreeSize = (myRight - myLeft) +1
-				var newOffset;
-				$profiler.mark("removing subtree")
-				/* 
-				first, remove this sub-tree from the world by 
-				setting negative sides 
-				*/ 
-				new Myna.Query({
-					ds:man.ds,
-					sql:<ejs>
-						update <%=this.table.sqlTableName%> set 
-							<%=rightCol%> = <%=rightCol%> * -1,
-							<%=leftCol%> = <%=leftCol%> * -1
-						where
-						<%=rightCol%> <= {myRight:bigint}
-						and <%=leftCol%> >= {myLeft:bigint}
-					</ejs>,
-					values:{
-						myRight:myRight,
-						myLeft:myLeft,
-					}
-				})
-				$profiler.mark("backfilling")
-				/* 
-				re-order the downstream tree to backfill
-				*/
-				new Myna.Query({
-					ds:man.ds,
-					sql:<ejs>
-						update <%=this.table.sqlTableName%> set 
-						<%=rightCol%> = <%=rightCol%> - {size:bigint},
-						<%=leftCol%> = <%=leftCol%> - {size:bigint}
-						where
-						<%=leftCol%> > {myRight:bigint}
-					</ejs>,
-					values:{
-						myRight:$this.data[$this.manager.rightCol],
-						size:subTreeSize,
-					}
-				})
-				/* 
-				re-order parentNodes to backfill
-				*/
-				new Myna.Query({
-					ds:man.ds,
-					sql:<ejs>
-						update <%=this.table.sqlTableName%> set 
-						<%=rightCol%> = <%=rightCol%> - {size:bigint}
-						where
-						<%=leftCol%> < {myLeft:bigint}
-						and <%=rightCol%> > {myRight:bigint}
-					</ejs>,
-					values:{
-						myRight:$this.data[$this.manager.rightCol],
-						myLeft:$this.data[$this.manager.leftCol],
-						size:subTreeSize,
-					}
-				})
-				
-				$profiler.mark("preocessing before")
-				if (location.beforeNode != undefined){
-					//see if the beforeNode element really exists
-					anchorNode = man.findBeans(location.beforeNode)
-					if (!anchorNode.length){//node does not exist
-						//treat this as a top level insert   
-						// by falling through
-						location.beforeNode = false;
-					} else {
-						anchorNode = anchorNode[0];
-						$this["set_" +$this.manager.parentCol](anchorNode.data[$this.manager.parentCol]);
-						newOffset = anchorNode.data[$this.manager.leftCol] - myLeft						
-						$this.manager.renumberForInsert(location.beforeNode,"before",subTreeSize)
-					}
-				}
-				$profiler.mark("processing under")
-				if (location.underNode != undefined){
-					//see if the underNode element really exists
-					anchorNode = man.findBeans(location.underNode)
-					if (!anchorNode.length){//node does not exist
-						//treat this as a top level insert   
-						//by falling through
-						location.underNode = false;
-					} else {
-						anchorNode = anchorNode[0];
-						$this["set_" +$this.manager.parentCol](anchorNode[$this.manager.idCol]);
-						newOffset = anchorNode.data[$this.manager.rightCol] - myLeft				
-						$this.manager.renumberForInsert(location.underNode,"under",subTreeSize)
-					}
-				} 
-				$profiler.mark("preocessing else")
-				if (!(location.beforeNode || location.underNode)){
-					var search = {}
-					//search for root node
-					search[$this.manager.parentCol] = null;
-					anchorNode = man.findBeans(search)
-					if (anchorNode.length){//there is a root node
-						anchorNode=anchorNode[0]
-						$this["set_" +$this.manager.parentCol](anchorNode[$this.manager.idCol]);
-						newOffset = anchorNode.data[$this.manager.rightCol] - myLeft				
-						$this.manager.renumberForInsert(anchorNode.data[$this.manager.idCol],"under",subTreeSize)
-					} else {//insert root node
-						throw new Error("cannot move a node when the is no root node!")
-					}
-				}
-				
-				$profiler.mark("inserting tree")
-				//insert  the subTree
-				new Myna.Query({
-					ds:man.ds,
-					sql:<ejs>
-						update <%=this.table.sqlTableName%> set 
-						<%=rightCol%> = <%=rightCol%> * -1 + ({offset:bigint}),
-						<%=leftCol%> = <%=leftCol%> * -1 + ({offset:bigint})
-						where
-							<%=leftCol%> < 0 
-					</ejs>,
-					values:{
-						offset:newOffset
-					}
-				})
-				
-				//Myna.printDump(anchorNode)
-				return $this;
-			},
+			
 		}

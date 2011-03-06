@@ -1,2 +1,2 @@
-//set this your actual ext 3.0 installation
-var extUrl=$server.rootUrl+"examples/ext_direct/ext-3.x/";
+//set this your actual ext 3.0x installation
+var extUrl=$server.rootUrl+"myna/ext-3.3.1/";

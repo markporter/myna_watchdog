@@ -1,7 +1,11 @@
-
+var enable_examples=false;
 
 $application.after("onRequestStart",function(){
-	if (!$cookie.getAuthUserId() || 
+	if (!enable_examples){
+		Myna.abort("Examples are currently disabled. <br/>To enable, edit line 1 of /examples/application.sjs and set <br/><br/> enable_examples=true;")	
+	}
+		
+	/* if (!$cookie.getAuthUserId() || 
 		!$cookie.getAuthUser().hasRight("myna_admin","full_admin_access")	
 	){
 		$res.redirectLogin({
@@ -10,11 +14,16 @@ $application.after("onRequestStart",function(){
 			message:"You must Myna Administrator access to view examples."
 			
 		})
-	}
+	} */
 	
 	if ("view_source" in $req.data){
-		var path = ($server.requestDir+$server.requestScriptName).replace(/\.\./g,"FAIL");
-		var content =new Myna.File(path)
+		var here = new Myna.File(".")
+		var path = new Myna.File($server.requestDir+$server.requestScriptName)
+		if (path.toString().left(here.length) != here){
+			Myna.abort("Invalid path")
+		}
+		//var path = ($server.requestDir+$server.requestScriptName).replace(/\.\./g,"FAIL");
+		var content =path
 			.readString()
 			.replace(/\t/g,"    ")
 			.escapeHtml();
