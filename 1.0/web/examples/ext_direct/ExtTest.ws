@@ -150,7 +150,7 @@
 				}
 				return nodes.map(function(n){
 					var leaf = !n.childIds.length
-					var title = n.title
+					var title = "L:" + n.getLeft() + " " + n.title + " R:" + n.getRight()
 					if (!leaf) title += " [" + n.descendantIds.length + " files]"  
 					return  {
 						id:n.id,

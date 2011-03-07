@@ -1923,7 +1923,7 @@ if (!Myna) var Myna={}
 		} else {
 			text = header	
 		}
-		out.println(text);
+		out.println(String(text));
 	}
 /* Function: sealObject 
 	This seals a JavaScript object, preventing it from being modified.

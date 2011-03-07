@@ -892,67 +892,72 @@ if (!Myna) var Myna={}
 			/* function overrides */
 				/* create */
 					man.before("create",function(data,location){
-						var chain = arguments.callee.chain;
-						arguments.callee.args =[data];
-						if (!location) location = {
-							beforeNode:false,
-							underNode:false
-						}
-						var anchorNode;
-						var rightCol = man.table.getSqlColumnName(options.rightCol);
-						var leftCol = man.table.getSqlColumnName(options.leftCol);
-						if (location.beforeNode){
-							//see if the beforeNode element really exists
-							anchorNode = man.findBeans(location.beforeNode)
-							if (!anchorNode.length || anchorNode[0].isRootNode()){//node does not exist
-								//treat this as a top level insert   
-								
-								return arguments.callee(data);
-							} else {
-								anchorNode = anchorNode[0];
-								data[options.parentCol] = anchorNode[options.parentCol]
-								if (options.depthCol) data[options.depthCol] = anchorNode[options.depthCol]
-								data[options.leftCol] = anchorNode[options.leftCol]+1;
-								data[options.rightCol] = anchorNode[options.leftCol]+2;
-								
-								man.renumberForInsert(location.beforeNode,"before",2)
+						Myna.clusterLock(
+							this.table.tableName + "_treeManager",
+							0,
+							function(){
+								var chain = arguments.callee.chain;
+								arguments.callee.args =[data];
+								if (!location) location = {
+									beforeNode:false,
+									underNode:false
+								}
+								var anchorNode;
+								var rightCol = man.table.getSqlColumnName(options.rightCol);
+								var leftCol = man.table.getSqlColumnName(options.leftCol);
+								if (location.beforeNode){
+									//see if the beforeNode element really exists
+									anchorNode = man.findBeans(location.beforeNode)
+									if (!anchorNode.length || anchorNode[0].isRootNode()){//node does not exist
+										//treat this as a top level insert   
+										
+										return arguments.callee(data);
+									} else {
+										anchorNode = anchorNode[0];
+										data[options.parentCol] = anchorNode[options.parentCol]
+										if (options.depthCol) data[options.depthCol] = anchorNode[options.depthCol]
+										data[options.leftCol] = anchorNode[options.leftCol]+1;
+										data[options.rightCol] = anchorNode[options.leftCol]+2;
+										
+										man.renumberForInsert(location.beforeNode,"before",2)
+									}
+								} else if (location.underNode){
+									//see if the underNode element really exists
+									anchorNode = man.findBeans(location.underNode)
+									if (!anchorNode.length){//node does not exist
+										//treat this as a top level insert   
+										return arguments.callee(data);
+									} else {
+										anchorNode = anchorNode[0];
+										data[options.parentCol] = anchorNode[options.idCol]
+										if (options.depthCol) data[options.depthCol] = anchorNode[options.depthCol] +1
+										data[options.leftCol] = anchorNode[options.rightCol];
+										data[options.rightCol] = anchorNode[options.rightCol]+1;
+										
+										man.renumberForInsert(location.underNode,"under",2)
+									}
+								} else {
+									var search = {}
+									//search for root node
+									search[options.parentCol] = null;
+									anchorNode = man.findBeans(search)
+									if (anchorNode.length){//there is a root node
+										anchorNode=anchorNode[0]
+										//treat this as an "under" insert to the rot node   
+										var id = anchorNode.data[options.idCol]
+										return arguments.callee(data,{
+											underNode:id
+										})
+										
+									} else {//insert root node
+										data[options.parentCol] = null
+										if (options.depthCol) data[options.depthCol] = 1
+										data[options.leftCol] = 1;
+										data[options.rightCol] = 2;
+									}
+								}
 							}
-						} else if (location.underNode){
-							//see if the underNode element really exists
-							anchorNode = man.findBeans(location.underNode)
-							if (!anchorNode.length){//node does not exist
-								//treat this as a top level insert   
-								return arguments.callee(data);
-							} else {
-								anchorNode = anchorNode[0];
-								data[options.parentCol] = anchorNode[options.idCol]
-								if (options.depthCol) data[options.depthCol] = anchorNode[options.depthCol] +1
-								data[options.leftCol] = anchorNode[options.rightCol];
-								data[options.rightCol] = anchorNode[options.rightCol]+1;
-								
-								man.renumberForInsert(location.underNode,"under",2)
-							}
-						} else {
-							var search = {}
-							//search for root node
-							search[options.parentCol] = null;
-							anchorNode = man.findBeans(search)
-							if (anchorNode.length){//there is a root node
-								anchorNode=anchorNode[0]
-								//treat this as an "under" insert to the rot node   
-								var id = anchorNode.data[options.idCol]
-								return arguments.callee(data,{
-									underNode:id
-								})
-								
-							} else {//insert root node
-								data[options.parentCol] = null
-								if (options.depthCol) data[options.depthCol] = 1
-								data[options.leftCol] = 1;
-								data[options.rightCol] = 2;
-							}
-						}
-						
+						)
 						//now we fall thorough to ManagerObject.create(data)
 					})
 					
@@ -969,146 +974,151 @@ if (!Myna) var Myna={}
 							},
 							moveNode:function(location){
 								var $this = this;
-								if (!location) location = {
-									beforeNode:false,
-									underNode:false
-								}
-								var anchorNode;
-								var rightCol = man.table.getSqlColumnName($this.manager.rightCol);
-								var leftCol = man.table.getSqlColumnName($this.manager.leftCol);
-								var myRight = $this.data[$this.manager.rightCol];
-								var myLeft = $this.data[$this.manager.leftCol];
-								var subTreeSize = (myRight - myLeft) +1
-								var newOffset;
-								$profiler.mark("removing subtree")
-								/* 
-								first, remove this sub-tree from the world by 
-								setting negative sides 
-								*/ 
-								new Myna.Query({
-									ds:man.ds,
-									sql:<ejs>
-										update <%=this.table.sqlTableName%> set 
-											<%=rightCol%> = <%=rightCol%> * -1,
-											<%=leftCol%> = <%=leftCol%> * -1
-										where
-										<%=rightCol%> <= {myRight:bigint}
-										and <%=leftCol%> >= {myLeft:bigint}
-									</ejs>,
-									values:{
-										myRight:myRight,
-										myLeft:myLeft,
-									}
-								})
-								$profiler.mark("backfilling")
-								/* 
-								re-order the downstream tree to backfill
-								*/
-								new Myna.Query({
-									ds:man.ds,
-									sql:<ejs>
-										update <%=this.table.sqlTableName%> set 
-										<%=rightCol%> = <%=rightCol%> - {size:bigint},
-										<%=leftCol%> = <%=leftCol%> - {size:bigint}
-										where
-										<%=leftCol%> > {myRight:bigint}
-									</ejs>,
-									values:{
-										myRight:$this.data[$this.manager.rightCol],
-										size:subTreeSize,
-									}
-								})
-								/* 
-								re-order parentNodes to backfill
-								*/
-								new Myna.Query({
-									ds:man.ds,
-									sql:<ejs>
-										update <%=this.table.sqlTableName%> set 
-										<%=rightCol%> = <%=rightCol%> - {size:bigint}
-										where
-										<%=leftCol%> < {myLeft:bigint}
-										and <%=rightCol%> > {myRight:bigint}
-									</ejs>,
-									values:{
-										myRight:$this.data[$this.manager.rightCol],
-										myLeft:$this.data[$this.manager.leftCol],
-										size:subTreeSize,
-									}
-								})
-								
-								$profiler.mark("preocessing before")
-								if (location.beforeNode != undefined){
-									//see if the beforeNode element really exists
-									anchorNode = man.findBeans(location.beforeNode)
-									if (!anchorNode.length || anchorNode[0].isRootNode()){//node does not exist
-										//treat this as a top level insert   
-										// by falling through
-										location.beforeNode = false;
-									} else {
-										anchorNode = anchorNode[0];
+								Myna.clusterLock(
+									this.table.tableName + "_treeManager",
+									0,
+									function(){
+										if (!location) location = {
+											beforeNode:false,
+											underNode:false
+										}
+										var anchorNode;
+										var rightCol = man.table.getSqlColumnName($this.manager.rightCol);
+										var leftCol = man.table.getSqlColumnName($this.manager.leftCol);
+										var myRight = $this.data[$this.manager.rightCol];
+										var myLeft = $this.data[$this.manager.leftCol];
+										var subTreeSize = (myRight - myLeft) +1
+										var newOffset;
+										$profiler.mark("removing subtree")
+										/* 
+										first, remove this sub-tree from the world by 
+										setting negative sides 
+										*/ 
+										new Myna.Query({
+											ds:man.ds,
+											sql:<ejs>
+												update <%=$this.table.sqlTableName%> set 
+													<%=rightCol%> = <%=rightCol%> * -1,
+													<%=leftCol%> = <%=leftCol%> * -1
+												where
+												<%=rightCol%> <= {myRight:bigint}
+												and <%=leftCol%> >= {myLeft:bigint}
+											</ejs>,
+											values:{
+												myRight:myRight,
+												myLeft:myLeft,
+											}
+										})
+										$profiler.mark("backfilling")
+										/* 
+										re-order the downstream tree to backfill
+										*/
+										new Myna.Query({
+											ds:man.ds,
+											sql:<ejs>
+												update <%=$this.table.sqlTableName%> set 
+												<%=rightCol%> = <%=rightCol%> - {size:bigint},
+												<%=leftCol%> = <%=leftCol%> - {size:bigint}
+												where
+												<%=leftCol%> > {myRight:bigint}
+											</ejs>,
+											values:{
+												myRight:$this.data[$this.manager.rightCol],
+												size:subTreeSize,
+											}
+										})
+										/* 
+										re-order parentNodes to backfill
+										*/
+										new Myna.Query({
+											ds:man.ds,
+											sql:<ejs>
+												update <%=$this.table.sqlTableName%> set 
+												<%=rightCol%> = <%=rightCol%> - {size:bigint}
+												where
+												<%=leftCol%> < {myLeft:bigint}
+												and <%=rightCol%> > {myRight:bigint}
+											</ejs>,
+											values:{
+												myRight:$this.data[$this.manager.rightCol],
+												myLeft:$this.data[$this.manager.leftCol],
+												size:subTreeSize,
+											}
+										})
 										
-										$this["set_" +$this.manager.parentCol](anchorNode.data[$this.manager.parentCol]);
-										if ($this.manager.depthCol) {
-											$this["set_" +$this.manager.depthCol](anchorNode.data[$this.manager.depthCol]);
+										$profiler.mark("preocessing before")
+										if (location.beforeNode != undefined){
+											//see if the beforeNode element really exists
+											anchorNode = man.findBeans(location.beforeNode)
+											if (!anchorNode.length || anchorNode[0].isRootNode()){//node does not exist
+												//treat this as a top level insert   
+												// by falling through
+												location.beforeNode = false;
+											} else {
+												anchorNode = anchorNode[0];
+												
+												$this["set_" +$this.manager.parentCol](anchorNode.data[$this.manager.parentCol]);
+												if ($this.manager.depthCol) {
+													$this["set_" +$this.manager.depthCol](anchorNode.data[$this.manager.depthCol]);
+												}
+												newOffset = anchorNode.data[$this.manager.leftCol] - myLeft						
+												$this.manager.renumberForInsert(location.beforeNode,"before",subTreeSize)
+											}
 										}
-										newOffset = anchorNode.data[$this.manager.leftCol] - myLeft						
-										$this.manager.renumberForInsert(location.beforeNode,"before",subTreeSize)
-									}
-								}
-								$profiler.mark("processing under")
-								if (location.underNode != undefined){
-									//see if the underNode element really exists
-									anchorNode = man.findBeans(location.underNode)
-									if (!anchorNode.length){//node does not exist
-										//treat this as a top level insert   
-										//by falling through
-										location.underNode = false;
-									} else {
-										anchorNode = anchorNode[0];
-										$this["set_" +$this.manager.parentCol](anchorNode[$this.manager.idCol]);
-										if ($this.manager.depthCol) {
-											$this["set_" +$this.manager.depthCol](anchorNode.data[$this.manager.depthCol] + 1);
+										$profiler.mark("processing under")
+										if (location.underNode != undefined){
+											//see if the underNode element really exists
+											anchorNode = man.findBeans(location.underNode)
+											if (!anchorNode.length){//node does not exist
+												//treat this as a top level insert   
+												//by falling through
+												location.underNode = false;
+											} else {
+												anchorNode = anchorNode[0];
+												$this["set_" +$this.manager.parentCol](anchorNode[$this.manager.idCol]);
+												if ($this.manager.depthCol) {
+													$this["set_" +$this.manager.depthCol](anchorNode.data[$this.manager.depthCol] + 1);
+												}
+												newOffset = anchorNode.data[$this.manager.rightCol] - myLeft				
+												$this.manager.renumberForInsert(location.underNode,"under",subTreeSize)
+											}
+										} 
+										$profiler.mark("preocessing else")
+										if (!(location.beforeNode || location.underNode)){
+											var search = {}
+											//search for root node
+											search[$this.manager.parentCol] = null;
+											anchorNode = man.findBeans(search)
+											if (anchorNode.length){//there is a root node
+												anchorNode=anchorNode[0]
+												$this["set_" +$this.manager.parentCol](anchorNode[$this.manager.idCol]);
+												if ($this.manager.depthCol) {
+													$this["set_" +$this.manager.depthCol](2);
+												}
+												newOffset = anchorNode.data[$this.manager.rightCol] - myLeft				
+												$this.manager.renumberForInsert(anchorNode.data[$this.manager.idCol],"under",subTreeSize)
+											} else {//insert root node
+												throw new Error("cannot move a node when the is no root node!")
+											}
 										}
-										newOffset = anchorNode.data[$this.manager.rightCol] - myLeft				
-										$this.manager.renumberForInsert(location.underNode,"under",subTreeSize)
+										
+										$profiler.mark("inserting tree")
+										//insert  the subTree
+										new Myna.Query({
+											ds:man.ds,
+											sql:<ejs>
+												update <%=$this.table.sqlTableName%> set 
+												<%=rightCol%> = <%=rightCol%> * -1 + ({offset:bigint}),
+												<%=leftCol%> = <%=leftCol%> * -1 + ({offset:bigint})
+												where
+													<%=leftCol%> < 0 
+											</ejs>,
+											values:{
+												offset:newOffset
+											}
+										})
 									}
-								} 
-								$profiler.mark("preocessing else")
-								if (!(location.beforeNode || location.underNode)){
-									var search = {}
-									//search for root node
-									search[$this.manager.parentCol] = null;
-									anchorNode = man.findBeans(search)
-									if (anchorNode.length){//there is a root node
-										anchorNode=anchorNode[0]
-										$this["set_" +$this.manager.parentCol](anchorNode[$this.manager.idCol]);
-										if ($this.manager.depthCol) {
-											$this["set_" +$this.manager.depthCol](2);
-										}
-										newOffset = anchorNode.data[$this.manager.rightCol] - myLeft				
-										$this.manager.renumberForInsert(anchorNode.data[$this.manager.idCol],"under",subTreeSize)
-									} else {//insert root node
-										throw new Error("cannot move a node when the is no root node!")
-									}
-								}
-								
-								$profiler.mark("inserting tree")
-								//insert  the subTree
-								new Myna.Query({
-									ds:man.ds,
-									sql:<ejs>
-										update <%=this.table.sqlTableName%> set 
-										<%=rightCol%> = <%=rightCol%> * -1 + ({offset:bigint}),
-										<%=leftCol%> = <%=leftCol%> * -1 + ({offset:bigint})
-										where
-											<%=leftCol%> < 0 
-									</ejs>,
-									values:{
-										offset:newOffset
-									}
-								})
-								
+								)
 								//Myna.printDump(anchorNode)
 								return $this;
 							}
@@ -1207,12 +1217,57 @@ if (!Myna) var Myna={}
 						var thisNode = this.getById(id);
 						var $this = this;
 						var chain = arguments.callee.chain;
-						
-						
-						//recursively delete child nodes
-							thisNode.childIds.forEach(function(childId){
-								man.remove(childId)
-							})
+						Myna.clusterLock(
+							this.table.tableName + "_treeManager",
+							0,
+							function(){
+								//recursively delete child nodes
+									thisNode.childIds.forEach(function(childId){
+										man.dm.managerTemplate.remove.call(man,childId);
+									})
+								//backfill
+									var rightCol = man.table.getSqlColumnName(man.rightCol);
+									var leftCol = man.table.getSqlColumnName(man.leftCol);
+									var myRight = thisNode.data[man.rightCol];
+									var myLeft = thisNode.data[man.leftCol];
+									var subTreeSize = (myRight - myLeft) +1
+									/* 
+									re-order the downstream tree to backfill
+									*/
+									new Myna.Query({
+										ds:man.ds,
+										sql:<ejs>
+											update <%=man.table.sqlTableName%> set 
+											<%=rightCol%> = <%=rightCol%> - {size:bigint},
+											<%=leftCol%> = <%=leftCol%> - {size:bigint}
+											where
+											<%=leftCol%> > {myRight:bigint}
+										</ejs>,
+										values:{
+											myRight:myRight,
+											size:subTreeSize,
+										}
+									})
+									/* 
+									re-order parentNodes to backfill
+									*/
+									new Myna.Query({
+										ds:man.ds,
+										sql:<ejs>
+											update <%=man.table.sqlTableName%> set 
+											<%=rightCol%> = <%=rightCol%> - {size:bigint}
+											where
+											<%=leftCol%> < {myLeft:bigint}
+											and <%=rightCol%> > {myRight:bigint}
+										</ejs>,
+										values:{
+											myRight:myRight,
+											myLeft:myLeft,
+											size:subTreeSize,
+										}
+									})
+							}
+						)
 					})
 				/* rebuildTree */
 					man.rebuildTree = function(){
@@ -1356,7 +1411,6 @@ if (!Myna) var Myna={}
 					</ejs>,
 					parameters:p
 				});
-				Myna.printDump("removing id " + id)
 			},
 			create:function(requiredFields){
 				var manager = this;
