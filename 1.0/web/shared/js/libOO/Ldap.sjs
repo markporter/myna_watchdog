@@ -8,14 +8,21 @@ if (!Myna) Myna={}
     Contructs a new Ldap connection
    
     Parameters:
-        server            -     *REQUIRED* Server and initial subtree to connect to.
-                            > ldap://server.yourdomain.com:389/o=top,ou=people
-                            > ldaps://server.yourdomain.com:636/o=top,ou=people
-        username        -    *Optional default null* Fully qualified username to log in as
-                            > cn=name,ou=department,o=ldap_root
-        password        -    *Optional default null* password for user
+        server          		-	*REQUIRED* Server and initial subtree to connect to.
+                        		 		> ldap://server.yourdomain.com:389/o=top,ou=people
+                        		 		> ldaps://server.yourdomain.com:636/o=top,ou=people
+        username        		-	Optional default null* 
+        							Fully qualified username to log in as
+                        		 		> cn=name,ou=department,o=ldap_root
+        password        		-	*Optional default null* 
+        							password for user
+        acceptSelfSignedCerts	-	*Optional default true* 
+        							By default secure ldap connections will 
+        							accept self-signed certs. Set this to false 
+        							to throw an exception. 
     */
-    Myna.Ldap = function(server,username,password){
+    Myna.Ldap = function(server,username,password,acceptSelfSignedCerts){
+    	if (acceptSelfSignedCerts === undefined) acceptSelfSignedCerts=true;
         this.server = server;
         this.user = username;
         this.password = password;
@@ -26,6 +33,9 @@ if (!Myna) Myna={}
         var env = new java.util.Hashtable();
         //env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
         env.put(Context.PROVIDER_URL, this.server);
+        if (acceptSelfSignedCerts){
+			env.put("java.naming.ldap.factory.socket", "info.emptybrain.myna.AcceptAllSSLSocketFactory");
+		}
        
         
         env.put(Context.REFERRAL, "follow");

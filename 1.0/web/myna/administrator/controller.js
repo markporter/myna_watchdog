@@ -2433,14 +2433,13 @@ var C ={
 								rowclick:function(grid,rowIndex,e){
 									var row = grid.getStore().getAt(rowIndex);
 									var form = config.task.getForm();
-										config.task.showForm();
-										form.setValues(row.data)
-										var cbArray = config.task.getFormPanel().findByType("checkbox")
-										cbArray.forEach(function(cb){
-											cb.setValue(!!(row.data.weekly_days.indexOf(cb.inputValue)+1))
-										})
-										//form.loadRecord(row);
-										
+									config.task.showForm();
+									form.setValues(row.data)
+									
+									var cb = Ext.getCmp("weekdays_cb_group");
+									cb.setValue(Array.dim(7).map(function(d,i){
+										return String(row.data.weekly_days).listContains(i) 
+									}))
 								}
 							}
 						},{
@@ -2552,7 +2551,7 @@ var C ={
 										xtype:"timefield",
 										format:"H:i",
 										altFormats:"H:i:s",
-										width:50,
+										width:55,
 										value:new Date().format("H:i")
 									},{
 									/* end_date_date */
@@ -2567,7 +2566,7 @@ var C ={
 										xtype:"timefield",
 										format:"H:i",
 										altFormats:"H:i:s",
-										width:50 */
+										width:55 */
 									}]
 								},{
 									items:[{
@@ -2711,14 +2710,14 @@ var C ={
 											xtype:"timefield",
 											format:"H:i",
 											altFormats:"H:i:s",
-											width:50,
+											width:55,
 											value:new Date().format("H:i")
 										}]	
 									},{
 									//Weekly Panel
 										xtype:"fieldset",
 										id:"scheduleWeekly",
-										height:190,
+										height:195,
 										width:125,
 										title:"Weekly Schedule",
 										items:[{
@@ -2734,61 +2733,22 @@ var C ={
 											xtype:"panel",
 											html:" weeks on "
 										},{
-											xtype:"panel",
-											layout:"table",
-											layoutConfig:{
-												columns:7	
-											},
-											defaults:{
-												xtype:"panel",
-												layout:"form",
-												
-												defaults:{
-													labelSeparator:"",
-													labelStyle:"padding-left:2px"
+										/* weekly_time */
+											xtype:"checkboxgroup",
+											hideLabel:true,
+											id:"weekdays_cb_group",
+											width:100,
+											columns:7,
+											itemCls: 'x-check-group-alt',
+											items:"S,M,T,W,T,F,S".split(",").map(function(d,i){
+												return {
+													boxLabel:d,
+													name:"weekly_days",
+													inputValue:parseInt(i)
 												}
-											},
-											items:[
-												{items:[{
-													xtype:"checkbox",
-													name:"weekly_days",
-													fieldLabel:"S",
-													inputValue:0
-												}]},{items:[{
-													xtype:"checkbox",
-													name:"weekly_days",
-													fieldLabel:"M",
-													inputValue:1
-												}]},{items:[{
-													xtype:"checkbox",
-													name:"weekly_days",
-													fieldLabel:"T",
-													inputValue:2
-												}]},{items:[{
-													xtype:"checkbox",
-													name:"weekly_days",
-													fieldLabel:"W",
-													inputValue:3
-												}]},{items:[{
-													xtype:"checkbox",
-													name:"weekly_days",
-													fieldLabel:"T",
-													inputValue:4
-												}]},{items:[{
-													xtype:"checkbox",
-													name:"weekly_days",
-													fieldLabel:"F",
-													inputValue:5
-												}]},{items:[{
-													xtype:"checkbox",
-													name:"weekly_days",
-													fieldLabel:"S",
-													inputValue:6
-												}]}
-											]
-											
-													
-										},{
+											})
+										},
+										{
 											xtype:"panel",
 											html:" at "	
 										},{	
@@ -2798,7 +2758,7 @@ var C ={
 											xtype:"timefield",
 											format:"H:i",
 											altFormats:"H:i:s",
-											width:50,
+											width:55,
 											value:new Date().format("H:i")
 										}]
 									},{
@@ -2835,7 +2795,7 @@ var C ={
 											xtype:"timefield",
 											format:"H:i",
 											altFormats:"H:i:s",
-											width:50,
+											width:55,
 											value:new Date().format("H:i")
 										}]
 									},{
@@ -2915,7 +2875,7 @@ var C ={
 											xtype:"timefield",
 											format:"H:i",
 											altFormats:"H:i:s",
-											width:50,
+											width:55,
 											value:new Date().format("H:i")
 										}]
 									},{
@@ -2952,7 +2912,7 @@ var C ={
 											xtype:"timefield",
 											format:"H:i",
 											altFormats:"H:i:s",
-											width:50,
+											width:55,
 											value:new Date().format("H:i")
 										}]	
 									}]

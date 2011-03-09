@@ -26,6 +26,9 @@
 */
 if (!Myna) var Myna={}
 
+
+
+
 /* Constructor: Myna.HttpConnection
 	Constructor function for HttpConnection class
 	
@@ -104,6 +107,7 @@ if (!Myna) var Myna={}
 			p.setTcpNoDelay(true);
 			p.setLinger(0);
 			p.setConnectionTimeout(this.timeout)
+			
 			conMan.setParams(p);
 		}
 	}
@@ -311,3 +315,23 @@ if (!Myna) var Myna={}
 	Myna.HttpConnection.prototype.getStatusCode=function(){
 		return this.methodHandler.getStatusCode();
 	}
+	
+	
+Myna.HttpConnection.registerSSLFactory = function(){
+	/* importPackage(javax.net.ssl);
+	var SecureRandom=java.security.SecureRandom;
+	importPackage(java.net);
+	var SocketFactory=javax.net.SocketFactory;
+	importPackage(java.io);
+	importPackage(java.security.cert); */
+	var Protocol=org.apache.commons.httpclient.protocol.Protocol;
+	var AcceptAllSSLSocketFactory=Packages.info.emptybrain.myna.AcceptAllSSLSocketFactory;
+	var p =new Protocol(
+		"https", 
+		new AcceptAllSSLSocketFactory(),
+		443
+	) 
+	Protocol.registerProtocol("https",p);
+	
+}
+Myna.HttpConnection.registerSSLFactory()

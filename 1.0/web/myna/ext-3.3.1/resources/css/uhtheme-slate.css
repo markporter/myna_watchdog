@@ -1387,16 +1387,16 @@ a.x-menu-item {
 
 .x-panel-mc {
     font: normal 11px tahoma,arial,helvetica,sans-serif;
-    background-color:#fff;
+    /* background-color:#fff; */
 }
 
 .x-panel-ml {
-	background-color: #fff;
-    background-image:url(../images/uh-slate/panel/left-right.gif);
+	/* background-color: #fff;
+    background-image:url(../images/uh-slate/panel/left-right.gif); */
 }
 
 .x-panel-mr {
-	background-image: url(../images/uh-slate/panel/left-right.gif);
+	/* background-image: url(../images/uh-slate/panel/left-right.gif); */
 }
 
 .x-tool {
