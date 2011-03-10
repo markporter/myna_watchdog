@@ -408,13 +408,13 @@ if (!Myna) var Myna={}
 				+ auth_type
 				+"'. Adapter auth_types cannot contain tilde(~) characters");
 			}
-			var adapter = $server.get("MYNA_auth_adapter_" + auth_type);
+			var adapter = $req["MYNA_auth_adapter_" + auth_type];
 			if (!adapter){
 				adapter = {
 					config:new Myna.File("/WEB-INF/myna/auth_types/" + auth_type).readString().parseJson()
 				}
 				Myna.include("/shared/js/libOO/auth_adapters/" + adapter.config.adapter +".sjs",adapter);
-				$server.set("MYNA_auth_adapter_" + auth_type,adapter);
+				$req["MYNA_auth_adapter_" + auth_type] = adapter;
 			}
 			return adapter;
 		},

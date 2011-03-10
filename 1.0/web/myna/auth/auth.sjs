@@ -164,7 +164,15 @@ var fusebox={
 					);
 				}
 			} catch(e){
-				Myna.log("error","auth failed for " + username,Myna.dump($req.data,"data") + Myna.dump($req.rawData,"rawData"));
+				$req.data.password = $req.rawData.password="REDACTED FOR SECURITY";
+				$req.data.password$array = $req.rawData.password$array=["REDACTED FOR SECURITY"];
+				Myna.log(
+					"error",
+					"Authenticaton Failed for " + username,
+					Myna.formatError(e) 
+						+ Myna.dump($req.data,"data") 
+						+ Myna.dump($req.rawData,"rawData")
+				);
 				//metaRedirect
 				$res.metaRedirect($server.serverUrl
 					+$server.requestUrl
