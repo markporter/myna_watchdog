@@ -33,7 +33,7 @@ if (!Myna) Myna={}
         var env = new java.util.Hashtable();
         //env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
         env.put(Context.PROVIDER_URL, this.server);
-        if (acceptSelfSignedCerts){
+        if (acceptSelfSignedCerts && /^ldaps/i.test(server)){
 			env.put("java.naming.ldap.factory.socket", "info.emptybrain.myna.AcceptAllSSLSocketFactory");
 		}
        
