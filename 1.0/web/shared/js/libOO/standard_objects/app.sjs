@@ -953,7 +953,12 @@ var $application={
 		try{
 			if ($application.rights){
 				$application.rights.forEach(function(r){
-					if (!r.appname) r.appname = $application.appname;
+					if (typeof r == "string") r={
+						name:r
+					}
+					if (!r.appname){
+						r.appname=$application.appname;	
+					}
 					Myna.Permissions.addRight(r)
 				})
 			}

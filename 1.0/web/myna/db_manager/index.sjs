@@ -31,7 +31,9 @@ includeOnce("fusebox.sjs"); // load functions as properties of the fusebox objec
 	}
 	var result = fusebox[$req.data.fuseaction]($req.data);
 	if (result){
-		print(result.toJson());
+		$res.setContentType("application/json")
+		$res.print(result.toJson());
+		//print("\n".repeat(1));
 	}
 /* Post-request */
 	

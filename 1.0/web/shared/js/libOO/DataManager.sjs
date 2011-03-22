@@ -892,72 +892,86 @@ if (!Myna) var Myna={}
 			/* function overrides */
 				/* create */
 					man.before("create",function(data,location){
-						Myna.clusterLock(
+						//Myna.printConsole("starting",Myna.dumpText(Array.parse(arguments)));
+						var chain = arguments.callee.chain;
+						chain.args =[data];
+						function processArgs(data,location){
+							//Myna.printConsole("processing",Myna.dumpText(Array.parse(arguments)))
+							if (!location) location = {
+								beforeNode:false,
+								underNode:false
+							}
+							var anchorNode;
+							var rightCol = man.table.getSqlColumnName(options.rightCol);
+							var leftCol = man.table.getSqlColumnName(options.leftCol);
+							if (location.beforeNode){
+								//see if the beforeNode element really exists
+								anchorNode = man.findBeans(location.beforeNode)
+								if (!anchorNode.length || anchorNode[0].isRootNode()){//node does not exist
+									//treat this as a top level insert   
+									
+									return arguments.callee(data);
+								} else {
+									anchorNode = anchorNode[0];
+									data[options.parentCol] = anchorNode[options.parentCol]
+									if (options.depthCol) data[options.depthCol] = anchorNode[options.depthCol]
+									data[options.leftCol] = anchorNode[options.leftCol]+1;
+									data[options.rightCol] = anchorNode[options.leftCol]+2;
+									
+									man.renumberForInsert(location.beforeNode,"before",2)
+								}
+							} else if (location.underNode){
+								//see if the underNode element really exists
+								anchorNode = man.findBeans(location.underNode)
+								if (!anchorNode.length){//node does not exist
+									//treat this as a top level insert   
+									return arguments.callee(data);
+								} else {
+									anchorNode = anchorNode[0];
+									data[options.parentCol] = anchorNode[options.idCol]
+									if (options.depthCol) data[options.depthCol] = anchorNode[options.depthCol] +1
+									data[options.leftCol] = anchorNode[options.rightCol];
+									data[options.rightCol] = anchorNode[options.rightCol]+1;
+									
+									man.renumberForInsert(location.underNode,"under",2)
+								}
+							} else {
+								var search = {}
+								//search for root node
+								search[options.parentCol] = null;
+								anchorNode = man.findBeans(search)
+								if (anchorNode.length){//there is a root node
+									anchorNode=anchorNode[0]
+									//treat this as an "under" insert to the rot node   
+									var id = anchorNode.data[options.idCol]
+									location={
+										underNode:id
+									}
+									return arguments.callee(data,location)
+									
+								} else {//insert root node
+									data[options.parentCol] = null
+									if (options.depthCol) data[options.depthCol] = 1
+									data[options.leftCol] = 1;
+									data[options.rightCol] = 2;
+								}
+							}
+						}
+						var gotLock =Myna.clusterLock(
 							this.table.tableName + "_treeManager",
 							0,
 							function(){
-								var chain = arguments.callee.chain;
-								arguments.callee.args =[data];
-								if (!location) location = {
+								processArgs(data,location||{
 									beforeNode:false,
 									underNode:false
-								}
-								var anchorNode;
-								var rightCol = man.table.getSqlColumnName(options.rightCol);
-								var leftCol = man.table.getSqlColumnName(options.leftCol);
-								if (location.beforeNode){
-									//see if the beforeNode element really exists
-									anchorNode = man.findBeans(location.beforeNode)
-									if (!anchorNode.length || anchorNode[0].isRootNode()){//node does not exist
-										//treat this as a top level insert   
-										
-										return arguments.callee(data);
-									} else {
-										anchorNode = anchorNode[0];
-										data[options.parentCol] = anchorNode[options.parentCol]
-										if (options.depthCol) data[options.depthCol] = anchorNode[options.depthCol]
-										data[options.leftCol] = anchorNode[options.leftCol]+1;
-										data[options.rightCol] = anchorNode[options.leftCol]+2;
-										
-										man.renumberForInsert(location.beforeNode,"before",2)
-									}
-								} else if (location.underNode){
-									//see if the underNode element really exists
-									anchorNode = man.findBeans(location.underNode)
-									if (!anchorNode.length){//node does not exist
-										//treat this as a top level insert   
-										return arguments.callee(data);
-									} else {
-										anchorNode = anchorNode[0];
-										data[options.parentCol] = anchorNode[options.idCol]
-										if (options.depthCol) data[options.depthCol] = anchorNode[options.depthCol] +1
-										data[options.leftCol] = anchorNode[options.rightCol];
-										data[options.rightCol] = anchorNode[options.rightCol]+1;
-										
-										man.renumberForInsert(location.underNode,"under",2)
-									}
-								} else {
-									var search = {}
-									//search for root node
-									search[options.parentCol] = null;
-									anchorNode = man.findBeans(search)
-									if (anchorNode.length){//there is a root node
-										anchorNode=anchorNode[0]
-										//treat this as an "under" insert to the rot node   
-										var id = anchorNode.data[options.idCol]
-										return arguments.callee(data,{
-											underNode:id
-										})
-										
-									} else {//insert root node
-										data[options.parentCol] = null
-										if (options.depthCol) data[options.depthCol] = 1
-										data[options.leftCol] = 1;
-										data[options.rightCol] = 2;
-									}
-								}
+								})
 							}
 						)
+						if (!gotLock) {
+							throw new Error("Unable to acquire lock on " +this.table.tableName + "_treeManager" )
+						}
+						//Myna.printConsole("done",Myna.dumpText(Array.parse(chain)))
+						
 						//now we fall thorough to ManagerObject.create(data)
 					})
 					
@@ -1501,8 +1515,8 @@ if (!Myna) var Myna={}
 					if (pattern === null){
 						col.isNull = true;
 					} else if (Myna.Database.dbTypeToJs($this.columns[colName].data_type) == "string"){
-						if (caseSensitive){
-							col.pattern = col.patter.toLowerCase();
+						if (!caseSensitive){
+							col.pattern = String(col.pattern).toLowerCase();
 							col.column = colName.toLowerCase();
 						}
 					}

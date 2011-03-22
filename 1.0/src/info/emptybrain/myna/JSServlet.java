@@ -182,19 +182,21 @@ public class JSServlet extends HttpServlet {
 					thread.handleRequest(scriptPath);
 					if (!thread.requestHandled){
 						//flush output
-						res.setContentLength(thread.generatedContent.length());
-						
-						String ETag = new Integer(thread.generatedContent.toString().hashCode()).toString();
+						String content = thread.generatedContent.toString();
+						byte[] data = content.toString().getBytes();
+						String ETag = new Integer(content.hashCode()).toString();
 						String IfNoneMatch  =null;
 						Enumeration IfNoneMatchHeaders = req.getHeaders("If-None-Match");
+						
 						if (IfNoneMatchHeaders.hasMoreElements()){
 							IfNoneMatch = (String) IfNoneMatchHeaders.nextElement(); 
-						} 
+						}
+						res.setContentLength(data.length);
 						res.setHeader("ETag",ETag);
 						if (IfNoneMatch != null && IfNoneMatch.equals(ETag)){
 							res.setStatus(304);		
 						} else {
-							res.getWriter().print(thread.generatedContent);	
+							res.getOutputStream().write(data,0,data.length);	
 						}	
 					}	
 				}

@@ -16,25 +16,35 @@ function searchUsers(search){
 		sql:<ejs>
 			select
 				login,
-				u.first_name,
-				u.last_name,
-				u.middle_name,
-				u.email,
-				u.title
+				COALESCE(u.first_name,'') as first_name,
+				COALESCE(u.last_name,'') as last_name,
+				COALESCE(u.middle_name,'') as middle_name,
+				COALESCE(u.email,'') as email,
+				COALESCE(u.title,'') as title
 			from 
 				user_logins ul,
 				users u					
 			where u.user_id = ul.user_id
 			and type ='myna'
 			<@if search.length>
-				and lower(user_login_id || login  || u.user_id || first_name || middle_name || last_name || email) like {search}
+				and (
+					lower(user_login_id) = {searchExact}
+					OR lower(login) = {searchExact}
+					OR lower(u.user_id) = {searchExact}
+					OR lower(first_name) like {searchFirst}
+					OR lower(last_name) like {searchFirst}
+					OR lower(email) like {search}
+				)
 			</@if>
 			order by last_name,first_name,login 
 		</ejs>,
 		values:{
+			searchFirst:"%" + search.toLowerCase(),
+			searchExact:search.toLowerCase(),
 			search:"%" + search.toLowerCase() + "%",
 		},
 	})
+	Myna.log("debug","myna search ",Myna.dump(qry));
 	return qry.data;
 }
 

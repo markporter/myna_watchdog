@@ -609,7 +609,8 @@
 				handler:function(data){	
 					var search = data.search;
 					var result=[]
-					if (search.length > 3){
+					if (search.length >= 2){
+						
 						data.providers.listToArray().forEach(function(type){
 							var p = Myna.Permissions.getAuthAdapter(type);
 							if ("searchUsers" in p){
@@ -617,9 +618,9 @@
 									user.type = type;
 									result.push(user)
 								})	
-							} else Myna.log("debug","properties",Myna.dump(p.getProperties()));
+							} else Myna.log("debug","No searchUsers in authAdapter" + type,Myna.dump(p.getProperties()));
 						})
-						new Myna.Query({
+						var searchQry=new Myna.Query({
 							dataSource:"myna_permissions",
 							sql:<ejs>
 								select
@@ -660,9 +661,11 @@
 								})
 								return obj;
 							}
-						}).data.forEach(function(row){
+						})
+						searchQry.data.forEach(function(row){
 							result.push(row);
 						})
+						
 					}
 					result.sort(function(a,b){
 						return String.compareAlpha(a.first_name+a.last_name, b.first_name+b.last_name)

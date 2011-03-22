@@ -207,12 +207,14 @@ if (!Myna) var Myna={}
 			if (exists.length) {
 				bean =exists[0];
 			} else {
+				//Myna.log("debug","Adding right " + options.name,Myna.dump(options), Myna.Dump(options) + Myna.Dump(exists));
 				bean = right_manager.create({
-					right_id:Myna.createUuid(),
+					
 					name:options.name,
 					appname:options.appname,
 					description:options.description|| ""
 				})
+			
 			}
 			var right= new Myna.Permissions.Right(bean);
 			

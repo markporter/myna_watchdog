@@ -451,7 +451,7 @@ Myna.Query.prototype={
 				size = Number(md.getPrecision(index+1));
 			} catch(e){}
 			qry.columns.push({
-				name:String(md.getColumnName(index+1)),
+				name:String(md.getColumnLabel(index+1)),
 				typeId:md.getColumnType(index+1),
 				typeName:String(md.getColumnTypeName(index+1)),
 				size:size

@@ -121,7 +121,7 @@ var $cookie={
 			void
 	*/
 	clearAuthUserId:function(name){
-		$cookie.clear("myna_auth_cookie");
+		$cookie.clear("myna_auth_cookie",true);
 		delete $cookie.__AUTH_USER_ID__
 		$cookie.__authCleared = true;
 	},
@@ -176,12 +176,25 @@ var $cookie={
 	},
 	/* Function: clear
 			clears a cookie. Equivalent to $cookie.set(name, "",{expireSeconds:0})
-			
+		Parameters:
+			name						-	name of cookie to delete
+			deleteParentPaths		-	*Optional, default false*
+											If true, all parent cookies are deleted as well
 		Returns:	
 			void
 	*/
-	clear:function(name){
-		$cookie.set(name, "",{expireSeconds:0})
+	clear:function(name,deleteParentPaths){
+		if (deleteParentPaths){
+			var paths = $server.requestUrl.split("/");
+			while (paths.length) {
+				$cookie.set(name, "",{
+					expireSeconds:0,
+					path:paths.join("/") + "/"
+				})
+				paths.pop()
+			}
+		} 
+		$cookie.set(name, "",{expireSeconds:0})	
 	},
 	
 }

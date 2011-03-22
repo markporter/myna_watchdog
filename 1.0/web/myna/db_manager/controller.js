@@ -17,7 +17,11 @@ var C ={
 		var oldDecode = Ext.util.JSON.decode;
 		Ext.decode = Ext.util.JSON.decode = function(text){
 			try{
-				return oldDecode(text);	
+				if (JSON != undefined){
+					return JSON.parse(text)	
+				}else {
+					return oldDecode(text);
+				}
 			} catch(e){
 				new Ext.Window({
 					id:"decode_error",
@@ -385,6 +389,7 @@ var C ={
 					hidden:true,
 					enableTabScroll:true,
 					xtype:"tabpanel",
+					enableTabScroll:true,
 					deferredRender:false,
 					layoutOnTabChange:true,
 					autoDestroy:true
@@ -898,6 +903,7 @@ var C ={
 														title:title,
 														items:[{
 															xtype:"tabpanel",
+															enableTabScroll:true,
 															activeTab:0,
 															items:[{
 																title:"TEXT",
@@ -1648,6 +1654,7 @@ var C ={
 					items:[{
 					/* tabs */
 						xtype:"tabpanel",
+						enableTabScroll:true,
 						deferredRender:false,
 						layoutOnTabChange:true,
 						autoDestroy:true,

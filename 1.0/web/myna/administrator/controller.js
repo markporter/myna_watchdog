@@ -1544,7 +1544,7 @@ var C ={
 							var store = Ext.getCmp("general_log_grid").getStore();
 							var pager = Ext.getCmp("general_log_pager");
 							store.baseParams = form.getValues();
-							pager.onClick("refresh")
+							pager.doRefresh()
 							formPanel.collapse();
 						},
 					items:[{
@@ -1636,7 +1636,7 @@ var C ={
 								var pager = Ext.getCmp("general_log_pager");
 								form.reset()
 								store.baseParams = {}
-								pager.onClick("refresh")
+								pager.doRefresh()
 							}
 						}]
 					},{
@@ -3355,7 +3355,7 @@ var C ={
 								var tb = Ext.getCmp("manage_rights_grid").getBottomToolbar()
 								store.baseParams.search=field.getValue();
 								store.baseParams.start=0;
-								tb.onClick("refresh");
+								tb.doRefresh();
 							}
 						},
 						stripeRows:true,
@@ -3610,7 +3610,7 @@ var C ={
 								var store = Ext.StoreMgr.get("manage_users_grid")
 								store.baseParams.search=field.getValue();
 								store.baseParams.start=0;
-								tb.onClick("refresh");
+								tb.doRefresh();
 							}
 						},
 						stripeRows:true,
@@ -3883,7 +3883,7 @@ var C ={
 									var store = Ext.StoreMgr.get("manage_user_logins_grid")
 									store.baseParams.search=field.getValue();
 									store.baseParams.start=0;
-									tb.onClick("refresh");
+									tb.doRefresh();
 								}
 							},
 							stripeRows:true,
@@ -4155,7 +4155,7 @@ var C ={
 								var store = Ext.StoreMgr.get("manage_user_groups_grid")
 								store.baseParams.search=field.getValue();
 								store.baseParams.start=0;
-								tb.onClick("refresh");
+								tb.doRefresh();
 							}
 						},
 						stripeRows:true,
@@ -4398,7 +4398,7 @@ var C ={
 										var tb = Ext.getCmp("manage_user_group_members_grid").getBottomToolbar()
 										store.baseParams.search=field.getValue();
 										store.baseParams.start=0;
-										tb.onClick("refresh");
+										tb.doRefresh();
 									},
 									add:function(user_id){
 										var form = Ext.getCmp("form" + tabId).form;
@@ -4432,7 +4432,7 @@ var C ={
 															C.body.unmask();
 															C.infoMsg("removed '" + name + "'");
 															Ext.getCmp("manage_user_group_members_grid")
-																.getBottomToolbar().onClick("refresh")
+																.getBottomToolbar().doRefresh()
 														} else return false
 													})
 												})
@@ -4566,7 +4566,7 @@ var C ={
 										var tb = Ext.getCmp("manage_assigned_rights_grid").getBottomToolbar()
 										store.baseParams.search=field.getValue();
 										store.baseParams.start=0;
-										tb.onClick("refresh");
+										tb.doRefresh();
 									},
 									add:function(right_id){
 										var form = Ext.getCmp("form" + tabId).form;
@@ -4600,7 +4600,7 @@ var C ={
 															C.body.unmask();
 															C.infoMsg("Removed '" + name + "'");
 															Ext.getCmp("manage_assigned_rights_grid")
-																.getBottomToolbar().onClick("refresh")
+																.getBottomToolbar().doRefresh()
 														} else return false
 													})
 												})

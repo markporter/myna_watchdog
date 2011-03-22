@@ -999,6 +999,7 @@
 							in JSON. The default reviver restores dates in this 
 							format: "\/Date(1269727815826)\/" format, which is the 
 							format <Object.toJson> uses.
+	
 	Returns: 
 		Number String Array or Object contained in the JSON text
 		
@@ -1006,7 +1007,7 @@
 		*SyntaxError* if not properly formatted
 	
 	Detail: 
-		Adapted from http://www.json.org/json.js
+		Adapted from http://code.google.com/p/json-sans-eval/
 	 
 		This function expects strings to be properly formatted. In particular 
 		watch out for property names, they must be quoted.
@@ -1133,6 +1134,11 @@
 						} else return value;
 					} else return value
 				}
+			}
+			
+			//use native JSON is available
+			if (typeof JSON != "undefined"){
+				return JSON.parse(this,opt_reviver);
 			}
 			
 			// Split into tokens

@@ -114,7 +114,7 @@ if (!Myna) var Myna={}
 		desc			-	*Optional default null*
 							description of the parameter	
 	Returns:
-		Reference to WebService instance
+		A reference to WebService instance
 		
 	Example:
 	(code)
@@ -619,6 +619,12 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 						<i><a href="http://www.mynajs.org/shared/docs/js/libOO/files/WebService-sjs.html#Myna.WebService.printExtApi" target="ext-api">API</a>
 							URL:</i> <%=serviceUrl+"?ext-api[&amp;ns=&lt;namespace&gt;][&amp;scriptvar=&lt;varname&gt;]"%><br>
 						<i>Service URL:</i> <%=serviceUrl+"?ext-route"%><br>
+						<b>Note:</b><br>
+						The generated Ext.Direct API contains 2 methods for every 
+						function. The methods that start with "$" always accept 1 
+						parameter that contains a JS object where each property is a 
+						param to the service function. See the <a href="http://www.mynajs.org/shared/docs/js/libOO/files/WebService-sjs.html#Myna.WebService.printExtApi" target="ext-api">API</a> 
+						documentation for details
 					</li>
 					<li>
 						<a href="http://www.mynajs.org/shared/docs/js/libOO/files/WebService-sjs.html" 
@@ -837,88 +843,169 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 		
 	}
 /* Function: printExtApi
-	 prints a JSON Ext.Direct API representing this web service. 
+	prints a JSON Ext.Direct API representing this web service. 
 	 
-	 if $req.data.ns is defined, this namespace is will be defined in the API
+	By default, this function returns a JSON Ext.Direxct API. Additional URL 
+	parameters may be added to return a JavaScript response and/or change the 
+	namespace and actino names in the returned API
 	 
-	 if $req.data.scriptvar is defined, a JavaScript response is generated 
-	 with the Ext.Direct API set equal to the value of $req.data.scriptvar. If
-	 $req.data.ns is also defined, then scriptvar will be created in that 
-	 namespace
-	 
-	 if $req.data.callback is defined, a JavaScript response is generated 
-	 that calls callback function with the Ext.Direct API as the only parameter
-	 
-	 
-	 Client-side Examples:
-	 	(code)
-		// adds a Ext.Direct provider via script include with callback
-		<script type="text/javascript" src="myservice.ws?ext-api&callback=Ext.Direct.addProvider"></script>
-		(end)
-	 
+	URL Parameters:
+		ns					-	If supplied, this will set the "ns" property of the API
+								which will result in the this action being loaded into
+								that object in the browser
+			
+		scriptvar		-	If supplied, a JavaScript response is generated with the 
+								Ext.Direct API set equal to the value of _scriptvar_. If
+								_ns_ is also defined, then scriptvar will be created in 
+								that namespace
+								
+		callback			-	If supplied, a JavaScript response is generated with the
+								Ext.Direct API passed as a parameter to a function named
+								_callback_. Typically "Ext.Direct.addProvider" is used 
+								for this but you can declare your own function if you 
+								want to manipulate the API client-side before 
+								registering.
+								
+		action			-	By default, the value of action property of the 
+								generated API is set to the name of this WebService. If
+								_action_ is passed, then that value is used instead. 
+								This sets the name of the resulting API object in the 
+								browser 
+		
+	Note:
+		The generated Ext.Direct API contains 2 methods for every function. The 
+		methods that start with "$" always accept 1 parameter that contains a JS 
+		object where each property is a param to the service function. The "$" 
+		version is required when using optional parameters. Almost all instances 
+		of "directFn" in Ext components, such as grids and combos, require this 
+		form.
+	
 		(code)
-		// adds a Ext.Direct provider via AJAX callback
+			//using this WebService API :
+			...
+			qry_content:{
+					desc:<ejs>
+						Queries all content blocks, 25 rows at a time, optionally 
+						filtering by a search string
+					</ejs>,
+					params:[
+						{ name:"start", type:"numeric", defaultValue:0 },
+						{ name:"limit", type:"numeric", defaultValue:25 },
+						{ name:"sort", type:"string", defaultValue:'title' },
+						{ name:"dir", type:"string", defaultValue:'asc' },
+						{ name:"search", type:"string", defaultValue:"" }
+					],
+			...
+			
+			//traditional, each param must be defined
+			MyService.qry_content(0, 25, "title","asc","CES",function(response){
+				debug_window(response);
+			})
+			
+			//"$" version allows the passing of only the significant properties 
+			MyService.$qry_content({search:"CES"},function(response){
+				debug_window(response);
+			})
+			
+		(end)		
 		
-		<script>
-			Ext.Ajax.request({
-				url:"http://myhost.com/myservice.ws?ext-api",
-				success:function(response){
-					Ext.Direct.addProvider(Ext.decode(response.responseText));		
-				}
-			})
-			MyService.someFunction(arg1, arg1,function(response){
-				alert(response);
-			})
-		</script>
-	  (end)
-	  
-	  
-	  (code)
-		// adds a Ext.Direct provider in the MyNS namespace via AJAX callback 
+	API import Examples:
+		Adding an Ext.Direct provider via script include with callback:
+			(code)
+			<script 
+				type="text/javascript" 
+				src="myservice.ws?ext-api&callback=Ext.Direct.addProvider"
+			></script>
+			
+			<script>
+				MyService.myFunction(function(result){
+					debug_window(result)
+				})
+			</script>
+			(end)
 		
-		<script>
-			Ext.Ajax.request({
-				url:"http://myhost.com/myservice.ws?ext-api",
-				success:function(response){
-					Ext.Direct.addProvider(Ext.decode(response.responseText));		
-				}
-			})
-			MyService.someFunction(arg1, arg1,function(response){
-				alert(response);
-			})
-		</script>
-	  (end)	  
+		
+		Adding an Ext.Direct provider via script include with callback namespace 
+		and action:
+			(code)
+			
+			<script 
+				type="text/javascript" 
+				src="myservice.ws?ext-api&callback=Ext.Direct.addProvider&ns=C&action=direct"
+			></script>
+			
+			<script>
+				C.direct.myFunction(function(result){
+					debug_window(result)
+				})
+			</script>
+			(end)
+		
+		Adding an Ext.Direct provider via AJAX callback:
+			(code)
+			<script>
+				Ext.Ajax.request({
+					url:"http://myhost.com/myservice.ws?ext-api",
+					success:function(response){
+						Ext.Direct.addProvider(Ext.decode(response.responseText));		
+					}
+				})
+				MyService.someFunction(arg1, arg1,function(response){
+					debug_window(response);
+				})
+			</script>
+		  (end)
+		
+		Adding an Ext.Direct provider in the MyNS namespace via AJAX callback:
+			(code)
+			<script>
+				Ext.Ajax.request({
+					url:"http://myhost.com/myservice.ws?ext-api",
+					success:function(response){
+						Ext.Direct.addProvider(Ext.decode(response.responseText));		
+					}
+				})
+				MyService.someFunction(arg1, arg1,function(response){
+					debug_window(response);
+				})
+			</script>
+			(end)	  
  
-	  (code)
-		// creates a global MyServiceAPI variable containing the Ext.Direct API 
-		//	via script include
+		Creates a global MyServiceAPI variable containing the Ext.Direct API 
+		via script include:
+			(code)
+			// 
+			
+			<script src="http://myhost.com/myservice.ws?ext-api&scriptvar=MyServiceAPI"></script>
+			<script>
+				Ext.Direct.addProvider(MyServiceAPI);
+				MyService.someFunction(arg1, arg1,function(response){
+					debug_window(response);
+				})
+			</script>
+			(end)
+			
+		Creates a MyServiceAPI variable in the MyNS namespace containing the 
+		Ext.Direct API via script include:
+			(code)
+			// 
+			
+			<script src="http://myhost.com/myservice.ws?ext-api&ns=MyNS&scriptvar=MyServiceAPI"></script>
+			<script>
+				Ext.Direct.addProvider(MyNS.MyServiceAPI);
+				MyNS.MyService.someFunction(arg1, arg1,function(response){
+					debug_window(response);
+				})
+			</script>
+			(end)
 		
-		<script src="http://myhost.com/myservice.ws?ext-api&scriptvar=MyServiceAPI"></script>
-		<script>
-			Ext.Direct.addProvider(MyServiceAPI);
-			MyService.someFunction(arg1, arg1,function(response){
-				alert(response);
-			})
-		</script>
-	  (end)
-	  
-	  (code)
-		// creates a MyServiceAPI variable in the MyNS namespace containing the 
-		//	Ext.Direct API via script include
 		
-		<script src="http://myhost.com/myservice.ws?ext-api&ns=MyNS&scriptvar=MyServiceAPI"></script>
-		<script>
-			Ext.Direct.addProvider(MyNS.MyServiceAPI);
-			MyNS.MyService.someFunction(arg1, arg1,function(response){
-				alert(response);
-			})
-		</script>
-	  (end)
-		  
+			
 		  
 	*/
 	Myna.WebService.prototype.printExtApi=function(req){
 		try {
+			var action=this.spec.name;
 			var f = this.spec.functions;
 			var API ={
 				url:$server.serverUrl+$server.currentUrl+$server.scriptName +"?ext-route",
@@ -929,12 +1016,23 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 				API.namespace=$req.rawData.ns
 			}
 			
-			API.actions[this.spec.name]=f.getKeys().map(function(method){
-				return {
+			if ("action" in $req.data){
+				action = $req.rawData.action;
+			}
+			
+			API.actions[action]=[]
+			f.getKeys().forEach(function(method,index){
+				API.actions[action].push({
 					name:method,
 					len:"params" in f[method]? f[method].params.length:0
-				}
+				})
+				API.actions[action].push({
+					name:"$" +method,
+					len:"params" in f[method] && f[method].params.length?1:0
+				})
 			})
+			
+			
 			 
 			if ("scriptvar" in $req.data){
 				if (!$req.data.scriptvar.length) {
@@ -958,7 +1056,7 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 				$res.print(API.toJson());
 			}
 		} catch(e){
-			Myna.logSync("debug","ext API error",Myna.formatError(e));
+			Myna.logSync("error","ext API error",Myna.formatError(e));
 			Myna.print("An error has ocurred. See the log.")	
 		}
 	}
@@ -1129,6 +1227,13 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 			}
 			result =ws.executeFunctionHandler(data.method,f,params)
 		} catch(e){
+			Myna.logSync(
+				"error",
+				"Error in WebService call " + ws.spec.name ,
+				Myna.formatError(__exception__) 
+					+Myna.dump($req.data,"parms") 
+					+ Myna.dump($req.contentText,"content")
+			);
 			result={
 				success:false,
 				message:e.message,
@@ -1436,14 +1541,28 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 				action:request.action,
 				method:request.method,
 			};
-			
+			var params;
 			try {
 				var handlerName=request.method;
 				var f = ws.spec.functions[handlerName];
-				if (request.data instanceof Array){
-					result.result =ws.executeFunctionHandler(request.method,f,request.data)	
+				if (/^\$/.test(request.method)){
+					f = ws.spec.functions[handlerName.after(1)];
+					params=[];
+					if ("params" in f && request.data.length){
+						params = f.params.map(function(param,index){
+							if (param.name in request.data[0]) {
+								return request.data[0][param.name];
+							} else {
+								return undefined;
+							}
+						})
+					}
+					result.result= ws.executeFunctionHandler(request.method,f,params);
+				} else if (request.data instanceof Array){
+					result.result =ws.executeFunctionHandler(request.method,f,request.data)
+					
 				} else {// named argument object
-					var params=[];
+					params=[];
 					if ("params" in f){
 						params = f.params.map(function(param,index){
 							if (param.name in request.data) {
@@ -1457,9 +1576,10 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 				}
 				return result;
 			} catch(e){
+				var message = "Error in Ext.Direct call " + ws.spec.name + "." +request.method +", TID: " + request.tid; 
 				Myna.logSync(
 					"debug",
-					"Error in WebService call " + ws.spec.name ,
+					message,
 					Myna.formatError(__exception__) 
 						+Myna.dump($req.data,"parms") 
 						+ Myna.dump($req.contentText,"content")
@@ -1467,7 +1587,7 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 				return {
 					type:'exception',
 					tid:request.tid,
-					message:"An error occurred",
+					message:message,
 					where:"See administrator log for details"
 				}
 			}
@@ -1486,7 +1606,9 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 				result = executeRequest(request);
 			}
 			$res.clear();
+			//$res.printBinary(result.toJson().toJava().getBytes(),"application/json");
 			$res.print(result.toJson());
+			
 		} else {// post/upload request
 			result = executeRequest({
 				type:'rpc',
