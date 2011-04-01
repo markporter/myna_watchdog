@@ -333,6 +333,15 @@ Myna.Query = function (optionsOrResultSet){
 	
 	*/
 	
+	/* Property: log
+		should executions of this query be logged?
+		
+		If this is set to true, then every execution of this query will be logged
+		as a "query" type to the logging database. Not recommended for production 
+		systems
+	*/
+	this.log =false
+	
 	/* Property: db
 		the <Myna.Database> object associated wioth this query
 		
@@ -655,6 +664,9 @@ Myna.Query.prototype={
 			
 			var result = new Myna.Cache(cache).call(cacheQry)
 			$profiler.end(profilerKey)
+			if (this.log && this.ds != "myna_log"){
+				Myna.log("query","Query: " + sql.left(30),Myna.dump(result));
+			}
 			return result;
 		} else {
 			try {
@@ -717,6 +729,10 @@ Myna.Query.prototype={
 				throw e;
 			} finally {
 				$profiler.end(profilerKey)
+				if (this.log &&this.ds != "myna_log"){
+					//Myna.printConsole("logging " + this.ql)
+					Myna.log("query","Query: " + sql.left(30),Myna.dump(qry));
+				}
 			}
 			/* 	let's give commiting a try, this will likely fail if the datasource
 				supports autoCommit

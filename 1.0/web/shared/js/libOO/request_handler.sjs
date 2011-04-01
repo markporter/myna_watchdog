@@ -24,16 +24,16 @@ try{
 			var params=[]
 			var dirStack = $server.requestDir.after($server.rootDir.length).split("/")
 				.filter(function(e){return e.length})
-			//Myna.abort("dirstack",$server)
+			
 			var curFile;
 			var dir,name;
 			var found = false;
-			
 			if ($server_gateway.requestScriptName != "_index"){
 				if ($server_gateway.requestScriptName) dirStack.push($server_gateway.requestScriptName);
 				var rootIndex = !dirStack.length
 				while (dirStack.length || rootIndex){
-					if (!$server_gateway.requestScriptName){
+					
+					//if (!$server_gateway.requestScriptName){
 						curFile=new Myna.File($server.rootDir +dirStack.join("/") + "/index.ejs");
 						if (curFile.exists()) {
 							dir=dirStack.join("/")
@@ -55,7 +55,7 @@ try{
 								}	
 							}
 						}
-					}
+					//}
 					curFile=new Myna.File($server.rootDir+dirStack.join("/"));
 					if (curFile.exists() && !curFile.isDirectory()) {
 						name= dirStack.pop();
@@ -91,10 +91,8 @@ try{
 				$req._DIR_LISTING_ELIGIBLE_=true;
 				//Myna.include("/myna/dir_listing.sjs")
 			} else {
-				$application._onError404();
+				$req._NOT_FOUND_=true;
 				
-				
-				Myna.abort();
 			}
 			
 		} else {
@@ -114,6 +112,10 @@ try{
 		if ($req._DIR_LISTING_ELIGIBLE_){
 			Myna.include("/myna/dir_listing.sjs");
 			Myna.abort()
+		}
+		if ($req._NOT_FOUND_){
+			$application._onError404();
+			Myna.abort();	
 		}
 		//server start scripts, if necessary
 		if ($server_gateway.isInitThread){

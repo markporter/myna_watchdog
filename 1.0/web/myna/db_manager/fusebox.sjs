@@ -202,8 +202,9 @@ var fusebox={
 		keyMap[parseInt(java.sql.DatabaseMetaData.importedKeyCascade)] ="CASCADE",
 		keyMap[parseInt(java.sql.DatabaseMetaData.importedKeySetNull)] ="SET NULL",
 		keyMap[parseInt(java.sql.DatabaseMetaData.importedKeySetDefault)] ="SET DEFAULT"
-		return result.concat(table.foreignKeys.map(function(key){
-			return {
+		
+		table.foreignKeys.forEach(function(key){
+				result.push({
 				key_name:key.fk_name,
 				type:"Foreign",
 				columns:key.fkcolumn_name,
@@ -211,8 +212,9 @@ var fusebox={
 				foreign_column:key.pkcolumn_name,
 				on_delete:keyMap[key.delete_rule],
 				on_update:keyMap[key.update_rule],
-			}
-		}))
+			})
+		})
+		return result
 	},
 	drop_table:function(data){
 		data.checkRequired(["table_name","ds"]);

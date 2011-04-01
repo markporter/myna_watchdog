@@ -430,6 +430,7 @@ if (!Myna) var Myna={}
 			* <ManagerObject.beanTemplate>
 		
 			*/
+		
 		/* Property: dm
 			The <Myna.DataManager> object that created this manager
 		
@@ -438,18 +439,26 @@ if (!Myna) var Myna={}
 			The <Myna.Database> for this manager
 		
 			*/
-		/* Property: table
+		
+			/* Property: table
 			The <Myna.Table> for this manager
 		
 			*/
+		
 		/* Property: ds
 			The datasource name for this manager
 		
 			*/
-		/* Property: columns
+		
+			/* Property: columns
 			The columns array from <Myna.Table.columns> for this table
 		
 			*/
+		/* Property: logQueries
+			if true, log all queries made by this manager *default: false*
+		
+			*/
+		
 		/* Property: columnNames
 			The columnNames array from <Myna.Table.columnNames> for this table
 		
@@ -877,6 +886,7 @@ if (!Myna) var Myna={}
 	/* ---------- getTreeManager --------------------------------------------- */
 		Myna.DataManager.prototype.getTreeManager = function (tableName, options){
 			var man =this.getManager.call(this,tableName);
+			if ("rebuildTree" in man) return man;
 			if (!options) options ={}
 			options.setDefaultProperties({
 				leftCol:"lft",
@@ -933,6 +943,7 @@ if (!Myna) var Myna={}
 									data[options.leftCol] = anchorNode[options.rightCol];
 									data[options.rightCol] = anchorNode[options.rightCol]+1;
 									
+									Myna.log("debug","renumbering from undernode");
 									man.renumberForInsert(location.underNode,"under",2)
 								}
 							} else {
@@ -969,7 +980,7 @@ if (!Myna) var Myna={}
 						)
 						if (!gotLock) {
 							throw new Error("Unable to acquire lock on " +this.table.tableName + "_treeManager" )
-						}
+						} 
 						//Myna.printConsole("done",Myna.dumpText(Array.parse(chain)))
 						
 						//now we fall thorough to ManagerObject.create(data)
@@ -1010,6 +1021,7 @@ if (!Myna) var Myna={}
 										*/ 
 										new Myna.Query({
 											ds:man.ds,
+											log:man.logQueries,
 											sql:<ejs>
 												update <%=$this.table.sqlTableName%> set 
 													<%=rightCol%> = <%=rightCol%> * -1,
@@ -1029,6 +1041,7 @@ if (!Myna) var Myna={}
 										*/
 										new Myna.Query({
 											ds:man.ds,
+											log:man.logQueries,
 											sql:<ejs>
 												update <%=$this.table.sqlTableName%> set 
 												<%=rightCol%> = <%=rightCol%> - {size:bigint},
@@ -1046,6 +1059,7 @@ if (!Myna) var Myna={}
 										*/
 										new Myna.Query({
 											ds:man.ds,
+											log:man.logQueries,
 											sql:<ejs>
 												update <%=$this.table.sqlTableName%> set 
 												<%=rightCol%> = <%=rightCol%> - {size:bigint}
@@ -1120,6 +1134,7 @@ if (!Myna) var Myna={}
 										//insert  the subTree
 										new Myna.Query({
 											ds:man.ds,
+											log:man.logQueries,
 											sql:<ejs>
 												update <%=$this.table.sqlTableName%> set 
 												<%=rightCol%> = <%=rightCol%> * -1 + ({offset:bigint}),
@@ -1147,6 +1162,7 @@ if (!Myna) var Myna={}
 							var p = new Myna.QueryParams();
 							var result =  new Myna.Query({
 								ds:man.ds,
+								log:man.logQueries,
 								sql:<ejs>
 									select  
 										<%=idCol%>
@@ -1173,6 +1189,7 @@ if (!Myna) var Myna={}
 							
 							var result =  new Myna.Query({
 								ds:man.ds,
+								log:man.logQueries,
 								sql:<ejs>
 									select  
 										<%=idCol%>
@@ -1203,6 +1220,7 @@ if (!Myna) var Myna={}
 							
 							var result =  new Myna.Query({
 								ds:man.ds,
+								log:man.logQueries,
 								sql:<ejs>
 									select  
 										<%=idCol%>
@@ -1250,6 +1268,7 @@ if (!Myna) var Myna={}
 									*/
 									new Myna.Query({
 										ds:man.ds,
+										log:man.logQueries,
 										sql:<ejs>
 											update <%=man.table.sqlTableName%> set 
 											<%=rightCol%> = <%=rightCol%> - {size:bigint},
@@ -1267,6 +1286,7 @@ if (!Myna) var Myna={}
 									*/
 									new Myna.Query({
 										ds:man.ds,
+										log:man.logQueries,
 										sql:<ejs>
 											update <%=man.table.sqlTableName%> set 
 											<%=rightCol%> = <%=rightCol%> - {size:bigint}
@@ -1327,6 +1347,7 @@ if (!Myna) var Myna={}
 						if (type=="before"){
 							new Myna.Query({
 								ds:man.ds,
+								log:man.logQueries,
 								sql:<ejs>
 									update <%=$this.table.sqlTableName%> set 
 									<%=rightCol%> = <%=rightCol%> + ({size:bigint})
@@ -1340,6 +1361,7 @@ if (!Myna) var Myna={}
 							})
 							new Myna.Query({
 								ds:man.ds,
+								log:man.logQueries,
 								sql:<ejs>
 									update <%=$this.table.sqlTableName%> set 
 									<%=leftCol%> = <%=leftCol%> + ({size:bigint})
@@ -1354,6 +1376,7 @@ if (!Myna) var Myna={}
 						} else {
 							new Myna.Query({
 								ds:man.ds,
+								log:man.logQueries,
 								sql:<ejs>
 									update <%=$this.table.sqlTableName%> set 
 									<%=rightCol%> = <%=rightCol%> + ({size:bigint}) 
@@ -1367,6 +1390,7 @@ if (!Myna) var Myna={}
 							})
 							new Myna.Query({
 								ds:man.ds,
+								log:man.logQueries,
 								sql:<ejs>
 									update <%=$this.table.sqlTableName%> set 
 									<%=leftCol%> = <%=leftCol%> + ({size:bigint}) 
@@ -1418,6 +1442,7 @@ if (!Myna) var Myna={}
 				var p = new Myna.QueryParams();
 				var qry = new Myna.Query({
 					dataSource:this.ds,
+					log:this.logQueries,
 					sql:<ejs>
 						delete from <%=this.sqlTableName%>
 						where <%=manager.qt%><%=this.columns[this.primaryKey].column_name%><%=manager.qt%> = 
@@ -1465,6 +1490,7 @@ if (!Myna) var Myna={}
 				var p = new Myna.QueryParams();
 				var qry = new Myna.Query({
 					dataSource:this.ds,
+					log:this.logQueries,
 					parameters:p,
 					sql:<ejs>
 						insert into <%=this.sqlTableName%>(<%=fieldArray.join()%>) 
@@ -1512,12 +1538,16 @@ if (!Myna) var Myna={}
 						col.op =" like ";
 					}
 					
+					col.compareColumn =col.column
 					if (pattern === null){
 						col.isNull = true;
 					} else if (Myna.Database.dbTypeToJs($this.columns[colName].data_type) == "string"){
 						if (!caseSensitive){
 							col.pattern = String(col.pattern).toLowerCase();
 							col.column = colName.toLowerCase();
+							col.compareColumn ="LOWER(" + col.column +")"	
+						} else {
+							
 						}
 					}
 					
@@ -1533,12 +1563,13 @@ if (!Myna) var Myna={}
 						criteria.push(getCriteria(colName,pattern[colName]))
 					})
 				} else{
-				criteria.push(getCriteria($this.db.isCaseSensitive?pkey:pkey.toLowerCase(),pattern));
+					criteria.push(getCriteria($this.db.isCaseSensitive?pkey:pkey.toLowerCase(),pattern));
 				}
 				var p = new Myna.QueryParams();
 				$profiler.begin("DataManager("+this.tableName+").find("+pattern.toJson()+")")
 				var qry = new Myna.Query({
 					dataSource:this.ds,
+					log:$this.logQueries,
 					parameters:p,
 					sql:<ejs>
 						select <%=pkey%>
@@ -1548,7 +1579,7 @@ if (!Myna) var Myna={}
 							<@if col.isNull>
 							and <%=col.column%> is null
 							<@else>
-							and <%=col.column%> <%=col.op%> <%=p.addValue(col.pattern,col.type,!!col.pattern)%>
+							and <%=col.compareColumn%> <%=col.op%> <%=p.addValue(col.pattern,col.type,!!col.pattern)%>
 							</@if>
 						</@loop>
 					</ejs>
@@ -1596,6 +1627,7 @@ if (!Myna) var Myna={}
 				var p = new Myna.QueryParams();
 				var qry = new Myna.Query({
 					dataSource:this.ds,
+					log:this.logQueries,
 					sql:<ejs>
 						select
 							<@loop array="manager.columnNames" element="name" index="i">
@@ -1694,6 +1726,7 @@ if (!Myna) var Myna={}
 					});
 					var qry = new Myna.Query({
 						dataSource:this.manager.ds,
+						log:this.manager.logQueries,
 						parameters:p,
 						sql:<ejs>
 							UPDATE <%=this.sqlTableName%>
@@ -1745,6 +1778,7 @@ if (!Myna) var Myna={}
 						var isNull = (value === null);
 						var qry = new Myna.Query({
 							dataSource:this.manager.ds,
+							log:this.manager.logQueries,
 							parameters:p,
 							sql:<ejs>
 								UPDATE <%=this.sqlTableName%>

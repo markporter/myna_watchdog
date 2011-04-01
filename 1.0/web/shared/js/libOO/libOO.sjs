@@ -9,7 +9,7 @@
 	"Template.sjs",
 	"Myna.sjs",
 	"KeyStore.sjs",
-	"DataSet.sjs",
+	"DataSet.js",
 	"Cache.sjs",
 	"JavaUtils.sjs",
 	"Profiler.js",
