@@ -10,6 +10,7 @@
 	"Myna.sjs",
 	"KeyStore.sjs",
 	"DataSet.js",
+	"DataSet.sjs",
 	"Cache.sjs",
 	"JavaUtils.sjs",
 	"Profiler.js",
