@@ -23,7 +23,7 @@ var templates = {
 		'DROP INDEX {name}'
 	],
 	dropPrimaryKey:[
-		'ALTER TABLE {tableName} DROP CONSTRAINT PRIMARY KEY'
+		'ALTER TABLE {tableName} DROP PRIMARY KEY'
 	],
 	dropColumn:[
 		"ALTER TABLE {tableName} DROP COLUMN {name}"

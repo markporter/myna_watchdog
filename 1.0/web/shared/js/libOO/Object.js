@@ -369,7 +369,23 @@
 	Object.prototype.toJson=function() {
 		return ObjectLib.toJson(this);
 	}	
-
+/* Function: toStruct 
+	returns a copy of an object with all the function properties removed  
+	 
+	Parameters: 
+		object 	-	object to inspect
+		
+	*/
+	Object.prototype.toStruct=function(){
+		var $this = this
+		var result ={}
+		for (var prop in $this){
+			if (typeof $this[prop] != "function") {
+				result[prop] = $this[prop]
+			}
+		}
+		return result;
+	}
 /* Function: setDefaultProperties
 	sets default properties on this object 
 	 

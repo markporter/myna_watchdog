@@ -1548,7 +1548,7 @@ Myna.WebService.prototype.makeCustomSoapType = function(obj,name, schema){
 				if (/^\$/.test(request.method)){
 					f = ws.spec.functions[handlerName.after(1)];
 					params=[];
-					if ("params" in f && request.data.length){
+					if ("params" in f && f.params.length && request.data && request.data.length){
 						params = f.params.map(function(param,index){
 							if (param.name in request.data[0]) {
 								return request.data[0][param.name];

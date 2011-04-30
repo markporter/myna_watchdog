@@ -4,7 +4,52 @@
 	 
 */
 var ObjectLib = {}
-
+/* Function: $O
+	wraps an object with the ObjectLib functions.
+	
+	Parameters:
+	obj	-	object to wrap
+	
+	returns _obj_ with all functions in ObjectLib attached, with _object_ as the target
+	
+	
+	Example:
+	
+	(code)
+		var thing={
+			name:"thing",
+			purpose"do Stuff!"
+		}
+		
+		//via ObjectLib
+		ObjectLib.setDefaultProperties(thing,{
+			newProp:"I'm a new property"
+		})
+		
+		//via $O
+		$O(thing).setDefaultProperties({
+			newProp2:"another new prop"
+		})
+	
+	(end)
+	
+	*/
+	if (typeof $O == "undefined"){
+		function $O(obj){
+			function buildFunction(prop){
+				return function(){
+					var args = Array.parse(arguments)
+					args.unshift(this)
+					return ObjectLib[prop].apply(this,args)
+				}
+			}
+			for (var prop in ObjectLib){
+				obj[prop] = buildFunction(prop)
+			}
+			
+			return obj
+		}
+	}
 /* Function: before
 	Prepends supplied function to the event chain of an object.
 	
@@ -402,7 +447,24 @@ var ObjectLib = {}
 			return '"[unknown]"';
 		}
 		
-	}	
+	}
+/* Function: toStruct 
+	returns a copy of an object with all the function properties removed  
+	 
+	Parameters: 
+		object 	-	object to inspect
+		
+	*/
+	ObjectLib.toStruct=function( obj){
+		var $this = obj
+		var result ={}
+		for (var prop in $this){
+			if (typeof $this[prop] != "function") {
+				result[prop] = $this[prop]
+			}
+		}
+		return result;
+	}
 /* Function: typeOf 
 	an enhanced replacement of the the Javscript builtin typeof function. 
 	 
@@ -522,6 +584,6 @@ var ObjectLib = {}
 	*/
 	ObjectLib.forEach=function (obj,func){
 		ObjectLib.getKeys(obj).forEach(function (key){
-			func(obj[key],key,obj);	
+			func(obj[key],key,obj);
 		})
 	}

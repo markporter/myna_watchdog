@@ -79,6 +79,7 @@ public class JSServlet extends HttpServlet {
 	* @param  res Servlet response object
 	*/
 	public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
+		//System.out.println("type = " + this.type);
 		try{
 			MynaThread thread = new MynaThread();
 			thread.environment.put("request",req);
@@ -226,6 +227,7 @@ public class JSServlet extends HttpServlet {
 	*/
 	public void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
 		this.type="POST";
+		//System.out.println("called post");
 		doGet(req,res);	
 	}
 	

@@ -79,13 +79,14 @@ Group: Myna Global Objects  {
 
 Group: Myna Object  {
 
+   File: DataSet.sjs  (DataSet.sjs)
    File: Myna  (Myna.sjs)
    File: Myna.Cache  (Cache.sjs)
    File: Myna.Cluster  (Cluster.sjs)
    File: Myna.CommonJS  (CommonJS.sjs)
    File: Myna.Database  (Database.sjs)
    File: Myna.DataManager  (DataManager.sjs)
-   File: Myna.DataSet  (DataSet.sjs)
+   File: Myna.DataSet  (DataSet.js)
    File: Myna.Event  (Event.sjs)
    File: Myna.File  (File.sjs)
    File: Myna.HttpConnection  (HttpConnection.sjs)

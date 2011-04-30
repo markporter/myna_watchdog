@@ -46,6 +46,7 @@ SubTitle: JavaScript documentation
 
 
 File: Array  (Array.js)
+File: DataSet.sjs  (DataSet.sjs)
 File: Date  (Date.js)
 File: debug_window.js  (debug_window.js)
 File: Function  (Function.js)
@@ -56,7 +57,7 @@ File: Myna.Cluster  (Cluster.sjs)
 File: Myna.CommonJS  (CommonJS.sjs)
 File: Myna.Database  (Database.sjs)
 File: Myna.DataManager  (DataManager.sjs)
-File: Myna.DataSet  (DataSet.sjs)
+File: Myna.DataSet  (DataSet.js)
 File: Myna.Event  (Event.sjs)
 File: Myna.File  (File.sjs)
 File: Myna.HttpConnection  (HttpConnection.sjs)
