@@ -32,79 +32,79 @@ Myna.Database = function (ds){
 		jdbc connection object. Created in <init>, closed on requestEnd
 		See <http://java.sun.com/j2se/1.4.2/docs/api/java/sql/Connection.html>
 	*/
-Myna.Database.prototype.__defineGetter__("con", function() {
-	var con
-	if (!$req["__CACHE__CONNECTION" + $server.threadId]) $req["__CACHE__CONNECTION" + $server.threadId] = new java.util.Hashtable();
-	if ($req["__CACHE__CONNECTION" + $server.threadId].containsKey(this.ds) && !$req["__CACHE__CONNECTION" + $server.threadId].get(this.ds).isClosed()){
-		con = $req["__CACHE__CONNECTION" + $server.threadId].get(this.ds);
-	} else { 
-		try{
-			if (/^:mem:/.test(this.ds)){
-				con = java.sql.DriverManager.getConnection("jdbc:h2:mem");
-			} else {
-				//con = java.sql.DriverManager.getConnection("jdbc:apache:commons:dbcp:" + this.ds);
-				if (typeof this.ds === "string"){
-					con = $server_gateway.javaDataSources.get(this.ds).getConnection()
-				} else /* if (this.ds instanceof Myna.DataSet) */{
-					
-					con = this.ds.getConnection()
+	Myna.Database.prototype.__defineGetter__("con", function() {
+		var con
+		if (!$req["__CACHE__CONNECTION" + $server.threadId]) $req["__CACHE__CONNECTION" + $server.threadId] = new java.util.Hashtable();
+		if ($req["__CACHE__CONNECTION" + $server.threadId].containsKey(this.ds) && !$req["__CACHE__CONNECTION" + $server.threadId].get(this.ds).isClosed()){
+			con = $req["__CACHE__CONNECTION" + $server.threadId].get(this.ds);
+		} else { 
+			try{
+				if (/^:mem:/.test(this.ds)){
+					con = java.sql.DriverManager.getConnection("jdbc:h2:mem");
+				} else {
+					//con = java.sql.DriverManager.getConnection("jdbc:apache:commons:dbcp:" + this.ds);
+					if (typeof this.ds === "string"){
+						con = $server_gateway.javaDataSources.get(this.ds).getConnection()
+					} else /* if (this.ds instanceof Myna.DataSet) */{
+						
+						con = this.ds.getConnection()
+					}
 				}
+				$req["__CACHE__CONNECTION" + $server.threadId].put(this.ds,con); 
+				$application.addOpenObject(con);
+			} catch(e){
+				Myna.log("ERROR","Unable to load datasource '" + this.ds +"' : " + __exception__.message,Myna.formatError(__exception__));
+				throw new Error("Unable to load datasource '" + this.ds +"' : " + __exception__.message)
 			}
-			$req["__CACHE__CONNECTION" + $server.threadId].put(this.ds,con); 
-			$application.addOpenObject(con);
-		} catch(e){
-			Myna.log("ERROR","Unable to load datasource '" + this.ds +"' : " + __exception__.message,Myna.formatError(__exception__));
-			throw new Error("Unable to load datasource '" + this.ds +"' : " + __exception__.message)
-		}
-	} 
-	return con;
-});
+		} 
+		return con;
+	});
 /* Function: init
 	(re)loads database metadata
-*/
-Myna.Database.prototype.init = function(){
-	var db = this;
-	/* Property: ds
-		Datasource associated with this Database object
 	*/
-	
-	/* Property: isCaseSensitive
-		true if table and column names are case sensitive
-	*/
-	this.isCaseSensitive = false;
-	try{
-		this.isCaseSensitive = !!Math.parseInt(Myna.JavaUtils.mapToObject(
-			Myna.JavaUtils.mapToObject($server_gateway.dataSources)[this.ds]
-		).case_sensitive);
-	} catch(e){}
-	
-	/* Property: md
-		database matadata object. Created in <init>, closed on requestEnd. 
-		See <http://java.sun.com/j2se/1.4.2/docs/api/java/sql/DatabaseMetaData.html>
-	*/
-	try{
-		this.md = this.con.getMetaData();
-	} catch(e){
+	Myna.Database.prototype.init = function(){
+		var db = this;
+		/* Property: ds
+			Datasource associated with this Database object
+		*/
 		
-		Myna.log("error","error aquiring metaData",Myna.formatError(__exception__));	
+		/* Property: isCaseSensitive
+			true if table and column names are case sensitive
+		*/
+		this.isCaseSensitive = false;
+		try{
+			this.isCaseSensitive = !!Math.parseInt(Myna.JavaUtils.mapToObject(
+				Myna.JavaUtils.mapToObject($server_gateway.dataSources)[this.ds]
+			).case_sensitive);
+		} catch(e){}
+		
+		/* Property: md
+			database matadata object. Created in <init>, closed on requestEnd. 
+			See <http://java.sun.com/j2se/1.4.2/docs/api/java/sql/DatabaseMetaData.html>
+		*/
+		try{
+			this.md = this.con.getMetaData();
+		} catch(e){
+			
+			Myna.log("error","error aquiring metaData",Myna.formatError(__exception__));	
+		}
+		this.catalog = this.con.getCatalog();
+		
+		/* Property: dbType
+			Lowercase type of database. This should normaly be the name of the 
+			database vendor. 
+		*/
+		this.dbType=String(this.md.getDatabaseProductName()).toLowerCase();
+		
+		
+		var dbTemplate ="/shared/js/libOO/db_properties/" + this.dbType.replace(/ /g,"_")+".sjs";
+		if (new Myna.File(dbTemplate).exists()){
+			Myna.include(dbTemplate,this);	
+		} else {
+			Myna.include("/shared/js/libOO/db_properties/other.sjs",this);	
+		}
+		
 	}
-	this.catalog = this.con.getCatalog();
-	
-	/* Property: dbType
-		Lowercase type of database. This should normaly be the name of the 
-		database vendor. 
-	*/
-	this.dbType=String(this.md.getDatabaseProductName()).toLowerCase();
-	
-	
-	var dbTemplate ="/shared/js/libOO/db_properties/" + this.dbType.replace(/ /g,"_")+".sjs";
-	if (new Myna.File(dbTemplate).exists()){
-		Myna.include(dbTemplate,this);	
-	} else {
-		Myna.include("/shared/js/libOO/db_properties/other.sjs",this);	
-	}
-	
-}
 /* Property: schemas
 	array of schema names available in this datasource
 	
@@ -154,10 +154,10 @@ Myna.Database.prototype.init = function(){
 	});
 /*	Function: getTable
 	returns a <Myna.Table> object representing the named table. 
-*/
-Myna.Database.prototype.getTable = function(tableName){
-	return new Myna.Table(this,tableName);
-}
+	*/
+	Myna.Database.prototype.getTable = function(tableName){
+		return new Myna.Table(this,tableName);
+	}
 
 /*	Function: dbTypeToJs
 	Static function that takes a column type name ("VARCHAR") or a column type id 
@@ -166,60 +166,60 @@ Myna.Database.prototype.getTable = function(tableName){
 	
 	Parameters:
 		sourceType	-	DB column type as a string ("VARCHAR") or number (112)
-*/
-Myna.Database.dbTypeToJs = function(sourceType){
-	var Types = java.sql.Types;
-	var type=null;
-	
-	if (typeof sourceType == "number" || sourceType == parseInt(sourceType)){
-		type = parseInt(sourceType);
-	} else if (typeof sourceType == "string"){
-		sourceType=sourceType.toUpperCase();
-		if (sourceType in Types){
-			type = Types[sourceType];	
+	*/
+	Myna.Database.dbTypeToJs = function(sourceType){
+		var Types = java.sql.Types;
+		var type=null;
+		
+		if (typeof sourceType == "number" || sourceType == parseInt(sourceType)){
+			type = parseInt(sourceType);
+		} else if (typeof sourceType == "string"){
+			sourceType=sourceType.toUpperCase();
+			if (sourceType in Types){
+				type = Types[sourceType];	
+			} else return "unsupported";
 		} else return "unsupported";
-	} else return "unsupported";
-	
-	switch (type){
-		case Types.BIGINT:
-		case Types.BIT:
-		case Types.DECIMAL:
-		case Types.FLOAT:
-		case Types.DOUBLE:
-		case Types.INTEGER:
-		case Types.NUMERIC:
-		case Types.REAL:
-		case Types.SMALLINT:
-		case Types.TINYINT:
-			return "numeric"
-		break;
 		
-		case Types.TIME:
-		case Types.TIMESTAMP:
-		case Types.DATE:
-			return "date"
+		switch (type){
+			case Types.BIGINT:
+			case Types.BIT:
+			case Types.DECIMAL:
+			case Types.FLOAT:
+			case Types.DOUBLE:
+			case Types.INTEGER:
+			case Types.NUMERIC:
+			case Types.REAL:
+			case Types.SMALLINT:
+			case Types.TINYINT:
+				return "numeric"
+			break;
 			
-		break;
+			case Types.TIME:
+			case Types.TIMESTAMP:
+			case Types.DATE:
+				return "date"
+				
+			break;
+			
+			case Types.BINARY:
+			case Types.LONGVARBINARY:
+			case Types.VARBINARY:
+			case Types.BLOB:
+				return "binary";
+			break;
+			case Types.CLOB:
+			case Types.CHAR:
+			case Types.VARCHAR:
+			case Types.NCHAR:
+			case Types.NVARCHAR:
+				return "string";
+			break;
+			default:
+				return "unsupported";
+			break;
+		}
 		
-		case Types.BINARY:
-		case Types.LONGVARBINARY:
-		case Types.VARBINARY:
-		case Types.BLOB:
-			return "binary";
-		break;
-		case Types.CLOB:
-		case Types.CHAR:
-		case Types.VARCHAR:
-		case Types.NCHAR:
-		case Types.NVARCHAR:
-			return "string";
-		break;
-		default:
-			return "unsupported";
-		break;
 	}
-	
-}
 
 /* Function: getTablesBySchema
 	returns table information for a specific schema
@@ -251,28 +251,28 @@ Myna.Database.dbTypeToJs = function(sourceType){
 
 		Some databases may not return information for all tables. 
 	*/
-Myna.Database.prototype.getTablesBySchema = function(schema){
-	return this._getCache("getTablesBySchema",function(db){
-		return db.functions.getTables(db,schema);
-	});
-}
+	Myna.Database.prototype.getTablesBySchema = function(schema){
+		return this._getCache("getTablesBySchema",function(db){
+			return db.functions.getTables(db,schema);
+		});
+	}
 
 /* Property: _cacheKey
 	(private) cache key base for internal metadata caching 
-*/
+	*/
 /* Function: _getCache
 	(private) internal function for caching metadata
 	
-*/
-Myna.Database.prototype._getCache = function(type,f){
-	if (!("cache" in this)){
-		this.clearMetadataCache();		
+	*/
+	Myna.Database.prototype._getCache = function(type,f){
+		if (!("cache" in this)){
+			this.clearMetadataCache();		
+		}
+		if (!(type in this.cache)){
+			this.cache[type] = f(this);
+		}
+		return this.cache[type]	
 	}
-	if (!(type in this.cache)){
-		this.cache[type] = f(this);
-	}
-	return this.cache[type]	
-}
 /* Function: clearMetadataCache
 	clears metadata cache for this table
 	
@@ -284,8 +284,8 @@ Myna.Database.prototype._getCache = function(type,f){
 		should only be necessary if the table is modified outside of Myna.table
 		or another Myna instance
 		
-*/
-Myna.Database.prototype.clearMetadataCache = function(){
-	this.cache={}
-	
-}
+	*/
+	Myna.Database.prototype.clearMetadataCache = function(){
+		this.cache={}
+		
+	}

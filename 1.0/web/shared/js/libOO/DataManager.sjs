@@ -101,7 +101,7 @@ if (!Myna) var Myna={}
 										See "Options" Below
 									
 			Options:
-				softDeleteCol	-	*Optional, default "deletedat"*
+				softDeleteCol	-	*Optional, default "deleted"*
 										If this column exists in the table, then delete 
 										operations will instead set this column to the 
 										current time. Find operations will automatically 
@@ -295,6 +295,90 @@ if (!Myna) var Myna={}
 				
 				(end)
 			*/
+		/* Function: query
+			returns a <Myna.DataSet> of informatino from this table
+			
+			Parameters:
+				pattern			-	if this is a String, Number, or Date, the primary 
+										key will be searched for this value. If this is an 
+										object, each key is expected to by a column name 
+										and the value a pattern to search for. In either
+										mode, the SQL wildcard (%) can be used for a 
+										"like" search. Special pattern properties are 
+										available for advanced queries. See *Special 
+										Pattern Properties* below
+										
+				options			-	query options, see *options* below
+			
+			Special Pattern Properties:
+				select	-	*default, "*"*
+								This is the select expression to use for this query. 
+								Any valid SQL will work
+				where 	-	*default, false*
+								This pattern property works much like the _sql_ property of <Myna.Query>.
+								Any valid SQL can be used here, and parameter placeholders can be used
+								just as in <Myna.Query>. Parameters are replaced from the other 
+								properties of _pattern_. See example below
+				orderBy	-	*default, false*
+								if defined, this is a valid SQL order by expression
+				
+				
+			Options:
+				caseSensitive			-	*default false*
+												if true, patterns will be matched in a 
+												case-sensitive manner
+				includeSoftDeleted	-	*default false*
+												if true, soft deleted columns will be 
+												included in query results  
+			
+			
+												
+			Examples:
+			(code)
+				var employees = new Myna.DataManager("some_ds").getManager("employees");
+				
+				//Find all employees of a given supervisor
+				var grunts = man.query({
+					supervisor_id:"0102236"
+				}) 
+				
+								
+				//more complicated search with wildcards
+				var assitants = employees.find({
+					supervisor_id:"0102236"
+					job_title:"%assitant%"
+				})
+				
+				// an even more complicated search with "select",
+				//  "where" and "orderBy" pattern properties
+				//  and including soft deleted records
+				var bobs_helpers = employees.find({
+					select:"name",
+					where:<ejs>
+						supervisor_id = {supervisor_id}
+						and (
+							job_title like {job_title}
+							or start_date > {start_date:date}
+						)
+					</ejs>,
+					orderBy:"name desc",
+					
+					supervisor_id:"55652315",
+					job_title:"%assitant%",
+					start_date:new Date().add(Date.year,-1)
+				},{
+					includeSoftDeleted:true
+				})
+				
+			(end)
+				
+			See:
+				<queryCol>
+				<queryValue>
+				<find>
+				<findBeans>
+			*/
+		
 		
 		/* Function: find
 			returns an array of primaryKey values that match a search
@@ -305,11 +389,11 @@ if (!Myna) var Myna={}
 										object, each key is expected to by a column name 
 										and the value a pattern to search for. In either
 										mode, the SQL wildcard (%) can be used for a 
-										"like" search. A special property _$where_ can be 
+										"like" search. A special property _where_ can be 
 										used for complex where clauses, see *$where* below
 				options			-	find options, see *options* below
 			
-			$where:
+			where:
 				This pattern property works much like the _sql_ property of <Myna.Query>.
 				Any valid SQL can be used here, and parameter placeholders can be used
 				just as in <Myna.Query>. Parameters are replaced from the other 
@@ -842,7 +926,7 @@ if (!Myna) var Myna={}
 		Myna.DataManager.prototype.getManager=function(table,options){
 			if (!options) options ={}
 			options.setDefaultProperties({
-				softDeleteCol:"deletedat"
+				softDeleteCol:"deleted"
 			})
 			
 			var tableName = table
@@ -1494,7 +1578,13 @@ if (!Myna) var Myna={}
 				var manager = this;
 				var p = new Myna.QueryParams();
 				if (this.table.columnNames.contains(this.softDeleteCol)){
-					this.getById(id).saveField(this.softDeleteCol,new Date())
+					//check date type
+					var deleteColType = this.db.dbTypeToJs(
+						this.table.columns[this.softDeleteCol].data_type
+					); 
+					if (deleteColType == "date"){
+						this.getById(id).saveField(this.softDeleteCol,new Date())
+					}
 				} else {
 					var qry = new Myna.Query({
 						dataSource:this.ds,
@@ -1574,8 +1664,157 @@ if (!Myna) var Myna={}
 				}
 				return this.getById(requiredFields[this.primaryKey]);
 			},
-			find:function(pattern,options){
+			
+			query:function(pattern,options){
 				if (!pattern) pattern={}
+				var $this = this;
+				var criteria=[];
+				var $this= this;
+				var pkey =this.columns[this.primaryKey].column_name;
+				var colNameSql;
+				var op;
+				var caseSensitive=false
+				var where = false;
+				var select ="*"
+				var orderBy=false;
+				
+				if (typeof options == "object"){
+					if (!options.getKeys().length){
+						caseSensitive = options
+					}
+				} else {
+					caseSensitive = options
+					options={}
+				}
+
+				var getCriteria=function(colName,pattern){
+					colName= colName.toLowerCase();
+					var col = {
+						column:colName,
+						op:"=",
+						isNull:false,
+						type:$this.columns[colName].data_type,
+						pattern:pattern
+					}
+					
+					
+					
+					if (/%/.test(String(pattern))){
+						col.op =" like ";
+					}
+					
+					col.compareColumn =col.column
+					if (pattern === null){
+						col.isNull = true;
+					} else if (Myna.Database.dbTypeToJs($this.columns[colName].data_type) == "string"){
+						if (!caseSensitive){
+							col.pattern = String(col.pattern).toLowerCase();
+							col.column = colName.toLowerCase();
+							col.compareColumn ="LOWER(" + col.column +")"	
+						} else {
+							
+						}
+					}
+					
+					return col
+				}
+				
+				if (typeof pattern == "object" && !(pattern instanceof Date)){
+					if ("select" in pattern) select = pattern.select
+					if ("orderBy" in pattern) orderBy = pattern.orderBy
+					if ("where" in pattern){
+						where = pattern.where
+					} else {
+						var myColumnList = this.columnNames.join()
+						if (!options.includeSoftDeleted){
+							pattern[this.softDeleteCol] = null	
+						}
+						pattern.getKeys().filter(function(colName){
+							return myColumnList.listContains(colName.toLowerCase())
+						}).forEach(function(colName){
+							
+							criteria.push(getCriteria(colName,pattern[colName]))
+						})
+					}
+					
+				} else{
+					criteria.push(getCriteria($this.db.isCaseSensitive?pkey:pkey.toLowerCase(),pattern));
+				}
+				
+				if (where){
+					$profiler.begin("DataManager("+this.tableName+").find("+pattern.toJson()+")")
+					var qry = new Myna.Query({
+						dataSource:this.ds,
+						log:$this.logQueries,
+						sql:<ejs>
+							select <%=select%>
+							from <%=this.sqlTableName%>
+							where 
+							<@if !options.includeSoftDeleted && $this.softDeleteCol in $this.table.columnNames>
+								<%=$this.table.getSqlColumnName($this.softDeleteCol)%> is null and
+							</@if>
+							<%=where%>
+							<@if orderBy>
+								order by <%=orderBy%>
+							</@if>
+						</ejs>,
+						values:pattern
+					})
+					$profiler.end("DataManager("+this.tableName+").find("+pattern.toJson()+")")
+				} else {
+					var p = new Myna.QueryParams();
+					$profiler.begin("DataManager("+this.tableName+").find("+pattern.toJson()+")")
+					var qry = new Myna.Query({
+						dataSource:this.ds,
+						log:$this.logQueries,
+						parameters:p,
+						sql:<ejs>
+							select <%=select%>
+							from <%=this.sqlTableName%>
+							where 1=1
+							<@loop array="criteria" element="col" >
+								<@if col.isNull>
+								and <%=col.column%> is null
+								<@else>
+								and <%=col.compareColumn%> <%=col.op%> <%=p.addValue(col.pattern,col.type,!!col.pattern)%>
+								</@if>
+							</@loop>
+							<@if orderBy>
+								order by <%=orderBy%>
+							</@if>
+						</ejs>
+					})
+					$profiler.end("DataManager("+this.tableName+").find("+pattern.toJson()+")")
+				}
+				
+				return qry.data
+			},
+			queryCol:function(pattern,options){
+				var result = this.query(pattern,options);
+				return result.valueArray(result.columns[0]);
+			},
+			queryValue:function(pattern,options){
+				var result = this.query(pattern,options);
+				if (result.length){
+					return result[0][result.columns[0]]	
+				} else return undefined
+			},
+			find:function(pattern,options){
+				var $this = this
+				var pkey =this.columns[this.primaryKey].column_name;
+				var sqlKey = this.table.getSqlColumnName(pkey)
+				if (typeof pattern == "object" && !(pattern instanceof Date)){
+					pattern.setDefaultProperties({select:sqlKey})
+				} else {
+					var id = pattern;
+					pattern ={
+						select:sqlKey
+					}
+					pattern[pkey] = id
+				}
+				return this.queryCol(pattern,options)
+				
+				/* if (!pattern) pattern={}
 				var criteria=[];
 				var $this= this;
 				var pkey =this.columns[this.primaryKey].column_name;
@@ -1681,7 +1920,7 @@ if (!Myna) var Myna={}
 					})
 					$profiler.end("DataManager("+this.tableName+").find("+pattern.toJson()+")")
 				}
-				return qry.valueArray(pkey.toLowerCase());
+				return qry.valueArray(pkey.toLowerCase()); */
 			},
 			findBeans:function(pattern,caseSensitive){
 				var $this = this;

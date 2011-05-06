@@ -1157,12 +1157,24 @@ if (!Myna) var Myna={}
 			throw new Error("Cannot include '"+path+"'. include() can only be called with .js .sjs or .ejs files")	
 		}
 		content +="\n";
+		
+		var originalDir = $server_gateway.currentDir;
+		var originalScriptName = $server_gateway.scriptName;
+		
+		var realPath = file.toString()
+		//Myna.printConsole("path = " + realPath +" currentDir = " + realPath.listBefore("/"))
+		$server_gateway.currentDir = realPath.listBefore("/") +"/";
+		$server_gateway.scriptName = realPath.listAfter("/")
+		
 		if (scope){
 			$server_gateway.executeJsString(scope,content,path);
 		} else {
 			scope=$server_gateway.threadScope
 			$server_gateway.executeJsString(scope,content,path);
 		} 
+		
+		$server_gateway.currentDir = originalDir ;
+		$server_gateway.scriptName = originalScriptName;
 		
 		if (typeof $profiler !== "undefined") $profiler.end("Include " + path);
 		return scope;
