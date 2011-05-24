@@ -35,6 +35,8 @@ public class JsCmd{
 		}
 		try{
 			mynaRoot=new File(JsCmd.class.getResource(".").toURI().resolve("../../../../../"));
+			
+			
 			thread = new MynaThread();
 			thread.rootDir = mynaRoot.toURI().toString();
 			thread.loadGeneralProperties();

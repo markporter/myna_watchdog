@@ -28,7 +28,7 @@ var $cookie={
 		var req = $server.request;
 		var cookieArray = $cookie.data;
 		for (var x=0; x < cookieArray.length; ++x){
-			if (cookieArray[x].getName().toLowerCase() == name){
+			if (cookieArray[x].getName().toLowerCase() == name.toLowerCase()){
 				return cookieArray[x].getValue();
 			}
 		}
@@ -58,7 +58,7 @@ var $cookie={
 								deletes the cookie
 								
 		Returns:	
-			void
+			_value_
 	*/
 	set:function(name,value,options){
 		if (!$server.response ) return; //don't bother if we can't send cookies
@@ -78,6 +78,8 @@ var $cookie={
 		$server.response.addCookie(cookie);
 		if (!("_PENDING_COOKIES_" in $req)) $req._PENDING_COOKIES_ ={}
 		$req._PENDING_COOKIES_[name] = value;
+		
+		return value
 	},
 	/* Function: setAuthUserId
 		sets a cookie that contains the supplied user_id and a timestamp

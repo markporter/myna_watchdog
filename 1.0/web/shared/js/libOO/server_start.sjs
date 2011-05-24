@@ -109,19 +109,27 @@ if (!$server_gateway.environment.containsKey("isCommandline")){
 			//set encryption password
 				var cryptConfig = config.getNetworkConfig().getSymmetricEncryptionConfig();
 				cryptConfig.setPassword(password);
-			
-				Hazelcast.init(config);
-				var ipMan =new Myna.DataManager("myna_permissions").getManager("cluster_members");
-				var id = $server.hostName+"/"+$server.instance_id;
-				var localMember = com.hazelcast.core.Hazelcast.getCluster().getLocalMember().getInetSocketAddress();
-				ipMan.create({
-					id:id,
-					ip:localMember.getAddress().getHostAddress(),
-					port:localMember.getPort()
-				})
+			// setup session map
+				var sessionConfig = new com.hazelcast.config.MapConfig()
+				sessionConfig.setName("__MYNA_SESSION__")
+				sessionConfig.setMaxIdleSeconds(5)
+				sessionConfig.setEvictionDelaySeconds(3)
+				sessionConfig.setEvictionPolicy('LRU')
+				var mapConfigs = config.getMapConfigs()
+				mapConfigs.put("__MYNA_SESSION__",sessionConfig);
+				config.setMapConfigs(mapConfigs)
+			Hazelcast.init(config);
+			var ipMan =new Myna.DataManager("myna_permissions").getManager("cluster_members");
+			var id = $server.hostName+"/"+$server.instance_id;
+			var localMember = com.hazelcast.core.Hazelcast.getCluster().getLocalMember().getInetSocketAddress();
+			ipMan.create({
+				id:id,
+				ip:localMember.getAddress().getHostAddress(),
+				port:localMember.getPort()
+			})
 				
 			//create global listeners variable
-			$server.set("event_listeners",{})
+				$server.set("event_listeners",{})
 			//load registered listeners
 			if (new Myna.File("/WEB-INF/myna/registered_listeners.sjs").exists()){ 
 				Myna.include("/WEB-INF/myna/registered_listeners.sjs");

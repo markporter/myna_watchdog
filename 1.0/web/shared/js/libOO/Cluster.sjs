@@ -34,7 +34,7 @@ Myna.Cluster ={
 		purpose	-	*Optional, default $server.purpose*
 						This map will be limited to the specified purpose. Set to 
 						"ANY" to enable all purposes
-		
+						
 	Note: 
 		The returned object is an implementation of java.util.concurrent.ConcurrentMap
 		

@@ -197,7 +197,29 @@
 
   </target>
 
+<!-- ==================== jar Target ================================== -->
 
+
+<target name="jar" depends="compile" description="create jar file">
+	<jar destfile="${dist.home}/myna.jar">
+		<fileset dir="${build.home}/WEB-INF/classes"/>
+		<fileset dir="${build.home}/../"
+			includes="build/*"
+		/>
+		<restrict>
+			<name regex="^(?!.*(SF|RSA|DSA)).*$" />
+			<archives>
+				<zips>	
+					<fileset dir="${jars.home}" includes="**/*.jar"/>
+				</zips>
+			</archives>
+		</restrict>
+		<manifest>
+			<attribute name="Main-Class"
+			value="info.emptybrain.myna.JsCmd"/>
+		</manifest>
+	</jar>
+</target>	
 
 <!-- ==================== Dist Target ===================================== -->
 

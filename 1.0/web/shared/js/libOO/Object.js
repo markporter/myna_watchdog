@@ -168,15 +168,6 @@
 				}
 				chain.returnValue=chain.originalFunction(obj);
 			}
-
-
-
-
-
-
-
-
-
 		})
 
 	(end)

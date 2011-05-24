@@ -43,57 +43,62 @@ if (!Myna) var Myna={}
 		(end)
 		
 */
-/* 	Constructor: Myna.ValidationResult
-		Contructs a ValidationResult Object 
+/* Property: success
+		 Boolean result status for this ValidationResult *default true*
+		 
+		 This is set to false automatically when <addError> is called, or a
+		 ValidationResult object with success=false is merged
+	*/
+/* Property: errors
+		object containing errors keyed by property name *default {}*
 		
-		Parameters:
-			validation	-	*Optional default undefined* a ValidationResult 
-							object to act as the base for this object 
-			
+		Errors are added to this object automatically when <addError> is 
+		called with a property parameter
+	*/
+/* Property: errorMessage
+		 Overall error message for this ValidationResult 
+		 
+		 This field is not set automatically 
+	*/
+/* Property: errorDetail
+		 All messages added via <addError> without a property parameter 
+		 
+	*/
+/* Constructor: Myna.ValidationResult
+	Contructs a ValidationResult Object 
+	
+	Parameters:
+		validation	-	*Optional default undefined* a ValidationResult 
+						object to act as the base for this object 
 		
+	
 	*/
 	Myna.ValidationResult = function(validation){
-		/* Property: success
-			 Boolean result status for this ValidationResult *default true*
-			 
-			 This is set to false automatically when <addError> is called, or a
-			 ValidationResult object with success=false is merged
-		*/
+	
 		this.success=true;
-
-		/* Property: errors
-			object containing errors keyed by property name *default {}*
-			
-			Errors are added to this object automatically when <addError> is 
-			called with a property parameter
-		*/
+	
+	
 		this.errors={};
 		
-		/* Property: errorMessage
-			 Overall error message for this ValidationResult 
-			 
-			 This field is not set automatically 
-		*/
+	
 		this.errorMessage="";
 		
 		
-		/* Property: errorDetail
-			 All messages added via <addError> without a property parameter 
-			 
-		*/
+	
 		this.errorDetail="";
 		
 		if (validation) this.merge(validation);
 	}
-	/* Function: addError
-		Adds an error to this result and sets <success> to false
-		
-		Parameters:
-			message		-	HTML message to add
-			property	-	*Optional default undefined* If defined, will save 
-							message to <errors> by this property
-		Returns:
-			reference to this ValidatinResult
+
+/* Function: addError
+	Adds an error to this result and sets <success> to false
+	
+	Parameters:
+		message		-	HTML message to add
+		property	-	*Optional default undefined* If defined, will save 
+						message to <errors> by this property
+	Returns:
+		reference to this ValidatinResult
 	*/
 	Myna.ValidationResult.prototype.addError=function(message,property){
 		if (property){
@@ -105,18 +110,18 @@ if (!Myna) var Myna={}
 		
 		return this;
 	}
-	/* Function: merge
-		Merge a ValidationResult into this one, optionally changing the <errors>
-		properties
-		
-		Parameters:
-			validation	-	a ValidationResult object to merge wit this one
-			prefix		-	*Optional default undefined* If defined, this string
-							will be prepended to the _validation_.errors before 
-							merging
-							
-		Detail:
-				
+/* Function: merge
+	Merge a ValidationResult into this one, optionally changing the <errors>
+	properties
+	
+	Parameters:
+		validation	-	a ValidationResult object to merge wit this one
+		prefix		-	*Optional default undefined* If defined, this string
+						will be prepended to the _validation_.errors before 
+						merging
+						
+	Detail:
+			
 	*/
 	Myna.ValidationResult.prototype.merge=function(validation,prefix){
 		if (validation.success) return;

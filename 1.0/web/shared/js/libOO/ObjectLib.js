@@ -150,6 +150,7 @@ var ObjectLib = {}
 	(end)
 	*/
 	ObjectLib.after=function( obj, functionName, functionObj){
+		if (!functionObj) functionObj=function(){}
 		var $this = obj
 		
 		//does the function exist?

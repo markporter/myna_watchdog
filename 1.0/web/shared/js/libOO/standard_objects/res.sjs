@@ -537,7 +537,7 @@ var $res = {
 			* <serveFile>
 	*/
 	printBinary:function(data,contentType,filename){
-		if (!contentType || contentType=="") contentType="appplication/octet-stream";
+		if (!contentType || contentType=="") contentType="application/octet-stream";
 		
 		$res.setContentType(contentType);
 		$server.response.setContentLength(data.length);
