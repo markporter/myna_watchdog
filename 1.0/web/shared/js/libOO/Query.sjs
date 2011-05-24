@@ -678,7 +678,9 @@ getStatement:function(sql){
 					sqlParameters.params.forEach(function(element,index){
 						try {
 							
-							if (element.type == java.sql.Types.CLOB && db.functions.setClob){	
+							if (element.type == "GUESS" ){
+								st.setObject(index+1,element.value);
+							} else if (element.type == java.sql.Types.CLOB && db.functions.setClob){	
 								db.functions.setClob(con,st,index,element.value)
 							} else if (element.type == java.sql.Types.BLOB && db.functions.setBlob){	
 								db.functions.setBlob(con,st,index,element.value)
