@@ -201,177 +201,177 @@ if (!Myna) var Myna={}
 							
 			
 		
-*/
-Myna.Query = function (optionsOrResultSet){
-	/* Property: columns
-		An Array of Objects that represent the columns in the result set. 
-	
-		Format:
-		(code)
-			[
-				{
-					name:<String column name>,
-					typeId:<numeric JDBC type id>,
-					typeName:<String type name>
-				},
-				...
-			]
-		(end)
-		... created by <parseResultSet>
 	*/
-	this.columns=[];
-	
-	/* Property: dateFormat
-		if set to a string format (see <Date.format>), then any date or timestamp 
-		values will be converted to formatted strings. If set to null (default) 
-		these values will be Date objects. Note that this will not change the type
-		for date/time columns in <Query.columns> or <Query.result>.columns
-	*/
-	this.dateFormat=null
-	
-	/* Property: data
-		An Array of Objects That represents the query data.
+	Myna.Query = function (optionsOrResultSet){
+		/* Property: columns
+			An Array of Objects that represent the columns in the result set. 
 		
-		Format:
-		(code)
-			[
-				{
-					<column name>:<column value>,
-					...
-				},
-				...
-			]
-		(end)
-		... created by <parseResultSet> 
-	*/
-	this.data=new Myna.DataSet();
-	
-	/* Property: dataSource
-		The name of the datasource used to run the query.
-		Datasources are configured in the Myna Administrator, located at 
-		webroot/myna/administrator/index.sjs 
-	*/
-	/* Property: ds
-		alternate name for <Myna.Query.dataSource>
-	*/
-	this.dataSource="";
-	
-	/* Property: sql	
-		The SQL String of the query
-	*/
-	this.sql="";
-	
-	/* Property: executionTime	
-		Elapsed time in milliseconds to run the query
-	*/
-	this.executionTime=0;
-	
-	/* Property: generatedKey	
-		For insert queries, contains the generated prymary key, if any
-	*/
-	this.generatedKey="";
-	
-	/* Property: updateCount	
-		Number of rows affected by the last update 
-	*/
-	this.updateCount=0;
-	
-	/* Property: parameters
-		<Myna.QueryParams> object representing query parameters
-	
-	*/
-	this.parameters = new Myna.QueryParams();
-	
-	/* Property: maxRows
-		Maximum number of rows to return. null for all rows
-	
-	*/
-	this.maxRows=null;
-	
-	/* Property: startRow
-		Row number in result from which to start returning rows.  Starts with 1. 
-		Used with _maxRows_
-	*/
-	this.startRow=1;
-	
-	/* Property: pageSize
-		Number of rows to return per page.Null 	means all rows. Used with _page_
-	*/
-	this.pageSize=null;
-						
-	/* Property: page
-		Page to return. Starts with 1. This is used with 
-						_pageSize_ as a shortcut for startRow and maxRows. 
-						startRow is set to (((_page_ - 1) * pageSize)+1) and 
-						max rows is set to pageSize 
-	*/
-	this.page=null;
-	
-	/* Property: totalRows
-		total rows in the query, if the entire result had been returned. The 
-		actual number of rows is data.length  
-	*/
-	this.totalRows=null;
-	/* Property: result
-		contains just data result of this query.
-		
-		Detail:
-			this property is an object that loks like this:
+			Format:
 			(code)
-			{
-				data:[{colname:value}],
-				totalRows:numeric,
-				maxRows:numeric,
-				startRow:numeric,
-				columns:[{name:string,type:string}]
-			}
+				[
+					{
+						name:<String column name>,
+						typeId:<numeric JDBC type id>,
+						typeName:<String type name>
+					},
+					...
+				]
 			(end)
-			the "type" in columns is the result from <Myna.Database.dbTypeToJs> for
-			the database column type. This property is more appropriate for sending 
-			to a client as it is smaller and does not contain any internal 
-			information about your database tables 
-	
-	*/
-	
-	/* Property: log
-		should executions of this query be logged?
+			... created by <parseResultSet>
+		*/
+		this.columns=[];
 		
-		If this is set to true, then every execution of this query will be logged
-		as a "query" type to the logging database. Not recommended for production 
-		systems
-	*/
-	this.log =false
-	
-	/* Property: db
-		the <Myna.Database> object associated wioth this query
+		/* Property: dateFormat
+			if set to a string format (see <Date.format>), then any date or timestamp 
+			values will be converted to formatted strings. If set to null (default) 
+			these values will be Date objects. Note that this will not change the type
+			for date/time columns in <Query.columns> or <Query.result>.columns
+		*/
+		this.dateFormat=null
 		
-		Detail:
-			this property is only set when this query was initialized with a 
-			datasource
-	*/
-	this.db ={}
-	var qry = this;
-	if (optionsOrResultSet instanceof java.sql.ResultSet){
-		this.parseResultSet(optionsOrResultSet);
-	} else if (ObjectLib.typeOf(optionsOrResultSet) == 'object') {
-		if (optionsOrResultSet.hasOwnProperty("ds")){
-			optionsOrResultSet.dataSource = optionsOrResultSet.ds;
-		}
-		if (optionsOrResultSet.hasOwnProperty("rowHandler")){
-			qry.rowHandler = optionsOrResultSet.rowHandler;
-		}
-		optionsOrResultSet.applyTo(qry,true);
-		if (qry.ds) qry.db = new Myna.Database(qry.ds);
+		/* Property: data
+			An Array of Objects That represents the query data.
+			
+			Format:
+			(code)
+				[
+					{
+						<column name>:<column value>,
+						...
+					},
+					...
+				]
+			(end)
+			... created by <parseResultSet> 
+		*/
+		this.data=new Myna.DataSet();
 		
-		if (!optionsOrResultSet.deferExec){
-			return this.execute();
-		}
-	} 
-	return this
-}
+		/* Property: dataSource
+			The name of the datasource used to run the query.
+			Datasources are configured in the Myna Administrator, located at 
+			webroot/myna/administrator/index.sjs 
+		*/
+		/* Property: ds
+			alternate name for <Myna.Query.dataSource>
+		*/
+		this.dataSource="";
+		
+		/* Property: sql	
+			The SQL String of the query
+		*/
+		this.sql="";
+		
+		/* Property: executionTime	
+			Elapsed time in milliseconds to run the query
+		*/
+		this.executionTime=0;
+		
+		/* Property: generatedKey	
+			For insert queries, contains the generated prymary key, if any
+		*/
+		this.generatedKey="";
+		
+		/* Property: updateCount	
+			Number of rows affected by the last update 
+		*/
+		this.updateCount=0;
+		
+		/* Property: parameters
+			<Myna.QueryParams> object representing query parameters
+		
+		*/
+		this.parameters = new Myna.QueryParams();
+		
+		/* Property: maxRows
+			Maximum number of rows to return. null for all rows
+		
+		*/
+		this.maxRows=null;
+		
+		/* Property: startRow
+			Row number in result from which to start returning rows.  Starts with 1. 
+			Used with _maxRows_
+		*/
+		this.startRow=1;
+		
+		/* Property: pageSize
+			Number of rows to return per page.Null 	means all rows. Used with _page_
+		*/
+		this.pageSize=null;
+							
+		/* Property: page
+			Page to return. Starts with 1. This is used with 
+							_pageSize_ as a shortcut for startRow and maxRows. 
+							startRow is set to (((_page_ - 1) * pageSize)+1) and 
+							max rows is set to pageSize 
+		*/
+		this.page=null;
+		
+		/* Property: totalRows
+			total rows in the query, if the entire result had been returned. The 
+			actual number of rows is data.length  
+		*/
+		this.totalRows=null;
+		/* Property: result
+			contains just data result of this query.
+			
+			Detail:
+				this property is an object that loks like this:
+				(code)
+				{
+					data:[{colname:value}],
+					totalRows:numeric,
+					maxRows:numeric,
+					startRow:numeric,
+					columns:[{name:string,type:string}]
+				}
+				(end)
+				the "type" in columns is the result from <Myna.Database.dbTypeToJs> for
+				the database column type. This property is more appropriate for sending 
+				to a client as it is smaller and does not contain any internal 
+				information about your database tables 
+		
+		*/
+		
+		/* Property: log
+			should executions of this query be logged?
+			
+			If this is set to true, then every execution of this query will be logged
+			as a "query" type to the logging database. Not recommended for production 
+			systems
+		*/
+		this.log =false
+		
+		/* Property: db
+			the <Myna.Database> object associated wioth this query
+			
+			Detail:
+				this property is only set when this query was initialized with a 
+				datasource
+		*/
+		this.db ={}
+		var qry = this;
+		if (optionsOrResultSet instanceof java.sql.ResultSet){
+			this.parseResultSet(optionsOrResultSet);
+		} else if (ObjectLib.typeOf(optionsOrResultSet) == 'object') {
+			if (optionsOrResultSet.hasOwnProperty("ds")){
+				optionsOrResultSet.dataSource = optionsOrResultSet.ds;
+			}
+			if (optionsOrResultSet.hasOwnProperty("rowHandler")){
+				qry.rowHandler = optionsOrResultSet.rowHandler;
+			}
+			optionsOrResultSet.applyTo(qry,true);
+			if (qry.ds) qry.db = new Myna.Database(qry.ds);
+			
+			if (!optionsOrResultSet.deferExec){
+				return this.execute();
+			}
+		} 
+		return this
+	}
 
 Myna.Query.prototype={
-	/* Function: formatSql
+/* Function: formatSql
 		returns returns a multiline text formated string of this.sql with any 
 		values merged in
 		 
@@ -405,7 +405,7 @@ Myna.Query.prototype={
 		} 
 		return sql
 	},
-	/* Function: getRowByColumn
+/* Function: getRowByColumn
 		returns first row of the result set that matches the column and value suppplied
 		 
 		Parameters: 
@@ -430,7 +430,7 @@ Myna.Query.prototype={
 		}
 		return null;
 	},
-	/* Function: parseResultSet
+/* Function: parseResultSet
 		parses a JDBC resultSet object and populates <data>
 		 
 		Parameters: 
@@ -500,7 +500,7 @@ Myna.Query.prototype={
 		return this;
 	},
 	
-	/* Function: valueArray
+/* Function: valueArray
 		returns an array of values of a column in the result set.
 		
 		Parameters:
@@ -509,8 +509,8 @@ Myna.Query.prototype={
 	valueArray:function(columnName){
 		return this.data.valueArray(columnName)	
 	},
-	
-	parseSql:function(values) {
+
+parseSql:function(values) {
 		var sql = this.sql instanceof Array ?this.sql.join(" "):this.sql;
 		
 		var p = this.parameters = new Myna.QueryParams();
@@ -525,7 +525,7 @@ Myna.Query.prototype={
 		return sql.replace(/\{([\w-]+)(?:\:([\w\.]*)(?:\((.*?)?\))?)?\}/g,fn);
 	},
 	
-	/* Function: defaultRowHandler
+/* Function: defaultRowHandler
 		default rowHandler if not overridden 
 		
 		Parameters:
@@ -539,7 +539,7 @@ Myna.Query.prototype={
 		return row.getRow();
 	},
 	
-	/* Function: rowHandler
+/* Function: rowHandler
 		handles each row in the query result set 
 		
 		Parameters:
@@ -553,7 +553,7 @@ Myna.Query.prototype={
 	rowHandler:function(row){
 		return this.defaultRowHandler(row)
 	},
-	getStatement:function(sql){
+getStatement:function(sql){
 		var st;
 		var qry = this;
 		var dsName = this.dataSource;
@@ -588,7 +588,7 @@ Myna.Query.prototype={
 		}
 		return st;
 	},
-	/* Function: execute 
+/* Function: execute 
 		Executes an SQL query and updates and returns this <Query> object.
 		 
 		Parameters: 
