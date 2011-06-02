@@ -45,7 +45,8 @@ var name = config.name;
 var appname = "task_"+name.replace(/\W+/g,"_").toLowerCase();
 var detail;
 
-var gotLock=Myna.lock("__TASK_LOCK_" + name,10,function(){
+//locks need some work to deal with timeouts
+//var gotLock=Myna.lock("__TASK_LOCK_" + name,10,function(){
 	function log(type, label,detail){
 		Myna.logSync(type,"Task '"+name+"': " +(label||""),detail||"",appname);
 	}
@@ -203,5 +204,5 @@ var gotLock=Myna.lock("__TASK_LOCK_" + name,10,function(){
 		].join("<br>\n")
 		log("error","Error: " +e.message,detail);	
 	}
-})	
-if (!gotLock) throw new Error("Previous task is still running")
+/* })	
+if (!gotLock) throw new Error("Previous task is still running") */

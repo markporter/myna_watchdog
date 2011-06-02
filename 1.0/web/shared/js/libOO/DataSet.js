@@ -532,37 +532,37 @@
 								added to this property as an array. 
 	*/		
 	DataSet.prototype.toStruct = function(keyCols, remainingProperty){
-		var result =[]
+		var result ={}
 		this.forEach(function(row,index){
 			//debug_window("starting row : " +index)
 			var path=""
-			var curArray= keyCols.reduce(function(parentArray,colName,index){
+			var curArray= keyCols.reduce(function(parent,colName,index){
 				path+="."+colName
 				//debug_window(path +" starting col  " + colName )
 				var colVal = row[colName];
-				if (colVal == parseInt(colVal)) colVal = colName +"_"+colVal
+				//if (colVal == parseInt(colVal)) colVal = colName +"_"+colVal
 				var curRow;
-				if (!(colVal in parentArray)){
+				if (!(colVal in parent)){
 					//debug_window(path +" adding " + colName +" : " +colVal + " : " +index)
-					var curRow =parentArray[colVal] = ObjectLib.applyTo(row,{});
-					parentArray.push(parentArray[colVal])
+					var curRow =parent[colVal] = ObjectLib.applyTo(row,{});
+					//parent.push(parent[colVal])
 					if (index < keyCols.length-1) {
-						curRow[keyCols[index +1]] =[]  
+						 curRow[keyCols[index +1]] ={}  
 					}else if (remainingProperty){
 						curRow[remainingProperty] =[]
-					}
+					} 
 				} else {
-					curRow =parentArray[colVal]	
+					curRow =parent[colVal]	
 				}
 				
 				if (index < keyCols.length-1) {
-					//debug_window(path +" decending to " + keyCols[index +1],  parentArray[colVal][keyCols[index +1]])
+					//debug_window(path +" decending to " + keyCols[index +1],  parent[colVal][keyCols[index +1]])
 					
 					return curRow[keyCols[index +1]]
 				} else if (remainingProperty){
 					return curRow[remainingProperty]
 				} else {
-					return parentArray
+					return parent
 				}
 					
 				

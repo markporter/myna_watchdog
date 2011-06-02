@@ -476,7 +476,7 @@ if (!Myna) var Myna={}
 											for (col=0; col < obj.columns.length; ++col) {
 												result+=
 												'<td class="">'+
-													obj.data[row][obj.columns[col].name] + 
+													obj.data[row][obj.columns[col].name.toLowerCase()] + 
 												'</td>';
 											}
 										result+=

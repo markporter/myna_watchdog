@@ -884,6 +884,55 @@ Date.getInterval = function(interval, count){
 	}
   return 0;
 };
+/* Function: parseInterval
+	 returns an object with a breakdown of the units in an interval  
+	 
+	Parameters:
+		interval		-	an interval in milliseconds to format
+		
+	returned object properties:
+	* milliSeconds
+	* seconds
+	* minutes
+	* hours
+	* days
+	* weeks
+	* years	
+	
+ */
+Date.parseInterval = function(interval){
+	
+	var second = 1000;
+	var minute = second*60;
+	var hour = minute*60;
+	var day = hour*24;
+	var week = day*7;
+	var year = day*365;
+	var result={}
+	
+	result.years = Math.floor(interval/year);
+	interval = interval % year;
+	
+	result.weeks = Math.floor(interval/week);
+	interval = interval % week;
+	
+	
+	result.days = Math.floor(interval/day);
+	interval = interval % day;
+	
+	result.hours = Math.floor(interval/hour);
+	interval = interval % hour;
+	
+	result.minutes = Math.floor(interval/minute);
+	interval = interval % minute;
+	
+	result.seconds = Math.floor(interval/second);
+	interval = interval % second;
+	
+	result.milliseconds = interval;
+	
+	return result
+} 
 /* Function: formatInterval
 	 returns an interval in milliseconds as human readable string in this format:
 	 'n years, n weeks, n days, n hours, n minutes, n seconds, n milliseconds', 

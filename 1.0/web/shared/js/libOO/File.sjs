@@ -92,13 +92,14 @@ if (!Myna) var Myna={}
 		The file does not have to exist, but the parent directory does.
 	*/
 	Myna.File.prototype.appendString = function(string){
-		var IOUtils = Packages.org.apache.commons.io.IOUtils;
-      var stream = new java.io.FileWriter(this.javaFile,true);
-		IOUtils.write(
-			string,
-         stream
-		);
-      stream.close();
+			var IOUtils = Packages.org.apache.commons.io.IOUtils;
+			var stream = new java.io.FileWriter(this.javaFile,true);
+			IOUtils.write(
+				string,
+				stream
+			);
+			stream.close();
+			
 	}
 /* Function: copyTo
 	copies this file/directory to another location

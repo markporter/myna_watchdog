@@ -308,7 +308,6 @@ var fusebox={
 		$req.returningJson=true;
 		data.checkRequired([
 			"name",
-			"interval",
 			"script"
 		])
 		data.name = data.name.unEscapeHtml();

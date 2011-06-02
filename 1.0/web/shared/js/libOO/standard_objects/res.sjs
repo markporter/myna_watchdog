@@ -80,7 +80,9 @@ var $res = {
 			new Array(paddingSize).forEach(function(){padding+=" "});
 			$server.response.getWriter().print(padding);
 			$server.response.getWriter().print($res.getContent());
-			$server.response.flushBuffer();
+			try {//we don't care if flushing fails
+				$server.response.flushBuffer();
+			} catch(e){}
 			return $res.clear();	
 		} else return ""
 	},
