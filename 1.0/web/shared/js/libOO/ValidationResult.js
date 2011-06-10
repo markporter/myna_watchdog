@@ -104,7 +104,10 @@ if (!Myna) var Myna={}
 		if (property){
 			this.errors[property] = message;	
 		} else {
-			this.errorDetail += message +"<br>\n"	
+			//only  add unique errors
+			if (!new RegExp(message).test(this.errorDetail)){
+				this.errorDetail += message +"<br>\n"
+			}
 		}
 		this.success=false;
 		
@@ -129,7 +132,7 @@ if (!Myna) var Myna={}
 		if (!prefix) prefix="";
 		
 		//merge general errors
-		this.addError(validation.errorDetal)
+		this.addError(validation.errorDetail)
 		
 		var thisResult = this;
 		if (validation.errors){

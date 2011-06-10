@@ -8,7 +8,8 @@
 	"ValidationResult.js",
 	"Profiler.js",
 	"DataSet.js",
-	"debug_window.js"
+	"debug_window.js",
+	"Inflector.js"
 ].forEach(function(element){
 	$res.print(new Myna.File(element).readString()+"\n");
 });

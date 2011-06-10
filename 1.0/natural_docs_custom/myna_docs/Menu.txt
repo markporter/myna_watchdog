@@ -61,6 +61,7 @@ File: Myna.DataManager  (DataManager.sjs)
 File: Myna.Event  (Event.sjs)
 File: Myna.File  (File.sjs)
 File: Myna.HttpConnection  (HttpConnection.sjs)
+File: Myna.Inflector  (Inflector.js)
 File: Myna.JavaUtils  (JavaUtils.sjs)
 
 Group: Auth_adapters  {

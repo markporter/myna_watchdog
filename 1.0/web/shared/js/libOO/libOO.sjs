@@ -30,6 +30,8 @@
 	"Event.sjs",
 	"Cluster.sjs",
 	"Swing.sjs",
+	"Inflector.js",
+	
 	
 ].forEach(function(element){
 	try {

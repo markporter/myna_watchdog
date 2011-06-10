@@ -202,7 +202,7 @@ if (!("JavaUtils" in Myna)) Myna.JavaUtils={}
 /* Function: createByteArray 
 	returns a java Byte array of the supplied size 
 		
-	Paramters:
+	Parameters:
 		size	-	initial size of array
 		
 	Detail: 

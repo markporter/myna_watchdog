@@ -507,6 +507,65 @@ var ObjectLib = {}
 		
 		return s;
 	}
+/* Function: setByPath
+	sets a property or nested object property of this object 
+	 
+	Parameters: 
+		obj				- 	object to apply to
+		path				-	dot separated path to the property to set
+		value				-	value to set
+		
+ 
+	Returns: 
+		_obj_
+		
+	Detail: 
+		Often times it is convenient to store key value pairs as a dot separated 
+		path and a value, especially in HTML forms which do not support structured 
+		parameters like so:
+		
+		> <input name="Users.336642.firstName" value = "Mark">
+		
+		Calling this function against an object will walk the nested object tree, 
+		creating objects as necessary, until the final property is set to the value
+		
+		
+	Example:
+		(code)
+			var result = ObjectLib.setByPath({},"Users.336642.firstName","Mark")
+			ObjectLib.setByPath(result,"Users.536642.firstName","Bob")
+			// result Equals
+			// {
+			// 	Users:{
+			// 		"336642":{
+			// 			firstName:"Mark"
+			// 		},
+			// 		"536642":{
+			// 			firstName:"Bob"
+			// 		},
+			// 	}
+			// }
+			
+		
+		(end)
+		
+	Note:
+		This function is applied automatically against $req.data for params that 
+		contain periods
+	 
+	*/
+	ObjectLib.setByPath=function (obj,path,value){
+		if (!path.listLen(".")){
+			obj[path] = value
+		} else {
+			var parts = path.split(".")
+			var lastProp = parts.pop();
+			parts.reduce(function(obj,prop){
+				return obj[prop] || (obj[prop] ={})
+			},obj)[lastProp] =value
+		}
+		return obj
+	}
 /* Function: setDefaultProperties
 	sets default properties on an object 
 	 
@@ -550,6 +609,8 @@ var ObjectLib = {}
 		}	
 		return obj
 	}
+	
+	
 	
 /* Function: forEach
 	loops over each non-function property of an object an executes the 

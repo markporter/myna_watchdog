@@ -819,10 +819,6 @@ var $application={
 						$profiler.end("Process Uploads");
 					}
 				params.forEach(function(valArray,key){
-					//for (keyId=0; keyId < keyValueArray.length; ++keyId){
-					//valArray = keyValueArray[keyId].getValue();
-					//key =keyValueArray[keyId].getKey()
-					
 					$req.paramNames.push(String(key));	
 					//check for null value, ie "&somevar="
 					if (valArray.length ==0){
@@ -851,6 +847,13 @@ var $application={
 							}
 						}
 					}
+					//check for pathed params
+					if (/\./.test(key)) {
+						var value= $req.data[key]
+						$req.data.setByPath(key,value)
+					}
+					
+					
 				} )
 				//escapeHtml
 				$req.rawData={}

@@ -42,8 +42,8 @@ var $req={
 			Every parameter in the HttpServletRequest is copied as a 
 			lowercase property of the _data_ object. 
 			
-			If a parameter is passed multiple times, this property will be a 
-			comma-separated list of	each value of the parameter. In addition, 
+			If a parameter is passed multiple times, this property will the last 
+			passed value of the parameter. In addition, 
 			a property called <paramName>$array is created. This property 
 			contains an array of all the values of that parameter name, in the 
 			order they were passed. This parameter is created even if only one 
@@ -55,6 +55,13 @@ var $req={
 			JSON valid objects, only the last will be stored in 
 			parameter_name$object, but a property called parameter_name$objectArray
 			is populated with every object created.
+			
+			If a parameter contains dots (.) then is is presumed to be a property 
+			path and is interpreted via <Object.setByPath>. Thus a parameter called
+			"Users.336642.firstName" can be accessed at $req.data.Users["336642"].firstName
+			
+			_data_ parameters created via setByPath are not filtered through  
+			<String.escapeHtml> as described below
 			
 			Every value in _data_.<paramName> and _data_.<paramName>$array 
 			is escaped via <String.escapeHtml>. This helps to protect 

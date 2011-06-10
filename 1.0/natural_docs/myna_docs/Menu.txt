@@ -90,6 +90,7 @@ Group: Myna Object  {
    File: Myna.Event  (Event.sjs)
    File: Myna.File  (File.sjs)
    File: Myna.HttpConnection  (HttpConnection.sjs)
+   File: Myna.Inflector  (Inflector.js)
    File: Myna.JavaUtils  (JavaUtils.sjs)
    File: Myna.KeyStore  (KeyStore.sjs)
    File: Myna.Ldap  (Ldap.sjs)
