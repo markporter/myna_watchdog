@@ -96,7 +96,7 @@ try{
 			}
 			
 		} else {
-			$res.serveFile($req.scriptFile,{headers:$req.headers});
+			$res.serveFile($req.scriptFile);
 			Myna.abort();
 		}
 	}

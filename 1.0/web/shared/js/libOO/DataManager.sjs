@@ -153,6 +153,16 @@ if (!Myna) var Myna={}
 			See Also:
 				* Storing Hierarchical Data in a Database - http://articles.sitepoint.com/article/hierarchical-data-database
 			*/
+		/* Function: managerExists
+			returns true if a manager with a given name can be created form this 
+			DataManager
+			
+			Parameters:
+				name		- 	String. Table name or model name to check
+				
+			
+			*/
+		
 		/* Property: ds
 				Datasource associated with this Myna.DataManager 
 			
@@ -2443,7 +2453,18 @@ if (!Myna) var Myna={}
 						}
 					}
 			return man;
-		}	
+		}
+	/* ---------- managerExists --------------------------------------------- */
+		Myna.DataManager.prototype.managerExists = function(name){
+			if (this.db.getTable(name).exists){
+				return true;
+			}else {
+				if (this.db.getTable(this.m2t(name)).exists){
+					return true
+				}
+			}
+			return false
+		}
 	/* ---------- managerTemplate -------------------------------------------- */
 		Myna.DataManager.managerTemplate ={
 			_core_init:function(){ 

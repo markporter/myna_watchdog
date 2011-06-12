@@ -296,12 +296,12 @@ var $res = {
 		Note:
 			When this function returns, the file may not have been downloaded yet. 
 			This is because some browsers/dowloaders have advanced multi-threaded
-			download support, so you should plan for your download code the be 
+			download support, so you should plan for this request to be 
 			called several times in parallel. Also if the client pauses and resumes 
 			the download you may get multiple calls. 
 		
 	*/
-	serveFile:function(file, shouldDelete){
+	serveFile:function(file){
 	
 		file = new Myna.File(file);
 		

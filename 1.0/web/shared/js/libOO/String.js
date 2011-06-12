@@ -5,7 +5,7 @@
 */
 
 /* Property: htmlEscapeChars
-	array of characters to be translated by <escapeHtml> and <unEscapeHtml>
+	*Static* Array of characters to be translated by <escapeHtml> and <unEscapeHtml>
 	*/
 	String.htmlEscapeChars=[
 		";",
@@ -44,40 +44,122 @@
 	returns all the characters after the first _count_ characters
 	 
 	Parameters: 
-		count 	-	number of characters to skip
- 
+		count 			-	number of characters to skip, a string or a RegExp object
+		caseSensitive	-	*Optional, default false*
+								if _count_ is a string, should the match be case sensitive?
+								
+	Returns:
+		string that appears after _count_, or null if not possible
+		
 	Example:
 	(code)
-		 
+	
+		var string = "JoeBlow"
+		Myna.println(string.after(3));//prints Blow
+		Myna.println(string.after(/e/,true));//prints Blow
+		Myna.println(string.after(/^joe/i,true));//prints Blow
+		Myna.println(string.after("joe"));//prints Blow
+		Myna.println(string.after("joe",true));//prints null because we forced case sensitivity
+	
 		var requestDir = $server.requestDir;
-		//this is an example only. $server.requestUrl does this for you
-		var requestUrl = requestDir.after($server.rootDir.length);
+		
+		// this is an example only. $server.requestUrl does this for you
+		var requestUrl = requestDir.after($server.rootDir);
+		
 	(end)
 	 
 	 
 	*/
-	String.prototype.after=function(count){
-		if (count<0 || count > this.length) return "";
+	String.prototype.after=function(count, caseSensitive){
+		
+		switch(true){
+			case typeof count == "number" || parseInt(count) == count:
+				if (count<0 || count > this.length) return null;	
+				break;
+			case typeof count == "string":
+				var str=count
+				if	(caseSensitive){
+					if (this.left(str.length) == str){
+						count = str.length;	
+					} else return null
+				} else {
+					if (this.left(str.length).toLowerCase() == str.toLowerCase()){
+						count = str.length;	
+					} else return null
+				}	
+				break;
+			case typeof count == "object" && count instanceof RegExp:
+				var r = count
+				var result = r.exec(this)
+				if (result) {
+					count = result.index + result[0].length
+				} else return null 
+				break;
+		}
+		
+		
 		return this.slice(count);
 	};
 /* Function: before 
 	returns all the characters before the last _count_ characters
 	 
 	Parameters: 
-		count 	-	number of characters to remove from the end of the string
- 
+		count 			-	number of characters to remove from the end of this 
+								string, a string, or a RegExp object
+		caseSensitive	-	*Optional, default false*
+								if _count_ is a string, should the match be case sensitive?
+								
+	Returns:
+		string that appears before _count_, or null if not possible
+		
 	Example:
 	(code)
+		
+		var string = "JoeBlow"
+		Myna.println(string.before(4));//prints Joe
+		Myna.println(string.before(/o/,true));//prints J
+		Myna.println(string.before(/o$/,true));//prints JoeBl
+		Myna.println(string.before(/blow/i,true));//prints Joe
+		Myna.println(string.before("blow"));//prints Joe
+		Myna.println(string.before("blow",true));//prints null because we forced case sensitivity
+	
+	
 		var requestUrl = $server.requestUrl;
-		var contextRelativeUrl = requestUrl.after($server.rootUrl.length);
-		//this is an example only. $server.rootDir does this for you
-		var rootDir = $server.requestDir.before(contextRelativeUrl.length);
+		var contextRelativeUrl = requestUrl.after($server.rootUrl);
+		
+		// this is an example only. $server.rootDir does this for you
+		var rootDir = $server.requestDir.before(contextRelativeUrl);
 	(end)
 	 
 	 
 	*/
 	String.prototype.before=function(count){
-		if (count<0 || count > this.length) return "";
+		switch(true){
+			case typeof count == "number" || parseInt(count) == count:
+				if (count<0 || count > this.length) return null;	
+				break;
+			case typeof count == "string":
+				var str=count
+				if	(caseSensitive){
+					if (this.right(str.length) == str){
+						count = str.length;	
+					} else return null
+				} else {
+					if (this.right(str.length).toLowerCase() == str.toLowerCase()){
+						count = str.length;	
+					} else return null
+				}	
+				break;
+			case typeof count == "object" && count instanceof RegExp:
+				var r = count
+				var result = r.exec(this)
+				if (result) {
+					count = this.length -result.index
+				} else return null 
+				break;
+				
+		}
+		
 		return this.substr(0,this.length-count);
 	};	
 /* Function: charToHtmlEntity
@@ -91,7 +173,7 @@
 		return "&#" + c.charCodeAt(0) + ";";
 	};
 /* Function: compareAlpha
-	A static sort function that will compare two strings by lexigraphical order.
+	*Static* A static sort function that will compare two strings by lexigraphical order.
 	
 	Paramters:
 		a	-	first string to compare
@@ -119,7 +201,7 @@
 
 	};
 /* Function: compareAlphaReverse
-	A descending version of <compareAlpha>.
+	*Static* A descending version of <compareAlpha>.
 	
 	Paramters:
 		a	-	first string to compare
@@ -137,7 +219,7 @@
 		return String.compareAlpha(b,a);
 	};
 /* Function: compareNatural
-	A static sort function that will compare two strings in a natural way.
+	*Static* A static sort function that will compare two strings in a natural way.
 	
 	Paramters:
 		a	-	first string to compare
@@ -240,7 +322,7 @@
 		return retVal;
 	};
 /* Function: compareNaturalReverse
-	A descending version of <compareNatural>.
+	*Static* A descending version of <compareNatural>.
 	
 	Paramters:
 		a	-	first string to compare
@@ -258,7 +340,7 @@
 		return String.compareNatural(b,a);
 	};
 /* Function: compareNumeric
-	A static sort function that will compare two strings by lexigraphical order.
+	*Static* A static sort function that will compare two strings by lexigraphical order.
 	
 	Paramters:
 		a	-	first string to compare
@@ -286,7 +368,7 @@
 
 	};
 /* Function: compareNumericReverse
-	A descending version of <compareNumeric>.
+	*Static* A descending version of <compareNumeric>.
 	
 	Paramters:
 		a	-	first string to compare
@@ -303,14 +385,30 @@
 	String.compareNumericReverse = function(a,b) {
 		return String.compareNumeric(b,a);
 	};
+/* Function: endsWith
+	returns true if this string ends with supplied string
+	
+	Parameters:
+		str				-	string to match
+		caseSensitive	-	*Optional, default false*
+								Should the match be case sensitive?
+	
+	See Also:
+		* <startsWith>
+								
+	Example:
+		Myna.println("BobDobb".endsWith("dobb"))//prints true
+		Myna.println("BobDobb".endsWith("dobb",true))//prints false
+	*/
+	String.prototype.endsWith = function(str,caseSensitive) {
+		return new RegExp(str+"$",caseSensitive?"":"i").test(this)
+	}
 /* Function: escapeHtml 
 	replaces common symbols with their HTML entity equivalents  
 	 
 	Detail:
 		the purpose of this function is to prevent a string from being 
-		interpreted as HTML/Javascript when output on a webpage. Becasue nearly 
-		all user supplied input wll eventually be displayed on a web page, this
-		function is executed against all input be default. 
+		interpreted as HTML/JavaScript when output on a webpage.
 		
 	Returns: 
 		converted string
@@ -385,7 +483,29 @@
 		})
 		return new_string; */
 	};
-
+/* Function: escapeJs 
+	returns string with symbols that might be interpreted as JavaScript escaped   
+	 
+	Detail:
+		the purpose of this function is to prevent a string from being 
+		interpreted as JavaScript when used as a string literal in a JS expression
+		
+	Returns: 
+		converted string
+	
+	Example:
+		(code)
+			//index.ejs
+			
+			<script>
+				var postTitle = "<%=Post.title.escapeJs()%>";
+			</script>
+		(end)
+	*/
+	String.prototype.escapeJs=function(){
+		return JSON.stringify(this).match(/^"(.*)"$/)[1].replace(/'/g,"\\'");	
+	}
+		
 /* Function: getLineIterator
 	returns java Iterator that produces a line at a time for this string
 	
@@ -416,7 +536,7 @@
 
 
 /* function: htmlEntityToChar
-	returns the chatacter representation of the supplied HTML/XML entity
+	*Static* returns the chatacter representation of the supplied HTML/XML entity
 	
 	Parameters:
 		e - HTML/XML entity in &#code; format where code is the decimal ASCII code
@@ -431,7 +551,7 @@
 	returns the left side of a string
 	 
 	Parameters: 
-		count 	-	number of characters to return
+		count 	-	number of characters to return 
  
 	Returns: 
 		The left _count_ characters of _string_
@@ -1356,6 +1476,24 @@
 		}
 		return result;
 	};
+/* Function: startsWith
+	returns true if this string starts with supplied string
+	
+	Parameters:
+		str				-	string to match
+		caseSensitive	-	*Optional, default false*
+								Should the match be case sensitive?
+	
+	See Also:
+		* <endsWith>
+								
+	Example:
+		Myna.println("BobDobb".startsWith("bob"))//prints true
+		Myna.println("BobDobb".startsWith("bob",true))//prints false
+	*/
+	String.prototype.startsWith = function(str,caseSensitive) {
+		return new RegExp("^"+str,caseSensitive?"":"i").test(this)
+	}
 /* Function: titleCap 
 	Capitalizes the first letter of every word in string
 	

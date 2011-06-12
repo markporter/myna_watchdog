@@ -97,6 +97,10 @@ sub BuildFile #(sourceFile, parsedFile)
             . '<script language=JavaScript src="' . $self->MakeRelativeURL($outputFile, $self->SearchDataJavaScriptFile(), 1) . '">'
                 . '</script>'
 								
+                	. '<script type="text/javascript" src="../shjs/sh_main.js"></script>'
+						. '<script type="text/javascript" src="../shjs/lang/sh_myna.js"></script>'
+						. '<link type="text/css" rel="stylesheet" href="../shjs/css/sh_mild_white.css">'
+                	
 						. '<script type="text/javascript" src="../../../../js/shjs/sh_main.js"></script>'
 						. '<script type="text/javascript" src="../../../../js/shjs/lang/sh_myna.js"></script>'
 						. '<link type="text/css" rel="stylesheet" href="../../../../js/shjs/css/sh_mild_white.css">'
