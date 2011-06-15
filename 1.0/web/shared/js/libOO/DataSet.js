@@ -529,12 +529,154 @@
 								if keyCols does not uniquely identify every 
 								row in the DataSet, and _remainingProperty_
 								is defined, then the remain rows will be 
-								added to this property as an array. 
+								added to this property as an array.
+		full				-	*Optional, default false*
+								If true, each level in the hierarchy contains 
+								all the values of the first row of that branch, 
+								and sub trees branch of the col name
+								
+	The purpose of this function is to convert flat result sets into a 
+	structured hierarchy. This is best illustrated by examples
+	
+	Examples:
+	(code)
+	// Original Set 
+		//	employee_id	| title					| position_code | department_name			 | department_code
+		//	----------- | --------------------- | ------------- | -------------------------- | ---------------
+		//	100000001	| Cp Tech-Mental Health	| 01021C		| MILAGRO					 | 01106550
+		//	100000003	| Universal Interviewer	| 054700		| MED SPECIALTIES CLINIC B	 | 01017120
+		//	100000075	| Clerk Outpt			| 054700		| MED SPECIALTIES CLINIC B	 | 01017120
+		//	100001035	| Clerk Outpt			| 054700		| MED SPECIALTIES CLINIC B	 | 01017120
+	
+	var simple = original_set.toStruct(["position_code","department_code"])
+		[ Object ]
+		  +-[01021C] [ Object ]
+		  | \-[01106550] [ Array ]
+		  |   \-[0] [ Object ]
+		  |     +-[department_code] 01106550
+		  |     +-[department_name] MILAGRO
+		  |     +-[employee_id] 100000001
+		  |     +-[position_code] 01021C
+		  |     \-[title] Cp Tech-Mental Health
+		  \-[054700] [ Object ]
+			\-[01017120] [ Array ]
+			  +-[0] [ Object ]
+			  | +-[department_code] 01017120
+			  | +-[department_name] MED SPECIALTIES CLINIC B
+			  | +-[employee_id] 100000003
+			  | +-[position_code] 054700
+			  | \-[title] Universal Interviewer
+			  +-[1] [ Object ]
+			  | +-[department_code] 01017120
+			  | +-[department_name] MED SPECIALTIES CLINIC B
+			  | +-[employee_id] 100000075
+			  | +-[position_code] 054700
+			  | \-[title] Clerk Outpt
+			  \-[2] [ Object ]
+				+-[department_code] 01017120
+				+-[department_name] MED SPECIALTIES CLINIC B
+				+-[employee_id] 100001035
+				+-[position_code] 054700
+				\-[title] Clerk Outpt
+	var simple_with_rows = original_set.toStruct(["position_code","department_code"],"rows")
+		[ Object ]
+		  +-[01021C] [ Object ]
+		  | \-[01106550] [ Object ]
+		  |   \-[rows] [ Array ]
+		  |     \-[0] [ Object ]
+		  |       +-[department_code] 01106550
+		  |       +-[department_name] MILAGRO
+		  |       +-[employee_id] 100000001
+		  |       +-[position_code] 01021C
+		  |       \-[title] Cp Tech-Mental Health
+		  \-[054700] [ Object ]
+			\-[01017120] [ Object ]
+			  \-[rows] [ Array ]
+				+-[0] [ Object ]
+				| +-[department_code] 01017120
+				| +-[department_name] MED SPECIALTIES CLINIC B
+				| +-[employee_id] 100000003
+				| +-[position_code] 054700
+				| \-[title] Universal Interviewer
+				+-[1] [ Object ]
+				| +-[department_code] 01017120
+				| +-[department_name] MED SPECIALTIES CLINIC B
+				| +-[employee_id] 100000075
+				| +-[position_code] 054700
+				| \-[title] Clerk Outpt
+				\-[2] [ Object ]
+				  +-[department_code] 01017120
+				  +-[department_name] MED SPECIALTIES CLINIC B
+				  +-[employee_id] 100001035
+				  +-[position_code] 054700
+				  \-[title] Clerk Outpt
+	var full_with_rows = original_set.toStruct(["position_code","department_code"],"rows")
+		[ Object ]
+		  +-[department_code] 01106550
+		  +-[department_name] MILAGRO
+		  +-[employee_id] 100000001
+		  +-[position_code] [ Object ]
+		  | +-[01021C] [ Object ]
+		  | | +-[department_code] [ Object ]
+		  | | | \-[01106550] [ Object ]
+		  | | |   +-[department_code] 01106550
+		  | | |   +-[department_name] MILAGRO
+		  | | |   +-[employee_id] 100000001
+		  | | |   +-[position_code] 01021C
+		  | | |   +-[rows] [ Array ]
+		  | | |   | \-[0] [ Object ]
+		  | | |   |   +-[department_code] 01106550
+		  | | |   |   +-[department_name] MILAGRO
+		  | | |   |   +-[employee_id] 100000001
+		  | | |   |   +-[position_code] 01021C
+		  | | |   |   \-[title] Cp Tech-Mental Health
+		  | | |   \-[title] Cp Tech-Mental Health
+		  | | +-[department_name] MILAGRO
+		  | | +-[employee_id] 100000001
+		  | | +-[position_code] 01021C
+		  | | \-[title] Cp Tech-Mental Health
+		  | \-[054700] [ Object ]
+		  |   +-[department_code] [ Object ]
+		  |   | \-[01017120] [ Object ]
+		  |   |   +-[department_code] 01017120
+		  |   |   +-[department_name] MED SPECIALTIES CLINIC B
+		  |   |   +-[employee_id] 100000003
+		  |   |   +-[position_code] 054700
+		  |   |   +-[rows] [ Array ]
+		  |   |   | +-[0] [ Object ]
+		  |   |   | | +-[department_code] 01017120
+		  |   |   | | +-[department_name] MED SPECIALTIES CLINIC B
+		  |   |   | | +-[employee_id] 100000003
+		  |   |   | | +-[position_code] 054700
+		  |   |   | | \-[title] Universal Interviewer
+		  |   |   | +-[1] [ Object ]
+		  |   |   | | +-[department_code] 01017120
+		  |   |   | | +-[department_name] MED SPECIALTIES CLINIC B
+		  |   |   | | +-[employee_id] 100000075
+		  |   |   | | +-[position_code] 054700
+		  |   |   | | \-[title] Clerk Outpt
+		  |   |   | \-[2] [ Object ]
+		  |   |   |   +-[department_code] 01017120
+		  |   |   |   +-[department_name] MED SPECIALTIES CLINIC B
+		  |   |   |   +-[employee_id] 100001035
+		  |   |   |   +-[position_code] 054700
+		  |   |   |   \-[title] Clerk Outpt
+		  |   |   \-[title] Universal Interviewer
+		  |   +-[department_name] MED SPECIALTIES CLINIC B
+		  |   +-[employee_id] 100000003
+		  |   +-[position_code] 054700
+		  |   \-[title] Universal Interviewer
+		  \-[title] Cp Tech-Mental Health
+	
+	
+	(end)	
 	*/		
-	DataSet.prototype.toStruct = function(keyCols, remainingProperty){
-		var result ={}
+	DataSet.prototype.toStruct = function(keyCols, remainingProperty, full){
+		if (!this.length) return {}
+		var result =full?ObjectLib.applyTo(this[0],{}):{};
+		var base =full?result[keyCols[0]] = {}:result;
+		var $this = this;
 		this.forEach(function(row,index){
-			//debug_window("starting row : " +index)
 			var path=""
 			var curArray= keyCols.reduce(function(parent,colName,index){
 				path+="."+colName
@@ -544,13 +686,20 @@
 				var curRow;
 				if (!(colVal in parent)){
 					//debug_window(path +" adding " + colName +" : " +colVal + " : " +index)
-					var curRow =parent[colVal] = ObjectLib.applyTo(row,{});
+					var curRow = parent[colVal] =full?ObjectLib.applyTo(row,{}):{};
+					
 					//parent.push(parent[colVal])
 					if (index < keyCols.length-1) {
-						 curRow[keyCols[index +1]] ={}  
-					}else if (remainingProperty){
-						curRow[remainingProperty] =[]
-					} 
+						 if (full) curRow[keyCols[index +1]] ={}  
+					} else if (remainingProperty){
+						curRow[remainingProperty] =new DataSet({
+							columns:$this.columns
+						})
+					} else if (!full){
+						curRow = parent[colVal]  =new DataSet({
+							columns:$this.columns
+						})
+					}
 				} else {
 					curRow =parent[colVal]	
 				}
@@ -558,16 +707,18 @@
 				if (index < keyCols.length-1) {
 					//debug_window(path +" decending to " + keyCols[index +1],  parent[colVal][keyCols[index +1]])
 					
-					return curRow[keyCols[index +1]]
+					return full?curRow[keyCols[index +1]]:curRow;
 				} else if (remainingProperty){
-					return curRow[remainingProperty]
+					return curRow[remainingProperty];
+				} else if (!full){
+					return curRow;
 				} else {
 					return parent
 				}
 					
 				
-			},result)
-			if (remainingProperty){
+			},base)
+			if (remainingProperty ||!full){
 				curArray.push(ObjectLib.applyTo(row,{}))	
 			} 
 			
