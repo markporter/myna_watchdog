@@ -44,7 +44,7 @@ public class CronThread {
 					String config = cronProps.getProperty(name);
 					ScriptTimerTask curTask = new ScriptTimerTask();
 					curTask.config = config;
-					curTimer.schedule(curTask,new Date(),interval);
+					curTimer.schedule(curTask,new Date(System.currentTimeMillis() + (2*CronThread.MINUTES)),interval);
 			}
 		} catch (java.lang.NullPointerException missingFile){
 			//ignore missing cron.properties	

@@ -144,7 +144,11 @@ public class MynaThread {
 					// it is time to stop the script.
 					// Throw Error instance to ensure that script will never
 					// get control back through catch or finally.
-					mcx.reportError("Request time of "+ ((currentTime - startTime)/1000) +" seconds exceeded timeout of " + timeout +" seconds.");
+					String path = ((StringBuffer)(mcx.mynaThread.environment.get("requestURL"))).toString();
+					mcx.reportError(
+						"URL <b>" +  path +"</b> "
+						+ "request time of "+ ((currentTime - startTime)/1000) +" seconds exceeded timeout of " + timeout +" seconds."  
+					);
 				}
      }
 
@@ -304,26 +308,25 @@ public class MynaThread {
 	*
 	*/
 	public void init() throws Exception{
+		
 		synchronized (MynaThread.class){
-			try {
-				openidConsumerManager = new ConsumerManager();
-			} catch(Exception e){
-				handleError(e);
+			if (this.environment.get("isCommandline") == null){
+				try {
+					openidConsumerManager = new ConsumerManager();
+				} catch(Exception e){
+					handleError(e);
+				}
 			}
 			
-			
 			loadGeneralProperties();
-			
 			int max_running_threads = Integer.parseInt(generalProperties.getProperty("max_running_threads"));
 			threadPermit = new Semaphore(max_running_threads);
 			manageLocksPermit = new Semaphore(1,true);
 			
 			this.threadHistorySize = Integer.parseInt(generalProperties.getProperty("thread_history_size"));
-			
 			loadDataSources();
 			//createSharedScope();
 			this.isInitialized = true;
-		
 		}
 	}
 	
@@ -444,6 +447,7 @@ public class MynaThread {
 			this.scriptName = scriptName;
 			this.requestScriptName = requestScriptName;
 		}
+		
 	}
 	
 	/**
@@ -452,6 +456,7 @@ public class MynaThread {
 	*
 	*/
 	public void handleRequest (String scriptPath) throws Exception{
+		
 		runningThreads.add(this);
 		runtimeStats.put("threadId",this.toString());
 		runtimeStats.put("started",this.started);
@@ -470,7 +475,6 @@ public class MynaThread {
 				
 			}
 		}
-		
 		this.requestTimeout= Integer.parseInt(generalProperties.getProperty("request_timeout"));
 		
 		//Scriptable sharedScope = createSharedScope();
@@ -503,7 +507,6 @@ public class MynaThread {
 					scope.setParentScope(null);
 					
 					runtimeStats.put("currentTask","Waiting in thread Queue");
-					
 					
 					if (generalProperties.getProperty("thread_whitelist").length() > 0){
 						String[] whitelist=generalProperties.getProperty("thread_whitelist").split(",");
@@ -553,7 +556,6 @@ public class MynaThread {
 				}
 			}
 		}
-		
 		new CustomContextFactory().call(new LocalContextAction(this));  
 	
 		 
