@@ -2526,6 +2526,7 @@ if (!Myna) var Myna={}
 						this.table.columns[this.softDeleteCol].data_type
 					); 
 					if (deleteColType == "date"){
+						
 						this.getById(id).saveField(this.softDeleteCol,new Date())
 					} else this.forceDelete(id)
 				} else this.forceDelete(id)
@@ -3729,7 +3730,7 @@ if (!Myna) var Myna={}
 								SET
 									<%=bean.manager.qt%><%=columnName%><%=bean.manager.qt%> = <%=p.addValue(value,type,isNull)%>
 									<@if bean.manager.modifiedCol>
-										<%=bean.manager.table.getSqlColumnName(bean.manager.modifiedCol)%> = <%=p.addValue(new Date(),"TIMESTAMP")%>
+										,<%=bean.manager.table.getSqlColumnName(bean.manager.modifiedCol)%> = <%=p.addValue(new Date(),"TIMESTAMP")%>
 									</@if>
 								WHERE
 									<%=bean.manager.qt%><%=this.columns[this.primaryKey].column_name%><%=bean.manager.qt%> = <%=p.addValue(bean.id,this.columns[this.primaryKey].data_type)%>

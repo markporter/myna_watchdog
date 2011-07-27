@@ -1014,3 +1014,7 @@ Date.monthsBetween = function(d1,d2){
 	}
 	return coefficient *count;
 }
+
+Date.prototype.toJSON=function(){
+	return '\/Date(' +this.getTime() +')\/'
+}

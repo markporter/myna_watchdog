@@ -114,7 +114,9 @@ var ObjectLib = {}
 		if (functionName in $this) {
 			//is the function a chain header?
 			if (!("chainArray" in $this[functionName])){
+				var originalFunction =$this[functionName] 
 				$this[functionName]=Function.createChainFunction([$this[functionName]]);
+				originalFunction.applyTo($this[functionName])
 			}
 		} else {
 			$this[functionName]=Function.createChainFunction();	
@@ -157,7 +159,9 @@ var ObjectLib = {}
 		if (functionName in $this) {
 			//is the function a chain header?
 			if (!("chainArray" in $this[functionName])){
+				var originalFunction =$this[functionName]
 				$this[functionName]=Function.createChainFunction([$this[functionName]]);
+				originalFunction.applyTo($this[functionName])
 			}
 		} else {
 			$this[functionName]=Function.createChainFunction();	

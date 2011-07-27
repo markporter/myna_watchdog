@@ -357,7 +357,21 @@
 		$res.print(qry.data.toJson());
 	(end)
 	*/
-	Object.prototype.toJson=function() {
+	Object.prototype.toJson=function(indent) {
+		/* return JSON.stringify(this,function(k,v){
+			if (v instanceof Date) {
+				return "\\/Date(' +v.getTime() +')\\/"
+			}else{
+				try{
+					JSON.stringify(v)
+				}catch(e){
+					Myna.println(" key: " + k)
+					Myna.println(" is array: " + (instanceof DataSet))
+					throw e
+				}
+				return v	
+			}
+		},indent) */
 		return ObjectLib.toJson(this);
 	}	
 /* Function: toStruct 

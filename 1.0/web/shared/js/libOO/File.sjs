@@ -10,22 +10,54 @@ if (!Myna) var Myna={}
 	Creates a new File Object from the supplied <MynaPath>
 	
 	Parameters:
-		path - <MynaPath> to a file
+		path - <MynaPath> to a file. This can be be multiple paths to be 
+		concatenated together 
+		
+	Example:
+	(code)
+		var wwwroot = new Myna.File("/")
+		var unix_server_root = new Myna.File("file:///")
+		//this will attempt to make a valid path, inserting "/"s between arguments
+		// and removing any duplicate "/"s
+		var modules_path = new Myna.File(
+			$FP.dir,
+			"plugins/modules",
+			c2f(controllerName)
+		)
+	(end)
 	*/
 	Myna.File =function (path){
-		if (path instanceof Myna.File){
-			path =path.javaFile.toURI();	
-		}else if (path instanceof java.io.file){
-			path = path.toURI();
-		}
+		
+		path=Array.parse(arguments).map(function(path,index){
+			if (path instanceof Myna.File){
+				path.javaFile.toURI().toString();	
+			}else if (path instanceof java.io.file){
+				path = path.toURI().toString();
+			} else path = String(path);
+			if (index == 0 ) {
+				if (path =="/") {
+					return path
+				} else {
+					return path.toString().replace(/\/+$/,"");
+				}
+			} else {
+				return path.toString().replace(/^\/+/,"").replace(/\/+$/,"");
+			}
+		}).join("/")
+		
 		
 		if (!(this instanceof arguments.callee)){
-			throw new Error("Myna.File must be called with the 'new' keyword")
+			return new Myna.File(path) 
 		}
+		
 		/* Property: javaFile
 			the underlying java.io.File object 
 		*/
-		this.javaFile = $server_gateway.getNormalizedFile(path)
+		if (/^file:\/+$/.test(path)){
+			this.javaFile = java.io.File.listRoots()[0];
+		} else {
+			this.javaFile = $server_gateway.getNormalizedFile(path)
+		}
       
       /* Property: size
 			size in bytes of this file. Same result as <getSize()> 
