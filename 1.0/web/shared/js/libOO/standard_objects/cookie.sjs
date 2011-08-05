@@ -111,7 +111,9 @@ var $cookie={
 		}.toJson()
 		.encrypt(Myna.Permissions.getAuthKey("myna_auth_cookie"))
 	   
-		var options =null
+		var options ={
+			path:$application.url
+		}
 		$cookie.set("myna_auth_cookie",cookie_data,options);
 		$cookie.__authCleared = false;
 	},

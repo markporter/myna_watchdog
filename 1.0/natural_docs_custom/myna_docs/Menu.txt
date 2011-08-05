@@ -47,7 +47,7 @@ SubTitle: JavaScript documentation
 
 File: Array  (Array.js)
 File: DataSet  (DataSet.js)
-File: DataSet.sjs  (DataSet.sjs)
+File: DataSet.sjs  (no auto-title, DataSet.sjs)
 File: Date  (Date.js)
 File: debug_window.js  (debug_window.js)
 File: Function  (Function.js)

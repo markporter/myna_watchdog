@@ -1081,7 +1081,7 @@
 	(end)
 	 
 	*/
-	String.prototype.toFixedWidth=function(count,pad,placeHolder,truncateFrom){
+String.prototype.toFixedWidth=function(count,pad,placeHolder,truncateFrom){
 		var s = new String(this);
 		if (!pad) pad = " ";
 		if (!placeHolder) placeHolder = "";
@@ -1104,7 +1104,14 @@
 			
 			}
 		} else {
-			return s + " ".repeat(count -s.length);	
+			switch (truncateFrom.toLowerCase()){
+			case "start":
+				return pad.repeat(count -s.length) +s;
+			case "middle":
+			case "end":
+				return s + pad.repeat(count -s.length);
+			}
+				
 		}
 	};
 

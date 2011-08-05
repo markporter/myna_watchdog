@@ -1876,7 +1876,11 @@ if (!Myna) var Myna={}
 						manager.addValidator(null,"length",{
 							max:function(colname,value,v,bean){
 								var colDef = bean.manager.table.columns[colname];
-								return colDef.column_size
+								if ("BLOB,CLOB".listContains(colDef.type_name)){
+									return 2*1024*1024*1024*1024;//2 GB	
+								} else {
+									return colDef.column_size
+								}
 							}
 						})
 						
@@ -3665,7 +3669,8 @@ if (!Myna) var Myna={}
 					this.isDirty = true;
 					//return even if successful when deferred
 					return result;
-				} else if (!result.success){//if validation failed 
+				} else if (!result.success){//if validation failed
+					Myna.log("validation","Validation errors for table " + this.manager.table.tableName,Myna.dump(result));
 					return result
 				}
 				

@@ -80,7 +80,7 @@ Group: Myna Global Objects  {
 Group: Myna Object  {
 
    File: DataSet  (DataSet.js)
-   File: DataSet.sjs  (DataSet.sjs)
+   File: DataSet.sjs  (no auto-title, DataSet.sjs)
    File: Myna  (Myna.sjs)
    File: Myna.Cache  (Cache.sjs)
    File: Myna.Cluster  (Cluster.sjs)
