@@ -295,7 +295,7 @@ var $res = {
 			
 		Note:
 			When this function returns, the file may not have been downloaded yet. 
-			This is because some browsers/dowloaders have advanced multi-threaded
+			This is because some browsers/downloaders have advanced multi-threaded
 			download support, so you should plan for this request to be 
 			called several times in parallel. Also if the client pauses and resumes 
 			the download you may get multiple calls. 
@@ -308,8 +308,9 @@ var $res = {
 		var codes =javax.servlet.http.HttpServletResponse;
 		var ranges=[];
 		if (!file.exists()){
-			Myna.log("error","$res.serveFile: file " + file + " does not exist",Myna.dump($req.data));
-			throw new Error("Filename does not exist");
+			$application._onError404()
+			Myna.log("404","$res.serveFile: file " + file + " does not exist",Myna.dump($req.data));
+			/*throw new Error("Filename does not exist"); */
 			return;
 		}
 		$server_gateway.requestHandled=true;

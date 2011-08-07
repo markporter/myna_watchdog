@@ -101,6 +101,52 @@ if (!Function.prototype.bind)
 		 };
 	};
 }
+
+/* Function: cache
+	returns a caching version of this function
+	
+	Detail:
+		The purpose of this function is to create a lazy-loading versiom of this 
+		function. The first time this function is called, the original function is 
+		executed, and subsequent calls immediately return the cached value. If 
+		this function takes a single param that can be converted to a string, then 
+		that will be used a s a cahce key, allowing multiple values to be cached
+		
+	Note:
+		This will only work properly with functions that do not take parameters.
+		
+	Example:
+	(code)
+	//old way:
+	
+	var f= function getEmployee(empId){
+		var my = arguments.callee
+		if (!(empId in my)){
+			my[empId] = dm.getManager("employees").getById(empId);
+			 = value;
+		}
+		return my[empId];
+	}
+	
+	//new way:
+	var f = (function(empIds){
+		return dm.getManager("employees").getById(empId);
+	}).cache();
+	(end)
+	
+	*/
+	Function.prototype.cache =function cache(){
+		var cache={}
+		var func = this
+		return function(key){
+			var key = String(key||"value")
+			if (!(key in cache)){
+				cache[key] = func.call(this, key);
+			}
+			return cache[key];
+		}
+	}
+
 /* Function: createCallback
 	returns a callback function that will execute this function with the 
 	supplied arguments 

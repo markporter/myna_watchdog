@@ -1,0 +1,43 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta name="description" content="<%=$page.description||""%>" />
+	<meta name="keywords" content="<%=$page.keywords.join()%>" />
+	<@loop array="$page.tags" element="tag">
+		<meta name="<%=tag.name%>" content="<%=tag.content%>" />
+	</@loop>
+<title><%=$page.title||$controller.name + "."+$params.action%></title>
+<link rel="shortcut icon" href="<%=$page.icon||"favicon.ico"%>" type="image/x-icon">
+<%-- Include external files and scripts here --%>
+<@loop array="$page.scripts" element="script">
+	<script type="script.type || text/javascript %>" src="<%=script.src%>"></script>
+	<%-- fix for syntax highlighting </script> --%>
+</@loop>
+<@loop array="$page.css" element="css">
+	<@if /^.link/i.test(css)>
+		<%=css%>
+	<@else>
+		<LINK href="<%=css%>" rel="stylesheet" type="text/css">
+	</@if>
+</@loop>
+</head>
+<body>
+
+<%-- If you'd like some sort of menu to show up on all of your views, include it here --%>
+<div id="header">
+    <div id="menu"></div>
+</div>
+
+<%--  Flash messages --%>
+<%=$flash.getMessages()%>
+
+<%-- Here's where I want my views to be displayed --%>
+<%=$page.content%>
+
+<%-- Add a footer to each displayed page --%>
+<div id="footer"></div>
+
+<%=renderElement("vars")%>
+
+</body>
+</html>

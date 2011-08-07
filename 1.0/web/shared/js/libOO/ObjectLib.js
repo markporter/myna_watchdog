@@ -360,6 +360,7 @@ var ObjectLib = {}
 	(end)
 	*/
 	ObjectLib.toJson=function(obj) {
+		if ((obj instanceof Object) && ("toJSON" in obj)) obj = obj.toJSON();
 		// m is a table of character substitutions.
 		var m = {
 			'\b': '\\b',

@@ -137,6 +137,8 @@ var C ={
 						},{
 							html:'<li><span class="link" onclick="C.user_groups.main()">Manage User Groups</span></li>'
 						},{ */
+							html:'<span class="link" onclick="C.fp.main()">Add/Update FlightPath App</span>'
+						},{
 							html:'<span class="link" onclick="C.applications.main()">Manage Applications</span>'
 							
 						},{
@@ -2987,6 +2989,27 @@ var C ={
 			}  
 				
 			center_tabs.activate(tabId)
+		}
+/* ================ FlightPAth =================================================== */
+	C.fp={}
+	/* ---------------- main ------------------------------------------------ */
+		C.fp.main=function(){
+			var path = prompt("Path to app relative to the Myna root. If it does not exist it will be created.")
+			Ext.Ajax.request({
+				url:"?fuseaction=update_fp_app",
+				params:{
+					path:path
+				},
+				waitMsg:"Updating FlightPath",
+				callback:C.cbHandler(function(result){
+					alert(result.message)
+				})
+			})
+			
+		}
+	/* ---------------- update_fp ------------------------------------------------ */
+		C.fp.update_fp=function(path){
+			
 		}
 /* ================ applications ============================================ */
 	C.applications={}

@@ -573,6 +573,22 @@ var fusebox={
 		$server_gateway.saveGeneralProperties();
 		return {success:true}
 	},
+/* ========== FlightPath ==================================================== */
+	update_fp_app:function(data,rawData){
+		var targetDir = new Myna.File($server.rootDir,rawData.path)
+		
+		var fpDir = new Myna.File("/shared/js/FlightPath");
+		var frameworkDir = new Myna.File(fpDir,"framework");
+		if (targetDir.exists()){
+			frameworkDir.copyTo(new Myna.File(targetDir,"framework"))
+			return {message:"FlightPath Updated. "}
+		} else {
+			fpDir.copyTo(targetDir)	
+			return {message:"FlightPath installed. Be sure to edit " + rawData.path +"/application.sjs \nto customize this app"}
+		}
+		
+		
+	},
 /* ========== Applications ================================================== */
 	get_installed_apps:function(){
 		return new Myna.Query({
@@ -808,6 +824,8 @@ var fusebox={
 		}
 			
 	},
+	
+	
 /* ========== Upgrade ======================================================= */
 	upgradeLog:function(message){
 		var log =$session.get("upgrade_log");

@@ -11,32 +11,50 @@ if (!Myna) var Myna={}
 		ds	-	 String datsource name
 */
 Myna.Database = function (ds){
-	var db = this;
+	$profiler.mark("loading db for " + ds)
 	if (!ds) {
 		throw new Error("Unable to load datasource '" + String(ds) +"'")
 	}
 	if (typeof ds === "string"){
-		db.ds = String(ds).toLowerCase();
-	} else {db.ds=ds;}
-	
-	if (!("__MYNA_DB_CACHE__" in $req)) $req["__MYNA_DB_CACHE__"] ={}
-	if (db.ds in $req["__MYNA_DB_CACHE__"]){
-		return $req["__MYNA_DB_CACHE__"][db.ds];
-	} else {
-		db.init()
-		$req["__MYNA_DB_CACHE__"][db.ds] = this;
-		return this;
+		ds = String(ds).toLowerCase();
 	}
+	
+	this.ds=ds;
+	var db =$server_gateway.environment.get("__DS_CACHE__:" + ds)
+	
+	if (!db) {
+		db = this;
+		this.cache={
+		}
+		db.init()
+		$server_gateway.environment.put("__DS_CACHE__:" + ds,this)
+	}
+	
+	return db
 }
+
+Myna.Database.prototype.getCacheValue =function(key,defaultValue) {
+	var value = this.cache[key]
+	if (!value) {
+		
+		value =typeof defaultValue == "function"?defaultValue():defaultValue;
+		this.cache[key] = value
+	}
+	return value
+}
+Myna.Database.prototype.setCacheValue =function(key,value) {
+	this.cache[key] = value
+}
+
 /* Property: con
 		jdbc connection object. Created in <init>, closed on requestEnd
 		See <http://java.sun.com/j2se/1.4.2/docs/api/java/sql/Connection.html>
 	*/
 	Myna.Database.prototype.__defineGetter__("con", function() {
 		var con
-		if (!$req["__CACHE__CONNECTION" + $server.threadId]) $req["__CACHE__CONNECTION" + $server.threadId] = new java.util.Hashtable();
-		if ($req["__CACHE__CONNECTION" + $server.threadId].containsKey(this.ds) && !$req["__CACHE__CONNECTION" + $server.threadId].get(this.ds).isClosed()){
-			con = $req["__CACHE__CONNECTION" + $server.threadId].get(this.ds);
+		var conCache = this.getCacheValue("ConectionCache",new java.util.Hashtable())
+		if (conCache.containsKey(this.ds) && !conCache.get(this.ds).isClosed()){
+			con = conCache.get(this.ds);
 		} else { 
 			try{
 				if (/^:mem:/.test(this.ds)){
@@ -50,7 +68,7 @@ Myna.Database = function (ds){
 						con = this.ds.getConnection()
 					}
 				}
-				$req["__CACHE__CONNECTION" + $server.threadId].put(this.ds,con); 
+				conCache.put(this.ds,con); 
 				$application.addOpenObject(con);
 			} catch(e){
 				Myna.log("ERROR","Unable to load datasource '" + this.ds +"' : " + __exception__.message,Myna.formatError(__exception__));
@@ -63,6 +81,7 @@ Myna.Database = function (ds){
 	(re)loads database metadata
 	*/
 	Myna.Database.prototype.init = function(){
+			
 		var db = this;
 		/* Property: ds
 			Datasource associated with this Database object
@@ -96,13 +115,19 @@ Myna.Database = function (ds){
 		*/
 		this.dbType=String(this.md.getDatabaseProductName()).toLowerCase();
 		
-		
-		var dbTemplate ="/shared/js/libOO/db_properties/" + this.dbType.replace(/ /g,"_")+".sjs";
-		if (new Myna.File(dbTemplate).exists()){
-			Myna.include(dbTemplate,this);	
-		} else {
-			Myna.include("/shared/js/libOO/db_properties/other.sjs",this);	
+		var dbProperties = this.getCacheValue("dbProperties",{})
+		if (!dbProperties[this.dbType]){
+			dbProperties[this.dbType] = {}
+			var dbTemplate ="/shared/js/libOO/db_properties/" + this.dbType.replace(/ /g,"_")+".sjs";
+			if (new Myna.File(dbTemplate).exists()){
+				Myna.include(dbTemplate,dbProperties[this.dbType]);	
+			} else {
+				Myna.include("/shared/js/libOO/db_properties/other.sjs",dbProperties[this.dbType]);	
+			}
+			this.setCacheValue("dbProperties",dbProperties)
 		}
+		
+		dbProperties[this.dbType].applyTo(this,true)
 		
 	}
 /* Property: schemas
@@ -119,12 +144,14 @@ Myna.Database = function (ds){
 	The default schema for this datasource
 		 
 	*/
-	Myna.Database.prototype.__defineGetter__("defaultSchema", function() {
-		var result = this.functions.getDefaultSchema(this);
-		if (!result) return "";
-		
-		return result;
-	})
+	Myna.Database.prototype.__defineGetter__(
+		"defaultSchema", 
+		function() {
+			return this._getCache("schemas",function(db){
+				return db.functions.getDefaultSchema(db)||"";
+			});
+		}
+	)
 	
 /* Property: tables
 		array of table information for the current schema.
@@ -155,9 +182,10 @@ Myna.Database = function (ds){
 /*	Function: getTable
 	returns a <Myna.Table> object representing the named table. 
 	*/
-	Myna.Database.prototype.getTable = function(tableName){
+	Myna.Database.prototype.getTable = (function(tableName){
 		return new Myna.Table(this,tableName);
-	}
+	}).cache()
+	
 
 /*	Function: dbTypeToJs
 	Static function that takes a column type name ("VARCHAR") or a column type id 

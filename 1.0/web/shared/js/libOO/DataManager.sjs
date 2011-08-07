@@ -389,7 +389,7 @@ if (!Myna) var Myna={}
 				(end)
 			*/
 		/* Function: query
-			returns a <Myna.DataSet> of informatino from this table
+			returns a <Myna.DataSet> of information from this table
 			
 			Parameters:
 				pattern			-	if this is a String, Number, or Date, the primary 
@@ -1624,6 +1624,17 @@ if (!Myna) var Myna={}
 		
 		}
 		/* private functions */
+			Myna.DataManager.prototype.getCacheValue =function(key,defaultValue) {
+				var cache = $server_gateway.environment.get("__DM_CACHE__:"+key)
+				if (!cache) {
+					cache =typeof defaultValue == "function"?defaultValue():defaultValue;
+					$server_gateway.environment.put("__DM_CACHE__:"+key,cache)
+				}
+				return cache
+			}
+			Myna.DataManager.prototype.setCacheValue =function(key,value) {
+				$server_gateway.environment.put("__DM_CACHE__:"+key,value)
+			}
 			/* splitCap */
 			Myna.DataManager.prototype.splitCap=function(name){
 				return name.replace(/[A-Z]/g,function(str,offset){
@@ -1705,7 +1716,6 @@ if (!Myna) var Myna={}
 				modifiedCol:"modified",
 			})
 			
-			
 			var name;
 			var tableName = table
 			if (table instanceof Myna.Table) {
@@ -1718,15 +1728,11 @@ if (!Myna) var Myna={}
 					}
 				}
 			}
-			
-			
 				
-			$profiler.begin("getManager for " + tableName)
-			var tkey =tableName.toLowerCase(); 
+			
+			var tkey =tableName.toLowerCase();
 			if (!("_managers" in this)) this._managers={}
 			if ( tkey in this._managers){
-				//Myna.printConsole("got here first")
-				$profiler.end("getManager for " + tableName)
 				return this._managers[tkey];	
 			} else {
 				//Myna.printConsole("got here")
@@ -1771,7 +1777,6 @@ if (!Myna) var Myna={}
 											})
 										})
 									
-										
 									//Myna.printConsole("hasOne, from " + manager.table.tableName + " to " + relatedTable.tableName );
 									if (!bridgeOnly){
 										/* hasOne */
@@ -1819,7 +1824,6 @@ if (!Myna) var Myna={}
 									name:manager.dm.m2pm(manager.dm.t2m(relatedExport.pktable_name)),
 									bridgeTable:relatedTable.tableName.toLowerCase(),
 									
-									localKey:localExport.pkcolumn_name.toLowerCase(),
 									localBridgeKey:localExport.fkcolumn_name.toLowerCase(),
 									
 									foreignBridgeKey:relatedExport.fkcolumn_name.toLowerCase(),
@@ -1827,7 +1831,7 @@ if (!Myna) var Myna={}
 								})	
 							})
 						})
-						
+					/* foreign keys  */
 						manager.table.foreignKeys.forEach(function(row){
 							name = manager.dm.t2m(row.pktable_name);
 							alias = name;
@@ -1846,7 +1850,6 @@ if (!Myna) var Myna={}
 							})
 						})
 						
-				
 				/* build bean class */
 					manager.beanClass=function(data){
 						this.id = data[manager.primaryKey]
@@ -1926,11 +1929,11 @@ if (!Myna) var Myna={}
 						}
 						
 					}) 
+									
 				
-					
-					
 				manager._core_init();
-				$profiler.end("getManager for " + tableName)
+				
+				
 				return manager;
 			}
 			
@@ -2066,7 +2069,7 @@ if (!Myna) var Myna={}
 										var myLeft = $this.data[$this.manager.leftCol];
 										var subTreeSize = (myRight - myLeft) +1
 										var newOffset;
-										$profiler.mark("removing subtree")
+										
 										/* 
 										first, remove this sub-tree from the world by 
 										setting negative sides 
@@ -2087,7 +2090,7 @@ if (!Myna) var Myna={}
 												myLeft:myLeft,
 											}
 										})
-										$profiler.mark("backfilling")
+										
 										/* 
 										re-order the downstream tree to backfill
 										*/
@@ -2126,7 +2129,7 @@ if (!Myna) var Myna={}
 											}
 										})
 										
-										$profiler.mark("preocessing before")
+										
 										if (location.beforeNode != undefined){
 											//see if the beforeNode element really exists
 											anchorNode = man.findBeans(location.beforeNode)
@@ -2145,7 +2148,7 @@ if (!Myna) var Myna={}
 												$this.manager.renumberForInsert(location.beforeNode,"before",subTreeSize)
 											}
 										}
-										$profiler.mark("processing under")
+										
 										if (location.underNode != undefined){
 											//see if the underNode element really exists
 											anchorNode = man.findBeans(location.underNode)
@@ -2163,7 +2166,7 @@ if (!Myna) var Myna={}
 												$this.manager.renumberForInsert(location.underNode,"under",subTreeSize)
 											}
 										} 
-										$profiler.mark("preocessing else")
+										
 										if (!(location.beforeNode || location.underNode)){
 											var search = {}
 											//search for root node
@@ -2182,7 +2185,7 @@ if (!Myna) var Myna={}
 											}
 										}
 										
-										$profiler.mark("inserting tree")
+										
 										//insert  the subTree
 										new Myna.Query({
 											ds:man.ds,
@@ -2702,7 +2705,7 @@ if (!Myna) var Myna={}
 				}
 				
 				if (where){
-					$profiler.begin("DataManager("+this.tableName+").find("+pattern.toJson()+")")
+					
 					var qry = new Myna.Query({
 						dataSource:this.ds,
 						log:$this.logQueries,
@@ -2720,10 +2723,10 @@ if (!Myna) var Myna={}
 						</ejs>,
 						values:pattern
 					})
-					$profiler.end("DataManager("+this.tableName+").find("+pattern.toJson()+")")
+					
 				} else {
 					var p = new Myna.QueryParams();
-					$profiler.begin("DataManager("+this.tableName+").find("+pattern.toJson()+")")
+					
 					qry = new Myna.Query({
 						dataSource:this.ds,
 						log:$this.logQueries,
@@ -2744,7 +2747,7 @@ if (!Myna) var Myna={}
 							</@if>
 						</ejs>
 					})
-					$profiler.end("DataManager("+this.tableName+").find("+pattern.toJson()+")")
+					
 				}
 				
 				return qry.data
@@ -2776,6 +2779,31 @@ if (!Myna) var Myna={}
 				}
 				return this.queryCol(pattern,options)
 				
+			},
+			//var bean = new this.beanClass(data)
+			findBeansExperimental:function(pattern,options){
+				var $this = this;
+				pattern=pattern||{}
+				if (options === !!options) {
+					options={
+						caseSensitive:!!options
+					}	
+				}
+				var $this = this;
+				if (pattern && !("select" in pattern)){
+					pattern.select ="*"
+				}
+					
+				return new Myna.DataSet({
+					columns:$this.columnNames,
+					data:this.query(pattern,options)
+						.map(function(row){
+							var bean =new $this.beanClass(row)
+							bean.deferred = $this.deferred;
+							bean.exists=true;
+							return bean
+						})
+				})
 			},
 			findBeans:function(pattern,caseSensitive){
 				var $this = this;
@@ -2899,7 +2927,7 @@ if (!Myna) var Myna={}
 				return bean; 
 			},
 			getById:function(id){
-				$profiler.begin("loading "+this.tableName+" bean "+ id)
+				
 				var manager = this;
 				var bean={};
 				var p = new Myna.QueryParams();
@@ -2986,7 +3014,7 @@ if (!Myna) var Myna={}
 				//bean.hideProperty("data");
 				bean.init(); //bean init is now in bean constructor
 				*/
-				$profiler.end("loading "+this.tableName+" bean "+ id)
+				
 				return bean;
 			},
 			validatorFunctions:{
@@ -3162,7 +3190,13 @@ if (!Myna) var Myna={}
 						})
 						thisModel.associations.hasOne[relatedAlias] = relatedModelOptions;
 					}
-					var relatedModel = thisModel[relatedModelName] = thisModel.dm.getManager(relatedModelName)
+					
+					thisModel.__defineGetter__(relatedModelName, function() { 
+						
+						return thisModel.dm.getManager(relatedModelName);
+						
+					});
+					
 					//getCriteria - a function that bullds search criteria
 						var getCriteria = function(bean){
 							var criteria;
@@ -3190,6 +3224,7 @@ if (!Myna) var Myna={}
 						}
 					//buildRelatedBean - a function for attaching related bean on demand 
 						var buildRelatedBean =function(){
+							
 							var chain = arguments.callee.chain;
 							var bean = chain.lastReturn
 							//try{
@@ -3314,8 +3349,12 @@ if (!Myna) var Myna={}
 						foreignKey:thisModel.dm.m2fk(foreignKeyName)
 					})
 					thisModel.associations.hasMany[relatedAlias] = relatedModelOptions;
+					thisModel.__defineGetter__(relatedModelName, function() { 
+						
+						return thisModel.dm.getManager(relatedModelName);
+						
+					});
 					
-					var relatedModel = thisModel[relatedModelName] = thisModel.dm.getManager(relatedModelName)
 					//getCriteria - a function that bullds search criteria
 						var getCriteria = function(bean){
 							if (relatedModelOptions._belongsTo){
@@ -3335,6 +3374,7 @@ if (!Myna) var Myna={}
 						}
 					//buildRelatedBean - a function for attaching related bean on demand 
 						var buildRelatedBean =function(){
+							var relatedModel = thisModel[relatedModelName];
 							var chain = arguments.callee.chain;
 							var bean = chain.lastReturn
 							//try{
@@ -3470,21 +3510,28 @@ if (!Myna) var Myna={}
 						relatedModelName = thisModel.dm.pm2m(relatedModelOptions.name)
 						
 					}
-					
-					var relatedModel = thisModel[relatedModelName] = thisModel.dm.getManager(relatedModelName)
-					
-					relatedModelOptions.setDefaultProperties({
-						localKey:thisModel.primaryKey,
-						foreignKey:relatedModel.primaryKey,
-						bridgeTable:[relatedModel.tableName,thisModel.tableName].sort().join("_"),
-						localBridgeKey:dm.m2fk(dm.t2m(thisModel.tableName)),
-						foreignBridgeKey:dm.m2fk(dm.t2m(relatedModel.tableName))
-					})
-					var bridgeTable =dm.db.getTable(relatedModelOptions.bridgeTable);
+					thisModel.__defineGetter__(relatedModelName, function() { 
+						
+						return thisModel.dm.getManager(relatedModelName);
+						
+					});
+
 					thisModel.associations.hasBridgeTo[relatedAlias] = relatedModelOptions;
 					
 					//buildRelatedBean - a function for attaching related bean on demand 
 						var buildRelatedBean =function(){
+							var relatedModel = thisModel[relatedModelName];
+					
+							relatedModelOptions.setDefaultProperties({
+								localKey:thisModel.primaryKey,
+								foreignKey:relatedModel.primaryKey,
+								bridgeTable:[relatedModel.tableName,thisModel.tableName].sort().join("_"),
+								localBridgeKey:dm.m2fk(dm.t2m(thisModel.tableName)),
+								foreignBridgeKey:dm.m2fk(dm.t2m(relatedModel.tableName))
+							})
+							var bridgeTable =dm.db.getTable(relatedModelOptions.bridgeTable);
+							
+					
 							var chain = arguments.callee.chain;
 							var bean = chain.lastReturn
 							
@@ -3492,7 +3539,6 @@ if (!Myna) var Myna={}
 								bean[relatedAlias]=function(){
 									var my = arguments.callee;
 									if (!my.set){
-										Myna.printConsole("adding bean " + relatedAlias )
 										var relatedBean
 										var relatedDs =my.set=new Myna.Query({
 											ds:dm.ds,
@@ -3853,5 +3899,8 @@ if (!Myna) var Myna={}
 				})
 				
 				return v
+			},
+			toJSON:function(){
+				return this.getData()
 			},
 		}

@@ -137,7 +137,11 @@ if (!Myna) var Myna={}
 	copies this file/directory to another location
 	
 	Parameters: 
-		dest 	-	<MynaPath> or <File> representing the directory to copy to
+		dest 		-	<MynaPath> or <File> representing the directory to copy to
+		filter	-	*Optional, default null8
+						Function. If defined and this file is a directory, the this 
+						function will be called with every Myna.File to be copied and 
+						should return true to copy the file/directory   
  
 	Returns: 
 		void
@@ -161,7 +165,7 @@ if (!Myna) var Myna={}
 			source with	the destination, with the source taking precedence. 
 	 
 	*/
-	Myna.File.prototype.copyTo = function(dest){
+	Myna.File.prototype.copyTo = function(dest,filter){
 		var FileUtils = Packages.org.apache.commons.io.FileUtils;
 		/* make sure dest is a java.io.File object */
 		if (dest instanceof Myna.File){
@@ -174,7 +178,19 @@ if (!Myna) var Myna={}
 		if (source.isDirectory()){
 			/* now let's see what the destination is */
 			if (!dest.exists() || dest.isDirectory()){
-				FileUtils.copyDirectory(source,dest);
+				if (filter){
+					FileUtils.copyDirectory(
+						source,
+						dest,
+						new java.io.FileFilter({
+							accept:function(javaFile){
+								return filter(new Myna.File(javaFile))
+							}
+						})
+					);
+				} else {
+					FileUtils.copyDirectory(source,dest);
+				}
 			} else {
 				throw new Error("Cannot copy a directory to a file");	
 			}

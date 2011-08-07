@@ -1114,7 +1114,7 @@ if (!Myna) var Myna={}
 		Myna.Permissions.Right = function(dao){
 			this.dao = dao;
 			//copy properties to this 
-			dao	.applyTo(this);
+			dao.applyTo(this);
 			//get rid of set_right_id. It is unnecessary and dangerous
 			delete this.set_right_id;
 		}
