@@ -2781,7 +2781,7 @@ if (!Myna) var Myna={}
 				
 			},
 			//var bean = new this.beanClass(data)
-			findBeansExperimental:function(pattern,options){
+			findBeans:function(pattern,options){
 				var $this = this;
 				pattern=pattern||{}
 				if (options === !!options) {
@@ -2790,8 +2790,12 @@ if (!Myna) var Myna={}
 					}	
 				}
 				var $this = this;
-				if (pattern && !("select" in pattern)){
-					pattern.select ="*"
+				try {
+					if ( pattern && typeof pattern == "object" &&  !("select" in pattern)){
+						pattern.select ="*"
+					}
+				}catch(e){
+					Myna.printConsole("DataManager.findBeans: bad pattern " + String(pattern) + " == "+ (typeof pattern))
 				}
 					
 				return new Myna.DataSet({
@@ -2805,7 +2809,7 @@ if (!Myna) var Myna={}
 						})
 				})
 			},
-			findBeans:function(pattern,caseSensitive){
+			findBeansold:function(pattern,caseSensitive){
 				var $this = this;
 				return new Myna.DataSet({
 					columns:$this.columnNames,

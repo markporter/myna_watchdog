@@ -126,5 +126,6 @@ var functions={
 	},
 	setBlob:function(con,st,index,value){
 		st.setObject(index+1,value,java.sql.Types.VARBINARY);
-	}
+	},
+	
 }

@@ -115,7 +115,7 @@ var functions={
 	},
 	
 	getSchemas:function(db){
-		return new Myna.Query({
+		var ret = new Myna.Query({
 			ds:db.ds,
 			sql:<ejs>
 				SELECT 
@@ -125,7 +125,7 @@ var functions={
 				where schema_name not like 'pg_%'
 			</ejs>
 		}).valueArray("schema_name")
-		
+		return ret
 	}, 
 	/* getSchemas:function(db){
 		var rsSchemas = db.md.getSchemas();
@@ -173,5 +173,28 @@ var functions={
 		st.setObject(index+1,value,java.sql.Types.VARCHAR);
 		/* var reader =new java.io.StringReader(value);
 		st.setCharacterStream(index,reader,value.length) */
-	}
+	},
+	totalRowsSql:function(sql){
+		return <ejs>
+			select count(*) count from (<%=sql%>) as myna_count
+		</ejs>
+	},
+	offsetSql:function(sql,limit,offset){
+		return <ejs>
+			<%=sql%>
+			
+			LIMIT
+			<@if limit>
+				<%=limit%>
+			<@else>
+				ALL
+			</@if>
+			OFFSET 
+			<@if offset>
+				<%=offset%>
+			<@else>
+				0
+			</@if>
+		</ejs> 
+	},
 }

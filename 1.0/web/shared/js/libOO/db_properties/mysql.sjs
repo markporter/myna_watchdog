@@ -143,5 +143,20 @@ var functions={
 	},
 	setBlob:function(con,st,index,value){
 		st.setObject(index+1,value,java.sql.Types.VARBINARY);
-	}
+	},
+	totalRowsSql:function(sql){
+		return <ejs>
+			select count(*) count from (<%=sql%>) as myna_count
+		</ejs>
+	},
+	offsetSql:function(sql,limit,offset){
+		return <ejs>
+			<%=sql%>
+			
+			<@if limit>
+				LIMIT <%=limit%> <@if offset>OFFSET <%=offset%></@if>
+			</@if>
+			
+		</ejs> 
+	},
 }

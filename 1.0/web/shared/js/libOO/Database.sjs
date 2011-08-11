@@ -33,18 +33,6 @@ Myna.Database = function (ds){
 	return db
 }
 
-Myna.Database.prototype.getCacheValue =function(key,defaultValue) {
-	var value = this.cache[key]
-	if (!value) {
-		
-		value =typeof defaultValue == "function"?defaultValue():defaultValue;
-		this.cache[key] = value
-	}
-	return value
-}
-Myna.Database.prototype.setCacheValue =function(key,value) {
-	this.cache[key] = value
-}
 
 /* Property: con
 		jdbc connection object. Created in <init>, closed on requestEnd
@@ -135,10 +123,9 @@ Myna.Database.prototype.setCacheValue =function(key,value) {
 	
 	*/
 	Myna.Database.prototype.__defineGetter__("schemas", function() {
-		return this._getCache("schemas",function(db){
-			return db.functions.getSchemas(db);
+		return this.getCacheValue("schemas",function(){
+			return this.functions.getSchemas(this);
 		});
-		
 	});
 /* Property: defaultSchema
 	The default schema for this datasource
@@ -147,8 +134,8 @@ Myna.Database.prototype.setCacheValue =function(key,value) {
 	Myna.Database.prototype.__defineGetter__(
 		"defaultSchema", 
 		function() {
-			return this._getCache("schemas",function(db){
-				return db.functions.getDefaultSchema(db)||"";
+			return this.getCacheValue("defaultSchema",function(){
+				return this.functions.getDefaultSchema(this)||"";
 			});
 		}
 	)
@@ -280,27 +267,30 @@ Myna.Database.prototype.setCacheValue =function(key,value) {
 		Some databases may not return information for all tables. 
 	*/
 	Myna.Database.prototype.getTablesBySchema = function(schema){
-		return this._getCache("getTablesBySchema",function(db){
-			return db.functions.getTables(db,schema);
+		return this.getCacheValue("getTablesBySchema",function(){
+			return this.functions.getTables(this,schema);
 		});
 	}
+
+	
+Myna.Database.prototype.getCacheValue =function(key,defaultValue) {
+	if (!("cache" in this)){
+		this.clearMetadataCache();		
+	}
+	var value = this.cache[key]
+	if (!(key in this.cache)) {
+		value =typeof defaultValue == "function"?defaultValue.call(this):defaultValue;
+		this.cache[key] = value
+	}
+	return value
+}
+Myna.Database.prototype.setCacheValue =function(key,value) {
+	this.cache[key] = value
+}
 
 /* Property: _cacheKey
 	(private) cache key base for internal metadata caching 
 	*/
-/* Function: _getCache
-	(private) internal function for caching metadata
-	
-	*/
-	Myna.Database.prototype._getCache = function(type,f){
-		if (!("cache" in this)){
-			this.clearMetadataCache();		
-		}
-		if (!(type in this.cache)){
-			this.cache[type] = f(this);
-		}
-		return this.cache[type]	
-	}
 /* Function: clearMetadataCache
 	clears metadata cache for this table
 	

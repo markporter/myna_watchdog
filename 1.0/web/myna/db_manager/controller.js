@@ -479,12 +479,6 @@ var C ={
 																"from " + (node.attributes.schema.length?node.attributes.schema + ".":"") + node.attributes.table_name + " " + table_alias
 															].join("\n")
 															var tpls = dbProperties[C.currentDbType].templates
-															if ("maxRows" in tpls){
-																sql= new Ext.XTemplate(tpls.maxRows).apply({
-																	query:sql,
-																	maxRows:100
-																})
-															}
 															
 															C.new_sql_window(sql)
 													})

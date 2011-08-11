@@ -435,25 +435,20 @@ Myna.Query.prototype={
 		 
 		Parameters: 
 			jdbcResultSet		-	JDBC resultSet
-			options 	-	Object of optional parameters. See below.
-	 
-		Options:
-			maxRows		-	*Default 0 (All rows)* Maximum number of rows to return
-			startRow	-	*Default 1* Row number in result from which to start returning 
-							rows. Starts with 1
+			
 			
 		Returns: 
 			this
 		 
 		*/
 	
-	parseResultSet:function(jdbcResultSet){
+	parseResultSet:function(jdbcResultSet,ignoreOffset){
 		var md = jdbcResultSet.getMetaData();
 		var qry = this;
 		/* reset data properties */
 			qry.columns=[];
 			qry.data=new Myna.DataSet();
-		
+		var isNative=false;
 		for (var index=0; index < md.getColumnCount(); ++index){
 			var size=Number(java.lang.Integer.MAX_VALUE)
 			try{
@@ -464,7 +459,8 @@ Myna.Query.prototype={
 				typeId:md.getColumnType(index+1),
 				typeName:String(md.getColumnTypeName(index+1)),
 				size:size
-			});		
+			});
+			
 		}
 		this.data.columns = this.columns.map(function(e){
 			if (qry.db && qry.db.isCaseSensitive){
@@ -479,7 +475,9 @@ Myna.Query.prototype={
 		//$application.addOpenObject(jdbcResultSet);
 		
 		var ResultSet = java.sql.ResultSet;
-		if (jdbcResultSet.getType() == ResultSet.TYPE_SCROLL_INSENSITIVE){
+		if (ignoreOffset){
+			//doNothing
+		} else if (jdbcResultSet.getType() == ResultSet.TYPE_SCROLL_INSENSITIVE){
 			// Point to the last row in resultset.
 			jdbcResultSet.last(); 
 			
@@ -491,6 +489,7 @@ Myna.Query.prototype={
 		} else if (this.startRow > 1){
 			while(jdbcResultSet.next() && jdbcResultSet.getRow() < this.startRow-1){}
 		}
+		
 		var row =new Myna.QueryResultRow(jdbcResultSet,this);
 		while(jdbcResultSet.next()){
 			if (this.maxRows >0 && this.data.length == this.maxRows ) break;
@@ -670,8 +669,21 @@ getStatement:function(sql){
 			return result;
 		} else {
 			try {
-				var st = this.getStatement(sql);
 				var db = new Myna.Database(dsName);
+				var ignoreOffset=false;
+				var origSql = sql;
+				if (
+					/^\s*select/i.test(sql) 
+					&&(
+						this.maxRows || this.startRow	>1
+					)
+					&& db.functions.offsetSql
+				){
+					sql=db.functions.offsetSql(sql,this.maxRows,this.startRow-1)
+					ignoreOffset = true;
+				} 
+				var st = this.getStatement(sql);
+				
 				var con = db.con;
 				
 				if (sqlParameters instanceof Myna.QueryParams){
@@ -704,9 +716,17 @@ getStatement:function(sql){
 				var hasResults = st.execute();
 				qry.success = true;
 				qry.executionTime=java.lang.System.currentTimeMillis()-start;
+				start = java.lang.System.currentTimeMillis();
 				if (hasResults ){
 					qry.resultSet = st.getResultSet();
-					qry.parseResultSet(qry.resultSet);
+					qry.parseResultSet(qry.resultSet,ignoreOffset);
+					if (ignoreOffset){
+						this.totalRows = new Myna.Query({
+							ds:dsName,
+							sql:db.functions.totalRowsSql(origSql),
+							parameters:sqlParameters
+						}).data[0].count	
+					}
 					qry.parseTime=java.lang.System.currentTimeMillis()-start;
 					/* st.close();
 					qry.resultSet.close() */

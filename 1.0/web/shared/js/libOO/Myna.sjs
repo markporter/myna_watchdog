@@ -1637,6 +1637,7 @@ if (!Myna) var Myna={}
 					if (!/isAlive/.test(e.message)){
 						
 						java.lang.System.err.println("Error writing log: " + e.message);
+						java.lang.System.err.println("Error detail: " + Myna.formatError(e));
 						java.lang.System.err.println("log Label: " +label);
 						java.lang.System.err.println("log Detail: " +detail);
 						$server_gateway.writeLog(

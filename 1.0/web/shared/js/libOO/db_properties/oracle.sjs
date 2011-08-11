@@ -112,6 +112,7 @@ var functions={
 			return !/(\$|PLAN_TABLE)/.test(row.table_name)
 		})
 	},
+
 	setClob:function(con,st,index,value){
 		con = st.getInnermostDelegate().getConnection();
 		var clob = Packages.oracle.sql.CLOB.createTemporary(con, false,Packages.oracle.sql.CLOB.DURATION_SESSION);
@@ -123,5 +124,30 @@ var functions={
 		var blob = Packages.oracle.sql.BLOB.createTemporary(con, false,Packages.oracle.sql.BLOB.DURATION_SESSION);
 		blob.putBytes(1,value);
 		st.setBlob(index+1, blob);
-	}
+	},
+	totalRowsSql:function(sql){
+		return <ejs>
+			select count(*) count from (<%=sql%>) as myna_count
+		</ejs>
+	},
+	offsetSql:function(sql,limit,offset){
+		return <ejs>
+		
+			SELECT * FROM (
+		
+				SELECT 
+					rownum rnum, 
+					a.*
+				FROM(
+					<%=sql%>
+				) a 
+				WHERE rownum <= <%=end%>
+			)
+			<@if offset>
+			WHERE rnum ><%=offset%>
+			</@if>
+			
+			
+		</ejs> 
+	},
 }
