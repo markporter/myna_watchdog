@@ -721,11 +721,16 @@ getStatement:function(sql){
 					qry.resultSet = st.getResultSet();
 					qry.parseResultSet(qry.resultSet,ignoreOffset);
 					if (ignoreOffset){
-						this.totalRows = new Myna.Query({
-							ds:dsName,
-							sql:db.functions.totalRowsSql(origSql),
-							parameters:sqlParameters
-						}).data[0].count	
+						try{
+							this.totalRows = new Myna.Query({
+								ds:dsName,
+								sql:db.functions.totalRowsSql(origSql),
+								parameters:sqlParameters
+							}).data[0].count
+						} catch(e){
+							Myna.printConsole(e)
+							Myna.printConsole(db.functions.totalRowsSql(origSql))
+						}
 					}
 					qry.parseTime=java.lang.System.currentTimeMillis()-start;
 					/* st.close();

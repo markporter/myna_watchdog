@@ -517,7 +517,7 @@ public class MynaThread {
 					}
 					
 					//wait if max threads are already running
-					if (!isWhiteListedThread) threadPermit.acquire();
+					//if (!isWhiteListedThread) threadPermit.acquire();
 					
 					isWaiting=false;
 					try{

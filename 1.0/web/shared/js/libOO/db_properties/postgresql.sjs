@@ -176,7 +176,7 @@ var functions={
 	},
 	totalRowsSql:function(sql){
 		return <ejs>
-			select count(*) count from (<%=sql%>) as myna_count
+			select count(*) as count from (<%=sql%>) as myna_count
 		</ejs>
 	},
 	offsetSql:function(sql,limit,offset){
