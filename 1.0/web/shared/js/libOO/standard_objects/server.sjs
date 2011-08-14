@@ -396,7 +396,30 @@ var $server={
 	get memUsed(){
 		return $server.memCurrent - $server.memFree;
 	},
+/* property: mynaCmd
+	Path to the Myna commandline shell script
 	
+	Example:
+	(code)
+		//execute some code in a separate JVM:
+		Myna.executeShell($server.mynaCmd+" -m 40",<ejs>
+			Myna.printConsole("I'm running as a completely separate process!");
+			Myna.include("/some/gnarly/code.sjs");
+		</ejs>)
+	(end)
+	See:
+		* <Myna Commandline> 
+		
+	*/		
+	get mynaCmd(){
+		var mynaCmd;
+		if (/windows/i.test($server.osName)){
+			mynaCmd =new Myna.File("/WEB-INF/myna/commandline/myna.cmd");
+		} else {
+			mynaCmd =new Myna.File("/WEB-INF/myna/commandline/myna");
+		}
+		return mynaCmd.javaFile.toString()
+	},	
 /* property: get
 	retrieves a server variable
 	

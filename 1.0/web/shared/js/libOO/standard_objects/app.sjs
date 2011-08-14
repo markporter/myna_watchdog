@@ -892,8 +892,9 @@ var $application={
 		} else if ($server.isCommandline){
 			$req.data ={
 				arguments:[]
+				
 			}
-			var args = $server_gateway.environment.get("commandlineArguments")
+			var args = $req.data.argArray= $server_gateway.environment.get("commandlineArguments")
 			if (args && args.length){
 				var inString = false;
 				var stringChar ="";

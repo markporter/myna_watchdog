@@ -752,7 +752,9 @@ if (!Myna) var Myna={}
 		result.script=script;
 		result.shellCommand=shellCommand;
 		process = runtime.exec(shellCommand + " " + systemPath,null,scriptFile.javaFile.getParentFile());
-		
+		result.inputStream = process.getInputStream();
+		result.errorInputStream =process.getErrorStream();
+		result.process = process;
 		if (waitForOutput){
 			result.output = Myna.JavaUtils.streamToString(process.getInputStream());
 			result.errors = Myna.JavaUtils.streamToString(process.getErrorStream());
