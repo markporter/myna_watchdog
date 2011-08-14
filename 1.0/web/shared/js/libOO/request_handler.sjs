@@ -70,7 +70,6 @@ try{
 				}
 			}
 			if(found){
-				
 				//reset pathing:
 				$server_gateway.currentDir = $server.rootDir+dir+"/";
 				$server_gateway.requestDir = $server_gateway.currentDir;

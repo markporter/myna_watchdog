@@ -144,7 +144,11 @@ public class MynaThread {
 					// it is time to stop the script.
 					// Throw Error instance to ensure that script will never
 					// get control back through catch or finally.
-					String path = ((StringBuffer)(mcx.mynaThread.environment.get("requestURL"))).toString();
+					String path ="";
+					try {
+						path = ((StringBuffer)(mcx.mynaThread.environment.get("requestURL"))).toString();
+						
+					} catch(Exception pathEx){}
 					mcx.reportError(
 						"URL <b>" +  path +"</b> "
 						+ "request time of "+ ((currentTime - startTime)/1000) +" seconds exceeded timeout of " + timeout +" seconds."  
@@ -471,7 +475,9 @@ public class MynaThread {
 			if (!isInitialized) {
 				this.init();
 				this.isInitThread=true;
-				log("INFO","Starting Myna Application Server","");
+				if (this.environment.get("isCommandline") == null){
+					log("INFO","Starting Myna Application Server","");
+				}
 				
 			}
 		}
@@ -1081,6 +1087,10 @@ public class MynaThread {
 		}
 		if (generalProperties.getProperty("debug_parser_output") == null){
 			generalProperties.setProperty("debug_parser_output","0");
+			propsChanged=true;
+		}
+		if (generalProperties.getProperty("cron_tasks_via_mynacmd") == null){
+			generalProperties.setProperty("cron_tasks_via_mynacmd","1");
 			propsChanged=true;
 		}
 		if (propsChanged) saveGeneralProperties();

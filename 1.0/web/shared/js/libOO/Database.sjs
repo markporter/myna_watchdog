@@ -20,14 +20,14 @@ Myna.Database = function (ds){
 	}
 	
 	this.ds=ds;
-	var db =$server_gateway.environment.get("__DS_CACHE__:" + ds)
+	var db =$req["__DS_CACHE__:" + ds]
 	
 	if (!db) {
 		db = this;
 		this.cache={
 		}
 		db.init()
-		$server_gateway.environment.put("__DS_CACHE__:" + ds,this)
+		$req["__DS_CACHE__:" + ds] =this
 	}
 	
 	return db

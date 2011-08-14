@@ -711,6 +711,7 @@ var C ={
 							{name:"instance_id"},
 							{name:"instance_purpose"},
 							{name:"administrator_email"},
+							{name:"cron_tasks_via_mynacmd"},
 							{name:"enable_directory_listings"},
 							{name:"commonjs_paths"},
 							{name:"administrator_email_on_error"},
@@ -775,6 +776,22 @@ var C ={
 							store:new Ext.data.SimpleStore({
 								fields: ['id','text'],
 								data:[[0,"No"],[1,"Yes"]]
+							}),
+							displayField:'text',
+							valueField:'id',
+							mode: 'local',
+							triggerAction: 'all',
+							selectOnFocus:true,
+							editable:false,
+							width:50,
+							allowBlank:false
+						},{
+							xtype:"combo",
+							fieldLabel: 'Run cron tasks in a separate JVM?',
+							hiddenName: 'cron_tasks_via_mynacmd',
+							store:new Ext.data.SimpleStore({
+								fields: ['id','text'],
+								data:[["0","No"],["1","Yes"]]
 							}),
 							displayField:'text',
 							valueField:'id',
@@ -1990,7 +2007,7 @@ var C ={
 								{name:'url'},
 								{name:'current_task'},
 								{name:'started'},
-								{name:'runtime'},
+								{name:'runtime', type:"number"},
 								{name:'current_runtime'},
 								{name:'is_white_listed'}
 							]),
@@ -2040,17 +2057,17 @@ var C ={
 							dataIndex: 'started'
 						},{
 							header: "Current", 
-							width: 50, 
+							width: 150, 
 							renderer:function(time){
-								return time +"ms";
+								return Date.formatInterval(time);
 							},
 							sortable: true, 
 							dataIndex: 'current_runtime'
 						},{
 							header: "Total", 
-							width: 50, 
+							width: 150, 
 							renderer:function(time){
-								return time +"ms";
+								return Date.formatInterval(time);
 							},
 							sortable: true, 
 							dataIndex: 'runtime'

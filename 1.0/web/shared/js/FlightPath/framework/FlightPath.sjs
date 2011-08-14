@@ -23,12 +23,12 @@ var config={
 var version="1.0"
 
 
-/* Property: _controlleClasses 
+/* Property: _controllerClasses 
 	private controller cache
 */
 var _controllerClasses={}
 
-/* Property: _controlleClasses 
+/* Property: _modelClasses 
 	private model cache
 */
 var _modelClasses={}

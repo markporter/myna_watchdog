@@ -686,7 +686,7 @@
 				var curRow;
 				if (!(colVal in parent)){
 					//debug_window(path +" adding " + colName +" : " +colVal + " : " +index)
-					var curRow = parent[colVal] =full?ObjectLib.applyTo(row,{}):{};
+					curRow = parent[colVal] =full?ObjectLib.applyTo(row,{}):{};
 					
 					//parent.push(parent[colVal])
 					if (index < keyCols.length-1) {

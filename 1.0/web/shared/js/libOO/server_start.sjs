@@ -26,12 +26,13 @@ if (!$server_gateway.environment.containsKey("isCommandline")){
 
 	//set up the commandline Script
 		var props = Myna.JavaUtils.mapToObject(java.lang.System.properties);
+		var mynaCmd
 		if (/windows/i.test($server.osName)){
-			var mynaCmd =new Myna.File("/WEB-INF/myna/commandline/myna.cmd");
+			mynaCmd =new Myna.File("/WEB-INF/myna/commandline/myna.cmd");
 			
 			mynaCmd.writeString(<ejs>
 				@echo off
-				REM this is max memory to use. can be overridden with the -m option 
+				REM this is max memory to use. 
 				set MEM=128
 				
 				set JAVA=<%=props["java.home"]%>\bin\java.exe
@@ -41,15 +42,16 @@ if (!$server_gateway.environment.containsKey("isCommandline")){
 			</ejs>)
 			Myna.log("info","Created Myna Commandline script in " + mynaCmd.javaFile.toString(),Myna.dump(result));
 		} else {
-			var mynaCmd =new Myna.File("/WEB-INF/myna/commandline/myna");
+			mynaCmd =new Myna.File("/WEB-INF/myna/commandline/myna");
 			
 			mynaCmd.writeString(<ejs>
 				#!/bin/bash
 				
-				#this is max memory to use. can be overridden with the -m option 
+				#this is max memory to use. Can be overridden with the -m option 
 				MEM=128
 				
 				JAVA="<%=props["java.home"]%>/bin/java"
+				PATH="$PATH;<%=props["java.home"]%>/bin"
 				WEB_INF="<%=new Myna.File("/WEB-INF").javaFile.toString()%>"
 				
 				if [ $# -eq 0  ] || [ $1 == "--help" ]; then
@@ -67,7 +69,7 @@ if (!$server_gateway.environment.containsKey("isCommandline")){
 				fi
 				
 								
-				$JAVA -Xmx${MEM}m -cp $WEB_INF/lib/*:$WEB_INF/classes/ info.emptybrain.myna.JsCmd ${1+"$@"}	
+				java -DINST=MynaCmd -DSCRIPT=$1 -Xmx${MEM}m -cp $WEB_INF/lib/*:$WEB_INF/classes/ info.emptybrain.myna.JsCmd ${1+"$@"}	
 			</ejs>)
 			var result =Myna.executeShell("/bin/bash",<ejs>
 				chmod 777 <%=mynaCmd.javaFile.toString()%>

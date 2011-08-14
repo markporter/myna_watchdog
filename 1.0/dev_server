@@ -6,16 +6,17 @@
 #user=
 server=dev
 port=8180
-myna_home=./winstone
+myna_home=./build
+web_inf=$(readlink -m $myna_home/WEB-INF)
 
 # these are  relative to myna_home or absolute
-webroot=../build
 pidfile=$server.pid
-logfile=$server.log
+logfile="$(readlink -m $myna_home/..)/$server.log"
 
-jvm_args="-server -Xmx256m  -Dsun.io.useCanonCaches=false -XX:MaxPermSize=64m -XX:+UseParallelGC -Djava.awt.headless=false"
+jvm_args="-DINST=$server -server -Xmx56m  -Dsun.io.useCanonCaches=false -XX:MaxPermSize=64m -XX:+UseParallelGC -Djava.awt.headless=true"
 
-args="--webroot=$webroot   --httpPort=$port --prefix=/dev --ajp13Port=-1"
+args="-c /$server -p $port"
+
 
 #export JAVA_HOME=/usr/java/default/
 #export JRE_HOME=/usr/java/default/jre/
@@ -23,30 +24,40 @@ args="--webroot=$webroot   --httpPort=$port --prefix=/dev --ajp13Port=-1"
 
 case "$1" in
 start)
-	cd $myna_home
-    	java $jvm_args -jar winstone.jar $args &> $logfile  &
-	pid=$(pgrep -f ^java.*$server)
-	echo $pid > $pidfile
 	
-	echo "Myna instance '$server' pid ($pid) Starting. tail -f $myna_home/$logfile for details."
+	java $jvm_args -cp $web_inf/lib/*:$web_inf/classes/ info.emptybrain.myna.MynaServer $args &> $logfile  &
+	pid=$(pgrep -f "^java.*INST=$server")
+	#echo $pid > $pidfile
 	
+	echo "Myna instance '$server' pid ($pid) Starting. tail -f $logfile for details."
+	
+	exit 0
     ;;
 stop)
-	cd $myna_home
-	kill -9 $(pgrep -f ^java.*webroot=$webroot)
-	rm $pidfile
+	
+	kill -9 $(pgrep -f ^java.*INST=$server)
+	#rm $pidfile
 	echo "Myna instance '$server' stopped."
     ;;
+compile)
+	$0 stop
+   ant compile && $0 restart && tail -f $logfile
+    ;;
 restart)
-    	$0 stop
+   $0 stop
 	sleep 1
 	$0 start
     ;;
 status)
 	cd $myna_home
 	echo -n Myna instance \"$server\":
-        ps -p $(cat $pidfile 2> /dev/null) 
-       
+	$(pgrep -f ^java.*webroot=$webroot 2> /dev/null) 
+	if [ $? -eq 0];then
+		echo " Running."
+	else
+		echo " Stopped."
+	fi
+   
     ;;
 *)
     echo "usage: $0 (start|stop|restart|status)"

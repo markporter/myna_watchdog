@@ -163,30 +163,103 @@ var detail;
 						
 					}
 					if (shouldRun){
+						var props = Myna.JavaUtils.mapToObject(java.lang.System.properties);
+						var mynaCmd
+						if (/windows/i.test($server.osName)){
+							mynaCmd =new Myna.File("/WEB-INF/myna/commandline/myna.cmd").javaFile.toString();
+							
+						} else {
+							mynaCmd =new Myna.File("/WEB-INF/myna/commandline/myna").javaFile.toString();
+						}
+						
 						lock.writeString(java.lang.Thread.currentThread().getId());
 						log("info","started.")
 						if (/^https?:\//.test(config.script)){
-							var h = new Myna.HttpConnection({
-								url:config.script,
-							})
-							h.connect();
-						
-							if (h.getStatusCode() == 200){
-								log("info","completed.")
+							if (props.cron_tasks_via_mynacmd == 1){
+								Myna.executeShell(mynaCmd+" -m 40",<ejs>
+									try{
+										$application.appname="<%=appname%>";
+										$req.id="<%=$req.id%>"
+										function log(type, label,detail){
+											Myna.logSync(type,"Task '<%=name%>': " +(label||""),detail||"");
+										}
+										var h = new Myna.HttpConnection({
+											url:"<%=config.script%>",
+										})
+										h.connect();
+									
+										if (h.getStatusCode() == 200){
+											
+											log("info","completed.")
+											$res.setExitCode(0)
+										} else {
+											detail =[
+												Myna.dump(h.responseHeaders,"Response headers"),
+												Myna.dump(<%=config.toJson()%>,"Task Config"),
+												"<h2>Output</h2>",
+												h.getResponseText()
+											].join("<br>\n")
+											log("error","Connection Error, Status: " + h.getStatusCode() ,detail);
+											$res.setExitCode(1,"Connection Error, Status: " + h.getStatusCode())
+										}	
+									} catch(e){
+										log("error","Error in cron <%=name%>",Myna.formatError(e));	
+									}
+								</ejs>,false)
 							} else {
-								detail =[
-									Myna.dump(h.responseHeaders,"Response headers"),
-									Myna.dump(config,"Task Config"),
-									"<h2>Output</h2>",
-									h.getResponseText()
-								].join("<br>\n")
-								log("error","Connection Error, Status: " + h.getStatusCode() ,detail);
+								try{
+									var h = new Myna.HttpConnection({
+										url:"<%=config.script%>",
+									})
+									h.connect();
+								
+									if (h.getStatusCode() == 200){
+										
+										log("info","completed.")
+										$res.setExitCode(0)
+									} else {
+										detail =[
+											Myna.dump(h.responseHeaders,"Response headers"),
+											Myna.dump(config,"Task Config"),
+											"<h2>Output</h2>",
+											h.getResponseText()
+										].join("<br>\n")
+										log("error","Connection Error, Status: " + h.getStatusCode() ,detail);
+										$res.setExitCode(1,"Connection Error, Status: " + h.getStatusCode())
+									}	
+								} catch(e){
+									log("error","Error in cron "+name,Myna.formatError(e));	
+								}
 							}
+								
+							
 						} else { //should be a script file
 							var script = new Myna.File(config.script);
 							if (script.exists()){
-								Myna.include(config.script);
-								log("info","completed.")
+								if (props.cron_tasks_via_mynacmd == 1){
+									Myna.executeShell(mynaCmd+" -m 40",<ejs>
+										try{
+											$application.appname="<%=appname%>";
+											$req.id="<%=$req.id%>"
+											function log(type, label,detail){
+												Myna.logSync(type,"Task '<%=name%>': " +(label||""),detail||"");
+											}
+											Myna.include("<%=config.script%>");
+											log("info","completed.")
+										} catch(e){
+											log("error","Error in cron <%=name%>",Myna.formatError(e));	
+										}
+									</ejs>,false)
+								} else {
+									try{
+										
+										Myna.include(config.script);
+										log("info","completed.")
+									} catch(e){
+										log("error","Error in cron "+name,Myna.formatError(e));	
+									}	
+								}
+								
 							} else {
 								throw new Error("Task Script '"+config.script+"' does not represent a valid URL or script file");
 							}

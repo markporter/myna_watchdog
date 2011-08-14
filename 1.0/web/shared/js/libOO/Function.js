@@ -139,7 +139,7 @@ if (!Function.prototype.bind)
 		var cache={}
 		var func = this
 		return function(key){
-			var key = String(key||"value")
+			key = String(key||"value")
 			if (!(key in cache)){
 				cache[key] = func.call(this, key);
 			}

@@ -1,11 +1,11 @@
 var thisDir =new Myna.File($server.requestDir)
+
 if (
-	thisDir.exists() 
-	&& ($server.scriptName == "" || $server.scriptName == "_index")  
-	&& $server.properties.instance_purpose.toLowerCase() == "dev"
+	thisDir.exists()              
+	&& ($server.requestScriptName == "" || $server.requestScriptName == "_index")  
+	&& $req._DIR_LISTING_ELIGIBLE_
 	&& !/web-inf/i.test(thisDir.toString())
 ){
-	
 	var files=thisDir.listFiles();
 	var compare;
 	var sortCol =$req.data.sort || "fileName";
@@ -38,7 +38,7 @@ if (
 				compare=String.compareNaturalReverse;
 			}
 			
-	}
+	}                                                         
 	files.sortByCol(sortCol,compare);
 	
 	var setDir = function(colname){
@@ -64,8 +64,8 @@ if (
 			font-style:italic; 
 		}
 		</style>
-		<b>Directory Listing for <%=thisDir%></b><br>
-		<b><i>To disable listings, set the instance purpose to something other than "dev"<i></b><br><br>
+		<b>Directory Listing for <%=$server.requestUrl%></b><br>
+		<b><i>To disable listings, see "Enable Directory Listings" in the Adminstrator<i></b><br><br>
 		<table style="width:100%" borders=0">
 			<tr >
 				<th><a href="?sort=fileName&asc=<%=setDir("fileName")%>">File Name</a></th>

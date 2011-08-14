@@ -9,9 +9,9 @@
 	<script type="text/javascript" src="<%=$application.extUrl%>ext-all.js"></script>
 	<script type="text/javascript" src="<%=$server.rootUrl%>shared/js/libOO/client.sjs"></script>
 	<!-- Simple OpenID Selector -->
-	<link rel="stylesheet" href="<%=$server.rootUrl%>shared/openid-selector/css/openid.css" />
+	<%-- <link rel="stylesheet" href="<%=$server.rootUrl%>shared/openid-selector/css/openid.css" />
 	<script type="text/javascript" src="<%=$server.rootUrl%>shared/openid-selector/js/jquery-1.2.6.min.js"></script>
-	<script type="text/javascript" src="<%=$server.rootUrl%>shared/openid-selector/js/openid-jquery.js"></script>
+	<script type="text/javascript" src="<%=$server.rootUrl%>shared/openid-selector/js/openid-jquery.js"></script> --%>
 	<!-- /Simple OpenID Selector -->
 	
 	<style type="text/css">
@@ -34,10 +34,10 @@
 	
 	<script>
 		Ext.onReady(function(){
-			openid.init({
+			/* openid.init({
 				input_id:'openid',
 				img_path:"<%=$server.rootUrl%>shared/openid-selector/images/"
-			});
+			}); */
 			//Ext.get("login_div").hide();
 			Ext.BLANK_IMAGE_URL = '<%=$application.extUrl%>resources/images/default/s.gif';
 			Ext.getBody().query(".hide-in-ext").forEach(function(domElement){
@@ -121,7 +121,7 @@
 						<legend ><%=providerMap[provider].desc%></legend>
 						
 				<@if provider == "openid">
-					<div id="openid_choice">
+					<%-- <div id="openid_choice">
 						
 						<div id="openid_btns"></div>
 					</div>
@@ -133,7 +133,7 @@
 					<noscript>
 					<p>OpenID is service that allows you to log-on to many different websites using a single indentity.
 					Find out <a href="http://openid.net/what/">more about OpenID</a> and <a href="http://openid.net/get/">how to get an OpenID enabled account</a>.</p>
-					</noscript>
+					</noscript> --%>
 				<@elseif provider == "server_admin">
 						<%-- <b><%=providerMap[provider].desc%></b><br/><br/> --%>
 						<input type="hidden" name="username" value="admin">

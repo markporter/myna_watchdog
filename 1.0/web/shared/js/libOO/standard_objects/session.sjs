@@ -88,7 +88,7 @@ var $session={
 	*/
 	set:function(key,value){
 		if (!this.created) this.init();
-		if (!$server.request) return ;
+		if (!$server.request) return undefined;
 		var gotLock = this._map.lockMap(10,java.util.concurrent.TimeUnit.SECONDS);
 		if (gotLock){
 			try {

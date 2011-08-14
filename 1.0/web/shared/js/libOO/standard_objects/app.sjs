@@ -1197,6 +1197,7 @@ var $application={
 					<%=line%>
 					</@loop>
 				</ejs>)	
+				java.lang.System.exit(1);
 			} else {
 				$res.print(formattedError)
 			}

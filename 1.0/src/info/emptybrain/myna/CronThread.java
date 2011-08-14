@@ -119,8 +119,8 @@ public class CronThread {
 				MynaThread thread = new MynaThread();
 				
 				try{
-					java.net.URI mynaRoot= JsCmd.class.getResource(".")
-							.toURI().resolve("../../../../../");
+					java.net.URI mynaRoot= JsCmd.class.getResource("/general.properties")
+							.toURI().resolve("../../");
 					
 					File jsFile = new File(
 						mynaRoot

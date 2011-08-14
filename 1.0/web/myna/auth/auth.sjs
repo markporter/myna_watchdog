@@ -2,14 +2,18 @@ var fusebox={
 	login:function(data){
 		//Myna.log("debug","data",Myna.dump($req.data));
 		data.setDefaultProperties({
-			providers:["openid"].concat(Myna.Permissions.getAuthTypes()).join(),
+			providers:Myna.Permissions.getAuthTypes().join(),
 			title:"Login"
 		})
 		var session_data = $session.get("_LOGIN_REQUEST_") || {}
 		session_data.applyTo(data);
 		
 		data.providerMap ={};
-		data.providers.split(/,/).forEach(function(p){
+		data.providers= data.providers.split(/,/).filter(function(provider){
+			return provider != "openid"
+		}).join()
+		data.providers.split(/,/)
+		.forEach(function(p){
 			if (p == "openid"){
 				data.providerMap[p]={
 					name:"OpenID: Google, Yahoo, AOL, and more",

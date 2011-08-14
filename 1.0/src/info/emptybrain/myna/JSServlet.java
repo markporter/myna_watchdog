@@ -180,6 +180,7 @@ public class JSServlet extends HttpServlet {
 					}
 					
 				} else {
+					res.setContentType("text/html");
 					thread.handleRequest(scriptPath);
 					if (!thread.requestHandled){
 						//flush output
@@ -209,7 +210,7 @@ public class JSServlet extends HttpServlet {
 				thread.handleError(e);
 				
 				//flush any error output
-				res.getWriter().print(thread.generatedContent);
+				res.getOutputStream().print(thread.generatedContent.toString());
 			}
 		} catch (Exception e){
 			e.printStackTrace(System.err);

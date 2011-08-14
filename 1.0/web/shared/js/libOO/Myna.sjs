@@ -759,27 +759,28 @@ if (!Myna) var Myna={}
 			
 			process.waitFor();
 			result.exitCode = process.exitValue();
-		}
-		if (result.exitCode ==0 && String(result.errors).length ==0){
-			scriptFile.forceDelete();
-		} else {
-			Myna.log("Error","Error in Myna.executeShell",<ejs>
-				<b>Shell Command:</b><br>
-				<pre><%=shellCommand%></pre><p>
-				
-				<b>Script:</b><br>
-				<pre><%=script%></pre><p>
-				
-				<b>Errors:</b><br>
-				<pre><%=result.errors%></pre><p>
-				
-				<b>Output:</b><br>
-				<pre><%=result.output%></pre><p>
-				
-				<b>ScriptPath:</b><br>
-				<pre><%=result.file%></pre><p>
-			</ejs>);	
-		}
+			if (result.exitCode ==0 && String(result.errors).length ==0){
+				scriptFile.forceDelete();
+			} else {
+				Myna.log("Error","Error in Myna.executeShell",<ejs>
+					<b>Shell Command:</b><br>
+					<pre><%=shellCommand%></pre><p>
+					
+					<b>Script:</b><br>
+					<pre><%=script%></pre><p>
+					
+					<b>Errors:</b><br>
+					<pre><%=result.errors%></pre><p>
+					
+					<b>Output:</b><br>
+					<pre><%=result.output%></pre><p>
+					
+					<b>ScriptPath:</b><br>
+					<pre><%=result.file%></pre><p>
+				</ejs>);	
+			}
+		} 
+		
 		return result;
 		
 	}
@@ -1619,7 +1620,53 @@ if (!Myna) var Myna={}
 			
 			var logFunction = function(reqId,type,label,detail,app_name,log_elapsed,req_elapsed,now){
 				try{
-					new Myna.DataManager("myna_log").getManager("myna_log_general").create({
+					new Myna.Query({
+						ds:"myna_log",
+						sql:<ejs>
+							insert into myna_log_general(
+								app_name,
+								detail,
+								event_ts,
+								hostname,
+								instance_id,
+								label,
+								log_elapsed,
+								log_id,
+								purpose,
+								request_elapsed,
+								request_id,
+								type
+							) values (
+								{app_name},
+								{detail},
+								{event_ts:timestamp},
+								{hostname},
+								{instance_id},
+								{label},
+								{log_elapsed:bigint},
+								{log_id},
+								{purpose},
+								{request_elapsed:bigint},
+								{request_id},
+								{type}
+							)
+						</ejs>,
+						values:{
+							app_name:app_name,
+							detail:detail,
+							event_ts:now,
+							hostname:$server.hostName,
+							instance_id:$server.instance_id,
+							label:String(label).left(255),
+							log_elapsed:log_elapsed,
+							log_id:Myna.createUuid(),
+							purpose:$server.purpose,
+							request_elapsed:req_elapsed,
+							request_id:reqId,
+							type:type
+						}
+					}) 
+					/* new Myna.DataManager("myna_log").getManager("myna_log_general").create({
 						app_name:app_name,
 						detail:detail,
 						event_ts:now,
@@ -1632,7 +1679,7 @@ if (!Myna) var Myna={}
 						request_elapsed:req_elapsed,
 						request_id:reqId,
 						type:type 
-					})
+					}) */
 				} catch(e){
 					if (!/isAlive/.test(e.message)){
 						

@@ -199,6 +199,7 @@ var fusebox={
 		return {success:true,output:$res.clear()}
 	},
 	get_running_requests:function(data){
+		$profiler.mark("Get Running Requests")
 		var runningThreads = $server_gateway.runningThreads.toArray()
 		.map(function(thread){
 			var scope = thread.threadScope
@@ -216,9 +217,11 @@ var fusebox={
 			if (thread.isWaiting){
 				current_task="Queued";
 			} else if (scope.$profiler){
-				var times = scope.$profiler.times;
-				var time = times[times.length-1];
-				current_task=time.label;
+				try {
+					var times = scope.$profiler.times;
+					var time = times[times.length-1];
+					current_task=time.label||"";
+				} catch(e){}
 				current_runtime=new Date().getTime() - time.begin;
 			} 
 			return {
@@ -657,7 +660,7 @@ var fusebox={
 				progress.message = "Egg does not match checksum, installation aborted";
 				progress.hasError = true;
 				$session.set("install_egg_progress",progress);
-				return;
+				return undefined;
 			}
 		}
 		
@@ -728,7 +731,7 @@ var fusebox={
 					sourceIS.close();
 				}
 				//skip same files and others we don't want to change
-				if (isSame) return;
+				if (isSame) return undefined;
 				//copy to upgrade directory
 				var is = zipFile.getInputStream(entry);
 				var os = FileUtils.openOutputStream(upgradeFile.javaFile);
@@ -737,7 +740,7 @@ var fusebox={
 				os.close();
 				
 			}
-			return;
+			return undefined;
 		});
 		zipFile.close();
 		progress.percentComplete=.9;

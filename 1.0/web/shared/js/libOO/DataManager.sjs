@@ -2789,7 +2789,7 @@ if (!Myna) var Myna={}
 						caseSensitive:!!options
 					}	
 				}
-				var $this = this;
+				
 				try {
 					if ( pattern && typeof pattern == "object" &&  !("select" in pattern)){
 						pattern.select ="*"

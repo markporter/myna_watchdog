@@ -61,7 +61,7 @@ var $cookie={
 			_value_
 	*/
 	set:function(name,value,options){
-		if (!$server.response ) return; //don't bother if we can't send cookies
+		if (!$server.response ) return undefined; //don't bother if we can't send cookies
 		
 		if (options == undefined) options ={}
 		options.setDefaultProperties({
