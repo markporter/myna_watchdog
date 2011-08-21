@@ -202,23 +202,34 @@
 
 <target name="jar" depends="compile" description="create jar file">
 	<jar destfile="${dist.home}/myna.jar">
-		<fileset dir="${build.home}/WEB-INF/classes"/>
-		<fileset dir="${build.home}/../"
-			includes="build/*"
-		/>
+		<fileset dir="${build.home}/WEB-INF/classes" includes="bootstrap/MynaServer.class"/>
 		<restrict>
 			<name regex="^(?!.*(SF|RSA|DSA)).*$" />
+			<name regex="^(?!.*(about_files|about.html|plugin.properties)).*$" />
 			<archives>
 				<zips>	
-					<fileset dir="${jars.home}" includes="**/*.jar"/>
+					<fileset dir="${jars.home}" includes="commons-cli.jar" />
+					<fileset dir="${jars.home}" includes="commons-io.jar" />
+					<fileset dir="${jars.home}" includes="jetty-all.jar" excludes=" *about.html"/>
+					<fileset dir="${jars.home}" includes="servlet-api-2.5.jar" excludes="*META-INF/* *about_files/* *about.html *plugin.properties"/>
+					
 				</zips>
 			</archives>
 		</restrict>
+		<fileset dir="${build.home}" />
 		<manifest>
 			<attribute name="Main-Class"
-			value="info.emptybrain.myna.JsCmd"/>
+			value="bootstrap.MynaServer"/>
 		</manifest>
 	</jar>
+	<!-- <manifest file="MANIFEST.MF">
+		<attribute name="Main-Class" value="info.emptybrain.myna.MynaServer"/>
+	</manifest>
+   <jar 
+   	jarfile="${dist.home}/myna.jar" 
+   	basedir="${build.home}"
+   	manifest="MANIFEST.MF"
+   /> -->
 </target>	
 
 <!-- ==================== Dist Target ===================================== -->

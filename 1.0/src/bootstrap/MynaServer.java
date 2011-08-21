@@ -1,5 +1,4 @@
-package info.emptybrain.myna;
-
+package bootstrap;
 
 import org.apache.commons.cli.*;
 import java.io.IOException;
@@ -18,7 +17,8 @@ import java.lang.reflect.*;
 
 public class MynaServer 
 {
-	
+	public static Server server;
+	public static boolean restart = false;
 	public static void main(String[] args) throws Exception
 	{
 		String classUrl = MynaServer.class.getResource("MynaServer.class").toString();
@@ -104,7 +104,7 @@ public class MynaServer
 			}
 		}
     
-		Server server = new Server(port);
+		server = new Server(port);
 		System.out.println(
 			"Using web root: " +webroot
 		);
@@ -117,7 +117,27 @@ public class MynaServer
 		server.setHandler(context);
 		
 		server.start();
-		server.join(); 
+		//server.join();
+		while (true){
+			Thread.sleep(1000);
+			if (MynaServer.restart){
+				MynaServer.restart = false;
+				System.out.println("restarting");
+				server.stop();
+				server.join();
+				server.destroy();
+				server = new Server(port);
+				context = new WebAppContext();
+				context.setDescriptor("/WEB-INF/web.xml");
+				context.setResourceBase(webroot);
+				context.setContextPath(webctx);
+				context.setParentLoaderPriority(true);
+				
+				server.setHandler(context);
+				
+				server.start();
+			}
+		}
 		
 		
 	}

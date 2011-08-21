@@ -210,7 +210,9 @@ public class JSServlet extends HttpServlet {
 				thread.handleError(e);
 				
 				//flush any error output
+				try {
 				res.getOutputStream().print(thread.generatedContent.toString());
+				} catch (Exception any){}
 			}
 		} catch (Exception e){
 			e.printStackTrace(System.err);
