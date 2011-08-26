@@ -1,6 +1,73 @@
 //only if not running from commandline
 if (!$server_gateway.environment.containsKey("isCommandline")){
-
+	//memory watchdog
+	if (Packages.bootstrap.MynaServer.server){
+		new Myna.Thread(function(){
+			$req.timeout=0;
+			var loopCount=0;
+			var lowMemCount=0;
+			$profiler.mark("Server health monitor thread")
+			Myna.sleep(10000);//lets give the server some time to get going
+			while(true){
+				Myna.sleep(1000);
+				++loopCount;
+				java.lang.Runtime.getRuntime().gc();
+				var memFree = $server.memAvailable/$server.memMax;
+				var runningThreads = $server_gateway.runningThreads.toArray().length;
+				Myna.printConsole(
+					"Running Threads",
+					"Mem Used: " +($server.memUsed/(1024*1024)).toFixed(2) +"MB, "+ (memFree*100).toFixed(2) + "% Free. Running threads: " + runningThreads
+				)
+				if (memFree < .015){
+					++lowMemCount;
+					
+					java.lang.Runtime.getRuntime().gc();
+					if (lowMemCount >1){
+						Myna.printConsole(" Less than 15% free memory, restarting...");
+						Myna.printConsole(
+							"Running Threads",
+							"Mem Used: " +($server.memUsed/(1024*1024)).toFixed(2) +"MB, "+ (memFree*100).toFixed(2) + "% Free. Running threads: " + runningThreads
+						)
+						
+						$server_gateway.runningThreads.toArray()
+						.map(function(thread){
+							var scope = thread.threadScope
+							var current_task="";
+							var url;
+							var req = thread.environment.get("request");
+							var runtime=new Date().getTime() - thread.started.getTime();
+							var current_runtime=runtime;
+							if (req){
+								url=req.getRequestURI();
+							} else {
+								url="Thread in " +thread.getNormalizedPath(thread.requestDir);
+							} 
+							
+							if (thread.isWaiting){
+								current_task="Queued";
+							} else if (scope.$profiler){
+								try {
+									var times = scope.$profiler.times;
+									var time = times[times.length-1];
+									current_task=time.label||"";
+								} catch(e){}
+							}
+							Myna.printConsole(<ejs>
+								<%=url.toFixedWidth(60)%> <%=current_task.toFixedWidth(60)%> <%=Date.formatInterval(runtime)%>
+							</ejs>)
+							
+						})
+						
+						
+						$server.restart()
+					}
+				} else {
+					lowMemCount=0;	
+				}
+				if (loopCount==1000) loopCount=0;
+			}
+		},[],.99)
+	}
 	$req.timeout=0;
 	Myna.include("/shared/js/libOO/upgrade_tables.sjs",{});
 	
@@ -19,8 +86,8 @@ if (!$server_gateway.environment.containsKey("isCommandline")){
 		  if (ds.type in dbTypes &&
 					 "connectionTestSql" in dbTypes[ds.type]
 		  ) {
-					 bds.setTestOnBorrow(true);
-					 bds.setValidationQuery(dbTypes[ds.type].connectionTestSql);
+			 bds.setTestOnBorrow(true);
+			 bds.setValidationQuery(dbTypes[ds.type].connectionTestSql);
 		  }
 	})
 

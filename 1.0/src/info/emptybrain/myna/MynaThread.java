@@ -45,7 +45,7 @@ public class MynaThread {
 	static public ConcurrentHashMap serverVarMap = new ConcurrentHashMap();//used by $server.get/set
 	static public ConcurrentHashMap applications = new ConcurrentHashMap();//contains Application descriptors, keyed by path
 	
-	public final java.lang.Thread javaThread = java.lang.Thread.currentThread();
+	
 	
 	//static private ConcurrentHashMap compiledScripts_ = new ConcurrentHashMap();
 	static private boolean isInitialized = false;
@@ -58,7 +58,7 @@ public class MynaThread {
 	
 	
 /* End static resources */	
-	
+	public final java.lang.Thread javaThread = java.lang.Thread.currentThread();
 	public boolean isInitThread = false; //Is this the first thread after server restart?
 	public boolean isWaiting=true;// am I waiting for a thread permit?
 	public boolean isWhiteListedThread=false;// can  I  bypass thread management?
@@ -656,7 +656,7 @@ public class MynaThread {
 			}
 			public Object run(Context cx) {
 				try {
-					Scriptable sharedScope = mt.sharedScope_;
+					Scriptable sharedScope = buildScope();//mt.sharedScope_;
 										 
 					if (sharedScope == null) return null;
 					threadContext =cx;
@@ -707,7 +707,11 @@ public class MynaThread {
 	* handles errors during JS execution
 	*
 	*/
-	public void handleError(Exception originalException) throws Exception{
+	public void handleError(Throwable originalException) throws Exception{
+		if (originalException instanceof java.lang.OutOfMemoryError){
+			System.out.println("============================ out of memory ===================");
+			System.exit(2);
+		}
 		/* if (this.inError) return;*/
 		this.inError = true; 
 		System.err.println(originalException);
@@ -717,90 +721,6 @@ public class MynaThread {
 				Object exception = Context.javaToJS(originalException,this.threadScope);
 				ScriptableObject.putProperty(this.threadScope, "exception", exception);
 				this.executeJsString(this.threadScope,"$application._onError(exception);","Compile Error");
-				
-				/* RhinoException e = (RhinoException) originalException;
-				
-				if (new String(e.getMessage()).indexOf("___MYNA_ABORT___") == 0) return;
-				
-				String[] lines;
-				
-				StringWriter originalTrace = new StringWriter();
-				PrintWriter pw = new PrintWriter(originalTrace);
-				
-				e.printStackTrace(pw);
-				
-				lines = originalTrace.toString().split("\n");
-				StringBuffer stackTrace = new StringBuffer();
-				StringBuffer level = new StringBuffer();
-				
-				Pattern jsError1 = Pattern.compile("^.*\\(file:(.*?..js)[:|#](\\d*)\\)");
-				String curFileLine="";
-				String lastFileLine="";
-				String originalFile="";
-				String originalLine="";
-				for (int x=0; x < lines.length; ++x){
-					Matcher currentLine = jsError1.matcher(lines[x]);
-					if (currentLine.matches()){
-						
-						curFileLine =  currentLine.group(1) + " at line " + currentLine.group(2);
-						if (originalFile.length() == 0){
-							originalFile = currentLine.group(1);
-							originalLine = currentLine.group(2);
-						}
-						if (!curFileLine.equals(lastFileLine)){
-							level.append("  ");
-							stackTrace.append(level + curFileLine + "\n");
-							lastFileLine = curFileLine;
-						}
-						
-					} 
-				}
-				
-				StringBuffer before = new StringBuffer();
-				String errorLine = new String();
-				StringBuffer after = new StringBuffer();
-				String errorMessage =e.getMessage();
-				
-				this.generatedContent.append(errorMessage.substring(0,errorMessage.indexOf("("))+ " (" +originalFile +":" +originalLine+")" + "<br>");
-								
-				int lineNumber =e.lineNumber();
-				String errorFile = e.sourceName();
-				if (Integer.parseInt(originalLine) != lineNumber){
-					lineNumber =Integer.parseInt(originalLine);
-					errorFile="file:" + originalFile;
-				}
-				
-				try{
-					String errorScript = "\n" + readScript(errorFile );
-					lines = errorScript.split("\n");
-					
-					int context = 5;
-					for (int x=Math.max(0,lineNumber-context); x < Math.min(lines.length, lineNumber + context+1); ++x ){
-						String currentLine = lines[x];
-						currentLine = currentLine.replaceAll("<","&lt;").replaceAll("\t","   ");
-						
-						if (x == lineNumber){
-							errorLine = "<b style='color:red'>" + x + ": " + currentLine + "</b>\n";	
-						} else if (x < lineNumber){
-							before.append(x + ": " + currentLine + "\n");
-						} else if (x > lineNumber ){
-							after.append(x + ": " + currentLine + "\n");
-						}
-					}
-				
-					
-					this.generatedContent.append("<pre>" + before + errorLine + after + "</pre><br>");
-				} catch (Exception d){}
-				
-				this.generatedContent.append("<br>Javascript Stack Trace:<br><pre>" + stackTrace + "</pre><p>");
-				this.generatedContent.append("<br>Full Stack Trace:<br><pre>");
-				
-				StringWriter traceStringWriter = new StringWriter();
-				PrintWriter tracePrintWriter = new PrintWriter(traceStringWriter);
-				
-				e.printStackTrace(tracePrintWriter);
-				this.generatedContent.append(traceStringWriter.toString() +"</pre><p>"); */
-					
 			} else {
 				StringBuffer errorText = new StringBuffer();
 				
@@ -823,11 +743,15 @@ public class MynaThread {
 				}
 				
 			}
-		} catch (Exception newException){
+		} catch (Throwable newException){
+			if (newException instanceof java.lang.OutOfMemoryError){
+				System.out.println("============================ out of memory (handleError) ===================");
+				System.exit(2);
+			}	
 			System.err.println(newException);
 			this.log("ERROR","Error parsing exception: " +newException.getClass().getName() + ": "+ newException.getMessage(),newException.toString());
 				
-			throw originalException; //if there is a problem displaying the error, just rethrow the original error.	
+			throw new Exception(originalException); //if there is a problem displaying the error, just rethrow the original error.	
 		}
 	}
 	

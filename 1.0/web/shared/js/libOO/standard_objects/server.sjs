@@ -432,7 +432,7 @@ var $server={
 	get:function(key,value){
 		return $server_gateway.serverVarMap.get(key)
 	},
-/* property: set
+/* Function: set
 	Sets a variable that is available across all requests. Server varaiables are 
 	not preserved across Myna restarts
 	
@@ -450,6 +450,19 @@ var $server={
 		$server_gateway.serverVarMap.put(key,value);
 		return value;
 	},
+/* Function: restart
+	If this instance is running under bootstrap.MynaServer, start a new listerner and exit this one.
+	
+	Detail:
+		Starts a new JVM running MynaServer and exits this one. Useful for 
+		recovering from out-of-memory errros, "hung" threads and when installing 
+		Myna upgrades 
+	*/
+	restart:function(){
+		if (Packages.bootstrap.MynaServer.server){
+			Packages.bootstrap.MynaServer.restart();	
+		}
+	}
 }
 	
 	
