@@ -8,22 +8,18 @@ server=dev
 port=8180
 myna_home=./build
 web_inf=$(readlink -m $myna_home/WEB-INF)
-
-# these are  relative to myna_home or absolute
-pidfile=$server.pid
 logfile="$(readlink -m $myna_home/..)/$server.log"
-
-jvm_args="-Dmyna.name=$server -server -Xmx70m"
-myna_args="-c /$server -p $port -w $myna_home -l $logfile -- $jvm_args"
-
 
 #export JAVA_HOME=/usr/java/default/
 #export JRE_HOME=/usr/java/default/jre/
 
-
 case "$1" in
 start)
-	java  $jvm_args -cp $web_inf/lib/*:$web_inf/classes/ bootstrap.MynaServer $myna_args &
+	watchdog_jvm_args="-Dmyna.name=$server -Xmx20m -server -cp $web_inf/lib/*:$web_inf/classes/"
+	server_jvm_args="-Dmyna.name=$server -Xmx70m -server"
+	
+	myna_args="-c /$server -p $port -w $myna_home -l $logfile -- $server_jvm_args"
+	java  $watchdog_jvm_args  bootstrap.MynaServer $myna_args &
 	echo "Myna instance '$server' Starting. tail -f $logfile for details."
 	
 	exit 0

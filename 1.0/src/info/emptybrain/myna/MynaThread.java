@@ -708,10 +708,6 @@ public class MynaThread {
 	*
 	*/
 	public void handleError(Throwable originalException) throws Exception{
-		if (originalException instanceof java.lang.OutOfMemoryError){
-			System.out.println("============================ out of memory ===================");
-			System.exit(2);
-		}
 		/* if (this.inError) return;*/
 		this.inError = true; 
 		System.err.println(originalException);
@@ -744,10 +740,7 @@ public class MynaThread {
 				
 			}
 		} catch (Throwable newException){
-			if (newException instanceof java.lang.OutOfMemoryError){
-				System.out.println("============================ out of memory (handleError) ===================");
-				System.exit(2);
-			}	
+			
 			System.err.println(newException);
 			this.log("ERROR","Error parsing exception: " +newException.getClass().getName() + ": "+ newException.getMessage(),newException.toString());
 				

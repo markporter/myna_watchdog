@@ -14,10 +14,10 @@ if (!$server_gateway.environment.containsKey("isCommandline")){
 				java.lang.Runtime.getRuntime().gc();
 				var memFree = $server.memAvailable/$server.memMax;
 				var runningThreads = $server_gateway.runningThreads.toArray().length;
-				Myna.printConsole(
+				/* Myna.printConsole(
 					"Running Threads",
 					"Mem Used: " +($server.memUsed/(1024*1024)).toFixed(2) +"MB, "+ (memFree*100).toFixed(2) + "% Free. Running threads: " + runningThreads
-				)
+				) */
 				if (memFree < .015){
 					++lowMemCount;
 					

@@ -1135,10 +1135,6 @@ var $application={
 	*/
 	onRequestEnd:function(){},
 	_onError:function(exception){
-		if (/java.lang.OutOfMemoryError/.test(exception.toString())){
-			System.out.println("============================ out of memory (app)===================");
-			System.exit(2);
-		}
 		var line,file,detail;
 		var 
 			isString=(typeof exception === "string"),

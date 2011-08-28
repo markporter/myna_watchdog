@@ -205,7 +205,7 @@ public class JSServlet extends HttpServlet {
 				
 				
 				
-			} catch(Exception e){
+			} catch(Throwable e){
 				//res.getWriter().print("rhino catch" + e);
 				thread.handleError(e);
 				

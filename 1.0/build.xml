@@ -265,14 +265,35 @@
    <!-- Create application JAR file -->
 	<mkdir dir="${dist.home}"/>
 	<delete file="MANIFEST.MF"/>
-	<manifest file="MANIFEST.MF">
+	<!-- <manifest file="MANIFEST.MF">
 		<attribute name="Main-Class" value="info.emptybrain.myna.JsCmd"/>
 	</manifest>
    <jar 
    	jarfile="${dist.home}/${app.name}-${build.version}.war" 
    	basedir="${build.home}"
    	manifest="MANIFEST.MF"
-   />
+   /> -->
+   <jar destfile="${dist.home}/${app.name}-${build.version}.war">
+		<fileset dir="${build.home}/WEB-INF/classes" includes="bootstrap/MynaServer.class"/>
+		<restrict>
+			<name regex="^(?!.*(SF|RSA|DSA)).*$" />
+			<name regex="^(?!.*(about_files|about.html|plugin.properties)).*$" />
+			<archives>
+				<zips>	
+					<fileset dir="${jars.home}" includes="commons-cli.jar" />
+					<fileset dir="${jars.home}" includes="commons-io.jar" />
+					<fileset dir="${jars.home}" includes="jetty-all.jar" excludes=" *about.html"/>
+					<fileset dir="${jars.home}" includes="servlet-api-2.5.jar" excludes="*META-INF/* *about_files/* *about.html *plugin.properties"/>
+					
+				</zips>
+			</archives>
+		</restrict>
+		<fileset dir="${build.home}" />
+		<manifest>
+			<attribute name="Main-Class"
+			value="bootstrap.MynaServer"/>
+		</manifest>
+	</jar>
 
    <!-- copy build to myna_server -->
 	<mkdir dir="${myna_server.home}/myna"/>
