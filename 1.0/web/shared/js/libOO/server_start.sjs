@@ -139,7 +139,7 @@ if (!$server_gateway.environment.containsKey("isCommandline")){
 				java -DINST=MynaCmd -DSCRIPT=$1 -Xmx${MEM}m -cp $WEB_INF/lib/*:$WEB_INF/classes/ info.emptybrain.myna.JsCmd ${1+"$@"}	
 			</ejs>)
 			var result =Myna.executeShell("/bin/bash",<ejs>
-				chmod 777 <%=mynaCmd.javaFile.toString()%>
+				/bin/chmod 777 <%=mynaCmd.javaFile.toString()%>
 			</ejs>)
 			Myna.log("info","Created Myna Commandline script in " + mynaCmd.javaFile.toString(),Myna.dump(result));
 		}
