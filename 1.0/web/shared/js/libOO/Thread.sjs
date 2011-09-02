@@ -117,7 +117,7 @@ if (!Myna) var Myna={}
 		/* this.functionSource = f.toSource();
 		$server_gateway.environment.put("threadSource", this.functionSource); */
 		try{
-			if ($cookie) $cookie.setAuthUserId($cookie.getAuthUserId());
+			if ($cookie  && $cookie.__AUTH_USER_ID__) $cookie.setAuthUserId($cookie.getAuthUserId());
 		}catch(e){
 			$req={}
 		}

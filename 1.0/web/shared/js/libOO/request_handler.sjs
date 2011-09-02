@@ -214,6 +214,8 @@ try{
 	}
 } finally{
 	//on end
-	$application._onRequestEnd();
+	if (typeof $application != "undefined"){
+		$application._onRequestEnd();
+	}
 	
 }

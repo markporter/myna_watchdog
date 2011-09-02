@@ -520,7 +520,7 @@ var _modelClasses={}
 		properties and "controller", "action" and "id" before conversion.
 	*/
 	function objectToUrl(object){
-		result =[]
+		var result =[]
 		function addProp(p,v){
 			if (v==null) v=""
 			result.push( escape(p) +"="+escape(v))	

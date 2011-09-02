@@ -23,7 +23,7 @@
 			},
 		},
 		homeRoute:{
-			controller:"Person",
+			controller:"Main",
 			action:"index"
 		},
 		routes:[{

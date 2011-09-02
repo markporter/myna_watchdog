@@ -431,8 +431,9 @@ if (!Myna) var Myna={}
 		getAuthKey:function(name){
 			//java.lang.System.out.println("authkey")
 			name = String(name).toLowerCase();
-			var varName ="__MYNA_AUTH_KEY_" + name 
-			if (varName in $req) return $req[varName];
+			var varName ="__MYNA_AUTH_KEY_" + name
+			var cachedKey = $server.get(varName);
+			if (cachedKey) return cachedKey;
 			
 			
 			try {
@@ -460,8 +461,8 @@ if (!Myna) var Myna={}
 					localKeys[name] = Myna.createUuid().toHash();
 					localKeysFile.writeString(localKeys.toJson())
 				}
-				
-				return $req[varName]=localKeys[name]
+				$server.set(varName,localKeys[name]);
+				return localKeys[name]
 			}
 		},
 	/* Function: getAuthToken

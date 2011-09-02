@@ -127,10 +127,11 @@ var functions={
 	},
 	totalRowsSql:function(sql){
 		return <ejs>
-			select count(*) count from (<%=sql%>) as myna_count
+			select count(*) count from (<%=sql%>)  myna_count
 		</ejs>
 	},
 	offsetSql:function(sql,limit,offset){
+		
 		return <ejs>
 		
 			SELECT * FROM (
@@ -141,7 +142,7 @@ var functions={
 				FROM(
 					<%=sql%>
 				) a 
-				WHERE rownum <= <%=end%>
+				WHERE rownum <= <%=limit%>
 			)
 			<@if offset>
 			WHERE rnum ><%=offset%>

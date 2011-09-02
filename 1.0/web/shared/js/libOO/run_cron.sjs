@@ -209,7 +209,7 @@ var detail;
 							} else {
 								try{
 									var h = new Myna.HttpConnection({
-										url:"<%=config.script%>",
+										url:config.script,
 									})
 									h.connect();
 								

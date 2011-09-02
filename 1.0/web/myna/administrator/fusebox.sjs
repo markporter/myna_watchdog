@@ -837,6 +837,7 @@ var fusebox={
 		$session.set("upgrade_log",log);
 	},
 	upgrade_start:function(data){
+		$req.timeout=0;
 		var numSteps=4
 		$req.returningJson = true;
 		

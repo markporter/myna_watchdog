@@ -198,7 +198,9 @@ public class JSServlet extends HttpServlet {
 						if (IfNoneMatch != null && IfNoneMatch.equals(ETag)){
 							res.setStatus(304);		
 						} else {
-							res.getOutputStream().write(data,0,data.length);	
+							try {
+								res.getOutputStream().write(data,0,data.length);
+							} catch (Exception any) {}
 						}	
 					}	
 				}

@@ -1,7 +1,6 @@
 //only if not running from commandline
 if (!$server_gateway.environment.containsKey("isCommandline")){
-	//memory watchdog
-	if (Packages.bootstrap.MynaServer.server){
+	/* if (Packages.bootstrap.MynaServer.server){
 		new Myna.Thread(function(){
 			$req.timeout=0;
 			var loopCount=0;
@@ -14,10 +13,6 @@ if (!$server_gateway.environment.containsKey("isCommandline")){
 				java.lang.Runtime.getRuntime().gc();
 				var memFree = $server.memAvailable/$server.memMax;
 				var runningThreads = $server_gateway.runningThreads.toArray().length;
-				/* Myna.printConsole(
-					"Running Threads",
-					"Mem Used: " +($server.memUsed/(1024*1024)).toFixed(2) +"MB, "+ (memFree*100).toFixed(2) + "% Free. Running threads: " + runningThreads
-				) */
 				if (memFree < .015){
 					++lowMemCount;
 					
@@ -67,7 +62,7 @@ if (!$server_gateway.environment.containsKey("isCommandline")){
 				if (loopCount==1000) loopCount=0;
 			}
 		},[],.99)
-	}
+	} */
 	$req.timeout=0;
 	Myna.include("/shared/js/libOO/upgrade_tables.sjs",{});
 	

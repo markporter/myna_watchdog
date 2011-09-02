@@ -20,13 +20,13 @@ public class MynaServer extends Thread
 	public static Server 					server;
 	public static boolean 					hasWatchdog	= false;
 	public static String 					webctx 		= "/";
-	public static String						webroot		= "./myna";
-	public static String						logFile		= null;
-	public static int							port			= 8180;
-	public static Process					p				= null;
+	public static String					webroot		= "./myna";
+	public static String					logFile		= null;
+	public static int						port		= 8180;
+	public static Process					p			= null;
 	public static java.util.List 			javaOpts 	= new java.util.ArrayList();
-	public static java.util.Properties 	props		 	= new java.util.Properties();
-	
+	public static java.util.Properties 		props		= new java.util.Properties();
+	public static boolean					 isJar		=false;
 	public static void restart() throws Exception
 	{
 		(new Thread() {
@@ -51,7 +51,7 @@ public class MynaServer extends Thread
 	{
 		Thread.sleep(1000);
 		String classUrl = MynaServer.class.getResource("MynaServer.class").toString();
-		boolean isJar = (classUrl.indexOf("jar") == 0);
+		isJar = (classUrl.indexOf("jar") == 0);
 		
 		CommandLineParser parser = new PosixParser();
 	
@@ -179,34 +179,43 @@ public class MynaServer extends Thread
 	public static void runAsWatchdog() throws Exception{
 		java.lang.Runtime rt = java.lang.Runtime.getRuntime();
 		rt.addShutdownHook(new MynaServer());
-		String osName = System.getProperty("os.name").toLowerCase();
-		String javaHome= System.getProperty("java.home");
-		String pathSep = System.getProperty("path.separator");
-		String fileSep = System.getProperty("file.separator");
-		//String cp = System.getProperty("java.class.path");
+		String osName 		= System.getProperty("os.name").toLowerCase();
+		String javaHome		= System.getProperty("java.home");
+		String pathSep 		= System.getProperty("path.separator");
+		String fileSep 		= System.getProperty("file.separator");
+		String additionalCp	= System.getProperty("myna.classpath");
 		String web_inf =webroot+fileSep+"WEB-INF"+fileSep;
-		String cp = 
-			web_inf+"classes" + pathSep
-			+web_inf+"lib" + fileSep+"*";
+		String cp = System.getProperty("java.class.path");
+		//if we are launching from a jar file, we ignore the CP and pull from the 
+		//webroot's WEB-INF directory
+		if (isJar){
+			cp = 
+				web_inf+"classes" + pathSep
+				+web_inf+"lib" + fileSep+"*";
+			
+		}
+		//additional CP paths can be added via -Dmyna.classpath
+		if (additionalCp != null){
+			cp += fileSep +additionalCp;	
+		}
+		 
 		
-		File javaExe;
+		String javaExe;
 		if (osName.indexOf("windows") != -1){
-			javaExe = new File(javaHome + "\\bin");
+			javaExe = javaHome + "\\bin\\java.exe ";
 		} else {
-			javaExe = new File(javaHome + "/bin");
+			javaExe = javaHome + "/bin/java ";
 		}
 		
 		
-		String [] envp = {
-			"PATH="+javaExe.toString(),
-			"CLASSPATH="+cp
-		};
-		StringBuffer cmd =new StringBuffer("java ");
+		
+		StringBuffer cmd =new StringBuffer(javaExe);
 		for (Object option : javaOpts){
 			cmd.append(option + " ");
 		}
 		cmd.append(
 			" -Dmyna.hasWatchdog=true "+
+			" -cp " + cp+
 			" bootstrap.MynaServer "+
 			" -c "+ webctx+
 			" -p "+ new Integer(port).toString()+
@@ -222,7 +231,7 @@ public class MynaServer extends Thread
 				System.err.println("Restarting MynaServer");
 				p.destroy();
 			}
-			p =rt.exec(cmd.toString(),envp,new File("."));
+			p =rt.exec(cmd.toString(),null,new File("."));
 			//load general properties
 				File propsFile = new File(
 					new File(webroot).toURI().resolve("WEB-INF/classes/general.properties")
