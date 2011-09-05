@@ -322,10 +322,9 @@ var $server={
 		return Myna.getGeneralProperties();
 			
 	},
+
 /* property: memCurrent
 	The current heap size in bytes.
-	
-	for the maximum memory that could be allocated
 	
 	See:
 		<$server.memMax>, 
@@ -462,7 +461,38 @@ var $server={
 		if (Packages.bootstrap.MynaServer.server){
 			Packages.bootstrap.MynaServer.restart();	
 		}
-	}
+	},
+/* Function: memToScale
+	converts a value in bytes to another scale
+	
+	Paramters:
+		value	-	value in bytes to convert
+		scale	-	*Optional default 'b'*
+					scale of returned value, precise to 2 decimal places. 
+					See *Scales* below
+					
+	Scales:	
+		b	-	bytes
+		k	-	kilobytes
+		m 	- 	megabytes
+		g	-	gigabytes
+		t	-	terabytes
+	*/
+	memToScale:function(value,scale){
+		switch(scale){
+			case "b":
+				return value.toFixed(2);
+			case "k":
+				return (value/(1024)).toFixed(2);
+			case "m":
+				return (value/(1024 * 1024)).toFixed(2);
+			case "g":
+				return (value/(1024 * 1024 * 1024)).toFixed(2);
+			case "t":
+				return (value/(1024 * 1024 * 1024 * 1024)).toFixed(2);
+		}
+		throw new Error("Unkown scale '" + scale +"'")
+	},
 }
 	
 	

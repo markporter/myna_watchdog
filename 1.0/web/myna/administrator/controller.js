@@ -1998,7 +1998,6 @@ var C ={
 							proxy: new Ext.data.HttpProxy({
 								url: '?fuseaction=get_running_requests'
 							}),
-						
 							reader: new Ext.data.JsonReader({
 								id: "thread_id"            
 							},
@@ -2122,11 +2121,56 @@ var C ={
 						width:"300",
 						autoScroll:true
 					}],
+					tbar:[{
+						xtype:"tbtext",
+						text:"Uptime:"
+					},{
+						xtype:"displayfield",
+						id:"uptime",
+						width:150
+					},{
+						xtype:"tbtext",
+						text:"Memory Used:"
+					},{
+						xtype:"displayfield",
+						id:"memUsed",
+						width:50
+					},{
+						xtype:"tbtext",
+						text:"Memory Free:"
+					},{
+						xtype:"displayfield",
+						id:"memFree",
+						width:50
+					},{
+						xtype:"tbtext",
+						text:"Running Threads:"
+					},{
+						xtype:"displayfield",
+						id:"runningThreads",
+						width:50
+					},{
+						xtype:"tbtext",
+						text:"Waiting Threads:"
+					},{
+						xtype:"displayfield",
+						id:"waitingThreads",
+						width:50
+					}],
 					listeners:{
 						activate:function(panel){
 							if (panel.timer) return;
 							panel.timer = window.setInterval(function(){
 								Ext.StoreMgr.get("threads").reload();
+								Ext.Ajax.request({
+									url:"?fuseaction=get_server_info",
+									callback:C.cbHandler(function(result){
+										for(prop in result){
+											var field = Ext.getCmp(prop);
+											if (field) field.setValue(result[prop])
+										}
+									})
+								})
 							},2000)
 							Ext.StoreMgr.get("threads").reload();	
 						},

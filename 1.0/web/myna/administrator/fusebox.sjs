@@ -198,10 +198,29 @@ var fusebox={
 		$server_gateway.executeJsString(t.threadScope,data.code.unEscapeHtml(),"Myna Adminstrator");
 		return {success:true,output:$res.clear()}
 	},
+	get_server_info:function(data){
+		var threads = $server_gateway.runningThreads.toArray()
+		var running=0
+		var queued=0
+		threads.forEach(function(t){
+			if (t.isWaiting){
+				queued++;
+			} else {
+				running++;
+			}
+		})
+		return {
+			memUsed:$server.memToScale($server.memUsed,"m") +"MB",
+			memFree:(($server.memAvailable/$server.memMax)*100).toFixed(2) +"%",
+			uptime:Date.formatInterval(new Date().getTime() - $server_gateway.serverStarted.getTime()).split(",").slice(0,2).join(),
+			runningThreads:running,
+			waitingThreads:queued
+		}
+	},
 	get_running_requests:function(data){
 		$profiler.mark("Get Running Requests")
 		var runningThreads = $server_gateway.runningThreads.toArray()
-		.map(function(thread){
+		.map(function(thread,i){
 			var scope = thread.threadScope
 			var current_task="";
 			var url;
@@ -211,7 +230,15 @@ var fusebox={
 			if (req){
 				url=req.getRequestURI();
 			} else {
-				url=thread.getNormalizedPath(thread.requestDir);
+				if (thread.environment.get("threadParent") && thread.environment.get("threadParent").environment.get("request")){
+					req = thread.environment.get("threadParent").environment.get("request");
+					url="Thread in " +req.getRequestURI()
+				} else {
+					url="Thread in :"+thread.requestDir +thread.requestScriptName;
+					if (thread.requestScriptName =="run_cron.sjs"){
+						url = "Cron: " + thread.environment.get("commandlineArguments")[1].parseJson().name
+					}
+				}
 			} 
 			
 			if (thread.isWaiting){
@@ -225,6 +252,7 @@ var fusebox={
 				current_runtime=new Date().getTime() - time.begin;
 			} 
 			return {
+				rownum:i,
 				thread_id:thread.hashCode(),
 				url:url,
 				started:thread.started.toString(),
@@ -374,8 +402,8 @@ var fusebox={
 		/* Myna.log("debug","cronProperties",Myna.dump(cronProperties));
 		Myna.log("debug","cron",Myna.dump(cron)); */
 		Myna.saveProperties(cronProperties,"/WEB-INF/classes/cron.properties");
-		new Packages.info.emptybrain.myna.CronThread();
-		//include("/shared/js/libOO/reload_cron.sjs")
+		//new Packages.info.emptybrain.myna.CronThread();
+		include("/shared/js/libOO/reload_cron.sjs")
 		return {success:true}
 	},
 	delete_cron_job:function(data){

@@ -53,7 +53,6 @@ public class JSServlet extends HttpServlet {
 							thread.handleRequest(curUri.toString());
 						}
 						//thread.rootUrl = req.getContextPath() + "/";
-						new CronThread();
 					} catch(Exception threadException){
 						thread.handleError(threadException);
 					}

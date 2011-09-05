@@ -28,75 +28,68 @@ import org.openid4java.consumer.ConsumerManager;
 
 public class MynaThread {
 	//static public Log logger = LogFactory.getLog(MynaThread.class);
-	static public String version="";
-	static public Semaphore threadPermit;
-	static public Semaphore manageLocksPermit;
-	static public volatile CopyOnWriteArrayList runningThreads 	= new CopyOnWriteArrayList();
-	static public volatile CopyOnWriteArrayList recentThreads 	= new CopyOnWriteArrayList();
+	static public volatile CopyOnWriteArrayList 	runningThreads 		= new CopyOnWriteArrayList();
+	static public volatile CopyOnWriteArrayList 	recentThreads 			= new CopyOnWriteArrayList();
 	
-	static public ConcurrentHashMap cron = new ConcurrentHashMap();
+	static public String 				version					="";
+	static public Semaphore 			threadPermit;
+	static public Semaphore 			manageLocksPermit;
+	static public ConcurrentHashMap 	cron 						= new ConcurrentHashMap();
+	static public ConcurrentHashMap 	dataSources 			= new ConcurrentHashMap(); //stores ds properties
+	static public ConcurrentHashMap 	javaDataSources 		= new ConcurrentHashMap(); //stores dbcp BasicDataSource instances
+	static public ConcurrentHashMap 	locks 					= new ConcurrentHashMap(); //used by Myna.getLock()
+	static public ConcurrentHashMap 	scriptCache 			= new ConcurrentHashMap();
+	static public Properties			generalProperties 	= new Properties();
+	static public ConcurrentHashMap 	serverVarMap 			= new ConcurrentHashMap();//used by $server.get/set
+	static public ConcurrentHashMap 	applications 			= new ConcurrentHashMap();//contains Application descriptors, keyed by path
+	static private boolean 			isInitialized 				= false;
+	static volatile private			Scriptable sharedScope_	= null;
+	static public int 				threadHistorySize			=0; // number of completed threads to store in recentThreads. Set with property "thread_history_size"
+	static public java.util.Date 	serverStarted 				= new java.util.Date(); //date object representing the time this server was started
 	
-	static public ConcurrentHashMap dataSources = new ConcurrentHashMap(); //stores ds properties
-	static public ConcurrentHashMap javaDataSources = new ConcurrentHashMap(); //stores dbcp BasicDataSource instances
-		
-	static public ConcurrentHashMap locks = new ConcurrentHashMap(); //used by Myna.getLock()
-	static public ConcurrentHashMap scriptCache = new ConcurrentHashMap();
-	static public Properties generalProperties = new Properties();
-	static public ConcurrentHashMap serverVarMap = new ConcurrentHashMap();//used by $server.get/set
-	static public ConcurrentHashMap applications = new ConcurrentHashMap();//contains Application descriptors, keyed by path
-	
-	
-	
-	//static private ConcurrentHashMap compiledScripts_ = new ConcurrentHashMap();
-	static private boolean isInitialized = false;
-	static volatile private Scriptable sharedScope_ = null;
-	
-	static public int threadHistorySize=0; // number of completed threads to store in recentThreads. Set with property "thread_history_size"
-	static public java.util.Date serverStarted = new java.util.Date(); //date object representing the time this server was started
-	
-	static public ConsumerManager openidConsumerManager; //initialized in init
+	static public ConsumerManager	openidConsumerManager; //initialized in init
 	
 	
 /* End static resources */	
-	public final java.lang.Thread javaThread = java.lang.Thread.currentThread();
-	public boolean isInitThread = false; //Is this the first thread after server restart?
-	public boolean isWaiting=true;// am I waiting for a thread permit?
-	public boolean isWhiteListedThread=false;// can  I  bypass thread management?
-	public int requestTimeout=0; //maximum time this thread should run. Set in general.properties
-	public boolean shouldDie=false; //if true, this thread will be killed in objserveInstructionCount
+	public final java.lang.Thread 	javaThread 				= java.lang.Thread.currentThread();
+	public boolean 						isInitThread 			= false; //Is this the first thread after server restart?
+	public boolean 						isWaiting				= true;// am I waiting for a thread permit?
+	public boolean 						isWhiteListedThread	= false;// can  I  bypass thread management?
+	public int 								requestTimeout			= 0; //maximum time this thread should run. Set in general.properties
+	public boolean 						shouldDie				= false; //if true, this thread will be killed in objserveInstructionCount
 	
-	public boolean inError = false; //Are we currently handling an error?
+	public boolean 						inError 					= false; //Are we currently handling an error?
 	
-	public ConcurrentHashMap environment = new ConcurrentHashMap();
-	public ConcurrentHashMap runtimeStats = new ConcurrentHashMap();
+	public ConcurrentHashMap 			environment 			= new ConcurrentHashMap();
+	public ConcurrentHashMap 			runtimeStats 			= new ConcurrentHashMap();
 
-	public ConcurrentHashMap translatedSources = new ConcurrentHashMap();
+	public ConcurrentHashMap 			translatedSources 	= new ConcurrentHashMap();
 	
-	public Context threadContext;
-	public ScriptableObject threadScope;
+	public Context 						threadContext;
+	public ScriptableObject 			threadScope;
 	
-	static public String rootDir=null; // system path to the Myna deployment folder
-	static public String rootUrl; // url to the myna root directory from / , not including protocol and server
+	static public String 				rootDir					= null; // system path to the Myna deployment folder
+	static public String 				rootUrl; // url to the myna root directory from / , not including protocol and server
 	
-	public String requestDir; // system path to the directory containing the originally requested script
-	public boolean requestHandled=false; // if true, than this thread has handled all output management and parent should not modify output
+	public String 							requestDir; // system path to the directory containing the originally requested script
+	public boolean 						requestHandled			=false; // if true, than this thread has handled all output management and parent should not modify output
 	
-	public String currentDir; // system path to the directory containing the currently running script
-	public String currentScript; // text of the currently running script
-	
-	
-	
-	public String scriptName; //name of the currently running script
-	public String requestScriptName; // name of the originally requested script
+	public String 							currentDir; // system path to the directory containing the currently running script
+	public String 							currentScript; // text of the currently running script
 	
 	
-	public java.util.Date started = new java.util.Date(); //date object representing the time this request was started
 	
-	public StringBuffer generatedContent = new StringBuffer("");
+	public String 							scriptName; //name of the currently running script
+	public String 							requestScriptName; // name of the originally requested script
 	
-	public Set uniqueIncludes_ = Collections.synchronizedSet(new HashSet());
 	
-	public Vector threadChain = new Vector(); //history of thread calls. Used to avoid infinite recursion
+	public java.util.Date 				started 					= new java.util.Date(); //date object representing the time this request was started
+	
+	public StringBuffer 					generatedContent 		= new StringBuffer("");
+	
+	public Set 								uniqueIncludes_	 	= Collections.synchronizedSet(new HashSet());
+	
+	public Vector 							threadChain 			= new Vector(); //history of thread calls. Used to avoid infinite recursion
 
 	/* Custom Context to store execution time and a reference to the MynaThread
 	running in this context. The MynaThread must be set after aquiring a context 
@@ -523,7 +516,11 @@ public class MynaThread {
 					}
 					
 					//wait if max threads are already running
-					//if (!isWhiteListedThread) threadPermit.acquire();
+					if (!isWhiteListedThread) {
+						//generalProperties.getProperty("request_handler")
+						boolean gotPermit =threadPermit.tryAcquire((long)10,TimeUnit.SECONDS);
+						if (!gotPermit) throw new Exception("Too Many Threads: Unable to gain thread permit after 10 seconds.");
+					}
 					
 					isWaiting=false;
 					try{

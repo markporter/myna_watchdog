@@ -152,7 +152,7 @@ if (!$server_gateway.environment.containsKey("isCommandline")){
 				var tcpConfig = config.getNetworkConfig().getJoin().getTcpIpConfig()//new com.hazelcast.config.TcpIpConfig()
 				//add ourself if not already in there
 				
-				new Myna.Query({
+				/* new Myna.Query({
 					ds:"myna_permissions",
 					sql:<ejs>
 						select distinct
@@ -165,7 +165,7 @@ if (!$server_gateway.environment.containsKey("isCommandline")){
 					tcpConfig.addMember(
 						row.ip
 					);
-				})
+				}) */
 				
 				
 				tcpConfig.setEnabled(true);
@@ -214,5 +214,16 @@ if (!$server_gateway.environment.containsKey("isCommandline")){
 			})  */
 	
 	})
+	//new Packages.info.emptybrain.myna.CronThread();
+	
+	
+	//reload cron
+	new Myna.Thread(function(){
+		$req.timeout=0
+		Myna.sleep(10000)
+		
+		Myna.include("/shared/js/libOO/reload_cron.sjs")
+	})
+	
 	
 }

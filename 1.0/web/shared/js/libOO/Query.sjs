@@ -663,6 +663,7 @@ getStatement:function(sql){
 			
 			var result = new Myna.Cache(cache).call(cacheQry)
 			$profiler.end(profilerKey)
+			$profiler.mark("Done "+profilerKey)
 			if (this.log && this.ds != "myna_log"){
 				Myna.log("query","Query: " + sql.left(30),Myna.dump(result));
 			}
@@ -756,6 +757,7 @@ getStatement:function(sql){
 				throw e;
 			} finally {
 				$profiler.end(profilerKey)
+				$profiler.mark("Done "+profilerKey)
 				if (this.log &&this.ds != "myna_log"){
 					//Myna.printConsole("logging " + this.ql)
 					Myna.log("query","Query: " + sql.left(30),Myna.dump(qry));

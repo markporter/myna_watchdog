@@ -40,11 +40,11 @@ public class CronThread {
 					Timer curTimer =new java.util.Timer();
 					timers.put(name,curTimer);
 									
-					long interval = CronThread.MINUTES/6;	
+					long interval = CronThread.MINUTES/2;	
 					String config = cronProps.getProperty(name);
 					ScriptTimerTask curTask = new ScriptTimerTask();
 					curTask.config = config;
-					curTimer.schedule(curTask,new Date(System.currentTimeMillis() + (2*CronThread.MINUTES)),interval);
+					curTimer.schedule(curTask,new Date(System.currentTimeMillis() + (2*CronThread.SECONDS)),interval);
 			}
 		} catch (java.lang.NullPointerException missingFile){
 			//ignore missing cron.properties	
