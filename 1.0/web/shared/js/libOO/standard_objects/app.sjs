@@ -1022,9 +1022,11 @@ var $application={
 	onApplicationStart:function(){},
 	_onRequestStart:function(){
 		this._initAppScope();
+		if ($server.isThread || $server.isCommandLine) return;
 		// call overloaded on request 
 			var originalCurrentDir =$server_gateway.currentDir;
 			$server_gateway.currentDir=$application.directory
+			
 			try{
 				this.onRequestStart();
 			} catch(e){
@@ -1101,10 +1103,14 @@ var $application={
 				
 			
 		}
-		var originalCurrentDir =$server_gateway.currentDir;
-		$server_gateway.currentDir=$application.directory;
-		$application.onRequestEnd();
-		$server_gateway.currentDir=originalCurrentDir;
+		
+		if (!$server.isThread && !$server.isCommandLine) {
+			var originalCurrentDir =$server_gateway.currentDir;
+			$server_gateway.currentDir=$application.directory;
+			$application.onRequestEnd();
+			$server_gateway.currentDir=originalCurrentDir;
+		}
+		
 		$profiler.mark("Request completed");
 		if ($server_gateway.generalProperties.getProperty("append_profiler_output") == "1"){
 			try{

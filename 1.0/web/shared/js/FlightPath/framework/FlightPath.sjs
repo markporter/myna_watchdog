@@ -1,7 +1,7 @@
 /* Class: FlightPath
 	Core framework class for Myna FlightPath
 */
-
+$server_gateway.threadScope.$FP=null;//this saves 500ms, don't ask me why
 /*  */
 /* Property: dir
 	shortcut to $application.directory
@@ -112,6 +112,7 @@ var _modelClasses={}
 		
 	*/
 	function camelNameToFileName(name){
+		if (typeof name != "string") throw new Error("invalid name '" + String(name) +"'")
 		return name.replace(/[A-Z]/g,function(str,offset){
 			if (offset ==0){
 				return str.toLowerCase();	
@@ -138,6 +139,7 @@ var _modelClasses={}
 		
 	*/
 	function fileNameToCamelName(name,capFirst){
+		if (typeof name != "string") throw new Error("invalid name '" + String(name) +"'")
 		return name.split(/[-_]/).map(function(part,index){
 			if (index == 0 && !capFirst){
 				return part.toLowerCase();
@@ -381,6 +383,7 @@ var _modelClasses={}
 		
 		var routes=this.config.routes
 		if (restParams.length){
+			var controllerNames = getControllerNames()
 			routes.some(function(route){
 				if (!route.pattern.listLen("/") == restParams.length) return false;
 				
@@ -409,12 +412,19 @@ var _modelClasses={}
 						}
 					}
 				})
-				
-				params = localParams;
-				return true
+				//Myna.printDump(localParams)
+				var controller = $FP.f2c(localParams.controller||"",true);
+				var action = $FP.f2c(localParams.action||""); 
+				if (controllerNames.contains(controller)){
+					if (getController(controller).getActions().contains(function(a){return a.action==action})){
+						params = localParams;
+						//Myna.abort("matched",params)
+						return true
+					} else return false
+				} else return false
 			})
 		} else {
-			var hom 	
+			
 		}
 		
 		//Myna.abort("params", params)
@@ -459,9 +469,11 @@ var _modelClasses={}
 			$res.serveFile(f)
 		} else {
 			var params =$req.params = getParams();
+			if(!params.controller){
+				$application._onError404();
+			}
+			
 			var c = getController(params.controller)	
-				
-			if(!c) $application._onError404();
 			if (!params.action) params.action ="index"
 			
 			c.handleAction(params);
@@ -513,14 +525,21 @@ var _modelClasses={}
 	converts a JS object into a URL query string.
 	
 	Parameters:
-		object	-	object to convert
+		object				-	object to convert
+		preserveFpParams	-	*Optional, default false*
+								Normally,"controller","action" and "id"
+								parameters are ignored. Setting this to true 
+								allows them to be included. 
 		
 	Note:
-		The resulting string not start with a "?" or a "&". Also removes "$"
-		properties and "controller", "action" and "id" before conversion.
+		The resulting string will not start with a "?" or a "&". This function 
+		ignores any properties that start with "$". Unless _preserveFpParams_ is 
+		set to true, the parameters "controller", "action" and "id" will also be 
+		ignored. This function is useful for converting controller params into 
+		URL params 
 	*/
-	function objectToUrl(object){
-		var result =[]
+	function objectToUrl(object,preserveFpParams){
+		result =[]
 		function addProp(p,v){
 			if (v==null) v=""
 			result.push( escape(p) +"="+escape(v))	
@@ -530,8 +549,10 @@ var _modelClasses={}
 				for (var i=0; i < v.length-1; ++i){
 					addProp(p,params[p+"$array"][i])	
 				}
-			} else if (!/\$/.test(p) && !"action,controller,id".listContains(p)) {
-				addProp(p,v)
+			} else if (!/\$/.test(p) ) {
+				if (preserveFpParams || !"action,controller,id".listContains(p)){
+					addProp(p,v)
+				}
 			}
 					
 		})
@@ -546,21 +567,23 @@ var _modelClasses={}
 		options	-	options object, see below
 		
 	Options:
+		route		-	*Optional, default "default"*
+						Name of route to construct
 		controller	-	*Optional, default null*
-							Name of controller to redirect to
+						Name of controller to redirect to
 		action		-	*Optional, default null*
-							Name of action to redirect to. If controller is not also 
-							defined, then the current controller is assumed
-		id				-	*Optional, default null*
-							ID to redirect to. If controller or action are not also 
-							defined, then the current controller and action is assumed
+						Name of action to redirect to. If controller is not also 
+						defined, then the current controller is assumed
+		id			-	*Optional, default null*
+						ID to redirect to. If controller or action are not also 
+						defined, then the current controller and action is assumed
 		params		-	*Optional, default null*
-							JS object containing URL parameters to include in the redirect
+						JS object containing URL parameters to include in the redirect
 		anchor		-	*Optional, default null*
-							Anchor (#) string to append to redirect
-		<others>		-	Any other property will be considered a $flash key. Any 
-							property that starts with "flash" will remove "flash" 
-							and be camelCased before using as a flash key  
+						Anchor (#) string to append to redirect
+		<others>	-	Any other property will be considered a $flash key. Any 
+						property that starts with "flash" will remove "flash" 
+						and be camelCased before using as a flash key  
 		
 	
 	*/
@@ -579,14 +602,9 @@ var _modelClasses={}
 				k = k.left(1).toLowerCase()+k.after(1)
 				options[k]=v;		
 			}
-		})
+		})                 
 		$flash.set(options)
 		//if (url.charAt(0) == "/") url= $server.serverUrl + url
 		$res.redirect(url)
 		
 	}
-/* Class: FlightPath.Html
-	This is a library within FLightPath for creating HTML snippets 
-*/
-
-

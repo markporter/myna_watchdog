@@ -7,6 +7,8 @@
 		options		-	options object, see below
 	
 	Options:
+		route		-	*Optional, default "default"*
+						Name of route to construct
 		staticUrl	-	*Optional, default null*
 							A url relative to the "static" folder. If defined, this 
 							overrides _controller_, _action_ and _id_
@@ -56,6 +58,8 @@
 		options		-	options object, see below
 	
 	Options:
+		route		-	*Optional, default "default"*
+						Name of route to construct
 		staticUrl	-	*Optional, default null*
 							A url relative to the "static" folder. If defined, this 
 							overrides _controller_, _action_ and _id_ 
@@ -69,35 +73,47 @@
 								
 	*/
 	function url(options){
-		var controller,action,id,url=$application.url,hash="";
+		var template=false,controller,action,id,url=$application.url,hash="";
+		var routes = $FP.config.routes.filter(function(r){
+			return r.name == (options.route||"default")
+		})
+		
+		if (routes.length ){
+			template=routes[0].pattern;
+		} else {
+			if (options.route) {//oops! we asked for a non-existent route
+				throw new Error("No route '" +options.route+"' in configuration.")
+			} else {//No routes defined? We'll use URL params
+				if (!options.params) options.params={}
+				options.params.setDefaultProperties({
+					id: options.id||$req.params.id||"",
+					action: $FP.c2f(options.action||$req.params.action),
+					controller: $FP.c2f(options.controller||$req.params.controller),
+				})
+			}
+		} 
+			
 		if (options.staticUrl){
 			url +="static/" +options.staticUrl
-		} else if ("id" in options){
-			id = options.id;
+		} else if (template){
+			id = options.id||$req.params.id||"";
 			action = $FP.c2f(options.action||$req.params.action);
 			controller = $FP.c2f(options.controller||$req.params.controller);
-			url += [controller,action,id].join("/")
-		} else if ("action" in options){
-			action = $FP.c2f(options.action);
-			controller = $FP.c2f(options.controller||$req.params.controller);
-			url += [controller,action].join("/")
-		} else if ("controller" in options){
-			controller = $FP.c2f(options.controller);
-			url += controller
-		} else {
 			
-			url += [
-				$FP.c2f($req.params.controller),
-				$FP.c2f($req.params.action),
-				$req.params.id
-			].join("/")
+			url += template
+				.replace(/\$controller/g,controller)
+				.replace(/\$action/g,action)
+				.replace(/\$id/g,id) 
 		}
+		
 		if ("params" in options){
-			var q = $FP.objectToUrl(options.params)
+			var q = $FP.objectToUrl(options.params,!template)
 			if (q) url+="?"+q	
 		}
 		if ("anchor" in options) {
 			url+="#"+escape(options.anchor)
 		}
+		
+		//Myna.abort(url)
 		return url
 	}	

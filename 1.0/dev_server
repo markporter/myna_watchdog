@@ -16,9 +16,19 @@ ps_signature="java.*myna.name=$server"
 case "$1" in
 start)
 	watchdog_jvm_args="-Dmyna.name=$server -Xmx20m -server -cp $web_inf/lib/*:$web_inf/classes/:/usr/local/bin"
-	server_jvm_args="-Dmyna.name=$server -Xmx70m -server"
+	server_jvm_args="-Dmyna.name=$server -Xmx600m -server"
 	
 	myna_args="-c /$server -p $port -w $myna_home -l $logfile -- $server_jvm_args"
+	java  $watchdog_jvm_args  bootstrap.MynaServer $myna_args &
+	echo "Myna instance '$server' Starting. tail -f $logfile for details."
+	
+	exit 0
+    ;;
+start-nowatchdog)
+	watchdog_jvm_args="-Dmyna.name=$server -Xmx600m -Dmyna.hasWatchdog=true -server -cp $web_inf/lib/*:$web_inf/classes/:/usr/local/bin"
+	
+	
+	myna_args="-c /$server -p $port -w $myna_home -l $logfile "
 	java  $watchdog_jvm_args  bootstrap.MynaServer $myna_args &
 	echo "Myna instance '$server' Starting. tail -f $logfile for details."
 	
@@ -32,7 +42,7 @@ stop)
     ;;
 compile)
 	$0 stop
-   ant compile && $0 restart && tail -f $logfile
+   ant compile && $0 start-nowatchdog && tail -f $logfile
     ;;
 restart)
    $0 stop
