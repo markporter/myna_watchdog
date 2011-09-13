@@ -1196,6 +1196,19 @@ if (!Myna) var Myna={}
 			See:
 				* <addValidator>
 			*/
+		/* Function: validatorFunctions.required
+			Validates that a value is non-empty
+				
+			Parameters:
+				
+				
+			Detail: 
+				This will add an error if (!value) would return false, and value is 
+				not zero     
+			
+			See:
+				* <addValidator>
+			*/
 		/* Property: dm
 			The <Myna.DataManager> object that created this manager
 		
@@ -1608,19 +1621,17 @@ if (!Myna) var Myna={}
 			*/
 /* ========== code ========================================================== */
 	/* ---------- Constructor ------------------------------------------------ */
-		Myna.DataManager = function (dataSource){ 
+		Myna.DataManager = function (dataSource/* ,managerTemplatePath,beanTemplatePath */){ 
 			
 			this.ds = dataSource;
 			
 			this.db = new Myna.Database(dataSource);
 			this.qt = this.db.columnQuoteChar;
-			this.managerTemplate = ({}).setDefaultProperties( 
-				Myna.DataManager.managerTemplate
-			)
-			this.beanTemplate =({}).setDefaultProperties( 
-				Myna.DataManager.beanTemplate
-			)
-		 
+			this.managerTemplate="/shared/js/libOO/OrmManagerTemplate.ejs"
+			this.beanTemplate="/shared/js/libOO/OrmBeanTemplate.ejs"
+			
+			this.managerClasses={}
+			this._managers={}
 		
 		}
 		/* private functions */
@@ -1707,6 +1718,7 @@ if (!Myna) var Myna={}
 				})
 				return result.join("_")
 			},
+		Myna.DataManager.managerClasses={}
 	/* ---------- getManager ------------------------------------------------- */
 		Myna.DataManager.prototype.getManager=function(table,options){
 			if (!options) options ={}
@@ -1728,226 +1740,44 @@ if (!Myna) var Myna={}
 					}
 				}
 			}
-				
+			tableName = tableName.toLowerCase();
 			
 			var tkey =tableName.toLowerCase();
-			if (!("_managers" in this)) this._managers={}
+			
 			if ( tkey in this._managers){
 				return this._managers[tkey];	
-			} else {
-				//Myna.printConsole("got here")
-				var $this = this;
-				var manager;
-				
-				this._managers[tkey] = manager= ({}).setDefaultProperties( 
-					this.managerTemplate
-				).setDefaultProperties(options)
+			} 
 			
-				manager.ds = this.ds;
-				manager.db = this.db;
-				manager.qt = this.qt;
-				manager.dm = this
-				manager.name=name;
-				manager.associations ={
-					hasOne:{},
-					hasMany:{},
-					belongsTo:{},
-					hasBridgeTo:{},
+			var classFile = new Myna.File("/WEB-INF/myna/ds_class_cache/" + this.ds +"/" +tableName +".sjs")
+			var templateFile =new Myna.File(this.managerTemplate)
+			var staleClassFile =(
+				!classFile.exists() 
+				|| classFile.lastModified.getTime() < templateFile.lastModified.getTime()
+			);
+			
+			if (
+				!Myna.DataManager.managerClasses[tableName]
+				|| staleClassFile 
+			) {
+				
+				if(staleClassFile){
+					classFile.getDirectory().createDirectory();
+					classFile.writeString(
+						Myna.includeContent(templateFile,{dm:this,tableName:tableName})	
+							.replace(/\[(\/?ejs)\]/g,"<$1>")
+							.replace(/<\|/g,"<\%")
+							.replace(/\|>/g,"\%\>")
+							.replace(/#/g,"@")
+					)
+					Myna.printConsole("loading model " + classFile)
 				}
-				manager.beanTemplate =({}).setDefaultProperties( 
-					this.beanTemplate
-				)
 				
-				manager.table =this.db.getTable(tableName);
-				var alias,fk_name_part;
-				manager.loadTableData(tableName);
-				//double-check special columns
-				
-				if (manager.table.columnNames.indexOf(manager.modifiedCol.toLowerCase()) == -1){
-					manager.modifiedCol = false;
-				}
-				if (manager.table.columnNames.indexOf(manager.softDeleteCol.toLowerCase()) == -1){
-					manager.softDeleteCol = false;
-				}
-				if (manager.table.columnNames.indexOf(manager.createdCol.toLowerCase()) == -1){
-					manager.createdCol = false;
-				}
-				/* build implicit associations from foreign keys */
-					/* exported keys*/
-						manager.table.exportedKeys.forEach(function(localExport){
-							/* make sure getManager will work */
-								var relatedTable = manager.db.getTable(localExport.fktable_name)
-								if (relatedTable.primaryKeys.length == 1){
-									/* now check for bridge only table */
-										var bridgeOnly =relatedTable.columnNames.every(function(colname){
-											if (colname.toLowerCase() == relatedTable.primaryKeys[0].toLowerCase()){
-												return true	
-											}
-											return relatedTable.foreignKeys.contains(function(fk){
-												return fk.fkcolumn_name.toLowerCase() == colname.toLowerCase()
-											})
-										})
-									
-									//Myna.printConsole("hasOne, from " + manager.table.tableName + " to " + relatedTable.tableName );
-									if (!bridgeOnly){
-										/* hasOne */
-											name = manager.dm.t2m(localExport.fktable_name)
-											alias = name
-											fk_name_part = localExport.fkcolumn_name.toLowerCase()
-											if ( //check for aliased FK
-												fk_name_part.listBefore("_") != localExport.pktable_name.toLowerCase()
-												&& manager.dm.fk2t(fk_name_part) != localExport.pktable_name.toLowerCase()
-											) {
-												alias=manager.dm.t2m(manager.dm.fk2t(fk_name_part))
-											}
-											manager.hasOne({
-												name:manager.dm.t2m(localExport.fktable_name),
-												localKey:localExport.pkcolumn_name.toLowerCase(),
-												foreignKey:localExport.fkcolumn_name.toLowerCase(),
-											})
-										/* hasMany */
-											name = manager.dm.m2pm(manager.dm.t2m(localExport.fktable_name))
-											alias = name
-											if ( //check for aliased FK
-												fk_name_part.listBefore("_") != localExport.pktable_name.toLowerCase()
-												&& manager.dm.fk2t(fk_name_part) != localExport.pktable_name.toLowerCase()
-											) {
-												alias=manager.dm.m2pm(manager.dm.t2m(manager.dm.fk2t(fk_name_part)))
-											}
-										
-											manager.hasMany({
-												name:name,
-												alias:alias,
-												localKey:localExport.pkcolumn_name.toLowerCase(),
-												foreignKey:localExport.fkcolumn_name.toLowerCase(),
-											})		
-									}
-								} else{
-									//Myna.log("debug","skipping " + relatedTable.tableName,Myna.dump($req.data));
-								}
-							
-							/* add Bridges */
-							relatedTable.foreignKeys.filter(function(relatedExport){
-								return relatedExport.pktable_name != manager.table.tableName
-							}).forEach(function(relatedExport){
-								//Myna.printConsole("bridgeTo, from " + manager.table.tableName + " to " + relatedTable.tableName );
-								manager.hasBridgeTo({
-									name:manager.dm.m2pm(manager.dm.t2m(relatedExport.pktable_name)),
-									bridgeTable:relatedTable.tableName.toLowerCase(),
-									
-									localBridgeKey:localExport.fkcolumn_name.toLowerCase(),
-									
-									foreignBridgeKey:relatedExport.fkcolumn_name.toLowerCase(),
-									foreignKey:relatedExport.pkcolumn_name.toLowerCase(),
-								})	
-							})
-						})
-					/* foreign keys  */
-						manager.table.foreignKeys.forEach(function(row){
-							name = manager.dm.t2m(row.pktable_name);
-							alias = name;
-							fk_name_part = row.fkcolumn_name.toLowerCase();
-							if ( //check for aliased FK
-								fk_name_part.listBefore("_") != row.fktable_name.toLowerCase()
-								&& manager.dm.fk2t(fk_name_part) != row.fktable_name.toLowerCase()
-							) {
-								alias=manager.dm.t2m(manager.dm.fk2t(fk_name_part))
-							}
-							manager.belongsTo({
-								name:name,
-								alias:alias,
-								localKey:row.fkcolumn_name.toLowerCase(),
-								foreignKey:row.pkcolumn_name.toLowerCase(),
-							})
-						})
-						
-				/* build bean class */
-					manager.beanClass=function(data){
-						this.id = data[manager.primaryKey]
-						this.data = data;
-						//this.hideProperty("data")
-						this._core_init();
-					}
-					manager.beanTemplate.setDefaultProperties(manager);
-					
-					manager.beanClass.prototype = manager.beanTemplate	
-					manager.beanTemplate.manager=manager
-					for (var prop in manager.beanTemplate){
-						//manager.beanTemplate.hideProperty(prop)
-					}
-					//validate required
-						manager.addValidator(null,function(colname,value,v,bean){
-							var colDef = bean.manager.table.columns[colname]
-							if (
-								colDef.is_nullable == "NO" && !colDef.column_def
-								&& colname != bean.manager.primaryKey
-								&& !(value)
-							){
-								v.addError(bean.manager.getLabel(colname) + " is required",colname)
-							}
-						},{validateWhenNull:true})
-					//validate length
-						manager.addValidator(null,"length",{
-							max:function(colname,value,v,bean){
-								var colDef = bean.manager.table.columns[colname];
-								if ("BLOB,CLOB".listContains(colDef.type_name)){
-									return 2*1024*1024*1024*1024;//2 GB	
-								} else {
-									return colDef.column_size
-								}
-							}
-						})
-						
-					//validate type
-						manager.addValidator(null,"type",{
-							type:function(colname,value,v,bean){
-								var colDef = bean.manager.table.columns[colname];
-								return Myna.Database.dbTypeToJs(colDef.data_type)
-							}
-						})
-						
-					//column specific code
-					manager.columnNames.forEach(function(colname){
-						var fname = colname;
-						if (!("get_"+fname in manager.beanTemplate)){
-							manager.beanTemplate["get_"+fname] = function (){
-								return this.data[arguments.callee.fieldName];
-							}
-							if (colname !="id"){
-								manager.beanTemplate.__defineGetter__(fname, manager.beanTemplate["get_"+fname]);
-							}
-							
-						}
-						
-						manager.beanTemplate["get_"+fname].fieldName = colname;
-						
-						if (fname != manager.primaryKey){
-							if (!("set_"+fname in manager.beanTemplate)){
-								manager.beanTemplate["set_"+fname] = function (newval){
-									var result = new Myna.ValidationResult();
-									if (typeof newval === "undefined"){
-										result.addError("argument 'newval' required for set" +fname +".",fname);
-										return result;
-									}
-									result.merge(this.saveField(arguments.callee.fieldName,newval));
-									return result;
-								}
-							}
-							if (colname !="id"){
-								manager.beanTemplate.__defineSetter__(fname, manager.beanTemplate["set_"+fname]);
-							}
-							manager.beanTemplate["set_"+fname].fieldName = colname;
-						}
-						
-					}) 
-									
-				
-				manager._core_init();
-				
-				
-				return manager;
+				Myna.include(classFile,this.managerClasses);
 			}
+			var manager= new this.managerClasses[tableName+"_manager"](this,options);
 			
+			
+			return this._managers[tkey]=manager
 		}
 	/* ---------- getTreeManager --------------------------------------------- */
 		Myna.DataManager.prototype.getTreeManager = function (tableName, options){
@@ -2483,13 +2313,303 @@ if (!Myna) var Myna={}
 			}
 			return false
 		}
-	/* ---------- managerTemplate -------------------------------------------- */
-		Myna.DataManager.managerTemplate ={
-			_core_init:function(){ 
-				this._labels = {}
-				return this.init();
+	/* ---------- validatorFunctions -------------------------------------------- */
+		Myna.DataManager.validatorFunctions={
+			type:function(colname,value,v,bean){
+				this.checkRequired(["type"])
+				var label = bean.manager.getLabel(colname);
+				var type = typeof this.type =="function"?this.type(colname,value,v,bean):this.type;
+				var msg = this.message||<ejs>
+					<%=label%> must be of type "<%=type%>"
+				</ejs>
+				switch(type){
+					case "string":
+						if (typeof value == "string") return  
+					case "numeric":
+						if (parseFloat(value) == value) return
+					case "date":
+						if (value instanceof Date) return
+					case "binary":
+						if (value instanceof Array){
+							try{
+								if (value.getClass().getName() == "[B") return
+							} catch(e){}
+						}
+					default:
+						v.addError(msg,colname)
+				}
 			},
-			init:function(){},
+			length:function(colname,value,v,bean){
+				var colDef = bean.manager.table.columns[colname]
+				var msg = this.message
+				var min = typeof this.min =="function"?this.min(colname,value,v,bean):this.min;
+				var max = typeof this.max =="function"?this.max(colname,value,v,bean):this.max;
+				if (Myna.Database.dbTypeToJs(colDef.data_type) == "string"){
+					if (max){
+						if (String(value).length > max){
+							
+							v.addError(msg ||
+								<ejs>
+									Exceeded maximum length for <%=bean.manager.getLabel(colname)%> (<%=max%>), 
+									by <%=String(bean.data[colname]).length-max%>
+								</ejs>,
+								colname
+							)
+						}
+					}
+					if (min){
+						if (String(value).length < min){
+							v.addError(msg ||
+								<ejs>
+									<%=bean.manager.getLabel(colname)%> 
+									must be at least <%=String(bean.data[colname]).length-min%> long
+								</ejs>,
+								colname
+							)
+						}
+					}
+					
+				} else if (Myna.Database.dbTypeToJs(colDef.data_type) == "numeric"){
+					if (max){
+						if (String(parseInt(value)).length > max){
+							v.addError(
+								<ejs>
+									Exceeded maximum length for <%=bean.manager.getLabel(colname)%> (<%=max%>), 
+									by <%=String(bean.data[colname]).length-colDef.column_size%>
+								</ejs>,
+								colname
+							)
+						}
+					}
+					if (min){
+						if (String(parseInt(value)).length  < min){
+							v.addError(
+								<ejs>
+									<%=bean.manager.getLabel(colname)%> 
+									must be at least <%=String(bean.data[colname]).length-min%> long
+								</ejs>,
+								colname
+							)
+						}
+					}
+				}
+			},
+			regex:function(colname,value,v,bean){
+				this.checkRequired(["regex"])
+				var msg= this.message|| bean.manager.getLabel(colname) +" is not properly formatted."
+				if (!this.regex.test(String(value))) v.addError(msg,colname);
+			},
+			list:function(colname,value,v,bean){
+				var oneOf = typeof this.oneOf =="function"?this.oneOf(colname,value,v,bean):this.oneOf;
+				var notOneOf = typeof this.notOneOf =="function"?this.notOneOf(colname,value,v,bean):this.notOneOf;
+				if (oneOf && oneOf.length){
+					var msg= this.message|| bean.manager.getLabel(colname) 
+								+" must be "+(oneOf.length>1?"one of ":"")+"'" + oneOf.join()+"'"
+					if (this.exact){
+						if (oneOf.indexOf(value) == -1) v.addError(msg,colname);
+					} else if (this.caseSensitive){
+						if (!oneOf.contains(value)) v.addError(msg,colname);
+					} else {
+						if (!oneOf.join().listContainsNoCase(value)) v.addError(msg,colname);
+					}
+				} else if (notOneOf && notOneOf.length){
+					msg= this.message|| bean.manager.getLabel(colname) 
+												+ " must NOT be "+(notOneOf.length>1?"one of ":"")+"'" + notOneOf.join() +"'"
+					if (this.exact){
+						if (notOneOf.indexOf(value) != -1) v.addError(msg,colname);
+					} else if (this.caseSensitive){
+						if (notOneOf.contains(value)) v.addError(msg,colname);
+					} else {
+						if (notOneOf.join().listContainsNoCase(value)) v.addError(msg,colname);
+					}
+				}
+			},
+			unique:function(colname,value,v,bean){
+				var msg= this.message|| bean.manager.getLabel(colname) +" ("+value+"), already exists in another record."
+				var search ={}
+				search[colname] = value
+				var result = bean.manager.find(search,this)
+				if (result.length){
+					if (result.length > 1 || result[0] != bean.id) v.addError(msg,colname);
+				}
+			},
+			/* required:function(colname,value,v,bean){
+				var msg= this.message|| bean.manager.getLabel(colname) +" is required."
+				if (!value && value != 0 && value !== false){
+					v.addError(msg,colname);
+				}
+			}, */
+		}
+	/* ---------- hasOneBeanLoader -------------------------------------------- */
+		Myna.DataManager.hasOneBeanLoader=function(bean,relatedModelOptions){
+			var my = arguments.callee;
+			if (!my.cache) my.cache = {}
+			var cacheKey = JSON.stringify(relatedModelOptions); 
+			if (!(cacheKey in my.cache)) {
+								
+				my.cache[cacheKey] = new Function(<ejs>
+					var dm = this.manager.dm;
+					var relatedBean
+					var relatedModel = dm.getManager("<%=relatedModelOptions.name%>")
+					var criteria  = {
+						where:"<%=relatedModelOptions.foreignKey%> = {<%=relatedModelOptions.foreignKey%>}",
+					}
+					criteria.<%=relatedModelOptions.foreignKey%>=this.data.<%=relatedModelOptions.localKey%>
+					<@if relatedModelOptions.conditions >
+						<@loop array="relatedModelOptions.conditions.getKeys()" element="prop" index="i">
+							<@if prop=="where" >
+								criteria.where += " and <%=relatedModelOptions.conditions.where%>";
+							<@else>
+								criteris.<%=prop%> = "<%=relatedModelOptions.conditions[prop]%>"
+							</@if>
+						</@loop>
+					</@if>
+					
+					var exists;
+					exists = relatedModel.find(criteria);
+					if (exists.length){
+						relatedBean=relatedModel.getById(exists[0]);
+						relatedBean.deferred =true;
+						
+					} else {
+						relatedBean=relatedModel.getNew(criteria);
+						
+					}
+					
+					relatedBean.relatedModelOptions = <%=relatedModelOptions.toJson()%>;
+					relatedBean.model = relatedModel;
+					
+					var alias = "<%=relatedModelOptions.alias||relatedModelOptions.name%>"
+					this._loadedAliases[alias]=relatedBean
+					return relatedBean;	
+				</ejs>)
+			}
+			//Myna.printConsole(cacheKey,my.cache[cacheKey].toSource().replace(/;/g,";\n"))
+			return my.cache[cacheKey].cache()
+		}
+	/* ---------- hasManyBeanLoader -------------------------------------------- */
+		Myna.DataManager.hasManyBeanLoader=function(bean,relatedModelOptions){
+			var my = arguments.callee;
+			if (!my.cache) my.cache = {}
+			var cacheKey = JSON.stringify(relatedModelOptions); 
+			if (!(cacheKey in my.cache)) {
+				my.cache[cacheKey] = new Function(<ejs>
+					var dm = this.manager.dm;
+					var relatedBean
+					var relatedModel = dm.getManager(dm.pm2t("<%=relatedModelOptions.name%>"))
+					var criteria  = {
+						where:"<%=relatedModelOptions.foreignKey%> = {<%=relatedModelOptions.foreignKey%>}",
+					}
+					<@if relatedModelOptions.orderBy >
+						criteria.orderBy="<%=relatedModelOptions.orderBy%>"
+					</@if>
+					
+					criteria.<%=relatedModelOptions.foreignKey%>=this.data.<%=relatedModelOptions.localKey%>
+					<@if relatedModelOptions.conditions >
+						<@loop array="relatedModelOptions.conditions.getKeys()" element="prop" index="i">
+							<@if prop=="where" >
+								criteria.where += " and <%=relatedModelOptions.conditions.where%>";
+							<@else>
+								criteris.<%=prop%> = "<%=relatedModelOptions.conditions[prop]%>"
+							</@if>
+						</@loop>
+					</@if>
+					
+					var relatedBean =relatedModel.findBeans(criteria);
+					relatedBean.getNew = function(initialValues){
+						var values = (initialValues||{}).applyTo({});
+						values.setDefaultProperties(criteria)
+						return relatedBean[relatedBean.length]=relatedModel.getNew(values)
+					}
+					
+					relatedBean.relatedModelOptions = <%=relatedModelOptions.toJson()%>;
+					relatedBean.model = relatedModel;
+								
+					var alias = "<%=relatedModelOptions.alias||relatedModelOptions.name%>"
+					this._loadedAliases[alias]=relatedBean
+					return relatedBean;	
+				</ejs>)
+			}
+			//Myna.printConsole(cacheKey,my.cache[cacheKey].toSource().replace(/;/g,";\n"))
+			return my.cache[cacheKey].cache()
+		}
+	/* ---------- hasBridgeToBeanLoader -------------------------------------------- */
+		Myna.DataManager.hasBridgeToBeanLoader=function(bean,relatedModelOptions){
+			var my = arguments.callee;
+			if (!my.cache) my.cache = {}
+			var cacheKey = JSON.stringify(relatedModelOptions); 
+			if (!(cacheKey in my.cache)) {
+				var dm = bean.manager.dm;
+				var relatedModel = dm.getManager(dm.pm2t(relatedModelOptions.name))
+				var thisModel=bean.manager;
+				//Myna.printDump(relatedModel)
+				var bridgeTable =dm.db.getTable(relatedModelOptions.bridgeTable);
+				relatedModelOptions.setDefaultProperties({
+					localKey:thisModel.primaryKey,
+					foreignKey:relatedModel.primaryKey,
+					bridgeTable:[relatedModel.tableName,thisModel.tableName].sort().join("_"),
+					localBridgeKey:dm.m2fk(dm.t2m(thisModel.tableName)),
+					foreignBridgeKey:dm.m2fk(dm.t2m(relatedModel.tableName))
+				})
+				
+				//Myna.printDump(thisModel.columns)
+				var bob =true
+				var body = <ejs>
+					var dm = this.manager.dm;
+					var relatedBean;
+					var relatedModel = dm.getManager(dm.pm2t("<%=relatedModelOptions.name%>"))
+					
+					var relatedBean =new Myna.Query({
+						ds:dm.ds,
+						sql:[
+							'select ',
+								'ft.<%=relatedModel.table.getSqlColumnName(relatedModel.primaryKey)%> as id',
+							'from',
+								'<%=relatedModel.table.sqlTableName%> ft,',
+								'<%=bridgeTable.sqlTableName%> bt',
+							'where ',
+								'bt.<%=bridgeTable.getSqlColumnName(relatedModelOptions.foreignBridgeKey)%>',
+									'=	ft.<%=relatedModel.table.getSqlColumnName(relatedModelOptions.foreignKey)%>',
+								'and bt.<%=bridgeTable.getSqlColumnName(relatedModelOptions.localBridgeKey)%> ',
+									'= {localId:<%=thisModel.columns[relatedModelOptions.localKey].data_type%>}',
+							'<@if relatedModelOptions.conditions>',
+								'and <%=relatedModelOptions.conditions%>	',
+							'</@if>	',
+							'<@if relatedModelOptions.orderBy>',
+								'order by <%=relatedModelOptions.orderBy%>	',
+							'</@if>',
+							
+						].join("\n"),
+						values:{
+							localId:<%=JSON.stringify(bean[relatedModelOptions.localKey])%>
+						}
+					}).data.map(function(row){
+						return relatedModel.getById(row.id)
+					})
+					relatedBean.columns = relatedModel.columns.getKeys()
+					
+					relatedBean.relatedModelOptions = <%=relatedModelOptions.toJson()%>;
+					relatedBean.getNew = function(initialValues){
+						var values = (initialValues||{}).applyTo({});
+						var newBean = relatedBean[relatedBean.length]=relatedModel.getNew(values)
+						newBean._hasBridgeTo = relatedBean.relatedModelOptions;
+						return newBean
+					}
+					relatedBean.model = relatedModel;
+								
+					var alias = "<%=relatedModelOptions.alias||relatedModelOptions.name%>"
+					this._loadedAliases[alias]=relatedBean
+					return relatedBean;	
+				</ejs>.replace(/\[(\/?ejs)\]/g,"<$1>")
+				//Myna.printConsole(body)
+				my.cache[cacheKey] =new Function(body)
+			}
+			
+			return my.cache[cacheKey].cache()
+		}
+	/* ---------- managerBaseClass -------------------------------------------- */
+		Myna.DataManager.managerBaseClass = function(){}
+		Myna.DataManager.managerBaseClass.prototype = {
 			addValidator:function(colname,validator,options){
 				if (!options) options ={};
 				if (!this._validators) this._validators={}
@@ -2497,8 +2617,10 @@ if (!Myna) var Myna={}
 				if (!(colname in this._validators)) this._validators[colname]=[];
 				if (typeof validator === "string"){
 					if (validator == "required") options.validateWhenNull = true;
-					if (validator in this.validatorFunctions && typeof this.validatorFunctions[validator] === "function"){
-						validator = this.validatorFunctions[validator]
+					if (validator in Myna.DataManager.validatorFunctions 
+						&& typeof Myna.DataManager.validatorFunctions[validator] === "function"
+					){
+						validator = Myna.DataManager.validatorFunctions[validator]
 					} else throw new  Error(validator + " is not a validation function")
 				}
 				
@@ -2507,33 +2629,8 @@ if (!Myna) var Myna={}
 				}))
 									
 			},
-			loadTableData:function(tableName){
-				var manager = this;
-				var con = manager.db.con;
-				//var tables = manager.db.tables;
-				
-				
-				manager.tableName = manager.table.tableName;
-				manager.sqlTableName = manager.table.sqlTableName;
-				
-				
-				if (!manager.table.exists){
-					throw new Error("No table '" + tableName +"' found in data source '" + manager.ds +"' \nTables: " + manager.db.tables.join());
-				}
-				
-				manager.columns = manager.table.columns;
-				manager.columnNames = manager.table.columnNames;
-				 
-				
-				if (manager.table.primaryKeys.length != 1){
-					throw new Error("getManager can only handle tables with exactly one primary key");	
-				} 
-				if (manager.table.primaryKeys.length == 1){
-					manager.primaryKey=manager.table.primaryKeys[0]
-				} else {
-					manager.primaryKey=null;
-				}
-				return manager;
+			loadTableData:function(tableName){//deprecated
+				return this
 			},
 			remove:function(id){
 				var manager = this;
@@ -2549,220 +2646,6 @@ if (!Myna) var Myna={}
 					} else this.forceDelete(id)
 				} else this.forceDelete(id)
 			},
-			forceDelete:function(id){
-				var manager = this;
-				var p = new Myna.QueryParams();
-				
-				var qry = new Myna.Query({
-					dataSource:this.ds,
-					log:this.logQueries,
-					sql:<ejs>
-						delete from <%=this.sqlTableName%>
-						where <%=manager.qt%><%=this.columns[this.primaryKey].column_name%><%=manager.qt%> = 
-							<%=p.addValue(id,this.columns[this.primaryKey].data_type)%>
-					</ejs>,
-					parameters:p
-				});
-			},
-			create:function(requiredFields){
-				var manager = this;
-				if (!requiredFields) requiredFields={}
-				if (this.primaryKey	 && !requiredFields[this.primaryKey]){
-					/* if (this.columns[this.primaryKey].column_def.length ==0) { */
-						requiredFields[this.primaryKey] = this.genKey();
-					/* } */
-				}
-				
-				if (!requiredFields) requiredFields={}
-				
-				requiredFields.checkRequired(this.columnNames.filter(function(colName){
-						return (manager.columns[colName].is_nullable == "NO" 
-							&& !manager.columns[colName].column_def
-							&& colName != manager.primaryKey);
-					
-				}))
-				
-				//update if exists instead of creating
-				if (this.primaryKey){
-					var exists =this.findBeans(requiredFields[this.primaryKey]);
-					if (exists.length) {
-						var validation =exists[0].setFields(requiredFields);
-						if (!validation.success) {
-							Myna.logSync("error","Error in ManagerObject.create()",Myna.dump(validation));
-							throw new Error("Error in ManagerObject.create() See Administrator log for details")
-						}
-						return exists[0];
-					}
-				}
-				var now = new Date()
-				if (this.createdCol && !requiredFields[this.createdCol]) {
-					requiredFields[this.createCol] = now;
-				}
-				if (this.modifiedCol && !requiredFields[this.modifiedCol]) {
-					requiredFields[this.modifiedCol] = now;
-				}
-				var columnArray = requiredFields.getKeys().filter(function(colName){
-					//ignore columns that don't exist
-					return manager.columns[colName];
-				}); 
-				//Myna.printDump(columnArray)
-				var fieldArray = columnArray.map(function(colName){
-					return  manager.qt + manager.columns[colName].column_name + manager.qt;
-				});
-				
-				
-				var p = new Myna.QueryParams();
-				var qry = new Myna.Query({
-					dataSource:this.ds,
-					log:this.logQueries,
-					parameters:p,
-					sql:<ejs>
-						insert into <%=this.sqlTableName%>(<%=fieldArray.join()%>) 
-						values (
-						<% 
-							columnArray.forEach(function(colName,index){
-								var value = requiredFields[colName];
-								var type = manager.columns[colName].data_type;
-								var isNull = (value === null);
-								Myna.print(p.addValue(value,type,isNull))
-								if (index < columnArray.length -1) Myna.print(",")
-							});
-							
-						%>
-						)
-						
-					</ejs>
-				});
-				if (this.primaryKey 
-					
-				 && (this.columns[this.primaryKey].column_def ==null ||this.columns[this.primaryKey].column_def.length !=0)  
-				 && !requiredFields[this.primaryKey]){
-					 requiredFields[this.primaryKey] = qry.generatedKey
-				}
-				return this.getById(requiredFields[this.primaryKey]);
-			},
-			
-			query:function(pattern,options){
-				if (!pattern) pattern={}
-				var $this = this;
-				var criteria=[];
-				var pkey =this.columns[this.primaryKey].column_name;
-				var colNameSql;
-				var op;
-				var caseSensitive=false
-				var where = false;
-				var select ="*"
-				var orderBy=false;
-				
-				if (typeof options == "object"){
-					caseSensitive= options.caseSensitive;
-				} else {
-					caseSensitive = options
-					options={}
-				}
-
-				var getCriteria=function(colName,pattern){
-					colName= colName.toLowerCase();
-					var col = {
-						column:colName,
-						op:"=",
-						isNull:false,
-						type:$this.columns[colName].data_type,
-						pattern:pattern
-					}
-					
-					
-					
-					if (/%/.test(String(pattern))){
-						col.op =" like ";
-					}
-					
-					col.compareColumn =col.column
-					if (pattern === null){
-						col.isNull = true;
-					} else if (Myna.Database.dbTypeToJs($this.columns[colName].data_type) == "string"){
-						if (!caseSensitive){
-							col.pattern = String(col.pattern).toLowerCase();
-							col.column = colName.toLowerCase();
-							col.compareColumn ="LOWER(" + col.column +")"	
-						} else {
-							
-						}
-					}
-					
-					return col
-				}
-				
-				if (typeof pattern == "object" && !(pattern instanceof Date)){
-					if ("select" in pattern) select = pattern.select
-					if ("orderBy" in pattern) orderBy = pattern.orderBy
-					if ("where" in pattern){
-						where = pattern.where
-					} else {
-						var myColumnList = this.columnNames.join()
-						if (!options.includeSoftDeleted){
-							pattern[this.softDeleteCol] = null	
-						}
-						pattern.getKeys().filter(function(colName){
-							return myColumnList.listContains(colName.toLowerCase())
-						}).forEach(function(colName){
-							
-							criteria.push(getCriteria(colName,pattern[colName]))
-						})
-					}
-					
-				} else{
-					criteria.push(getCriteria($this.db.isCaseSensitive?pkey:pkey.toLowerCase(),pattern));
-				}
-				
-				if (where){
-					
-					var qry = new Myna.Query({
-						dataSource:this.ds,
-						log:$this.logQueries,
-						sql:<ejs>
-							select <%=select%>
-							from <%=this.sqlTableName%>
-							where 
-							<@if !options.includeSoftDeleted && $this.softDeleteCol in $this.table.columnNames>
-								<%=$this.table.getSqlColumnName($this.softDeleteCol)%> is null and
-							</@if>
-							<%=where%>
-							<@if orderBy>
-								order by <%=orderBy%>
-							</@if>
-						</ejs>,
-						values:pattern
-					})
-					
-				} else {
-					var p = new Myna.QueryParams();
-					
-					qry = new Myna.Query({
-						dataSource:this.ds,
-						log:$this.logQueries,
-						parameters:p,
-						sql:<ejs>
-							select <%=select%>
-							from <%=this.sqlTableName%>
-							where 1=1
-							<@loop array="criteria" element="col" >
-								<@if col.isNull>
-								and <%=col.column%> is null
-								<@else>
-								and <%=col.compareColumn%> <%=col.op%> <%=p.addValue(col.pattern,col.type,!!col.pattern)%>
-								</@if>
-							</@loop>
-							<@if orderBy>
-								order by <%=orderBy%>
-							</@if>
-						</ejs>
-					})
-					
-				}
-				
-				return qry.data
-			},
 			queryCol:function(pattern,options){
 				var result = this.query(pattern,options);
 				return result.valueArray(result.columns[0]);
@@ -2772,62 +2655,6 @@ if (!Myna) var Myna={}
 				if (result.length){
 					return result[0][result.columns[0]]	
 				} else return undefined
-			},
-			find:function(pattern,options){
-				
-				var $this = this
-				var pkey =this.columns[this.primaryKey].column_name;
-				var sqlKey = this.table.getSqlColumnName(pkey)
-				if (!pattern) pattern={}
-				if (typeof pattern == "object" && !(pattern instanceof Date)){
-					pattern.setDefaultProperties({select:sqlKey})
-				} else {
-					var id = pattern;
-					pattern ={
-						select:sqlKey
-					}
-					pattern[pkey] = id
-				}
-				return this.queryCol(pattern,options)
-				
-			},
-			//var bean = new this.beanClass(data)
-			findBeans:function(pattern,options){
-				var $this = this;
-				pattern=pattern||{}
-				if (options === !!options) {
-					options={
-						caseSensitive:!!options
-					}	
-				}
-				
-				try {
-					if ( pattern && typeof pattern == "object" &&  !("select" in pattern)){
-						pattern.select ="*"
-					}
-				}catch(e){
-					Myna.printConsole("DataManager.findBeans: bad pattern " + String(pattern) + " == "+ (typeof pattern))
-				}
-					
-				return new Myna.DataSet({
-					columns:$this.columnNames,
-					data:this.query(pattern,options)
-						.map(function(row){
-							var bean =new $this.beanClass(row)
-							bean.deferred = $this.deferred;
-							bean.exists=true;
-							return bean
-						})
-				})
-			},
-			findBeansold:function(pattern,caseSensitive){
-				var $this = this;
-				return new Myna.DataSet({
-					columns:$this.columnNames,
-					data:this.find(pattern,caseSensitive).map(function(id){
-						return $this.getById(id);
-					})
-				})
 			},
 			
 			getDefault:function getDefault(colname){
@@ -2858,7 +2685,6 @@ if (!Myna) var Myna={}
 			setDefaults:function setDefaults(map){
 				this._defaults = map.applyTo({})
 			},
-			
 			genLabel:function genLabel(colname){
 				var sr={
 					id:"ID"	
@@ -2881,29 +2707,45 @@ if (!Myna) var Myna={}
 					$this.setLabel(k,v)
 				})
 			},
-			genKey:function(){
-				var manager=this;
-				var pktype =Myna.Database.dbTypeToJs(
-					manager.table.columns[
-						manager.primaryKey
-					].data_type
-				);
-				switch (pktype){
-					case "string":
-						return Myna.createUuid();
-					case "numeric":
-						var maxId =new Myna.Query({
-							dataSource:this.ds,
-							sql:'select max('+manager.qt+  this.columns[this.primaryKey].column_name+ manager.qt+') as id from ' + this.sqlTableName 
-						}).data[0].id;
-						if (!maxId) {
-							return 1;
-						} else {
-							return maxId +1;
+			_applyRelatedValues:function(bean,values){
+				this.associations.forEach(function(aliases,type){
+					aliases.forEach(function(relatedModelOptions,relatedAlias){
+						if (bean[relatedAlias]() instanceof Array){
+							var relatedBeans = value[relatedAlias];
+							if (!relatedBeans) return;
+							var relatedModel = this[relatedModelOptions.name];
+							var pk = relatedModel.primaryKey;
+							if (relatedBeans instanceof Array){
+								relatedBeans.forEach(function(relatedBean){
+									var existingBean =bean[relatedAlias]().findFirstByCol(pk,relatedBean[pk]); 
+									if (existingBean){
+										existingBean.setFields(relatedBean)
+									} else {
+										relatedBean[pk] = keyVal;
+										relatedBean[relatedModelOptions.foreignKey] = bean.id;
+										bean[relatedAlias]().push(relatedModel.get(relatedBean))
+									}
+								})
+							} else {
+								relatedBeans.forEach(function(relatedBean,keyVal){
+									var existingBean =bean[relatedAlias]().findFirstByCol(pk,keyVal); 
+									if (existingBean){
+										existingBean.setFields(relatedBean);
+									} else {
+										relatedBean[pk] = keyVal;
+										relatedBean[relatedModelOptions.foreignKey] = bean.id;
+										
+										bean[relatedAlias]().push(relatedModel.get(relatedBean))
+									}
+								})
+							}
+						}else{
+							var relatedBean = value[relatedAlias];
+							if (!relatedBean) return;
+							bean[relatedAlias]().setFields(relatedBean)
 						}
-					default:
-						throw new Error("genKey must be overloaded for primary keys of type" + pktype )
-				}
+					})
+				})				
 			},
 			get:function(values){
 				var searchParams ={}
@@ -2916,7 +2758,7 @@ if (!Myna) var Myna={}
 					record.deferred = true;
 					record.setFields(values)
 					record.exists=true
-					return record
+					return this._applyRelatedValues(record,values)
 				} else {
 					return this.getNew(values)
 				}
@@ -2936,166 +2778,12 @@ if (!Myna) var Myna={}
 					}
 				})
 				
-				var bean = new this.beanClass(data)
+				var bean = new this.beanClass(data,this)
 				bean.deferred = true;
 				bean.exists=false;
 				
-				return bean; 
+				return this._applyRelatedValues(bean,initialValues); 
 			},
-			getById:function(id){
-				
-				var manager = this;
-				var bean={};
-				var p = new Myna.QueryParams();
-				var qry = new Myna.Query({
-					dataSource:this.ds,
-					log:this.logQueries,
-					sql:<ejs>
-						select
-							<@loop array="manager.columnNames" element="name" index="i">
-								<%=manager.qt%><%=manager.columns[name].column_name%><%=manager.qt%> <@if i < manager.columnNames.length - 1 >,</@if>
-							</@loop>
-							
-						from <%=this.sqlTableName%>
-						where <%=manager.qt%><%=this.columns[this.primaryKey].column_name%><%=manager.qt%> = 
-							<%=p.addValue(id,this.columns[this.primaryKey].data_type)%>
-					</ejs>,
-					parameters:p
-				});
-				if (!qry.data.length) {
-					throw new Error("Unable to find '" + this.sqlTableName + "' by id '" + id +"'.");
-				}
-					
-				 
-				bean = new this.beanClass(qry.data[0])
-				bean.deferred = this.deferred;
-				bean.exists=true;
-				
-				
-				return bean;
-			},
-			validatorFunctions:{
-				type:function(colname,value,v,bean){
-					this.checkRequired(["type"])
-					var label = bean.manager.getLabel(colname);
-					var type = typeof this.type =="function"?this.type(colname,value,v,bean):this.type;
-					var msg = this.message||<ejs>
-						<%=label%> must be of type "<%=type%>"
-					</ejs>
-					switch(type){
-						case "string":
-							if (typeof value == "string") return  
-						case "numeric":
-							if (parseFloat(value) == value) return
-						case "date":
-							if (value instanceof Date) return
-						case "binary":
-							if (value instanceof Array){
-								try{
-									if (value.getClass().getName() == "[B") return
-								} catch(e){}
-							}
-						default:
-							v.addError(msg,colname)
-					}
-				},
-				length:function(colname,value,v,bean){
-					var colDef = bean.manager.table.columns[colname]
-					var msg = this.message
-					var min = typeof this.min =="function"?this.min(colname,value,v,bean):this.min;
-					var max = typeof this.max =="function"?this.max(colname,value,v,bean):this.max;
-					if (Myna.Database.dbTypeToJs(colDef.data_type) == "string"){
-						if (max){
-							if (String(value).length > max){
-								
-								v.addError(msg ||
-									<ejs>
-										Exceeded maximum length for <%=bean.manager.getLabel(colname)%> (<%=max%>), 
-										by <%=String(bean.data[colname]).length-max%>
-									</ejs>,
-									colname
-								)
-							}
-						}
-						if (min){
-							if (String(value).length < min){
-								v.addError(msg ||
-									<ejs>
-										<%=bean.manager.getLabel(colname)%> 
-										must be at least <%=String(bean.data[colname]).length-min%> long
-									</ejs>,
-									colname
-								)
-							}
-						}
-						
-					} else if (Myna.Database.dbTypeToJs(colDef.data_type) == "numeric"){
-						if (max){
-							if (String(parseInt(value)).length > max){
-								v.addError(
-									<ejs>
-										Exceeded maximum length for <%=bean.manager.getLabel(colname)%> (<%=max%>), 
-										by <%=String(bean.data[colname]).length-colDef.column_size%>
-									</ejs>,
-									colname
-								)
-							}
-						}
-						if (min){
-							if (String(parseInt(value)).length  < min){
-								v.addError(
-									<ejs>
-										<%=bean.manager.getLabel(colname)%> 
-										must be at least <%=String(bean.data[colname]).length-min%> long
-									</ejs>,
-									colname
-								)
-							}
-						}
-					}
-				},
-				regex:function(colname,value,v,bean){
-					this.checkRequired(["regex"])
-					var msg= this.message|| bean.manager.getLabel(colname) +" is not properly formatted."
-					if (!this.regex.test(String(value))) v.addError(msg,colname);
-				},
-				list:function(colname,value,v,bean){
-					var oneOf = typeof this.oneOf =="function"?this.oneOf(colname,value,v,bean):this.oneOf;
-					var notOneOf = typeof this.notOneOf =="function"?this.notOneOf(colname,value,v,bean):this.notOneOf;
-					if (oneOf && oneOf.length){
-						var msg= this.message|| bean.manager.getLabel(colname) 
-									+" must be "+(oneOf.length>1?"one of ":"")+"'" + oneOf.join()+"'"
-						if (this.exact){
-							if (oneOf.indexOf(value) == -1) v.addError(msg,colname);
-						} else if (this.caseSensitive){
-							if (!oneOf.contains(value)) v.addError(msg,colname);
-						} else {
-							if (!oneOf.join().listContainsNoCase(value)) v.addError(msg,colname);
-						}
-					} else if (notOneOf && notOneOf.length){
-						msg= this.message|| bean.manager.getLabel(colname) 
-													+ " must NOT be "+(notOneOf.length>1?"one of ":"")+"'" + notOneOf.join() +"'"
-						if (this.exact){
-							if (notOneOf.indexOf(value) != -1) v.addError(msg,colname);
-						} else if (this.caseSensitive){
-							if (notOneOf.contains(value)) v.addError(msg,colname);
-						} else {
-							if (notOneOf.join().listContainsNoCase(value)) v.addError(msg,colname);
-						}
-					}
-				},
-				unique:function(colname,value,v,bean){
-					var msg= this.message|| bean.manager.getLabel(colname) +" ("+value+"), already exists in another record."
-					var search ={}
-					search[colname] = value
-					var result = bean.manager.find(search,this)
-					if (result.length){
-						if (result.length > 1 || result[0] != bean.id) v.addError(msg,colname);
-					}
-				},
-			},
-			/* --------------- associations ------------------------------------ */
-			
 			belongsTo:function belongsTo(name){
 				var work =[]
 				if (name instanceof Array){
@@ -3177,72 +2865,6 @@ if (!Myna) var Myna={}
 							}
 							return criteria
 						}
-					//buildRelatedBean - a function for attaching related bean on demand 
-						var buildRelatedBean =function(){
-							
-							var chain = arguments.callee.chain;
-							var bean = chain.lastReturn
-							//try{
-								bean[relatedAlias]=function(){
-										
-									var my = arguments.callee;
-									
-									if (!my.bean){
-										var relatedBean
-										var criteria = getCriteria(bean)
-										var exists;
-										var relatedModel = thisModel[relatedModelName]
-										exists = relatedModel.find(criteria);
-										if (exists.length){
-											relatedBean=relatedModel.getById(exists[0]);
-											relatedBean.deferred =true;
-											
-										} else {
-											relatedBean=relatedModel.getNew(criteria);
-											
-										}
-										
-										relatedBean.relatedModelOptions = relatedModelOptions;
-										relatedBean.model = relatedModel;
-										bean.after("save",function(){
-											var validation = arguments.callee.chain.lastReturn
-											if (relatedBean.isDirty){
-												var relatedValidation = relatedBean.save()
-												validation.merge(relatedValidation,relatedAlias +".");
-												
-											}
-											return validation
-										})
-										
-										
-										my.bean = relatedBean
-									}
-									
-									return my.bean 
-								}
-							//} catch(e){}
-							//if (!relatedModelOptions._belongsTo){
-								bean.after("getData",function(oneLevel){
-									var data = arguments.callee.chain.lastReturn
-									if (!oneLevel){
-										data[relatedAlias] = this[relatedAlias]().getData(true)
-									}
-									
-									return data
-								})
-							//}
-							
-							if ( arguments.length && typeof arguments[0] === "object" && relatedAlias in arguments[0] ){
-								bean[relatedAlias]().setFields(arguments[0][relatedAlias])
-							}
-							return bean;
-						}
-					
-					//Myna.log("debug","layering functions for " + relatedAlias);
-					var functions = ["getById","get","getNew"] 
-					functions.forEach(function(name){
-						thisModel.after(name,buildRelatedBean)		
-					})
 					
 					if (!relatedModelOptions._belongsTo){
 						thisModel.before("forceDelete",function(id){
@@ -3311,138 +2933,6 @@ if (!Myna) var Myna={}
 						
 					});
 					
-					//getCriteria - a function that bullds search criteria
-						var getCriteria = function(bean){
-							if (relatedModelOptions._belongsTo){
-								return bean.data[relatedModelOptions.foreignKey]
-							} else {
-								var criteria = {
-									where:relatedModelOptions.foreignKey+" = {"+relatedModelOptions.foreignKey+"}",
-								}
-								criteria.orderBy = relatedModelOptions.orderBy; 
-								criteria[relatedModelOptions.foreignKey] =bean.data[relatedModelOptions.localKey]
-								if (relatedModelOptions.conditions) {
-									relatedModelOptions.conditions.applyTo(criteria);
-									criteria.where += " and " +relatedModelOptions.conditions.where	;
-								}
-							}
-							return criteria
-						}
-					//buildRelatedBean - a function for attaching related bean on demand 
-						var buildRelatedBean =function(){
-							var relatedModel = thisModel[relatedModelName];
-							var chain = arguments.callee.chain;
-							var bean = chain.lastReturn
-							//try{
-								bean[relatedAlias]=function(){
-									var my = arguments.callee;
-									
-									if (!my.set){
-										var relatedBean
-										var criteria = getCriteria(bean)
-										var exists;
-										var relatedDs =my.set= relatedModel.findBeans(criteria);
-										
-										relatedDs.relatedModelOptions = relatedModelOptions;
-										relatedDs.model = relatedModel;
-										relatedDs.getNew = function(initialValues){
-											var values = (initialValues||{}).applyTo({});
-											values.setDefaultProperties(criteria)
-											return relatedDs[relatedDs.length]=relatedModel.getNew(values)
-										}
-										bean.after("save",function(){
-											var validation = arguments.callee.chain.lastReturn
-											my.set.forEach(function(relatedBean){
-												//if (relatedBean.isDirty){
-													var relatedValidation = relatedBean.save()
-													validation.merge(relatedValidation,relatedAlias +"."+relatedBean.id);
-												//}
-											})
-											
-											return validation
-										})
-										
-									}
-									
-									return my.set 
-								}
-							//} catch(e){}
-							
-							bean.after("getData",function(oneLevel){
-								var data = arguments.callee.chain.lastReturn;
-								if (!oneLevel){
-									data[relatedAlias] = this[relatedAlias]().map(function(bean){
-										return bean.getData(true)
-									})
-								}
-								
-								return data
-							})
-							
-							//process a get/new(params)
-							if ( 
-									arguments.length 
-									&& typeof arguments[0] === "object" 
-									&& relatedAlias in arguments[0]
-							){
-								var relatedBeans = arguments[0][relatedAlias]; 
-								var pk = relatedModel.primaryKey;
-								if (relatedBeans instanceof Array){
-									
-									relatedBeans.forEach(function(relatedBean){
-										var existingBean =bean[relatedAlias]().findFirstByCol(pk,relatedBean[pk]); 
-										if (existingBean){
-											existingBean.setFields(relatedBean)
-										} else {
-											relatedBean[pk] = keyVal;
-											relatedBean[relatedModelOptions.foreignKey] = bean.id;
-											bean[relatedAlias]().push(relatedModel.get(relatedBean))
-										}
-									})
-								} else {
-									
-									relatedBeans.forEach(function(relatedBean,keyVal){
-										var existingBean =bean[relatedAlias]().findFirstByCol(pk,keyVal); 
-										if (existingBean){
-											existingBean.setFields(relatedBean);
-										} else {
-											relatedBean[pk] = keyVal;
-											relatedBean[relatedModelOptions.foreignKey] = bean.id;
-											
-											bean[relatedAlias]().push(relatedModel.get(relatedBean))
-										}
-									})
-								}
-							}
-							return bean;
-						}
-					
-					//Myna.log("debug","layering functions for " + relatedAlias);
-					var functions = ["getById","get","getNew"] 
-					functions.forEach(function(name){
-						thisModel.after(name,buildRelatedBean)		
-					})
-					
-					if (!relatedModelOptions){
-						thisModel.before("forceDelete",function(id){
-							var chain = arguments.callee.chain;
-							if (!relatedModelOptions.cascade) return
-							var type = relatedModelOptions.cascade;
-							var criteria = getCriteria({id:id})
-							var exists;
-							relatedIds = relatedModel.find(criteria);
-							if (relatedIds.length){
-								relatedIds.forEach(function(id){
-									if (type=="delete"){
-										relatedModel.forceDelete(relatedBean.id)
-									} else if (type=="null"){
-										relatedModel.getById(id).saveField(relatedModelOptions.foreignKey,null)	
-									}
-								})
-							} 
-							
-						})
-					}
 					
 				})
 			},
@@ -3480,287 +2970,17 @@ if (!Myna) var Myna={}
 
 					thisModel.associations.hasBridgeTo[relatedAlias] = relatedModelOptions;
 					
-					//buildRelatedBean - a function for attaching related bean on demand 
-						var buildRelatedBean =function(){
-							var relatedModel = thisModel[relatedModelName];
 					
-							relatedModelOptions.setDefaultProperties({
-								localKey:thisModel.primaryKey,
-								foreignKey:relatedModel.primaryKey,
-								bridgeTable:[relatedModel.tableName,thisModel.tableName].sort().join("_"),
-								localBridgeKey:dm.m2fk(dm.t2m(thisModel.tableName)),
-								foreignBridgeKey:dm.m2fk(dm.t2m(relatedModel.tableName))
-							})
-							var bridgeTable =dm.db.getTable(relatedModelOptions.bridgeTable);
-							
-					
-							var chain = arguments.callee.chain;
-							var bean = chain.lastReturn
-							
-							//try{
-								bean[relatedAlias]=function(){
-									var my = arguments.callee;
-									if (!my.set){
-										var relatedBean
-										var relatedDs =my.set=new Myna.Query({
-											ds:dm.ds,
-											sql:<ejs>
-												select 
-													ft.<%=relatedModel.table.getSqlColumnName(relatedModel.primaryKey)%> as id
-												from
-													<%=relatedModel.table.sqlTableName%> ft,
-													<%=bridgeTable.sqlTableName%> bt
-												where 
-													bt.<%=bridgeTable.getSqlColumnName(relatedModelOptions.foreignBridgeKey)%>
-														=	ft.<%=relatedModel.table.getSqlColumnName(relatedModelOptions.foreignKey)%>
-													and bt.<%=bridgeTable.getSqlColumnName(relatedModelOptions.localBridgeKey)%> 
-														= {localId:<%=thisModel.table.columns[relatedModelOptions.localKey].type_name%>}
-												<@if relatedModelOptions.conditions>
-													and <%=relatedModelOptions.conditions%>	
-												</@if>	
-												<@if relatedModelOptions.orderBy>
-													order by <%=relatedModelOptions.orderBy%>	
-												</@if>
-												
-											</ejs>,
-											values:relatedModelOptions.applyTo({
-												localId:bean[relatedModelOptions.localKey]
-											})
-										}).data.map(function(row){
-											return relatedModel.getById(row.id)
-										})
-										relatedDs.columns = relatedModel.columns.getKeys()
-										
-										relatedDs.relatedModelOptions = relatedModelOptions;
-										relatedDs.model = relatedModel;
-										relatedDs.getNew = function(initialValues){
-											var relatedBean = relatedDs[relatedDs.length]=relatedModel.getNew(initialValues)
-											
-											return relatedBean
-										}
-										bean.after("save",function(){
-											var validation = arguments.callee.chain.lastReturn
-											
-											relatedDS.forEach(function(relatedBean){
-												if (relatedBean.isDirty){
-													var relatedValidation = relatedBean.save()
-													validation.merge(relatedValidation,relatedAlias +"."+relatedBean.id);
-													
-													if (dm.db.getTable(relatedModelOptions.bridgeTable).primaryKeys.length == 1){
-														var bridge = dm.getManager(relatedModelOptions.bridgeTable)
-														var search ={}
-														search[relatedModelOptions.localBridgeKey] =bean.data[relatedModelOptions.localKey];
-														search[relatedModelOptions.foreignBridgeKey] =relatedBean.data[relatedModelOptions.foreignKey]
-														bridge.get(search).save()
-													} else {
-														var lbk =relatedModelOptions.localBridgeKey;
-														var lbkSql = bridgeTable.getSqlColumnName(lbk);
-														var fbk =relatedModelOptions.foreignBridgeKey;
-														var fbkSql = bridgeTable.getSqlColumnName(fbk);
-														new Myna.Query({
-															ds:dm.ds,
-															log:thisModel.logQueries,
-															sql:<ejs>
-																delete from <%=bridgeTable.sqlTableName%>
-																where 
-																	<%=lbkSql%> = {localKey:<%=bridgeTable.columns[lbk].type_name%>}
-																	and <%=fbkSql%> = {foreignKey:<%=bridgeTable.columns[fbk].type_name%>}
-															</ejs>,
-															values:{
-																localKey:bean.data[relatedModelOptions.localKey],
-																foreignKey:relatedBean.data[relatedModelOptions.foreignKey]
-															}
-														})
-														new Myna.Query({
-															log:thisModel.logQueries,
-															ds:dm.ds,
-															sql:<ejs>
-																insert into <%=bridgeTable.sqlTableName%>(
-																	<%=lbkSql%>,
-																	<%=fbkSql%>
-																) values (
-																	{localKey:<%=bridgeTable.columns[lbk].type_name%>},
-																	{foreignKey:<%=bridgeTable.columns[fbk].type_name%>}
-																)
-																 
-															</ejs>,
-															values:{
-																localKey:bean.data[relatedModelOptions.localKey],
-																foreignKey:relatedBean.data[relatedModelOptions.foreignKey]
-															}
-														})
-														
-													}
-												}
-											})
-											
-											return validation
-										})
-									}
-									
-									return my.set 
-								}
-							//} catch(e){}
-							
-							bean.after("getData",function(oneLevel){
-								var data = arguments.callee.chain.lastReturn
-								if (!oneLevel){
-									data[relatedAlias] = this[relatedAlias]().map(function(bean){
-										return bean.getData(true)
-									})
-								}
-								
-								return data
-							})
-							
-							if ( 
-									arguments.length 
-									&& typeof arguments[0] === "object" 
-									&& relatedAlias in arguments[0]
-							){
-								var relatedBeans = arguments[0][relatedAlias]
-								var pk = relatedModel.primaryKey;
-								if (relatedBeans instanceof Array){
-									relatedBeans.forEach(function(relatedBean){
-										var existingBean =bean[relatedAlias]().findFirstByCol(pk,relatedBean[pk]); 
-										if (existingBean){
-											existingBean.setFields(relatedBean)
-										} else {
-											relatedDs.push(relateModel.get(relatedBean))
-										}
-									})
-								} else {
-									relatedBeans.forEach(function(relatedBean,keyVal){
-										var existingBean =bean[relatedAlias]().findFirstByCol(pk,keyVal); 
-										if (existingBean){
-											existingBean.setFields(relatedBean);
-										} else {
-											relatedDs.push(relateModel.get(relatedBean))
-										}
-									})
-								}
-							}
-							return bean;
-						}
-					
-					//Myna.log("debug","layering functions for " + relatedAlias);
-					var functions = ["getById","get","getNew"] 
-					functions.forEach(function(name){
-						thisModel.after(name,buildRelatedBean)		
-					})
 				})
 			},
 		}
-	/* ---------- beanTemplate ----------------------------------------------- */
-		Myna.DataManager.beanTemplate ={
-			_core_init:function(){ return this.init()},
-			init:function(){},
-			isDirty:false,
-			setFields:function(fields){
-				var bean = this;
-				//ignore non-field values
-				fields= fields.applyTo({})
-				if (this.manager.modifiedCol && !fields[this.manager.modifiedCol]) {
-					fields[this.modifiedCol] = new Date();
-				}
-				fields.getKeys().forEach(function(k){
-					//filter non column properties
-					if (!(k in bean.columns) || k == bean.primaryKey){
-						delete fields[k]	
-					}
-				})
-				
-				fields.applyTo(this.data,true);
-				var result = this.validate();
-				
-				if (this.deferred) {
-					this.isDirty = true;
-					//return even if successful when deferred
-					return result;
-				} else if (!result.success){//if validation failed
-					Myna.log("validation","Validation errors for table " + this.manager.table.tableName,Myna.dump(result));
-					return result
-				}
-				
-				//only get here if not deferred and validation was successful
-				
-				try {
-					var p =new Myna.QueryParams();
-					var fieldArray = fields.getKeys();
-					var qry = new Myna.Query({
-						dataSource:this.manager.ds,
-						log:this.manager.logQueries,
-						parameters:p,
-						sql:<ejs>
-							UPDATE <%=this.sqlTableName%>
-							SET
-								<@loop array="fieldArray" element="fieldName" index="i">
-									<% 
-										var value = fields[fieldName];
-										var type = bean.columns[fieldName.toLowerCase()].data_type;
-										var isNull = (value === null);
-										var columnName=bean.columns[fieldName.toLowerCase()].column_name;
-									%>
-									<%=bean.manager.qt%><%=columnName%><%=bean.manager.qt%> = <%=p.addValue(value,type,isNull)%>
-									<@if i != fieldArray.length-1 >,</@if>
-								</@loop>
-								
-								
-							WHERE
-								<%=bean.manager.qt%><%=bean.columns[bean.primaryKey].column_name%><%=bean.manager.qt%> = 
-									<%=p.addValue(bean.id,bean.columns[bean.primaryKey].data_type)%>
-						</ejs>
-					});
-					//bean.data[fieldName] = newval;
-					
-				} catch (e){
-					Myna.log("error",e.message,Myna.formatError(e));
-					result.addError("Error saving record, see Administrator log for details");
-				}
-				return result;
-			},
-			saveField:function(fieldName,newval){
-				var result = new Myna.ValidationResult();
-				if (this.deferred) {
-					this.isDirty = true;
-					this.data[fieldName]=newval;
-					return result;
-				}
-				if (newval != this.data[fieldName]){
-					var bean = this;
-					try {
-						var columnName = this.columns[fieldName].column_name;
-						var p =new Myna.QueryParams();
-						var value = newval;
-						var type = this.columns[fieldName].data_type;
-						var isNull = (value === null);
-						var qry = new Myna.Query({
-							dataSource:this.manager.ds,
-							log:this.manager.logQueries,
-							parameters:p,
-							sql:<ejs>
-								UPDATE <%=this.sqlTableName%>
-								SET
-									<%=bean.manager.qt%><%=columnName%><%=bean.manager.qt%> = <%=p.addValue(value,type,isNull)%>
-									<@if bean.manager.modifiedCol>
-										,<%=bean.manager.table.getSqlColumnName(bean.manager.modifiedCol)%> = <%=p.addValue(new Date(),"TIMESTAMP")%>
-									</@if>
-								WHERE
-									<%=bean.manager.qt%><%=this.columns[this.primaryKey].column_name%><%=bean.manager.qt%> = <%=p.addValue(bean.id,this.columns[this.primaryKey].data_type)%>
-							</ejs>
-						});
-						this.data[fieldName] = newval;
-					} catch (e){
-						Myna.log("error",e.message,Myna.formatError(e));
-						result.addError(e.message,fieldName);
-					}
-				}
-				return result;
-			},
+	/* ---------- beanBaseClass -------------------------------------------- */
+		Myna.DataManager.beanBaseClass = function(data){}
+		Myna.DataManager.beanBaseClass.prototype = {
 			save:function(){
 				var $this = this;
 				
-				if (!this.deferred) return new Myna.ValidationResult();
+				if (!this.deferred) return v;
 				var v = this.validate()
 				var manager = this.manager
 				
@@ -3772,6 +2992,18 @@ if (!Myna) var Myna={}
 						this.isDirty = false;
 						this.exists=true
 						
+						this._loadedAliases.forEach(function(alias,relatedBean){
+							if (relatedBean instanceof Array){
+								relatedBean.forEach(function(bean){
+									var relatedValidation = bean.save()
+									v.merge(relatedValidation,alias +"."+bean.id +".");
+								})	
+							} else {
+								var relatedValidation = relatedBean.save()
+								v.merge(relatedValidation,alias +".");
+							}
+						})
+						
 						return v
 					} catch(e){
 						Myna.log("error","Error saving record",Myna.formatError(e) + Myna.dump(this.data,"record"));
@@ -3782,14 +3014,79 @@ if (!Myna) var Myna={}
 				} else return v
 			},
 			forceDelete:function(id){
+				var bean=this;
+				this.manager.associations.hasOne.forEach(function(alias,relatedModelOptions){
+					if (!relatedModelOptions.cascade) return
+					//getCriteria - a function that bullds search criteria
+					var criteria= {
+						where:relatedModelOptions.foreignKey+" = {"+relatedModelOptions.foreignKey+"}",
+					}
+					criteria[relatedModelOptions.foreignKey] =bean.data[relatedModelOptions.localKey]
+					if (relatedModelOptions.conditions) {
+						relatedModelOptions.conditions.applyTo(criteria);
+						criteria.where += " and " +relatedModelOptions.conditions.where	;
+					}
+					
+					var type = relatedModelOptions.cascade;
+					var relatedModel=bean.manager.dm.getManager(relatedModelOptions.name);
+					var exists = relatedModel.find(criteria);
+					if (exists.length ==1){
+						var relatedBean=relatedModel.getById(exists[0]);
+						if (type=="delete"){
+							relatedModel.forceDelete(relatedBean.id)
+						} else if (type=="null"){
+							relatedBean.saveField(relatedModelOptions.foreignKey,null)	
+						}
+						
+					} 
+				})
+				this.manager.associations.hasMany.forEach(function(alias,relatedModelOptions){
+					if (!relatedModelOptions.cascade) return
+					//getCriteria - a function that bullds search criteria
+					var criteria= {
+						where:relatedModelOptions.foreignKey+" = {"+relatedModelOptions.foreignKey+"}",
+					}
+					criteria[relatedModelOptions.foreignKey] =bean.data[relatedModelOptions.localKey]
+					if (relatedModelOptions.conditions) {
+						relatedModelOptions.conditions.applyTo(criteria);
+						criteria.where += " and " +relatedModelOptions.conditions.where	;
+					}
+					
+					var type = relatedModelOptions.cascade;
+					var relatedModel=bean.manager.dm.getManager(relatedModelOptions.name);
+					relatedModel.findBeans(criteria).forEach(function(relatedBean){
+						if (type=="delete"){
+							relatedModel.forceDelete(relatedBean.id)
+						} else if (type=="null"){
+							relatedBean.saveField(relatedModelOptions.foreignKey,null)	
+						}
+					})	
+					 
+						
+				})
 				return this.manager.forceDelete(this.id)
 			},
 			getLabel:function(colname){
 				return this.manager.getLabel(colname)
 			},
-			getData:function(){
+			getData:function(onelevel){
+				var bean=this;
 				var result ={}
 				result.setDefaultProperties(this.data)
+				
+				if (!onelevel){
+					this.manager.associations.forEach(function(aliases,type){
+						aliases.forEach(function(relatedModelOptions,alias){
+							if (bean[alias]() instanceof Array){
+								result[alias] = bean[alias]().map(function(relatedBean){
+									return relatedBean.getData(true);
+								})
+							}else{
+								result[alias] = bean[alias]().getData(true)
+							}
+						})
+					})
+				}
 				return result;
 			},
 			getParent:function(column){

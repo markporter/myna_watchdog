@@ -737,7 +737,10 @@ if (!Myna) var Myna={}
 			last_name:""
 		},true)
 		//copy properties to this 
-		dao	.applyTo(this);
+		dao.applyTo(this);
+		//copy hiddenProperties
+		var $this = this;
+		"ds,dm,manager,data".split(",").forEach(function(p){$this[p] = dao[p]})
 		
 		//get rid of set_user_id. It is unnecessary and dangerous
 		delete this.set_user_id
@@ -1129,6 +1132,8 @@ if (!Myna) var Myna={}
 		this.dao = dao;
 		//copy properties to this 
 		dao.applyTo(this);
+		var $this = this;
+		"ds,dm,manager,data".split(",").forEach(function(p){$this[p] = dao[p]})
 		//get rid of set_user_group_id. It is unnecessary and dangerous
 		delete this.set_user_group_id ;
 	}
