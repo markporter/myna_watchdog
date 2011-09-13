@@ -1761,6 +1761,17 @@ if (!Myna) var Myna={}
 				manager.table =this.db.getTable(tableName);
 				var alias,fk_name_part;
 				manager.loadTableData(tableName);
+				//double-check special columns
+				
+				if (manager.table.columnNames.indexOf(manager.modifiedCol.toLowerCase()) == -1){
+					manager.modifiedCol = false;
+				}
+				if (manager.table.columnNames.indexOf(manager.softDeleteCol.toLowerCase()) == -1){
+					manager.softDeleteCol = false;
+				}
+				if (manager.table.columnNames.indexOf(manager.createdCol.toLowerCase()) == -1){
+					manager.createdCol = false;
+				}
 				/* build implicit associations from foreign keys */
 					/* exported keys*/
 						manager.table.exportedKeys.forEach(function(localExport){
@@ -2831,7 +2842,7 @@ if (!Myna) var Myna={}
 				}
 				return null;
 			},
-			getDefaults:function getDefault(){
+			getDefaults:function getDefaults(){
 				if (!this._defaults) this._defaults={}
 				var result = {}
 				var $this = this
@@ -2854,7 +2865,7 @@ if (!Myna) var Myna={}
 				}
 				if (colname in sr) return sr[colname]
 				return colname.split(/_/).map(function(part){
-					if (part in sr) return sr[part]
+					if (sr.getKeys().indexOf(part) >-1) return sr[part]
 					return part.titleCap()
 				}).join(" ")
 			},
@@ -2865,8 +2876,9 @@ if (!Myna) var Myna={}
 				this._labels[colname] = label;
 			},
 			setLabels:function setLabels(map){
+				var $this = this
 				map.forEach(function(v,k){
-					this.setLabel(k,v)
+					$this.setLabel(k,v)
 				})
 			},
 			genKey:function(){
@@ -2959,65 +2971,6 @@ if (!Myna) var Myna={}
 				bean.deferred = this.deferred;
 				bean.exists=true;
 				
-				/* bean.baseBean = ({}).setDefaultProperties( 
-					this.beanTemplate
-				)
-				bean.manager=manager;
-				bean.dm = manager.dm;
-				bean.ds = manager.ds;
-				bean.data=qry.data[0];
-				bean.id=id;
-				
-				
-				//for (var p in bean) bean.hideProperty(p);
-				//print(dump(qry,"bean query"))
-				this.columnNames.forEach(function(colname){
-					var fname = colname;
-					if (!("get_"+fname in bean.baseBean)){
-						bean.baseBean["get_"+fname] = function (){
-							return this.data[arguments.callee.fieldName];
-						}
-					}
-					bean.__defineGetter__(fname, bean.baseBean["get_"+fname]);
-					
-					bean.baseBean["get_"+fname].fieldName = colname;
-					//bean.hideProperty("get_"+fname);
-	
-					
-					if (fname != manager.primaryKey){
-						if (!("set_"+fname in bean.baseBean)){
-							bean.baseBean["set_"+fname] = function (newval){
-								var result = new Myna.ValidationResult();
-								if (typeof newval === "undefined"){
-									result.addError("argument 'newval' required for set" +fname +".",fname);
-									return result;
-								}
-								if (newval != this.data[arguments.callee.fieldName]){
-									result.merge(this.saveField(arguments.callee.fieldName,newval));
-									this.data[arguments.callee.fieldName] = newval;
-								}
-								return result;
-							}
-						}
-						bean.__defineSetter__(fname, bean.baseBean["set_"+fname]);
-						bean.baseBean["set_"+fname].fieldName = colname;
-						//bean.hideProperty("set_"+fname);
-					}
-					
-				})
-				
-				
-				bean.setDefaultProperties(bean.baseBean);
-				//for (var p in bean.baseBean) bean.hideProperty(p);
-				  
-				
-				bean.setDefaultProperties(this);
-				//for (var p in this) bean.hideProperty(p);
-				//bean.hideProperty("manager");
-				//bean.hideProperty("baseBean");
-				//bean.hideProperty("data");
-				bean.init(); //bean init is now in bean constructor
-				*/
 				
 				return bean;
 			},
@@ -3160,7 +3113,6 @@ if (!Myna) var Myna={}
 				return this.hasOne(work)
 			},
 			hasOne:function hasOne(name){
-				
 				var work =[]
 				if (name instanceof Array){
 					work = name
@@ -3172,7 +3124,6 @@ if (!Myna) var Myna={}
 					work.push(name)
 				}
 				var thisModel = this;
-				
 				
 				//each relationship
 				work.forEach(function (relatedModelOptions){
@@ -3240,6 +3191,7 @@ if (!Myna) var Myna={}
 										var relatedBean
 										var criteria = getCriteria(bean)
 										var exists;
+										var relatedModel = thisModel[relatedModelName]
 										exists = relatedModel.find(criteria);
 										if (exists.length){
 											relatedBean=relatedModel.getById(exists[0]);
@@ -3400,12 +3352,11 @@ if (!Myna) var Myna={}
 										}
 										bean.after("save",function(){
 											var validation = arguments.callee.chain.lastReturn
-											
-											relatedDs.forEach(function(relatedBean){
-												if (relatedBean.isDirty){
+											my.set.forEach(function(relatedBean){
+												//if (relatedBean.isDirty){
 													var relatedValidation = relatedBean.save()
 													validation.merge(relatedValidation,relatedAlias +"."+relatedBean.id);
-												}
+												//}
 											})
 											
 											return validation
@@ -3428,12 +3379,13 @@ if (!Myna) var Myna={}
 								return data
 							})
 							
+							//process a get/new(params)
 							if ( 
 									arguments.length 
 									&& typeof arguments[0] === "object" 
 									&& relatedAlias in arguments[0]
 							){
-								var relatedBeans = arguments[0][relatedAlias]
+								var relatedBeans = arguments[0][relatedAlias]; 
 								var pk = relatedModel.primaryKey;
 								if (relatedBeans instanceof Array){
 									
@@ -3442,16 +3394,22 @@ if (!Myna) var Myna={}
 										if (existingBean){
 											existingBean.setFields(relatedBean)
 										} else {
-											relatedDs.push(relateModel.get(relatedBean))
+											relatedBean[pk] = keyVal;
+											relatedBean[relatedModelOptions.foreignKey] = bean.id;
+											bean[relatedAlias]().push(relatedModel.get(relatedBean))
 										}
 									})
 								} else {
+									
 									relatedBeans.forEach(function(relatedBean,keyVal){
 										var existingBean =bean[relatedAlias]().findFirstByCol(pk,keyVal); 
 										if (existingBean){
 											existingBean.setFields(relatedBean);
 										} else {
-											relatedDs.push(relateModel.get(relatedBean))
+											relatedBean[pk] = keyVal;
+											relatedBean[relatedModelOptions.foreignKey] = bean.id;
+											
+											bean[relatedAlias]().push(relatedModel.get(relatedBean))
 										}
 									})
 								}
@@ -3802,7 +3760,7 @@ if (!Myna) var Myna={}
 			save:function(){
 				var $this = this;
 				
-				if (!this.deferred) return v;
+				if (!this.deferred) return new Myna.ValidationResult();
 				var v = this.validate()
 				var manager = this.manager
 				
