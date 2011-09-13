@@ -2740,7 +2740,7 @@ if (!Myna) var Myna={}
 								})
 							}
 						}else{
-							var relatedBean = value[relatedAlias];
+							var relatedBean = values[relatedAlias];
 							if (!relatedBean) return;
 							bean[relatedAlias]().setFields(relatedBean)
 						}
