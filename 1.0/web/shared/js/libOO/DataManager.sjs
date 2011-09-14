@@ -2433,12 +2433,12 @@ if (!Myna) var Myna={}
 					if (result.length > 1 || result[0] != bean.id) v.addError(msg,colname);
 				}
 			},
-			/* required:function(colname,value,v,bean){
+			required:function(colname,value,v,bean){
 				var msg= this.message|| bean.manager.getLabel(colname) +" is required."
 				if (!value && value != 0 && value !== false){
 					v.addError(msg,colname);
 				}
-			}, */
+			},
 		}
 	/* ---------- hasOneBeanLoader -------------------------------------------- */
 		Myna.DataManager.hasOneBeanLoader=function(bean,relatedModelOptions){
@@ -2711,7 +2711,7 @@ if (!Myna) var Myna={}
 				this.associations.forEach(function(aliases,type){
 					aliases.forEach(function(relatedModelOptions,relatedAlias){
 						if (bean[relatedAlias]() instanceof Array){
-							var relatedBeans = value[relatedAlias];
+							var relatedBeans = values[relatedAlias];
 							if (!relatedBeans) return;
 							var relatedModel = this[relatedModelOptions.name];
 							var pk = relatedModel.primaryKey;
@@ -2839,54 +2839,6 @@ if (!Myna) var Myna={}
 						return thisModel.dm.getManager(relatedModelName);
 						
 					});
-					
-					//getCriteria - a function that bullds search criteria
-						var getCriteria = function(bean){
-							var criteria;
-							if (relatedModelOptions._belongsTo){
-								criteria = {
-									where:relatedModelOptions.foreignKey+" = {"+relatedModelOptions.foreignKey+"}",
-								}
-								criteria[relatedModelOptions.foreignKey] =bean.data[relatedModelOptions.localKey]
-								if (relatedModelOptions.conditions) {
-									relatedModelOptions.conditions.applyTo(criteria);
-									criteria.where += " and " +relatedModelOptions.conditions.where	;
-								}
-								
-							} else {
-								criteria = {
-									where:relatedModelOptions.foreignKey+" = {"+relatedModelOptions.foreignKey+"}",
-								}
-								criteria[relatedModelOptions.foreignKey] =bean.data[relatedModelOptions.localKey]
-								if (relatedModelOptions.conditions) {
-									relatedModelOptions.conditions.applyTo(criteria);
-									criteria.where += " and " +relatedModelOptions.conditions.where	;
-								}
-							}
-							return criteria
-						}
-					
-					if (!relatedModelOptions._belongsTo){
-						thisModel.before("forceDelete",function(id){
-							var chain = arguments.callee.chain;
-							if (!relatedModelOptions.cascade) return
-							var type = relatedModelOptions.cascade;
-							var criteria = getCriteria({id:id})
-							var exists;
-							exists = relatedModel.find(criteria);
-							if (exists.length){
-								relatedBean=relatedModel.getById(exists[0]);
-								if (type=="delete"){
-									relatedModel.forceDelete(relatedBean.id)
-								} else if (type=="null"){
-									relatedBean.saveField(relatedModelOptions.foreignKey,null)	
-								}
-								
-							} 
-							
-						})
-					}
-					
 				})
 			},
 			hasMany:function hasMany(name){
