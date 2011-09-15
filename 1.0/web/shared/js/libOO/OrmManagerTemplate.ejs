@@ -539,7 +539,8 @@ function <%=tableName%>_manager(){
 			configurable: false
 		}
 	);
-	Object.defineProperty(
+	$this.exists = false;
+	/* Object.defineProperty(
 		$this, 
 		"exists", 
 		{
@@ -548,8 +549,8 @@ function <%=tableName%>_manager(){
 			enumerable: false,  
 			configurable: false
 		}
-	);
-	Object.defineProperty(
+	); */
+	/* Object.defineProperty(
 		$this, 
 		"isDirty", 
 		{
@@ -558,17 +559,19 @@ function <%=tableName%>_manager(){
 			enumerable: false,  
 			configurable: false
 		}
-	);
-	Object.defineProperty(
+	); */
+	$this.isDirty= false;
+	$this.deferred = false;
+	/* Object.defineProperty(
 		$this, 
 		"deferred", 
 		{
 			value:false,
 			writeable:true,
-			enumerable: false,  
-			configurable: false
+			enumerable: true,  
+			configurable: true
 		}
-	);
+	); */
 	Object.defineProperty(
 		$this, 
 		"manager", 
@@ -644,7 +647,7 @@ function <%=tableName%>_manager(){
 
 <%=tableName%>_manager.beanClass.prototype = {
 	init:function(){},
-	isDirty:false,
+	//isDirty:false,
 	setFields:function(fields){
 		var bean = this;
 		var manager = this.manager;

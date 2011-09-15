@@ -100,8 +100,7 @@ var _modelClasses={}
 					model._configured=true;
 					
 					
-					mergeModels(model,modelName)
-					
+					model = mergeModels(model,modelName)
 				}
 				return model;
 			})
@@ -330,7 +329,7 @@ var _modelClasses={}
 			Myna.printConsole("using stored model for " + modelName)
 		} else {
 			if (this.dm.managerExists(modelName)){
-				model = this.dm.getManager(modelName)	
+				model = this.dm.getManager(modelName)
 			} else {
 				model = mergeModels({},modelName)	
 			}

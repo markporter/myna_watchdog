@@ -2720,6 +2720,7 @@ if (!Myna) var Myna={}
 				var bean = new this.beanClass(data,this)
 				bean.deferred = true;
 				bean.exists=false;
+				bean.isDirty=true;
 				
 				return this._applyRelatedValues(bean,initialValues); 
 			},
@@ -2880,7 +2881,6 @@ if (!Myna) var Myna={}
 		Myna.DataManager.beanBaseClass.prototype = {
 			save:function(){
 				var $this = this;
-				
 				if (!this.deferred) return new Myna.ValidationResult();
 				var v = this.validate()
 				var manager = this.manager
