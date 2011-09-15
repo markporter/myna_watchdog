@@ -598,6 +598,7 @@ Controller.prototype.init = function init(controllerName){
 				$FP.helpers,
 				{
 					$controller:$this,
+					$model:$this.model,
 					$page:$this.$page,
 					$params:$this.$params,
 					renderElement:$this.renderElement

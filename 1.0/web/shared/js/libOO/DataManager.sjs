@@ -1774,10 +1774,10 @@ if (!Myna) var Myna={}
 				
 				Myna.include(classFile,this.managerClasses);
 			}
-			var manager= new this.managerClasses[tableName+"_manager"](this,options);
+			var manager =this._managers[tkey]= new this.managerClasses[tableName+"_manager"]();
 			
 			
-			return this._managers[tkey]=manager
+			return manager._init(this,options)
 		}
 	/* ---------- getTreeManager --------------------------------------------- */
 		Myna.DataManager.prototype.getTreeManager = function (tableName, options){
@@ -2440,146 +2440,83 @@ if (!Myna) var Myna={}
 				}
 			},
 		}
-	/* ---------- hasOneBeanLoader -------------------------------------------- */
-		Myna.DataManager.hasOneBeanLoader=function(bean,relatedModelOptions){
-			var my = arguments.callee;
-			if (!my.cache) my.cache = {}
-			var cacheKey = JSON.stringify(relatedModelOptions); 
-			if (!(cacheKey in my.cache)) {
-								
-				my.cache[cacheKey] = new Function(<ejs>
-					var dm = this.manager.dm;
-					var relatedBean
-					var relatedModel = dm.getManager("<%=relatedModelOptions.name%>")
-					var criteria  = {
-						where:"<%=relatedModelOptions.foreignKey%> = {<%=relatedModelOptions.foreignKey%>}",
+	/* ---------- getRelated -------------------------------------------- */
+		Myna.DataManager.getRelated=function(bean,alias,type,relatedModelOptions){
+			var dm = bean.manager.dm;
+			var relatedBean
+			var relatedModel = dm.getManager(relatedModelOptions.name)
+			var thisModel = bean.manager;
+			try{
+			var criteria  = {
+				where:<ejs>
+					<%=relatedModel.getSqlColumnName(relatedModelOptions.foreignKey)%> = {<%=relatedModelOptions.foreignKey%>}
+				</ejs>
+			}
+			}catch(e){
+				
+				Myna.abort(e.message,Array.parse(arguments))
+			}
+			criteria[relatedModelOptions.foreignKey]=bean.data[relatedModelOptions.localKey]
+			if (relatedModelOptions.conditions){
+				relatedModelOptions.conditions.getKeys().forEach(function(prop){
+					if (prop=="where"){
+						criteria.where += " and " +relatedModelOptions.conditions.where +" ";
+					}else{
+						criteris[prop] = relatedModelOptions.conditions[prop];
 					}
-					criteria.<%=relatedModelOptions.foreignKey%>=this.data.<%=relatedModelOptions.localKey%>
-					<@if relatedModelOptions.conditions >
-						<@loop array="relatedModelOptions.conditions.getKeys()" element="prop" index="i">
-							<@if prop=="where" >
-								criteria.where += " and <%=relatedModelOptions.conditions.where%>";
-							<@else>
-								criteris.<%=prop%> = "<%=relatedModelOptions.conditions[prop]%>"
-							</@if>
-						</@loop>
-					</@if>
-					
+				})
+			}
+			
+			switch(type){
+				case "belongsTo":
+				case "hasOne":
 					var exists;
 					exists = relatedModel.find(criteria);
 					if (exists.length){
 						relatedBean=relatedModel.getById(exists[0]);
 						relatedBean.deferred =true;
-						
 					} else {
 						relatedBean=relatedModel.getNew(criteria);
-						
 					}
-					
-					relatedBean.relatedModelOptions = <%=relatedModelOptions.toJson()%>;
-					relatedBean.model = relatedModel;
-					
-					var alias = "<%=relatedModelOptions.alias||relatedModelOptions.name%>"
-					this._loadedAliases[alias]=relatedBean
-					return relatedBean;	
-				</ejs>)
-			}
-			//Myna.printConsole(cacheKey,my.cache[cacheKey].toSource().replace(/;/g,";\n"))
-			return my.cache[cacheKey].cache()
-		}
-	/* ---------- hasManyBeanLoader -------------------------------------------- */
-		Myna.DataManager.hasManyBeanLoader=function(bean,relatedModelOptions){
-			var my = arguments.callee;
-			if (!my.cache) my.cache = {}
-			var cacheKey = JSON.stringify(relatedModelOptions); 
-			if (!(cacheKey in my.cache)) {
-				my.cache[cacheKey] = new Function(<ejs>
-					var dm = this.manager.dm;
-					var relatedBean
-					var relatedModel = dm.getManager(dm.pm2t("<%=relatedModelOptions.name%>"))
-					var criteria  = {
-						where:"<%=relatedModelOptions.foreignKey%> = {<%=relatedModelOptions.foreignKey%>}",
-					}
-					<@if relatedModelOptions.orderBy >
-						criteria.orderBy="<%=relatedModelOptions.orderBy%>"
-					</@if>
-					
-					criteria.<%=relatedModelOptions.foreignKey%>=this.data.<%=relatedModelOptions.localKey%>
-					<@if relatedModelOptions.conditions >
-						<@loop array="relatedModelOptions.conditions.getKeys()" element="prop" index="i">
-							<@if prop=="where" >
-								criteria.where += " and <%=relatedModelOptions.conditions.where%>";
-							<@else>
-								criteris.<%=prop%> = "<%=relatedModelOptions.conditions[prop]%>"
-							</@if>
-						</@loop>
-					</@if>
-					
-					var relatedBean =relatedModel.findBeans(criteria);
+					break;
+				case "hasMany":
+					relatedBean =relatedModel.findBeans(criteria);
 					relatedBean.getNew = function(initialValues){
 						var values = (initialValues||{}).applyTo({});
 						values.setDefaultProperties(criteria)
 						return relatedBean[relatedBean.length]=relatedModel.getNew(values)
 					}
-					
-					relatedBean.relatedModelOptions = <%=relatedModelOptions.toJson()%>;
-					relatedBean.model = relatedModel;
-								
-					var alias = "<%=relatedModelOptions.alias||relatedModelOptions.name%>"
-					this._loadedAliases[alias]=relatedBean
-					return relatedBean;	
-				</ejs>)
-			}
-			//Myna.printConsole(cacheKey,my.cache[cacheKey].toSource().replace(/;/g,";\n"))
-			return my.cache[cacheKey].cache()
-		}
-	/* ---------- hasBridgeToBeanLoader -------------------------------------------- */
-		Myna.DataManager.hasBridgeToBeanLoader=function(bean,relatedModelOptions){
-			var my = arguments.callee;
-			if (!my.cache) my.cache = {}
-			var cacheKey = JSON.stringify(relatedModelOptions); 
-			if (!(cacheKey in my.cache)) {
-				var dm = bean.manager.dm;
-				var relatedModel = dm.getManager(dm.pm2t(relatedModelOptions.name))
-				var thisModel=bean.manager;
-				//Myna.printDump(relatedModel)
-				var bridgeTable =dm.db.getTable(relatedModelOptions.bridgeTable);
-				relatedModelOptions.setDefaultProperties({
-					localKey:thisModel.primaryKey,
-					foreignKey:relatedModel.primaryKey,
-					bridgeTable:[relatedModel.tableName,thisModel.tableName].sort().join("_"),
-					localBridgeKey:dm.m2fk(dm.t2m(thisModel.tableName)),
-					foreignBridgeKey:dm.m2fk(dm.t2m(relatedModel.tableName))
-				})
-				
-				//Myna.printDump(thisModel.columns)
-				var bob =true
-				var body = <ejs>
-					var dm = this.manager.dm;
-					var relatedBean;
-					var relatedModel = dm.getManager(dm.pm2t("<%=relatedModelOptions.name%>"))
-					
+					break;
+				case "hasBridgeTo":
+					var bridgeTable =dm.db.getTable(relatedModelOptions.bridgeTable);
+					relatedModelOptions.setDefaultProperties({
+						localKey:thisModel.primaryKey,
+						foreignKey:relatedModel.primaryKey,
+						bridgeTable:[relatedModel.tableName,thisModel.tableName].sort().join("_"),
+						localBridgeKey:dm.m2fk(dm.t2m(thisModel.tableName)),
+						foreignBridgeKey:dm.m2fk(dm.t2m(relatedModel.tableName))
+					})
 					var relatedBean =new Myna.Query({
 						ds:dm.ds,
-						sql:[
-							'select ',
-								'ft.<%=relatedModel.table.getSqlColumnName(relatedModel.primaryKey)%> as id',
-							'from',
-								'<%=relatedModel.table.sqlTableName%> ft,',
-								'<%=bridgeTable.sqlTableName%> bt',
-							'where ',
-								'bt.<%=bridgeTable.getSqlColumnName(relatedModelOptions.foreignBridgeKey)%>',
-									'=	ft.<%=relatedModel.table.getSqlColumnName(relatedModelOptions.foreignKey)%>',
-								'and bt.<%=bridgeTable.getSqlColumnName(relatedModelOptions.localBridgeKey)%> ',
-									'= {localId:<%=thisModel.columns[relatedModelOptions.localKey].data_type%>}',
-							'<@if relatedModelOptions.conditions>',
-								'and <%=relatedModelOptions.conditions%>	',
-							'</@if>	',
-							'<@if relatedModelOptions.orderBy>',
-								'order by <%=relatedModelOptions.orderBy%>	',
-							'</@if>',
+						sql:<ejs>
+							select 
+								ft.<%=relatedModel.getSqlColumnName(relatedModel.primaryKey)%> as id
+							from
+								<%=relatedModel.table.sqlTableName%> ft,
+								<%=bridgeTable.sqlTableName%> bt
+							where 
+								bt.<%=bridgeTable.getSqlColumnName(relatedModelOptions.foreignBridgeKey)%>
+									=	ft.<%=relatedModel.table.getSqlColumnName(relatedModelOptions.foreignKey)%>
+								and bt.<%=bridgeTable.getSqlColumnName(relatedModelOptions.localBridgeKey)%> 
+									= {localId:<%=thisModel.columns[relatedModelOptions.localKey].data_type%>}
+							<@if relatedModelOptions.conditions>
+								and <%=relatedModelOptions.conditions%>	
+							</@if>	
+							<@if relatedModelOptions.orderBy>
+								order by <%=relatedModelOptions.orderBy%>	
+							</@if>
 							
-						].join("\n"),
+						</ejs>,
 						values:{
 							localId:<%=JSON.stringify(bean[relatedModelOptions.localKey])%>
 						}
@@ -2588,24 +2525,21 @@ if (!Myna) var Myna={}
 					})
 					relatedBean.columns = relatedModel.columns.getKeys()
 					
-					relatedBean.relatedModelOptions = <%=relatedModelOptions.toJson()%>;
+					relatedBean.relatedModelOptions = relatedModelOptions;
 					relatedBean.getNew = function(initialValues){
 						var values = (initialValues||{}).applyTo({});
 						var newBean = relatedBean[relatedBean.length]=relatedModel.getNew(values)
 						newBean._hasBridgeTo = relatedBean.relatedModelOptions;
 						return newBean
 					}
-					relatedBean.model = relatedModel;
-								
-					var alias = "<%=relatedModelOptions.alias||relatedModelOptions.name%>"
-					this._loadedAliases[alias]=relatedBean
-					return relatedBean;	
-				</ejs>.replace(/\[(\/?ejs)\]/g,"<$1>")
-				//Myna.printConsole(body)
-				my.cache[cacheKey] =new Function(body)
+					break;
+				
 			}
 			
-			return my.cache[cacheKey].cache()
+			relatedBean.model = relatedModel;
+			relatedBean.relatedModelOptions = relatedModelOptions;
+			bean._loadedAliases[alias]=relatedBean
+			return relatedBean;
 		}
 	/* ---------- managerBaseClass -------------------------------------------- */
 		Myna.DataManager.managerBaseClass = function(){}
@@ -2710,10 +2644,11 @@ if (!Myna) var Myna={}
 			_applyRelatedValues:function(bean,values){
 				this.associations.forEach(function(aliases,type){
 					aliases.forEach(function(relatedModelOptions,relatedAlias){
+						if (!(relatedAlias in values)) return;	
 						if (bean[relatedAlias]() instanceof Array){
 							var relatedBeans = values[relatedAlias];
 							if (!relatedBeans) return;
-							var relatedModel = this[relatedModelOptions.name];
+							var relatedModel = bean.manager.dm.getManager(relatedModelOptions.name);
 							var pk = relatedModel.primaryKey;
 							if (relatedBeans instanceof Array){
 								relatedBeans.forEach(function(relatedBean){
@@ -2740,19 +2675,22 @@ if (!Myna) var Myna={}
 								})
 							}
 						}else{
+							
 							var relatedBean = values[relatedAlias];
 							if (!relatedBean) return;
 							bean[relatedAlias]().setFields(relatedBean)
 						}
 					})
-				})				
+				})			
+				return bean;
 			},
 			get:function(values){
+				//Myna.printConsole("get","values " + values.toJson())
 				var searchParams ={}
 				searchParams[this.primaryKey] = values[this.primaryKey];
 				//make a local copy
 				values=values.applyTo(this.getDefaults(),true)
-				
+				//Myna.printConsole("searching for " + searchParams.toJson())
 				var record = this.findBeans(searchParams).first(false)
 				if (record){
 					record.deferred = true;
@@ -2764,6 +2702,7 @@ if (!Myna) var Myna={}
 				}
 			},
 			getNew:function getNew(initialValues){
+				//Myna.printConsole("getNew","values " + initialValues.toJson())
 				if (!initialValues) initialValues={}
 				if (!(this.primaryKey in initialValues)){
 					initialValues[this.primaryKey] = this.genKey()
@@ -2858,14 +2797,23 @@ if (!Myna) var Myna={}
 				
 				//each relationship
 				work.forEach(function (relatedModelOptions){
-					var relatedModelName = relatedModelOptions.name;
-					var relatedAlias = relatedModelOptions.alias = relatedModelOptions.alias || relatedModelOptions.name;
-					if (relatedAlias in thisModel.associations.hasOne) return;
+					
 					
 					/* singularize if this is a model name */
 					if (relatedModelOptions.name.toLowerCase() != relatedModelOptions.name){
 						relatedModelName = thisModel.dm.pm2m(relatedModelOptions.name)
-						
+					}
+					/* convert to model name */
+					else{
+						relatedModelName = relatedModelOptions.name =thisModel.dm.t2m(relatedModelOptions.name)
+					}
+					
+					var relatedModelName = relatedModelOptions.name;
+					var relatedAlias = relatedModelOptions.alias = relatedModelOptions.alias || relatedModelOptions.name;
+					if (relatedAlias in thisModel.associations.hasOne) return;
+					
+					if (!thisModel.dm.managerExists(relatedModelName)) {
+						throw new Error("Model '"+relatedModelName+"' does not exist.")	
 					}
 					
 					//singular model name calculated above, like Person
@@ -2878,6 +2826,7 @@ if (!Myna) var Myna={}
 						localKey:thisModel.primaryKey,
 						foreignKey:thisModel.dm.m2fk(foreignKeyName)
 					})
+					
 					thisModel.associations.hasMany[relatedAlias] = relatedModelOptions;
 					thisModel.__defineGetter__(relatedModelName, function() { 
 						
@@ -2932,7 +2881,7 @@ if (!Myna) var Myna={}
 			save:function(){
 				var $this = this;
 				
-				if (!this.deferred) return v;
+				if (!this.deferred) return new Myna.ValidationResult();
 				var v = this.validate()
 				var manager = this.manager
 				
@@ -2943,12 +2892,38 @@ if (!Myna) var Myna={}
 						bean.applyTo(this,true);
 						this.isDirty = false;
 						this.exists=true
-						
+						var localBean = this;
 						this._loadedAliases.forEach(function(alias,relatedBean){
 							if (relatedBean instanceof Array){
 								relatedBean.forEach(function(bean){
 									var relatedValidation = bean.save()
 									v.merge(relatedValidation,alias +"."+bean.id +".");
+									//bridge tables are a pain
+									if (relatedBean._hasBridgeTo && relatedValidation.success){
+										//Fire a blind insert into bridge table	
+										try {
+											var bridgeTable =dm.db.getTable(relatedModelOptions.bridgeTable);
+											var lbk=relatedBean._hasBridgeTo.localBridgeKey;
+											var fbk=relatedBean._hasBridgeTo.foreignBridgeKey;
+											new Myna.Query({
+												ds:bean.manager.dm.ds,
+												sql:<ejs>
+													insert into <%=relatedBean._hasBridgeTo.bridgeTable%>(
+														<%=lbk%>,
+														<%=fbk%>
+													) values (
+														{localId:<%=bridgeTable.columns[lbk].data_type%>},
+														{foreignId:<%=bridgeTable.columns[fbk].data_type%>},
+													)
+														
+												</ejs>,
+												values:{
+													localId:localBean.id,
+													foreignId:bean.id
+												}
+											})
+										}catch(e){}
+									}
 								})	
 							} else {
 								var relatedValidation = relatedBean.save()

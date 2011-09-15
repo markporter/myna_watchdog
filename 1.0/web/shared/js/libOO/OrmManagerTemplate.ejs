@@ -19,166 +19,7 @@
 	
 %>
 
-function <%=tableName%>_manager(dm,options){
-	if (!options) options ={}
-	options.setDefaultProperties({
-		softDeleteCol:"deleted",
-		createdCol:"created",
-		modifiedCol:"modified",
-	})
-	this.dm = dm;
-	this._labels = {}
-	
-	this.db = dm.db;
-	this.primaryKey="<%=primaryKey%>";
-	
-	this.associations ={
-		hasOne:{},
-		hasMany:{},
-		belongsTo:{},
-		hasBridgeTo:{},
-	}
-	this.table = this.db.getTable(this.name);
-	 
-	this._validators={}
-	var $this = this;
-	<%  	
-	/* build implicit associations from foreign keys */
-		/* exported keys*/
-			table.exportedKeys.forEach(function(localExport){
-				/* make sure getManager will work */
-					var relatedTable = db.getTable(localExport.fktable_name)
-					if (relatedTable.primaryKeys.length == 1){
-						/* now check for bridge only table */
-							var bridgeOnly =relatedTable.columnNames.every(function(colname){
-								if (colname.toLowerCase() == relatedTable.primaryKeys[0].toLowerCase()){
-									return true	
-								}
-								return relatedTable.foreignKeys.contains(function(fk){
-									return fk.fkcolumn_name.toLowerCase() == colname.toLowerCase()
-								})
-							})
-						
-						//Myna.printConsole("hasOne, from " + manager.table.tableName + " to " + relatedTable.tableName );
-						if (!bridgeOnly){
-							/* hasOne */
-								name = dm.t2m(localExport.fktable_name)
-								alias = name
-								fk_name_part = localExport.fkcolumn_name.toLowerCase()
-								if ( //check for aliased FK
-									fk_name_part.listBefore("_") != localExport.pktable_name.toLowerCase()
-									&& dm.fk2t(fk_name_part) != localExport.pktable_name.toLowerCase()
-								) {
-									alias=dm.t2m(dm.fk2t(fk_name_part))
-								}
-								Myna.print(
-									"\nthis.hasOne("
-									+JSON.stringify({
-										name:dm.t2m(localExport.fktable_name),
-										localKey:localExport.pkcolumn_name.toLowerCase(),
-										foreignKey:localExport.fkcolumn_name.toLowerCase(),
-									},null,"  ")
-									+ ");"
-								)
-								
-								
-							/* hasMany */
-								name = dm.m2pm(dm.t2m(localExport.fktable_name))
-								alias = name
-								if ( //check for aliased FK
-									fk_name_part.listBefore("_") != localExport.pktable_name.toLowerCase()
-									&& dm.fk2t(fk_name_part) != localExport.pktable_name.toLowerCase()
-								) {
-									alias=dm.m2pm(dm.t2m(dm.fk2t(fk_name_part)))
-								}
-								Myna.print(
-									"\nthis.hasMany("
-									+JSON.stringify({
-										name:name,
-										alias:alias,
-										localKey:localExport.pkcolumn_name.toLowerCase(),
-										foreignKey:localExport.fkcolumn_name.toLowerCase(),
-									},null,"  ")
-									+ ");"
-									
-								)
-						}
-					} else{
-						//Myna.log("debug","skipping " + relatedTable.tableName,Myna.dump($req.data));
-					}
-				
-				/* add Bridges */
-				relatedTable.foreignKeys.filter(function(relatedExport){
-					return relatedExport.pktable_name != table.tableName
-				}).forEach(function(relatedExport){
-					//Myna.printConsole("bridgeTo, from " + table.tableName + " to " + relatedTable.tableName );
-					Myna.print(
-						"\nthis.hasBridgeTo("
-						+JSON.stringify({
-							name:dm.m2pm(dm.t2m(relatedExport.pktable_name)),
-							bridgeTable:relatedTable.tableName.toLowerCase(),
-							
-							localBridgeKey:localExport.fkcolumn_name.toLowerCase(),
-							
-							foreignBridgeKey:relatedExport.fkcolumn_name.toLowerCase(),
-							foreignKey:relatedExport.pkcolumn_name.toLowerCase(),
-						},null,"  ")
-						+ ");" 
-					)
-				})
-			})
-		/* foreign keys  */
-			table.foreignKeys.forEach(function(row){
-				name = dm.t2m(row.pktable_name);
-				alias = name;
-				fk_name_part = row.fkcolumn_name.toLowerCase();
-				if ( //check for aliased FK
-					fk_name_part.listBefore("_") != row.fktable_name.toLowerCase()
-					&& dm.fk2t(fk_name_part) != row.fktable_name.toLowerCase()
-				) {
-					alias=dm.t2m(dm.fk2t(fk_name_part))
-				}
-				Myna.print(
-					"\nthis.belongsTo("
-					+JSON.stringify({
-						name:name,
-						alias:alias,
-						localKey:row.fkcolumn_name.toLowerCase(),
-						foreignKey:row.pkcolumn_name.toLowerCase(),
-					},null,"  ")
-					+");"
-				)
-			})
-	%>
-	/* build validators */
-	<% 
-	columnNames.forEach(function(colname){
-		var colDef = columns[colname];
-		if (
-			colDef.is_nullable == "NO" 
-			&& !colDef.column_def  
-			&& colname != primaryKey
-		){
-		%>
-		this.addValidator("<%=colname%>","required");<%
-		}
-		
-		if (!/date|time/i.test(colDef.type_name)){
-			if ("BLOB,CLOB".listContains(colDef.type_name)){
-			%>
-		this.addValidator("<%=colname%>","length",{max:"2*1024*1024*1024*1024//2 GB"});<%
-			} else {
-			%>
-		this.addValidator("<%=colname%>","length",{max:"<%=colDef.column_size%>"});<%
-			}
-		}
-		%>
-		this.addValidator("<%=colname%>","type",{type:"<%=Myna.Database.dbTypeToJs(colDef.data_type)%>"})
-		<%
-		
-	})
-	%>
-	
+function <%=tableName%>_manager(){
 	this.init();
 }
 
@@ -188,8 +29,171 @@ function <%=tableName%>_manager(dm,options){
 	name:"<%=tableName%>",
 	tableName:[ejs]<%=table.tableName%>[/ejs],
 	sqlTableName:[ejs]<%=table.sqlTableName%>[/ejs],
+	_init:function(dm,options){
+		if (!options) options ={}
+		options.setDefaultProperties({
+			softDeleteCol:"deleted",
+			createdCol:"created",
+			modifiedCol:"modified",
+		})
+		this.dm = dm;
+		this._labels = {}
+		
+		this.db = dm.db;
+		this.primaryKey="<%=primaryKey%>";
+		
+		this.associations ={
+			hasOne:{},
+			hasMany:{},
+			belongsTo:{},
+			hasBridgeTo:{},
+		}
+		this.table = this.db.getTable(this.name);
+		 
+		this._validators={}
+		var $this = this;
+		<%  	
+		/* build implicit associations from foreign keys */
+			/* exported keys*/
+				table.exportedKeys.forEach(function(localExport){
+					/* make sure getManager will work */
+						var relatedTable = db.getTable(localExport.fktable_name)
+						if (relatedTable.primaryKeys.length == 1){
+							/* now check for bridge only table */
+								var bridgeOnly =relatedTable.columnNames.every(function(colname){
+									if (colname.toLowerCase() == relatedTable.primaryKeys[0].toLowerCase()){
+										return true	
+									}
+									return relatedTable.foreignKeys.contains(function(fk){
+										return fk.fkcolumn_name.toLowerCase() == colname.toLowerCase()
+									})
+								})
+							
+							//Myna.printConsole("hasOne, from " + manager.table.tableName + " to " + relatedTable.tableName );
+							if (!bridgeOnly){
+								/* hasOne */
+									name = dm.t2m(localExport.fktable_name)
+									alias = name
+									fk_name_part = localExport.fkcolumn_name.toLowerCase()
+									if ( //check for aliased FK
+										fk_name_part.listBefore("_") != localExport.pktable_name.toLowerCase()
+										&& dm.fk2t(fk_name_part) != localExport.pktable_name.toLowerCase()
+									) {
+										alias=dm.t2m(dm.fk2t(fk_name_part))
+									}
+									Myna.print(
+										"\nthis.hasOne("
+										+JSON.stringify({
+											name:dm.t2m(localExport.fktable_name),
+											localKey:localExport.pkcolumn_name.toLowerCase(),
+											foreignKey:localExport.fkcolumn_name.toLowerCase(),
+										},null,"  ")
+										+ ");"
+									)
+									
+									
+								/* hasMany */
+									name = dm.m2pm(dm.t2m(localExport.fktable_name))
+									alias = name
+									if ( //check for aliased FK
+										fk_name_part.listBefore("_") != localExport.pktable_name.toLowerCase()
+										&& dm.fk2t(fk_name_part) != localExport.pktable_name.toLowerCase()
+									) {
+										alias=dm.m2pm(dm.t2m(dm.fk2t(fk_name_part)))
+									}
+									Myna.print(
+										"\nthis.hasMany("
+										+JSON.stringify({
+											name:name,
+											alias:alias,
+											localKey:localExport.pkcolumn_name.toLowerCase(),
+											foreignKey:localExport.fkcolumn_name.toLowerCase(),
+										},null,"  ")
+										+ ");"
+										
+									)
+							}
+						} else{
+							//Myna.log("debug","skipping " + relatedTable.tableName,Myna.dump($req.data));
+						}
+					
+					/* add Bridges */
+					relatedTable.foreignKeys.filter(function(relatedExport){
+						return relatedExport.pktable_name != table.tableName
+					}).forEach(function(relatedExport){
+						//Myna.printConsole("bridgeTo, from " + table.tableName + " to " + relatedTable.tableName );
+						Myna.print(
+							"\nthis.hasBridgeTo("
+							+JSON.stringify({
+								name:dm.m2pm(dm.t2m(relatedExport.pktable_name)),
+								bridgeTable:relatedTable.tableName.toLowerCase(),
+								
+								localBridgeKey:localExport.fkcolumn_name.toLowerCase(),
+								
+								foreignBridgeKey:relatedExport.fkcolumn_name.toLowerCase(),
+								foreignKey:relatedExport.pkcolumn_name.toLowerCase(),
+							},null,"  ")
+							+ ");" 
+						)
+					})
+				})
+			/* foreign keys  */
+				table.foreignKeys.forEach(function(row){
+					name = dm.t2m(row.pktable_name);
+					var alias = name;
+					var fk_name_part = row.fkcolumn_name.toLowerCase();
+					if ( //check for aliased FK
+						fk_name_part.listBefore("_") != row.fktable_name.toLowerCase()
+						&& dm.fk2t(fk_name_part) != row.fktable_name.toLowerCase()
+					) {
+						alias=dm.t2m(dm.fk2t(fk_name_part))
+					}
+					Myna.print(
+						"\nthis.belongsTo("
+						+JSON.stringify({
+							name:name,
+							alias:alias,
+							localKey:row.fkcolumn_name.toLowerCase(),
+							foreignKey:row.pkcolumn_name.toLowerCase(),
+						},null,"  ")
+						+");"
+					)
+				})
+		%>
+		/* build validators */
+		<% 
+		columnNames.forEach(function(colname){
+			var colDef = columns[colname];
+			if (
+				colDef.is_nullable == "NO" 
+				&& !colDef.column_def  
+				&& colname != primaryKey
+			){
+			%>
+			this.addValidator("<%=colname%>","required");<%
+			}
+			
+			if (!/date|time/i.test(colDef.type_name)){
+				if ("BLOB,CLOB".listContains(colDef.type_name)){
+				%>
+			this.addValidator("<%=colname%>","length",{max:"2*1024*1024*1024*1024//2 GB"});<%
+				} else {
+				%>
+			this.addValidator("<%=colname%>","length",{max:"<%=colDef.column_size%>"});<%
+				}
+			}
+			%>
+			this.addValidator("<%=colname%>","type",{type:"<%=Myna.Database.dbTypeToJs(colDef.data_type)%>"})
+			<%
+			
+		})
+		%>
+		this.init();
+		return this;
+	},
 	init:function(){},
 	ds:"<%=dm.ds%>",
+	
 	forceDelete:function(id){
 		var manager = this;
 		var p = new Myna.QueryParams();
@@ -623,8 +627,12 @@ function <%=tableName%>_manager(dm,options){
 		if (type=="belongsTo") type="hasOne";
 		//if(type == "hasOne" || type == "hasMany")
 		models.forEach(function(options,alias){
-			$this[alias] = function(){ 
-				this[alias] =Myna.DataManager[type +"BeanLoader"]($this,options)
+			$this[alias] = function(){
+				if (!options){
+					Myna.abort("fail")	
+				}
+				var relatedBean = Myna.DataManager.getRelated($this,alias,type,options.toJson().parseJson());
+				this[alias] =function(){return relatedBean}
 				return this[alias]()
 			}
 		})
@@ -746,7 +754,7 @@ function <%=tableName%>_manager(dm,options){
 				return this.data.<%=colname%>;
 			},
 			<@if colname != primaryKey>
-			set_<%=colname%>:function(value){
+			set_<%=colname%>:function(newval){
 				var result = new Myna.ValidationResult();
 				if (typeof newval === "undefined"){
 					result.addError("argument 'value' required for set_<%=colname%>.","<%=colname%>");

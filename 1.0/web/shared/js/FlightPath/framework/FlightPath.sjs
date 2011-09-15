@@ -32,67 +32,98 @@ var _controllerClasses={}
 	private model cache
 */
 var _modelClasses={}
-
+/* mergeModels */
+	function mergeModels(model,modelName){
+		var classList = [
+			model,
+			"app/models/global.sjs",
+		]
+		
+		var m = new Myna.File(
+			$FP.dir,
+			"app/models",
+			c2f(modelName) + "_model.sjs"
+		);
+		if (!m.exists()){	//check for module path
+			m = new Myna.File($FP.dir,"app/modules")
+				.listFiles(function(f){return f.isDirectory()})
+				.map(function(f){
+					return new Myna.File(
+						f,
+						"models",
+						c2f(modelName) + "_model.sjs"
+					)
+				})
+				.filter(function(f){return f.exists()})
+				.first(false)
+		}
+		if (!m){	//check in the framework
+			m = new Myna.File(
+				$FP.dir,
+				"framework/models",
+				c2f(modelName) + "_model.sjs"
+			);
+		}
+		if (!m.exists()){
+			m ={init:function(){}}
+		}
+		
+		classList.push(m)
+		
+		result =mergeClasses(classList)
+		//Myna.printDump(result.getProperties(),modelName)
+		result.init();
+		return result;
+	}
 /* Function: init
 	*/
 	function init(forceReload){
 		var core;
-			core= this;
-			$application.config.applyTo(this.config,true)
-			if (
-				"purpose" in this.config
-				&&	$server.purpose.toLowerCase() in this.config.purpose 
-			){
-				this.config.purpose[$server.purpose.toLowerCase()].applyTo(this.config,true)
-			}
+		core= this;
+		$application.config.applyTo(this.config,true)
+		if (
+			"purpose" in this.config
+			&&	$server.purpose.toLowerCase() in this.config.purpose 
+		){
+			this.config.purpose[$server.purpose.toLowerCase()].applyTo(this.config,true)
+		}
+		
+		this.appname = $application.appname
 			
-			this.appname = $application.appname
-			
-			if (this.config.ds) {
-				this.dm = new Myna.DataManager(new Myna.Template(this.config.ds).apply(this))
-				this.dm.after("getManager",function(modelName){
-					var chain = arguments.callee.chain
-					var model = chain.lastReturn
-					if (!model._configured){
-						model._configured=true;
-						var base = $application.directory
-						var m = mergeClasses([
-							new $FP.Model(),
-							base+"app/models/global.sjs",
-							new Myna.File(base+"app/models")
-							.listFiles(
-								function(f){
-									return f.fileName.toLowerCase().listBefore(".")  ==  c2f(modelName);
-								}
-							).first({})
-							
-						]).applyTo(model,true)
-						model.init();
-						
-					}
-					return model;
-				})
-			}
-			
-			Myna.include("framework/Controller.sjs",this)
-			Myna.include("framework/Model.sjs",this)
-			this.helpers={}
-			new Myna.File("framework/helpers").listFiles("sjs").forEach(function(f){
-				var name =f2c(f.fileName.listBefore("."),true);
-				core.helpers[name]=Myna.include(f,{});
-			})
-			var local_helpers = new Myna.File("app/helpers");
-			if (local_helpers.exists()){
-				new Myna.File("views/helpers").listFiles("sjs").forEach(function(f){
-					var name =f2c(f.fileName.listBefore("."),true);
-					core.helpers[name]=Myna.include(f,core.helpers[name]||{});
-				})
-			}
-			
-			
-			this.loadedAt = new Date()
-			core= this
+		if (this.config.ds) {
+			this.dm = new Myna.DataManager(new Myna.Template(this.config.ds).apply(this))
 	
+			this.dm.after("getManager",function(modelName){
+				var chain = arguments.callee.chain
+				var model = chain.lastReturn
+				if (!model._configured){
+					model._configured=true;
+					
+					
+					mergeModels(model,modelName)
+					
+				}
+				return model;
+			})
+		}
+		
+		Myna.include("framework/Controller.sjs",this)
+		Myna.include("framework/Model.sjs",this)
+		this.helpers={}
+		new Myna.File("framework/helpers").listFiles("sjs").forEach(function(f){
+			var name =f2c(f.fileName.listBefore("."),true);
+			core.helpers[name]=Myna.include(f,{});
+		})
+		var local_helpers = new Myna.File("app/helpers");
+		if (local_helpers.exists()){
+			new Myna.File("views/helpers").listFiles("sjs").forEach(function(f){
+				var name =f2c(f.fileName.listBefore("."),true);
+				core.helpers[name]=Myna.include(f,core.helpers[name]||{});
+				
+			})
+		}
+		
+		this.loadedAt = new Date()
 		
 		$FP = core;
 		Myna.include("framework/Flash.sjs")
@@ -199,7 +230,6 @@ var _modelClasses={}
 					c2f(controllerName) + "_controller.sjs"
 				);
 			}
-			
 			//Myna.abort(controller + controller.exists())
 			if (!controller.exists()) return null
 			classList.push(controller)
@@ -296,55 +326,20 @@ var _modelClasses={}
 		var model;
 		
 		if (modelName in _modelClasses) {
-			modelClass.prototype=_modelClasses[modelName];
+			model=_modelClasses[modelName];
+			Myna.printConsole("using stored model for " + modelName)
 		} else {
-			
-			if (this.dm && this.dm.managerExists(modelName)){
-				model =this.dm.getManager(modelName);
-			} else return null
-			var classList = [
-				model,
-				"app/models/global.sjs",
-			]
-			
-			model = new Myna.File(
-				$FP.dir,
-				"app/models",
-				c2f(modelName) + "_model.sjs"
-			);
-			if (!model.exists()){	//check for module path
-				model = new Myna.File($FP.dir,"app/modules")
-					.listFiles(function(f){return f.isDirectory()})
-					.map(function(f){
-						return new Myna.File(
-							f,
-							"models",
-							c2f(modelName) + "_model.sjs"
-						)
-					})
-					.filter(function(f){return f.exists()})
-					.first(false)
-			}
-			if (!model){	//check in the framework
-				model = new Myna.File(
-					$FP.dir,
-					"framework/models",
-					c2f(modelName) + "_model.sjs"
-				);
-			}
-			if (!model.exists()){
-				model ={}
+			if (this.dm.managerExists(modelName)){
+				model = this.dm.getManager(modelName)	
+			} else {
+				model = mergeModels({},modelName)	
 			}
 			
-			classList.push(model)
-			modelClass.prototype = mergeClasses(classList)
-			_modelClasses[modelName] = modelClass.prototype
+			_modelClasses[modelName] = model;
 			
 		}
 		
 		//Myna.printDump(c,"Model")
-		return new modelClass()
-		
 		
 		return model
 		
@@ -455,31 +450,39 @@ var _modelClasses={}
 	Main entry point for requests
 	*/
 	function handleRequest(){
-		var path =$server.requestUrl
-			.after($server.currentUrl)
-				
-		if (path.listFirst("/") == "static"){
-			
-			var f = new Myna.File(
-				$FP.dir,
-				"app",
-				path,
-				$server.requestScriptName
-			)
-			$res.serveFile(f)
-		} else {
-			var params =$req.params = getParams();
-			if(!params.controller){
-				$application._onError404();
+		try{
+			if (this._handling_request) {
+				Myna.printConsole("recursive")
+				return;
 			}
-			
-			var c = getController(params.controller)	
-			if (!params.action) params.action ="index"
-			
-			c.handleAction(params);
-			$req.handled=true;
+			this._handling_request=true
+			var path =$server.requestUrl
+				.after($server.currentUrl)
+					
+			if (path.listFirst("/") == "static"){
+				
+				var f = new Myna.File(
+					$FP.dir,
+					"app",
+					path,
+					$server.requestScriptName
+				)
+				$res.serveFile(f)
+			} else {
+				var params =$req.params = getParams();
+				if(!params.controller){
+					$application._onError404();
+				}
+				
+				var c = getController(params.controller)	
+				if (!params.action) params.action ="index"
+				
+				c.handleAction(params);
+				$req.handled=true;
+			}
+		} finally{
+			this._handling_request=false	
 		}
-		
 	}
 
 /* Function: mergeClasses
@@ -593,7 +596,8 @@ var _modelClasses={}
 		delete options.action;
 		delete options.controller;
 		delete options.params;
-		delete options.anchor
+		delete options.anchor;
+		delete options.route;
 		
 		options.forEach(function(v,k){
 			if (/^flash/.test(k)){
@@ -607,4 +611,11 @@ var _modelClasses={}
 		//if (url.charAt(0) == "/") url= $server.serverUrl + url
 		$res.redirect(url)
 		
+		//Myna.abort("<a href="+url+">"+url+"</a")
+		
 	}
+/* Class: FlightPath.Html
+	This is a library within FLightPath for creating HTML snippets 
+*/
+
+
