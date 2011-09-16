@@ -510,7 +510,9 @@ var _modelClasses={}
 			if (typeof part == "function"){
 				new part().applyTo(obj,true)
 			} else if (typeof part == "string" || part instanceof Myna.File){
-				Myna.include(part,{}).applyTo(obj,true);
+				if (new Myna.File(part).exists()){
+					Myna.include(part,{}).applyTo(obj,true);
+				}
 			} else {
 				part.applyTo(obj,true)	
 			}

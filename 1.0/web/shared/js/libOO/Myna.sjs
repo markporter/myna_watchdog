@@ -366,9 +366,9 @@ if (!Myna) var Myna={}
 			try{
 			switch (ObjectLib.typeOf(obj)){
 				case "array":
-					if (obj instanceof Myna.DataSet){
+					if ("columns" in obj){//DataSet
 						keys = ObjectLib.getKeys(obj,true).filter(function(prop){
-								return prop != parseFloat(prop);
+							return prop != parseFloat(prop) && prop !="columns";
 						});
 						result+='<table class="query" border="0" cellspacing="0"><caption>DataSet</caption>';
 						for (x=0; x < keys.length; ++x) {

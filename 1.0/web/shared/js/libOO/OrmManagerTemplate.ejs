@@ -16,17 +16,24 @@
 	var primaryKey = table.primaryKeys[0];
 	var pkey_datatype =columns[primaryKey].data_type;
 	var sqlpkey = table.getSqlColumnName(primaryKey);
-	
+	var t = table
+	var signature = Object({
+			columns:t.columns,
+			primaryKeyInfo:t.primaryKeyInfo,
+			foreignKeyInfo:t.foreignKeyInfo,
+			exportedKeys:t.exportedKeys
+	}).toJson().hashCode()
 %>
 
 function <%=tableName%>_manager(){
 	this.init();
 }
 
-
+<%=tableName%>_manager.signature='<%=signature%>';
 <%=tableName%>_manager.prototype={
 	qt:[ejs]<%=dm.qt%>[/ejs],
 	name:"<%=tableName%>",
+	modelName:"<%=dm.t2m(tableName)%>",
 	tableName:[ejs]<%=table.tableName%>[/ejs],
 	sqlTableName:[ejs]<%=table.sqlTableName%>[/ejs],
 	_init:function(dm,options){
@@ -52,6 +59,16 @@ function <%=tableName%>_manager(){
 		 
 		this._validators={}
 		var $this = this;
+		options.applyTo(this);
+		if (this.columnNames.indexOf(this.modifiedCol.toLowerCase()) == -1){
+			this.modifiedCol = false;
+		}
+		if (this.columnNames.indexOf(this.softDeleteCol.toLowerCase()) == -1){
+			this.softDeleteCol = false;
+		}
+		if (this.columnNames.indexOf(this.createdCol.toLowerCase()) == -1){
+			this.createdCol = false;
+		}
 		<%  	
 		/* build implicit associations from foreign keys */
 			/* exported keys*/
@@ -238,7 +255,7 @@ function <%=tableName%>_manager(){
 			}
 		var now = new Date()
 		if (this.createdCol && !requiredFields[this.createdCol]) {
-			requiredFields[this.createCol] = now;
+			requiredFields[this.createdCol] = now;
 		}
 		if (this.modifiedCol && !requiredFields[this.modifiedCol]) {
 			requiredFields[this.modifiedCol] = now;
@@ -449,6 +466,11 @@ function <%=tableName%>_manager(){
 		})
 	},
 	getSqlColumnName:function(colname){
+		if (!colname || !(colname.toLowerCase() in this.columns)){
+			throw new Error(
+				"getSqlColumnName: Column '" + colname + "' does not exist in the '" + this.tableName + "' table."
+			)	
+		}
 		return this.columns[colname.toLowerCase()].column_name.listQualify(this.qt);
 	},
 	genKey:function(){

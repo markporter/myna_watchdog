@@ -1630,7 +1630,6 @@ if (!Myna) var Myna={}
 			this.managerTemplate="/shared/js/libOO/OrmManagerTemplate.ejs"
 			this.beanTemplate="/shared/js/libOO/OrmBeanTemplate.ejs"
 			
-			this.managerClasses={}
 			this._managers={}
 		
 		}
@@ -1744,6 +1743,7 @@ if (!Myna) var Myna={}
 			
 			var tkey =tableName.toLowerCase();
 			
+			
 			if ( tkey in this._managers){
 				return this._managers[tkey];	
 			} 
@@ -1755,11 +1755,32 @@ if (!Myna) var Myna={}
 				|| classFile.lastModified.getTime() < templateFile.lastModified.getTime()
 			);
 			
+			
+			
 			if (
 				!Myna.DataManager.managerClasses[tableName]
 				|| staleClassFile 
 			) {
-				
+				if (!staleClassFile){//now check for DDL changes
+					var t = this.db.getTable(tableName);
+					
+					
+					if (!(tableName+"_manager" in Myna.DataManager.managerClasses)){
+						//Myna.printConsole(tkey +" loading for DDL check")
+						Myna.include(classFile,Myna.DataManager.managerClasses);
+					}
+					var signature = Object({
+						columns:t.columns,
+						primaryKeyInfo:t.primaryKeyInfo,
+						foreignKeyInfo:t.foreignKeyInfo,
+						exportedKeys:t.exportedKeys
+					}).toJson().hashCode()
+					
+					if (Myna.DataManager.managerClasses[tableName+"_manager"].signature != signature){
+						staleClassFile =true;
+						Myna.printConsole(tkey +" failed DDL check")
+					}
+				}
 				if(staleClassFile){
 					classFile.getDirectory().createDirectory();
 					classFile.writeString(
@@ -1769,12 +1790,14 @@ if (!Myna) var Myna={}
 							.replace(/\|>/g,"\%\>")
 							.replace(/#/g,"@")
 					)
-					Myna.printConsole("loading model " + classFile)
+					//Myna.printConsole("loading model " + classFile)
 				}
-				
-				Myna.include(classFile,this.managerClasses);
+				if (!(tableName+"_manager" in Myna.DataManager.managerClasses)){
+					//Myna.printConsole(tkey +" loading for stale file check")
+					Myna.include(classFile,Myna.DataManager.managerClasses);
+				}
 			}
-			var manager =this._managers[tkey]= new this.managerClasses[tableName+"_manager"]();
+			var manager =this._managers[tkey]= new Myna.DataManager.managerClasses[tableName+"_manager"]();
 			
 			
 			return manager._init(this,options)
@@ -2689,9 +2712,10 @@ if (!Myna) var Myna={}
 				var searchParams ={}
 				searchParams[this.primaryKey] = values[this.primaryKey];
 				//make a local copy
-				values=values.applyTo(this.getDefaults(),true)
-				//Myna.printConsole("searching for " + searchParams.toJson())
-				var record = this.findBeans(searchParams).first(false)
+				//values=values.applyTo(this.getDefaults(),true)
+				
+				var record = this.findBeans(searchParams,{includeSoftDeleted:true}).first(false)
+				
 				if (record){
 					record.deferred = true;
 					record.setFields(values)
@@ -2769,7 +2793,7 @@ if (!Myna) var Myna={}
 						if (relatedAlias in thisModel.associations.hasOne) return;
 						relatedModelOptions.setDefaultProperties({
 							localKey:thisModel.primaryKey,
-							foreignKey:thisModel.dm.m2fk(relatedAlias==relatedModelName?thisModel.name:relatedAlias)
+							foreignKey:thisModel.dm.m2fk(relatedAlias==relatedModelName?thisModel.modelName:relatedAlias)
 						})
 						thisModel.associations.hasOne[relatedAlias] = relatedModelOptions;
 					}
@@ -2818,7 +2842,7 @@ if (!Myna) var Myna={}
 					}
 					
 					//singular model name calculated above, like Person
-					var foreignKeyName = thisModel.name;
+					var foreignKeyName = thisModel.modelName;
 					if (relatedAlias!=relatedModelOptions.name){
 						//Convert plural model alias to singular, e.g. CustomWidgets to CustomWidget
 						foreignKeyName = thisModel.dm.t2m(thisModel.dm.pm2t(relatedAlias))
@@ -2893,7 +2917,7 @@ if (!Myna) var Myna={}
 						this.isDirty = false;
 						this.exists=true
 						var localBean = this;
-						this._loadedAliases.forEach(function(alias,relatedBean){
+						this._loadedAliases.forEach(function(relatedBean,alias){
 							if (relatedBean instanceof Array){
 								relatedBean.forEach(function(bean){
 									var relatedValidation = bean.save()

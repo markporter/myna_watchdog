@@ -19,7 +19,7 @@
 							additional params to add to the URL
 		anchor		-	*Optional, default null*
 							String to add after "#' in the URL
-		content		-	*Optional, default generated URL*
+		text		-	*Optional, default generated URL*
 							If provided, this will be placed between the resulting 
 							<a></a> tags
 		[others]		-	Any other properties will be added as attributes to the tag 	
@@ -28,7 +28,7 @@
 	
 	function link(options){
 		var url = this.url(options);
-		var content = options.content||url
+		var text = options.text||url
 		var attributes = options.getKeys()
 			.filter(function(key){
 				return ![
@@ -38,16 +38,16 @@
 					"id",
 					"params",		
 					"anchor",
-					"content"
+					"text"
 				].contains(key)
 			})
 			.map(function(key){
 				return <ejs>
-					<%=key%>="<%=options[key].escapeHtml()%>"
+					<%=key%>="<%=options[key]%>"
 				</ejs>
 			}).join(" ")
 		return <ejs>
-			<a href="<%=url%>" <%=attributes%>><%=content%></a>
+			<a href="<%=url%>" <%=attributes%>><%=text%></a>
 		</ejs>
 	}	
 
@@ -65,7 +65,7 @@
 							overrides _controller_, _action_ and _id_ 
 		controller	-	*Optional, default current controller*
 		action		-	*Optional, default current action*
-		id				-	*Optional, default current id*
+		id				-	*Optional, default ""*
 		params		-	*Optional, default null*
 							additional params to add to the URL
 		anchor		-	*Optional, default null*
@@ -96,14 +96,14 @@
 		if (options.staticUrl){
 			url +="static/" +options.staticUrl
 		} else if (template){
-			id = options.id||$req.params.id||"";
+			id = options.id||"";
 			action = $FP.c2f(options.action||$req.params.action);
 			controller = $FP.c2f(options.controller||$req.params.controller);
 			
 			url += template
 				.replace(/\$controller/g,controller)
 				.replace(/\$action/g,action)
-				.replace(/\$id/g,id) 
+				.replace(/\/\$id/g,id?"/"+id:"") 
 		}
 		
 		if ("params" in options){

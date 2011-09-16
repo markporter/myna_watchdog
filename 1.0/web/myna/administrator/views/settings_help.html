@@ -47,10 +47,30 @@
 	<br><br>
 	
 	<b>Optimization Level</b><br>
-	An optimization level of -1 indicates that interpretive mode will always be 
-	used and compiled scripts will not be cached. Levels 0 through 9 indicate that 
-	class files may be generated. Higher optimization levels trade off compile 
-	time performance for runtime performance.
+	An optimization level of -1 indicates interpretive mode. Levels 0 through 9
+	indicate that java class files may be generated. Higher optimization levels 
+	trade off compile time performance for runtime performance.
+	
+	<b>NOTE:</b> Interpreted mode (-1) is considered a debug/development mode 
+	and disables most caching. Specifically:
+	<ul>
+		<li>
+			Scope caching: At higher optimization levels a single global scope is 
+			shared among all scripts. This means Mina's standard libraries and 
+			JavaScript's global objects do not need to be recreated on every 
+			request. This saves time and memory usage. For thread safety, most 
+			global properties cannot be modified at higher optimization levels.  
+		</li>
+		<li>
+			DataManager Caching: At higher optimization levels, Myna a will not 
+			check the database for table changes if a class cache already exists 
+		</li>
+		<li>
+			Script Caching: At higher optimization levels, Myna a will cache 
+			compiled sjs and ejs files unless the timestamp on the file is newer 
+			than the compiled script
+		</li>
+	</ul>
 	<br><br>
 	
 	<b>Standard Libraries</b><br>
