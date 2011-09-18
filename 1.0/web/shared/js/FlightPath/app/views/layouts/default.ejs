@@ -7,10 +7,10 @@
 		<meta name="<%=tag.name%>" content="<%=tag.content%>" />
 	</@loop>
 <title><%=$page.title||$controller.name + "."+$params.action%></title>
-<link rel="shortcut icon" href="<%=$page.icon||"favicon.ico"%>" type="image/x-icon">
+<link rel="shortcut icon" href="<%=$page.icon||$FP.url +"static/favicon.ico"%>" type="image/x-icon">
 <%-- Include external files and scripts here --%>
 <@loop array="$page.scripts" element="script">
-	<script type="script.type || text/javascript %>" src="<%=script.src%>"></script>
+	<script type="<%=script.type || text/javascript %>" src="<%=script.src%>"></script>
 	<%-- fix for syntax highlighting </script> --%>
 </@loop>
 <@loop array="$page.css" element="css">

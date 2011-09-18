@@ -496,7 +496,9 @@ var ObjectLib = {}
 		var s = typeof object;
 		if (s === 'object') {
 			if (object) {
-				if (typeof object["length"] === 'number' &&
+				if (object instanceof String){
+					return 'string';
+				} else if (typeof object["length"] === 'number' &&
 						/* !(object.propertyIsEnumerable('length')) && */
 						typeof object.splice === 'function') {
 					return 'array';

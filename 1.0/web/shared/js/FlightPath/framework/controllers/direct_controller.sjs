@@ -6,6 +6,7 @@ function api(params){
 	}
 	
 	if (params.ns) API.ns = params.ns;
+	if (params.namespace) API.namespace = params.namespace;
 	$FP.getControllerNames().forEach(function(name){
 		var controller = $FP.getController(name)
 		Myna.println(name)
@@ -25,6 +26,8 @@ function api(params){
 		var content = [];
 		if (params.ns){
 			content.push("Ext.ns('"+params.ns+"');"+params.ns+".")
+		} else if (params.namespace){
+			content.push("Ext.namespace('"+params.namespace+"');"+params.namespace+".")
 		}
 		content.push($req.rawData.scriptvar + "=" +API.toJson());
 		this.renderContent(conent.join(""),"text/javascript");

@@ -2519,7 +2519,7 @@ if (!Myna) var Myna={}
 						localBridgeKey:dm.m2fk(dm.t2m(thisModel.tableName)),
 						foreignBridgeKey:dm.m2fk(dm.t2m(relatedModel.tableName))
 					})
-					var relatedBean =new Myna.Query({
+					relatedBean =new Myna.Query({
 						ds:dm.ds,
 						sql:<ejs>
 							select 

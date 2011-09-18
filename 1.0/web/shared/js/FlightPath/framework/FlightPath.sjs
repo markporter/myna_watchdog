@@ -70,7 +70,7 @@ var _modelClasses={}
 		
 		classList.push(m)
 		
-		result =mergeClasses(classList)
+		var result =mergeClasses(classList)
 		//Myna.printDump(result.getProperties(),modelName)
 		result.init();
 		return result;
@@ -328,7 +328,7 @@ var _modelClasses={}
 			model=_modelClasses[modelName];
 			Myna.printConsole("using stored model for " + modelName)
 		} else {
-			if (this.dm.managerExists(modelName)){
+			if (this.dm && this.dm.managerExists(modelName)){
 				model = this.dm.getManager(modelName)
 			} else {
 				model = mergeModels({},modelName)	

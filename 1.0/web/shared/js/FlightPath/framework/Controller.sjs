@@ -13,8 +13,7 @@
 	
 	Parameters:
 		layoutName  -	String. Layout name, or path relative to app/layouts
-		only			-	*Optional, default false*
-							If set to true, this is the only layout that will be applied
+		
 	
 	Detail:
 		Layouts are templates that wrap the content produced in a view. Layouts 
@@ -43,23 +42,51 @@
 		
 	(end)
 	
-	You can also use the _only_ parameter to disable layering and force the use 
-	of a particular layout
+	
+
+	*/
+	Controller.prototype.addLayout = function addLayout(layout){
+		this.layouts.push(layout)	
+	}
+/* Function: setLayout 
+	Sets a single layout layer to this this request, clearing any existing layouts
+	
+	Parameters:
+	layout		-	String or Boolean. Layout name, or path relative to 
+						app/layouts, or false to disable all layouts
+						
+	Detail:
+		Layouts are templates that wrap the content produced in a view. Layouts 
+		are stored in app/views/layouts/layoutName.ejs. Layouts are layered like 
+		so:
+	(code)
+		/app/views/layouts/default.ejs wraps
+			/app/views/layouts/controllername/default.ejs wraps
+				/app/views/controllername/actionname.ejs
+	(end)
+	
+	Calling this function adds a single additional layout that wrap the view, like so:
 	
 	(code)
 		function init(){
-			this.addLayout("mylayout1",true)
+			this.setLayout("mylayout1")
 		}
 		
 	//results in 
-		/app/views/layouts/mylayout1.ejs wraps
-			/app/views/controllername/actionname.ejs	
+	/app/views/layouts/default.ejs wraps
+		/app/views/layouts/controllername/default.ejs wraps
+			/app/views/layouts/mylayout1.ejs wraps
+				/app/views/controllername/actionname.ejs	
 		
-	(end)	
-
-	*/
-	Controller.prototype.addLayout = function addLayout(layout,only){
-		this.layouts.push(layout)	
+	(end)
+	
+	*/	
+	Controller.prototype.setLayout = function setLayout(layout){
+		if (layout){
+			this.layouts.push(layout)
+		} else {
+			this.layouts=[]
+		}
 	}
 /* Function: addFilter 
 	adds an action filter
