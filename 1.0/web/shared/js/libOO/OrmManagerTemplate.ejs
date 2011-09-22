@@ -652,9 +652,22 @@ function <%=tableName%>_manager(){
 		if (type=="belongsTo") type="hasOne";
 		//if(type == "hasOne" || type == "hasMany")
 		models.forEach(function(options,alias){
-			$this[alias] = function(){
+			$this[alias] = function(conditions){
 				if (!options){
 					Myna.abort("fail")	
+				}
+				if (conditions){
+					if (options.conditions){
+						conditions.forEach(function(option,prop){
+							if (prop=="where"){
+								options.conditions.where += " and " + conditions.where +" ";
+							}else{
+								options.conditions[prop] = conditions[prop];
+							}
+						})
+					} else {
+						options.conditions = conditions;
+					}
 				}
 				var relatedBean = Myna.DataManager.getRelated($this,alias,type,options.toJson().parseJson());
 				this[alias] =function(){return relatedBean}

@@ -543,7 +543,7 @@ var _modelClasses={}
 		URL params 
 	*/
 	function objectToUrl(object,preserveFpParams){
-		result =[]
+		var result =[]
 		function addProp(p,v){
 			if (v==null) v=""
 			result.push( escape(p) +"="+escape(v))	

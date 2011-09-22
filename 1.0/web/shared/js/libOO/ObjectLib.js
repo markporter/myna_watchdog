@@ -553,6 +553,21 @@ var ObjectLib = {}
 			// 	}
 			// }
 			
+			// the * means append otherwise the array index is used even if out of order
+			var result = {}
+			ObjectLib.setByPath(result,"Users[*].firstName","Mark")
+			ObjectLib.setByPath(result,"Users[0].firstName","Bob")
+			// result Equals
+			// {
+			// 	Users:[
+			//		{
+			// 			firstName:"Bob"
+			// 		},
+			// 		{
+			// 			firstName:"Mark"
+			// 		}
+			//	]
+			// }
 		
 		(end)
 		
@@ -567,9 +582,35 @@ var ObjectLib = {}
 		} else {
 			var parts = path.split(".")
 			var lastProp = parts.pop();
-			parts.reduce(function(obj,prop){
+			
+			var target=parts.reduce(function(obj,prop){
+				//Myna.println(prop)
+				if (/\[[\d|*]+\]/.test(prop)){
+					var match = prop.match(/(.*?)\[(.*?)\]/);
+					var arrayProp = match[1], index=match[2];
+					if (!(arrayProp in obj)) obj[arrayProp] = []
+					obj = obj[arrayProp]
+					if (index == "*") {
+						prop = obj.length;
+					} else {
+						prop = parseInt(index);
+					}
+				}
 				return obj[prop] || (obj[prop] ={})
-			},obj)[lastProp] =value
+			},obj)
+			
+			if (/\[[\d|*]+\]/.test(lastProp)){
+				var match = lastProp.match(/(.*?)\[(.*?)\]/);
+				var arrayProp = match[1], index=match[2];
+				if (!(arrayProp in target)) target[arrayProp] = []
+				target = target[arrayProp]
+				if (index == "*") {
+					lastProp = target.length;
+				} else {
+					lastProp = parseInt(index);
+				}
+			}
+			target[lastProp] =value;
 		}
 		return obj
 	}

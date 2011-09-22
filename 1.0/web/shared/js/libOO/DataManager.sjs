@@ -952,7 +952,7 @@ if (!Myna) var Myna={}
 			This function has 3 parameter patterns:
 			
 				Model Name:
-					name	-	Plural name of model exact table name to associate. 
+					name	-	Plural name of model or exact table name to associate. 
 								Plural Model names are the ProperCased table name, e.g 
 								profiles becomes Profiles, and user_profiles would be 
 								UserProfiles
@@ -960,7 +960,7 @@ if (!Myna) var Myna={}
 					(code)
 						//these are equivalent
 						var Person = dm.getManager("Person")
-						Person.hasMany("Post")
+						Person.hasMany("Posts")
 						Person.hasMany("posts")
 						
 					(end)
@@ -1028,7 +1028,7 @@ if (!Myna) var Myna={}
 			Detail:
 				This maps a one-to-many relationship with the related table to this 
 				one. Once set, any beans returned by this manager will include a 
-				property with the same name as the related table that represents the 
+				function with the same name as the related alias that represents the 
 				result of <relatedModel>.findBeans(), constrained by the foreign key 
 				relationship. This is best shown by example
 				
@@ -2470,11 +2470,11 @@ if (!Myna) var Myna={}
 			var relatedModel = dm.getManager(relatedModelOptions.name)
 			var thisModel = bean.manager;
 			try{
-			var criteria  = {
-				where:<ejs>
-					<%=relatedModel.getSqlColumnName(relatedModelOptions.foreignKey)%> = {<%=relatedModelOptions.foreignKey%>}
-				</ejs>
-			}
+				var criteria  = {
+					where:<ejs>
+						<%=relatedModel.getSqlColumnName(relatedModelOptions.foreignKey)%> = {<%=relatedModelOptions.foreignKey%>}
+					</ejs>
+				}
 			}catch(e){
 				
 				Myna.abort(e.message,Array.parse(arguments))
@@ -2485,7 +2485,7 @@ if (!Myna) var Myna={}
 					if (prop=="where"){
 						criteria.where += " and " +relatedModelOptions.conditions.where +" ";
 					}else{
-						criteris[prop] = relatedModelOptions.conditions[prop];
+						criteria[prop] = relatedModelOptions.conditions[prop];
 					}
 				})
 			}
@@ -2675,13 +2675,13 @@ if (!Myna) var Myna={}
 							var pk = relatedModel.primaryKey;
 							if (relatedBeans instanceof Array){
 								relatedBeans.forEach(function(relatedBean){
-									var existingBean =bean[relatedAlias]().findFirstByCol(pk,relatedBean[pk]); 
+									relatedBean[relatedModelOptions.foreignKey] = bean.id;
+									relatedBean = relatedModel.get(relatedBean)
+									var existingBean =bean[relatedAlias]().findFirstByCol(pk,relatedBean.id); 
 									if (existingBean){
 										existingBean.setFields(relatedBean)
 									} else {
-										relatedBean[pk] = keyVal;
-										relatedBean[relatedModelOptions.foreignKey] = bean.id;
-										bean[relatedAlias]().push(relatedModel.get(relatedBean))
+										bean[relatedAlias]().push(relatedBean)
 									}
 								})
 							} else {
@@ -2783,14 +2783,18 @@ if (!Myna) var Myna={}
 					var relatedAlias = relatedModelOptions.alias = relatedModelOptions.alias || relatedModelOptions.name
 					 
 					if (relatedModelOptions._belongsTo){
-						if (relatedAlias in thisModel.associations.belongsTo) return;
+						if (relatedAlias in thisModel.associations.belongsTo) {
+							relatedModelOptions.setDefaultProperties(thisModel.associations.belongsTo[relatedAlias])	
+						};
 						relatedModelOptions.setDefaultProperties({
 							localKey:thisModel.dm.m2fk(relatedAlias==relatedModelName?relatedModelName:relatedAlias),
 							foreignKey:thisModel.primaryKey
 						})
 						thisModel.associations.belongsTo[relatedAlias] = relatedModelOptions;
 					} else {
-						if (relatedAlias in thisModel.associations.hasOne) return;
+						if (relatedAlias in thisModel.associations.hasOne) {
+							relatedModelOptions.setDefaultProperties(thisModel.associations.hasOne[relatedAlias])	
+						};
 						relatedModelOptions.setDefaultProperties({
 							localKey:thisModel.primaryKey,
 							foreignKey:thisModel.dm.m2fk(relatedAlias==relatedModelName?thisModel.modelName:relatedAlias)
@@ -2835,7 +2839,9 @@ if (!Myna) var Myna={}
 					
 					var relatedModelName = relatedModelOptions.name;
 					var relatedAlias = relatedModelOptions.alias = relatedModelOptions.alias || relatedModelOptions.name;
-					if (relatedAlias in thisModel.associations.hasOne) return;
+					if (relatedAlias in thisModel.associations.hasMany) {
+						relatedModelOptions.setDefaultProperties(thisModel.associations.hasMany[relatedAlias])	
+					};
 					
 					if (!thisModel.dm.managerExists(relatedModelName)) {
 						throw new Error("Model '"+relatedModelName+"' does not exist.")	
@@ -2881,7 +2887,9 @@ if (!Myna) var Myna={}
 				work.forEach(function (relatedModelOptions){
 					var relatedModelName = relatedModelOptions.name;
 					var relatedAlias = relatedModelOptions.alias = relatedModelOptions.alias || relatedModelOptions.name;
-					if (relatedAlias in thisModel.associations.hasOne) return;
+					if (relatedAlias in thisModel.associations.hasBridgeTo) {
+						relatedModelOptions.setDefaultProperties(thisModel.associations.hasBridgeTo[relatedAlias])	
+					};
 					
 					/* singularize if this is a model name */
 					if (relatedModelOptions.name.toLowerCase() != relatedModelOptions.name){
@@ -2911,6 +2919,11 @@ if (!Myna) var Myna={}
 				
 				if (v.success){
 					try{
+						//first save/create parent objects
+						this.manager.associations.belongsTo.forEach(function(relatedModelOptions,alias){
+							var relatedValidation = $this[alias]().save()
+							v.merge(relatedValidation,alias +".");
+						})
 						var bean =this.manager.create(this.data)
 						
 						bean.applyTo(this,true);
@@ -2918,6 +2931,9 @@ if (!Myna) var Myna={}
 						this.exists=true
 						var localBean = this;
 						this._loadedAliases.forEach(function(relatedBean,alias){
+							//already handled parents
+							if (alias in $this.manager.associations.belongsTo) return;
+							
 							if (relatedBean instanceof Array){
 								relatedBean.forEach(function(bean){
 									var relatedValidation = bean.save()

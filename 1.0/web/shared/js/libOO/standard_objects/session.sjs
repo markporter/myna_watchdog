@@ -29,7 +29,7 @@ var $session={
 			$session.id=$cookie.get("MYNA_SESSION")
 			
 			if (!$session.id){
-				$session.id =$cookie.set("MYNA_SESSION",Myna.createUuid());
+				$session.id =$cookie.set("MYNA_SESSION",Myna.createUuid(),{path:$application.url});
 			}
 			var isNew = !this._map.get($session.id);
 			if (isNew) this._map.put($session.id,"{}");

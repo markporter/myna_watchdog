@@ -201,6 +201,7 @@ var $res = {
 		(end)
 	*/
 	redirect:function(url){
+		$res.clear()
 		if ($server.response) $server.response.sendRedirect(url);
 		Myna.abort();		
 	},
