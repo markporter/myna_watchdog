@@ -1,12 +1,13 @@
 <%
-	var table = dm.db.getTable(tableName);
-	var db = dm.db;
+	var db = new Myna.Database(dm.ds)
+	var table = db.getTable(tableName);
+	table.clearMetadataCache();
 	var sqlTableName = table.sqlTableName;
 	var qt = dm.qt;
 	var columns = table.columns;
 	var columnNames = table.columnNames;
 	if (!table.exists){
-		throw new Error("No table '" + tableName +"' found in data source '" + this.ds +"' \nTables: " + this.db.tables.join());
+		throw new Error("No table '" + tableName +"' found in data source '" + dm.ds +"' \nTables: " + this.db.tables.map(function(t){return t.table_name}).join());
 	}
 	
 	if (table.primaryKeys.length != 1){
@@ -693,7 +694,7 @@ function <%=tableName%>_manager(){
 		}
 		fields.getKeys().forEach(function(k){
 			//filter non column properties
-			if (!(k in bean.columns) || k == "<%=primaryKey%>"){
+			if (!(k in bean.columns) || (k == "<%=primaryKey%>" && !bean.deferred)){
 				delete fields[k]	
 			}
 		})
