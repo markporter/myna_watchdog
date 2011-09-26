@@ -423,7 +423,7 @@ if (!Myna) var Myna={}
 				includeSoftDeleted	-	*default false*
 												if true, soft deleted columns will be 
 												included in query results  
-			
+				[queryOptions]			-	Any other <Myna.Query> options such as maxRows								
 			
 												
 			Examples:
@@ -1740,7 +1740,7 @@ if (!Myna) var Myna={}
 				}
 			}
 			tableName = tableName.toLowerCase();
-			
+			//Myna.printConsole(this.db.getTable(table).exists + ":"+this.m2t(table) +":"+this.ds)
 			var tkey =tableName.toLowerCase();
 			
 			

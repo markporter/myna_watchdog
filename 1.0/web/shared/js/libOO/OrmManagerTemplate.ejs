@@ -376,7 +376,7 @@ function <%=tableName%>_manager(){
 		
 		if (where){
 			
-			var qry = new Myna.Query({
+			var qry = new Myna.Query(options.applyTo({
 				dataSource:this.ds,
 				log:$this.logQueries,
 				sql:[ejs]
@@ -392,12 +392,12 @@ function <%=tableName%>_manager(){
 					</#if>
 				[/ejs],
 				values:pattern
-			})
+			}))
 			
 		} else {
 			var p = new Myna.QueryParams();
 			
-			qry = new Myna.Query({
+			qry = new Myna.Query(options.applyTo({
 				dataSource:this.ds,
 				log:$this.logQueries,
 				parameters:p,
@@ -416,10 +416,10 @@ function <%=tableName%>_manager(){
 						order by <|=orderBy|>
 					</#if>
 				[/ejs]
-			})
+			}))
 			
 		}
-		
+		qry.data.totalRows = qry.totalRows
 		return qry.data
 	},
 	find:function(pattern,options){

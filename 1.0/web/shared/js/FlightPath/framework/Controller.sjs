@@ -718,6 +718,7 @@ Controller.prototype.set = function set(prop,val){
 	} else {
 		this.data[prop] = val
 	}
+	return val;
 }
 
 Controller.prototype.setLayout = function setLayout(layout){

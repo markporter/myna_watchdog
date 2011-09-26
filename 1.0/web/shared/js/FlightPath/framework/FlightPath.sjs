@@ -36,6 +36,7 @@ var _modelClasses={}
 	function mergeModels(model,modelName){
 		var classList = [
 			model,
+			new $FP.Model(),
 			"app/models/global.sjs",
 		]
 		
@@ -72,7 +73,6 @@ var _modelClasses={}
 		
 		var result =mergeClasses(classList)
 		//Myna.printDump(result.getProperties(),modelName)
-		result.init();
 		return result;
 	}
 /* Function: init
@@ -89,11 +89,20 @@ var _modelClasses={}
 		}
 		
 		this.appname = $application.appname
-			
+		
+		this.modelManagers ={}
 		if (this.config.ds) {
-			this.dm = new Myna.DataManager(new Myna.Template(this.config.ds).apply(this))
+			if (typeof this.config.ds == "string") {
+				this.config.ds={"default":this.config.ds}	
+			}
+			this.config.ds.forEach(function(ds,alias){
+				core.modelManagers[alias] = new Myna.DataManager(new Myna.Template(ds).apply(this))
 	
-			this.dm.after("getManager",function(modelName){
+				core.modelManagers[alias].getModel = core.modelManagers[alias].getManager
+				core.modelManagers[alias].modelExists = core.modelManagers[alias].managerExists
+				core.modelManagers[alias].getManager = core.getModel
+			})
+			/* this.dm.after("getManager",function(modelName){
 				var chain = arguments.callee.chain
 				var model = chain.lastReturn
 				if (!model._configured){
@@ -103,8 +112,10 @@ var _modelClasses={}
 					model = mergeModels(model,modelName)
 				}
 				return model;
-			})
+			}) */
+			
 		}
+		
 		
 		Myna.include("framework/Controller.sjs",this)
 		Myna.include("framework/Model.sjs",this)
@@ -318,24 +329,24 @@ var _modelClasses={}
 		modelName	- name of model to load	
 	*/
 	function getModel(modelName){
-		var modelClass =function(){
-			this.init(modelName)
-		};
-		
 		var model;
-		
+			
 		if (modelName in _modelClasses) {
 			model=_modelClasses[modelName];
 			Myna.printConsole("using stored model for " + modelName)
 		} else {
-			if (this.dm && this.dm.managerExists(modelName)){
-				model = this.dm.getManager(modelName)
-			} else {
-				model = mergeModels({},modelName)	
+			model = mergeModels({},modelName);
+			
+			if (!model.manager) model.manager ="default"
+			if (model.manager in $FP.modelManagers){
+				var mm = $FP.modelManagers[model.manager]
+				var realName = model.realName||modelName; 
+				
+				model = mergeModels(mm.getModel(realName),modelName)
+				
 			}
-			
+			model.init()	
 			_modelClasses[modelName] = model;
-			
 		}
 		
 		//Myna.printDump(c,"Model")
@@ -387,7 +398,7 @@ var _modelClasses={}
 						localParams[p.after(1)] = restParams[index];
 						return true
 					} else {
-						return p == restParams[index].toLowerCase() 	
+						return p == restParams[index].toLowerCase() || new RegExp(restParams[index],"i").test(p)
 					}
 				})
 				
