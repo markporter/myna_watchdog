@@ -885,6 +885,7 @@ var $application={
 					$res.metaRedirect($server.requestUrl+$server.requestScriptName + queryVars)
 					$res.flush();
 					$req.handled = true;
+					$server_gateway.requestHandled=true;
 					return;
 				}
 			

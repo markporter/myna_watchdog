@@ -1740,6 +1740,11 @@ if (!Myna) var Myna={}
 				}
 			}
 			tableName = tableName.toLowerCase();
+			if (!this.db.getTable(tableName).exists){
+				throw new Error(<ejs>
+					Unable to find either '<%=table%>' or '<%=tableName%>' in datasource '<%=this.ds%>'  
+				</ejs>)	
+			}
 			//Myna.printConsole(this.db.getTable(table).exists + ":"+this.m2t(table) +":"+this.ds)
 			var tkey =tableName.toLowerCase();
 			
@@ -2568,7 +2573,7 @@ if (!Myna) var Myna={}
 		Myna.DataManager.managerBaseClass = function(){}
 		Myna.DataManager.managerBaseClass.prototype = {
 			addValidator:function(colname,validator,options){
-				if (!options) options ={};
+				if (!options) options ={}
 				if (!this._validators) this._validators={}
 				if (!colname) colname ="ALL";
 				if (!(colname in this._validators)) this._validators[colname]=[];
@@ -2785,7 +2790,7 @@ if (!Myna) var Myna={}
 					if (relatedModelOptions._belongsTo){
 						if (relatedAlias in thisModel.associations.belongsTo) {
 							relatedModelOptions.setDefaultProperties(thisModel.associations.belongsTo[relatedAlias])	
-						};
+						}
 						relatedModelOptions.setDefaultProperties({
 							localKey:thisModel.dm.m2fk(relatedAlias==relatedModelName?relatedModelName:relatedAlias),
 							foreignKey:thisModel.primaryKey
@@ -2794,7 +2799,7 @@ if (!Myna) var Myna={}
 					} else {
 						if (relatedAlias in thisModel.associations.hasOne) {
 							relatedModelOptions.setDefaultProperties(thisModel.associations.hasOne[relatedAlias])	
-						};
+						}
 						relatedModelOptions.setDefaultProperties({
 							localKey:thisModel.primaryKey,
 							foreignKey:thisModel.dm.m2fk(relatedAlias==relatedModelName?thisModel.modelName:relatedAlias)
@@ -2830,7 +2835,9 @@ if (!Myna) var Myna={}
 					
 					/* singularize if this is a model name */
 					if (relatedModelOptions.name.toLowerCase() != relatedModelOptions.name){
-						relatedModelName = thisModel.dm.pm2m(relatedModelOptions.name)
+						
+						relatedModelOptions.name =relatedModelName = thisModel.dm.pm2m(relatedModelOptions.name)
+						
 					}
 					/* convert to model name */
 					else{
@@ -2841,7 +2848,7 @@ if (!Myna) var Myna={}
 					var relatedAlias = relatedModelOptions.alias = relatedModelOptions.alias || relatedModelOptions.name;
 					if (relatedAlias in thisModel.associations.hasMany) {
 						relatedModelOptions.setDefaultProperties(thisModel.associations.hasMany[relatedAlias])	
-					};
+					}
 					
 					if (!thisModel.dm.managerExists(relatedModelName)) {
 						throw new Error("Model '"+relatedModelName+"' does not exist.")	
@@ -2889,11 +2896,11 @@ if (!Myna) var Myna={}
 					var relatedAlias = relatedModelOptions.alias = relatedModelOptions.alias || relatedModelOptions.name;
 					if (relatedAlias in thisModel.associations.hasBridgeTo) {
 						relatedModelOptions.setDefaultProperties(thisModel.associations.hasBridgeTo[relatedAlias])	
-					};
+					}
 					
 					/* singularize if this is a model name */
 					if (relatedModelOptions.name.toLowerCase() != relatedModelOptions.name){
-						relatedModelName = thisModel.dm.pm2m(relatedModelOptions.name)
+						relatedModelOptions.name =relatedModelName = thisModel.dm.pm2m(relatedModelOptions.name)
 						
 					}
 					thisModel.__defineGetter__(relatedModelName, function() { 

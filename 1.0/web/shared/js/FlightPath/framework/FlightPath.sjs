@@ -47,7 +47,7 @@ var _modelClasses={}
 		);
 		if (!m.exists()){	//check for module path
 			m = new Myna.File($FP.dir,"app/modules")
-				.listFiles(function(f){return f.isDirectory()})
+				.listFiles(function(f){return f.isDirectory() && /^\w+$/.test(f.fileName)})
 				.map(function(f){
 					return new Myna.File(
 						f,
@@ -220,7 +220,7 @@ var _modelClasses={}
 			);
 			if (!controller.exists()){	//check for module path
 				controller = new Myna.File($FP.dir,"app/modules")
-					.listFiles(function(f){return f.isDirectory()})
+					.listFiles(function(f){return f.isDirectory() && /^\w+$/.test(f.fileName)})
 					.map(function(f){
 						
 						return new Myna.File(
@@ -285,7 +285,7 @@ var _modelClasses={}
 		//search modules for controllers
 		var controllerFolders = new Myna.File($FP.dir,"app/modules")
 			.listFiles(function(file){
-				return file.isDirectory()
+				return file.isDirectory() && /^\w+$/.test(file.fileName)
 			})
 		controllerFolders.forEach(function(folder){
 			names =names.concat(
@@ -329,24 +329,40 @@ var _modelClasses={}
 		modelName	- name of model to load	
 	*/
 	function getModel(modelName){
+		
 		var model;
-			
+		
+		//Myna.printConsole(this.ds +": loading.. " +modelName)
 		if (modelName in _modelClasses) {
 			model=_modelClasses[modelName];
-			Myna.printConsole("using stored model for " + modelName)
+			//Myna.printConsole("using stored model for " + modelName)
 		} else {
 			model = mergeModels({},modelName);
 			
 			if (!model.manager) model.manager ="default"
+			
+		
 			if (model.manager in $FP.modelManagers){
 				var mm = $FP.modelManagers[model.manager]
-				var realName = model.realName||modelName; 
+				var realName = model.realName||modelName;
+				try{
+					var manager = mm.getModel(realName)
+				} catch(e){
+					manager={}	
+				}
+				//Myna.abort()
 				
-				model = mergeModels(mm.getModel(realName),modelName)
+				manager.setDefaultProperties(model)
+				manager.after("init",model.init)
+				_modelClasses[modelName]=model = manager;
+				
+				
 				
 			}
-			model.init()	
-			_modelClasses[modelName] = model;
+			//Myna.printConsole("before init.. " +modelName)
+			model.init()
+			//Myna.printConsole("completing.. " +modelName)
+			
 		}
 		
 		//Myna.printDump(c,"Model")

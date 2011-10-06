@@ -202,7 +202,7 @@ var $res = {
 	*/
 	redirect:function(url){
 		$res.clear()
-		if ($server.response) $server.response.sendRedirect(url);
+		if ($server.response) try{$server.response.sendRedirect(url);} catch(e){}
 		Myna.abort();		
 	},
 /* Function: redirectLogin
@@ -510,7 +510,13 @@ var $res = {
 		
 	*/
 	setHeader:function(name,value){
-		if ($server.response) $server.response.setHeader(name,value);
+		if ($server.response) {
+			if (value instanceof Date){
+				$server.response.setDateHeader(name,value.getTime());
+			} else {
+				$server.response.setHeader(name,value);
+			}
+		}
 	},
 /* Function: printBinary
 		sends binary data to the browser
