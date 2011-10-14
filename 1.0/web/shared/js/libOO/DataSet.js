@@ -284,7 +284,49 @@
 			columns:this.columns
 		})
 	}	
+/* Function: merge
+	merges another DataSet into this one, by a common column value 
 	
+	Parameters:
+		ds			-	Other dataset to merge into this one
+		column		-	String name of column that the two DataSets have in common
+	
+	Example:
+	(code)
+		var a = new Myna.DataSet([{
+			id:1,
+			name:"bob"
+		}])
+		
+		var a = new Myna.DataSet([{
+			id:1,
+			age:15
+		}])
+		
+		a.merge(b,"id") 
+	(end)
+	
+	*/
+	DataSet.prototype.merge = function(ds,column) {
+		var $this = this
+		if (!ds || !("columns" in ds)) throw new Error("First Param must be an instance of DataSet")
+		var myColumns = this.columns.join()
+		var newColumns=[]
+		ds.columns.forEach(function(colname){
+			if (!myColumns.listContains(colname)) {
+				$this.columns.push(colname)
+				newColumns.push(colname)
+			}
+		})
+		$this.forEach(function(row){
+			var relatedRow= ds.findFirstByCol(column,row[column])
+			if (relatedRow){
+				newColumns.forEach(function(col){
+					row[col] = relatedRow[col]
+				})
+			}
+		})
+	}	
 /* Function: minByCol
 	returns the "smallest" value of a column.
 	
