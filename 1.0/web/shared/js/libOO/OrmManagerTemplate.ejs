@@ -37,7 +37,7 @@ function <%=tableName%>_manager(){
 	modelName:"<%=dm.t2m(tableName)%>",
 	tableName:[ejs]<%=table.tableName%>[/ejs],
 	sqlTableName:[ejs]<%=table.sqlTableName%>[/ejs],
-	_init:function(dm,options){
+	_init:function _init(dm,options){
 		if (!options) options ={}
 		options.setDefaultProperties({
 			softDeleteCol:"deleted",
@@ -48,7 +48,7 @@ function <%=tableName%>_manager(){
 		this._labels = {}
 		
 		this.db = dm.db;
-		this.primaryKey="<%=primaryKey%>";
+		this.primaryKey=this.idField="<%=primaryKey%>";
 		
 		this.associations ={
 			hasOne:{},
@@ -209,10 +209,10 @@ function <%=tableName%>_manager(){
 		this.init();
 		return this;
 	},
-	init:function(){},
+	init:function init(){},
 	ds:"<%=dm.ds%>",
 	
-	forceDelete:function(id){
+	forceDelete:function forceDelete(id){
 		var manager = this;
 		var p = new Myna.QueryParams();
 		
@@ -228,7 +228,7 @@ function <%=tableName%>_manager(){
 			}
 		});
 	},
-	create:function(requiredFields){
+	create:function create(requiredFields){
 		var manager = this;
 		if (!requiredFields) requiredFields={}
 		if (!requiredFields.<%=primaryKey%>){
@@ -301,7 +301,7 @@ function <%=tableName%>_manager(){
 		
 		return this.getById(requiredFields.<%=primaryKey%>);
 	},
-	query:function(pattern,options){
+	query:function query(pattern,options){
 		if (!pattern) pattern={}
 		var $this = this;
 		var criteria=[];
@@ -422,7 +422,7 @@ function <%=tableName%>_manager(){
 		qry.data.totalRows = qry.totalRows
 		return qry.data
 	},
-	find:function(pattern,options){
+	find:function find(pattern,options){
 		var $this = this
 		var sqlKey = '<%=table.getSqlColumnName(primaryKey)%>'
 		if (!pattern) pattern={}
@@ -438,7 +438,7 @@ function <%=tableName%>_manager(){
 		return this.queryCol(pattern,options)
 		
 	},
-	findBeans:function(pattern,options){
+	findBeans:function findBeans(pattern,options){
 		var $this = this;
 		pattern=pattern||{}
 		if (options === !!options) {
@@ -466,7 +466,7 @@ function <%=tableName%>_manager(){
 				})
 		})
 	},
-	getSqlColumnName:function(colname){
+	getSqlColumnName:function getSqlColumnName(colname){
 		if (!colname || !(colname.toLowerCase() in this.columns)){
 			throw new Error(
 				"getSqlColumnName: Column '" + colname + "' does not exist in the '" + this.tableName + "' table."
@@ -474,7 +474,7 @@ function <%=tableName%>_manager(){
 		}
 		return this.columns[colname.toLowerCase()].column_name.listQualify(this.qt);
 	},
-	genKey:function(){
+	genKey:function genKey(){
 		<% 
 			var pktype =Myna.Database.dbTypeToJs(pkey_datatype);
 		%>
@@ -495,7 +495,7 @@ function <%=tableName%>_manager(){
 			throw new Error("genKey must be overloaded for primary keys of type" + pktype )
 		</@if>
 	},
-	getById:function(id){
+	getById:function getById(id){
 		var manager = this;
 		var bean={};
 		var p = new Myna.QueryParams();
@@ -682,9 +682,9 @@ function <%=tableName%>_manager(){
 <%=tableName%>_manager.prototype.beanClass=<%=tableName%>_manager.beanClass;
 
 <%=tableName%>_manager.beanClass.prototype = {
-	init:function(){},
+	init:function init(){},
 	//isDirty:false,
-	setFields:function(fields){
+	setFields:function setFields(fields){
 		var bean = this;
 		var manager = this.manager;
 		//ignore non-field values
@@ -747,7 +747,7 @@ function <%=tableName%>_manager(){
 		}
 		return result;
 	},
-	saveField:function(fieldName,newval){
+	saveField:function saveField(fieldName,newval){
 		var result = new Myna.ValidationResult();
 		if (this.deferred) {
 			this.isDirty = true;
@@ -804,7 +804,13 @@ function <%=tableName%>_manager(){
 }
 new Myna.DataManager.beanBaseClass().applyTo(<%=tableName%>_manager.beanClass.prototype);
 
-<%=tableName%>_manager.prototype.columnNames=<%=JSON.stringify(columnNames,null,"   ")%>
+<%=tableName%>_manager.prototype.columnNames=
+<%=tableName%>_manager.prototype.fieldNames=<%=JSON.stringify(columnNames,null,"   ")%>
 <%=tableName%>_manager.prototype.columns=<%=JSON.stringify(columns,null,"   ")%>
+<%=tableName%>_manager.prototype._types=<%=JSON.stringify(
+	columns.map(function(def,colname){
+		return Myna.Database.dbTypeToJs(def.data_type)
+	})
+,null,"   ")%>
 
 new Myna.DataManager.managerBaseClass().applyTo(<%=tableName%>_manager.prototype)

@@ -72,6 +72,7 @@ var _modelClasses={}
 		classList.push(m)
 		
 		var result =mergeClasses(classList)
+		result.name=modelName
 		//Myna.printDump(result.getProperties(),modelName)
 		return result;
 	}

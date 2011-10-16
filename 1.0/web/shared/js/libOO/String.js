@@ -505,7 +505,59 @@
 	String.prototype.escapeJs=function(){
 		return JSON.stringify(this).match(/^"(.*)"$/)[1].replace(/'/g,"\\'");	
 	}
+/* Function: format 
+	returns a string with parameters replaced   
+	 
+	Parameters:
+		values...		-	Either multiple value parameters, a single parameter array
+								or a JS object containing key/value pairs
+								
+	Detail:
+		This provides a very simple templating system for strings. Bracketed terms
+		(e.g.{1} or {paramName}) in this string are replaced with that matching index 
+		in _values_. For parameter list or a single parameter array, positional 
+		terms ({0},{1},...{n}) are replaced. For a single object parameter, 
+		matching property names are replaced ({age},{height},{DOB}) 
 		
+	Returns: 
+		converted string
+	
+	Example:
+		(code)
+			var saying = "This is the {0} of our {1}. words:{0},{1}".format("summer","discontent")
+			var saying2 = "This is the {season} of our {feeling}. words:{season},{feeling}".format({
+				season:"summer",
+				feeling:"discontent"
+			})
+		(end)
+	*/
+	String.prototype.format=function(values){
+		var args = Array.parse(arguments);
+		var isArray=false
+		if (args.length > 1) {
+			isArray = true	
+		} else  if (args.length == 1 ){
+			if (args[0] && typeof args[0] == "object" && "length" in args[0] && "concat" in args[0]){
+				args = args[0];
+				isArray=true;
+			} else if (typeof args[0] == "string" || "getTime" in args[0] || args[0] == parseFloat(args[0])){
+				isArray = true	
+			} else {//property object
+				args=args[0]
+			}
+		} else return new String(this);
+		
+		if (isArray){
+			if (!args.length) return new String(this);
+			return this.replace(/{(\d+)}/g, function(match, number) { 
+				return typeof args[number] != 'undefined'? String(args[number]) : match;
+			})
+		} else {
+			return this.replace(/{(\w+)}/g, function(match, key) { 
+				return key in args? String(args[key]) : match;
+			})
+		}
+	}		
 /* Function: getLineIterator
 	returns java Iterator that produces a line at a time for this string
 	

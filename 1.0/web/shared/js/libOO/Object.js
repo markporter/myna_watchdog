@@ -556,6 +556,85 @@
 	Object.prototype.forEach=function (func){
 		return ObjectLib.forEach(this,func);
 	}
+/* Function: map
+	returns new Object with the results of calling a provided function on every 
+	non-function element in this.   
+	 
+	Parameters: 
+		func 		-	Function to execute. See below for the parameters it will 
+						be passed
+ 
+	Callback Parameters:
+		element		-	the value of property
+		name			-	the name of the property
+		object		-	a reference to this object
+		
+	
+		
+	Detail: 
+		This function is modeled after the JS function <Array.map>. 
+		
+	Example:
+		(code)
+		//make sure null values come across as empty strings
+		var emp = {
+			id:12,
+			name:"Bob",
+			age:null,
+			occupation:"being awesome",
+			isDeceased:false
+		}.map(function(element,name,object){
+			if (element === null) {
+				return ""
+			} else {
+				return element
+			}
+		})
+		
+		(end)
+	 
+	*/
+	Object.prototype.map=function map(func){
+		return ObjectLib.map(this,func)
+	}
+/* Function: filter
+	returns new Object with only the key/values from this object that pass a test function
+	 
+	Parameters: 
+		obj		-	Object to loop over	
+		func 		-	Function to execute. return true to include this key/value
+						See below for the parameters it will be passed
+ 
+	Callback Parameters:
+		element		-	the value of property
+		name			-	the name of the property
+		object		-	a reference to this object
+		
+	
+		
+	Detail: 
+		This function is modeled after the JS function <Array.filter>. 
+		
+	Example:
+		(code)
+		// remove null values
+		var emp = {
+			id:12,
+			name:"Bob",
+			age:null,
+			occupation:"being awesome",
+			isDeceased:false
+		}.filter(function(element,name,object){
+			return element !== null
+		})
+		
+		(end)
+	 
+	*/
+	Object.prototype.filter=function (func){
+		return ObjectLib.filter(this,func)
+	}	
+	
 /* Function: copy
 	returns a new object with the same properties as the supplied object 
 	 

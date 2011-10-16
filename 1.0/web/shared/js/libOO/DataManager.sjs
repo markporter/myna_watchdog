@@ -339,12 +339,29 @@ if (!Myna) var Myna={}
 			*/
 		
 		/* Function: remove
+			Removes or invalidates a row from the managed table matching the supplied primary key
+			
+			Parameters:
+				id	-	primary key value of the row to remove
+				
+			Detail:
+				This function checks for the existence of <softDeleteCol> and will 
+				update it to the current time if available. If no <softDeleteCol> is
+				defined, then <forceDelte> is called to remove the row form the 
+				table. 
+				
+			*/
+		/* Function: forceDelete
 			Removes a row from the managed table matching the supplied primary key
 			
 			Parameters:
 				id	-	primary key value of the row to remove
+				
+			Detail:
+				If this manager <hasOne> or <hasMany> related managers with 
+				cascading deletes, these related rows will be deleted regardless of
+				the existence of <softDeleteCol> in the related managers
 			*/
-		
 		/* Function: create 
 			Creates a record in the database, optionally generating a primary key
 			
@@ -1285,6 +1302,20 @@ if (!Myna) var Myna={}
 			See:
 				<Myna.DataManager.beanTemplate>
 			*/
+		/* Property: softDeleteCol
+			Date or timestamp column to set to current time instead of deleting rows
+			
+			Detail:
+				If this column exists in the table, then <remove> operations will 
+				instead set this column to the current time. Find operations will 
+				automatically filter rows where this column is non-null, unless the 
+				_includeSoftDeleted_ option is passed
+				
+			See:
+				* <remove>
+				* <forceDelete>
+				
+			*/	
 			
 	/* Class: TreeManagerObject 
 		Table data access object generated and returned by 
@@ -2593,6 +2624,23 @@ if (!Myna) var Myna={}
 			},
 			loadTableData:function(tableName){//deprecated
 				return this
+			},
+			getField:function getField(name){
+				return {
+					name:name,
+					type:this.getType(name),
+					label:this.getLabel(name),
+					defaultValue:this.getDefault(name)
+				}
+			},
+			getFields:function getFields(){
+				var $this= this;
+				return this.columns.map(function(colDef,name,columns){
+					return $this.getField(name)
+				})
+			},
+			getType:function getType(name){
+				return this._types[name]
 			},
 			remove:function(id){
 				var manager = this;

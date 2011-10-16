@@ -681,13 +681,15 @@ var ObjectLib = {}
 		
 	Example:
 		(code)
-		{
+		var emp ={
 			id:12,
 			name:"Bob"
 			occupation:"being awsome",
 			isDeceased:false
-		}.forEach(function(element,name,object){
-			ObjectLib.print(name + ": " + element +"<br>");
+		}
+		
+		ObjectLib.forEach(emp,function(element,name,object){
+			alert(name + ": " + element +"<br>");
 		})
 		(end)
 	 
@@ -697,3 +699,98 @@ var ObjectLib = {}
 			func(obj[key],key,obj);
 		})
 	}
+/* Function: map
+	returns new Object with the results of calling a provided function on every 
+	non-function element in _obj_.   
+	 
+	Parameters: 
+		obj		-	Object to loop over	
+		func 		-	Function to execute. See below for the parameters it will 
+						be passed
+ 
+	Callback Parameters:
+		element		-	the value of property
+		name			-	the name of the property
+		object		-	a reference to this object
+		
+	
+		
+	Detail: 
+		This function is modeled after the JS function <Array.map>. 
+		
+	Example:
+		(code)
+		//make sure null values come across as empty strings
+		var emp = {
+			id:12,
+			name:"Bob",
+			age:null,
+			occupation:"being awesome",
+			isDeceased:false
+		}
+		
+		var fixedEmp = ObjectLib.map(emp,function(element,name,object){
+			if (element === null) {
+				return ""
+			} else {
+				return element
+			}
+		})
+		
+		(end)
+	 
+	*/
+	ObjectLib.map=function (obj,func){
+		var newObj ={}
+		ObjectLib.getKeys(obj).forEach(function (key){
+			newObj[key] =func(obj[key],key,obj);
+		})
+		return newObj
+	}
+/* Function: filter
+	returns new Object with only the key/values from _obj_ object that pass a test function
+	 
+	Parameters: 
+		obj		-	Object to loop over	
+		func 		-	Function to execute. return true to include this key/value
+						See below for the parameters it will be passed
+ 
+	Callback Parameters:
+		element		-	the value of property
+		name			-	the name of the property
+		object		-	a reference to this object
+		
+	
+		
+	Detail: 
+		This function is modeled after the JS function <Array.filter>. 
+		
+	Example:
+		(code)
+		// remove null values
+		var emp = {
+			id:12,
+			name:"Bob",
+			age:null,
+			occupation:"being awesome",
+			isDeceased:false
+		}
+		
+		var fixedEmp = ObjectLib.filter(emp,function(element,name,object){
+			return element !== null
+		})
+		
+		(end)
+	 
+	*/
+	ObjectLib.filter=function (obj,func){
+		var newObj ={}
+		ObjectLib.getKeys(obj)
+		.filter(function(key){
+			return func(obj[key],key,obj)
+		})
+		.forEach(function (key){
+			newObj[key] =obj[key];
+		})
+		return newObj
+	}	

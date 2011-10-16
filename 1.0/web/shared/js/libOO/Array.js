@@ -547,14 +547,13 @@
 	Array.prototype.contains = function contains(search){
 		for (var x=0; x<this.length;++x){
 			if (typeof search === "function"){
-				if (search(this[x])) return true;	
+				if (search(this[x],x,this)) return true;	
 			} else {
 				if (this[x] == search) return true	
 			}
 		}
 		return false;
 	}
-
 if ("$server_gateway" in this){
 	(function(){
 		var hide = function (o, p) {
