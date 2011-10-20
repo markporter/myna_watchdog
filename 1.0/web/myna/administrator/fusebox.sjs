@@ -403,7 +403,8 @@ var fusebox={
 		Myna.log("debug","cron",Myna.dump(cron)); */
 		Myna.saveProperties(cronProperties,"/WEB-INF/classes/cron.properties");
 		//new Packages.info.emptybrain.myna.CronThread();
-		include("/shared/js/libOO/reload_cron.sjs")
+		
+		include("/shared/js/libOO/reload_cron.sjs",{name:data.name})
 		return {success:true}
 	},
 	delete_cron_job:function(data){

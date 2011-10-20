@@ -103,8 +103,8 @@ function userExists(username){
 function getDN(username){
 	var $this = this;
 	var searchString="(cn="+username+")";
-	if ($this.config.filter){
-		  qry = "(&" + $this.config.filter + qry + ")"
+	if ($this.config.hasOwnProperty("filter")){
+		 searchString = "(&" + $this.config.filter +searchString + ")"
 	}
 	var users = getLdap().search(searchString);
 	if (users.length == 1) {
@@ -152,7 +152,7 @@ function searchUsers(search){
 	
 	qry +=")";
 	
-	if ($this.config.filter){
+	if ($this.config.hasOwnProperty("filter")){
 		  qry = "(&" + $this.config.filter + qry + ")"
 	}
 	
@@ -198,7 +198,7 @@ function getUserByLogin(login){
 	var $this = this;
 	var qry ="("+ $this.config.map.login+ "="+login+")";
 		
-	if ($this.config.filter){
+	if ($this.config.hasOwnProperty("filter")){
 		  qry = "(&" + $this.config.filter + qry + ")"
 	}
 		  

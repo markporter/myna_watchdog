@@ -1,4 +1,4 @@
-
+$req.timeout=0;
 function log(type, label,detail){
 	$profiler.mark("Task '"+name+"': " +(label||""))
 	Myna.logSync(type,"Task '"+name+"': " +(label||""),detail||"",appname);
@@ -158,9 +158,9 @@ function getNextRunDate(){
 			$profiler.mark("adding up to weekday")
 			while(nextRun.getDay() != config.monthly_by_weekday_day) nextRun =nextRun.add(Date.DAY,1);
 			$profiler.mark("adding week count")
-			Myna.printConsole(nextRun + ": "  + config.monthly_by_weekday_daycount)
+			//Myna.printConsole(nextRun + ": "  + config.monthly_by_weekday_daycount)
 			nextRun = nextRun.add(Date.DAY,(config.monthly_by_weekday_daycount-1)*7)
-			Myna.printConsole(nextRun)
+			//Myna.printConsole(nextRun)
 			
 			if (nextRun < now){//already ran this month
 				$profiler.mark("adding extra months")
@@ -186,8 +186,7 @@ function getNextRunDate(){
 			log("error","Schedule type " + config.type +" is undefined");
 		
 	}
-	
-	Myna.printConsole(name +" next scheduled for " + nextRun.format("m/d/Y H:i"))
+	log("info","next scheduled for " + nextRun.format("m/d/Y H:i"));
 	return nextRun
 	
 }

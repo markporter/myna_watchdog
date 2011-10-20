@@ -540,7 +540,7 @@
 			if (args[0] && typeof args[0] == "object" && "length" in args[0] && "concat" in args[0]){
 				args = args[0];
 				isArray=true;
-			} else if (typeof args[0] == "string" || "getTime" in args[0] || args[0] == parseFloat(args[0])){
+			} else if (args[0] == parseFloat(args[0] || typeof args[0] == "string" || "getTime" in args[0] )){
 				isArray = true	
 			} else {//property object
 				args=args[0]

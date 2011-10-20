@@ -494,13 +494,22 @@ if (!Myna) var Myna={}
 	Parameters:
 		filter		-	*Optional, default: null* 
 						Either a comma separated list of file extensions to list, 
-						ex: "css,js", OR a filter function. If null all files are 
-						returned.
+						ex: "css,js", OR a filter function( see Filter Function 
+						below). If null all files are returned.
 		recursive	-  *Optional, default: false* 
 						If true, all sub-directories will be searched 
 						as well. If this is a filter function, then only 
 						directories for which this function returns true 
 						will be recursed
+		maxFiles	-	*Optional, default: null*
+						If defined, this will be the maximum number of files to 
+						examine. Can be used to prevent excessive recursion 
+	Filter Function:
+		The filter function takes a single argument, a <Myna.File> instance. 
+		This function should return true if the file should be included in the 
+		result set or false otherwise. Throwing an exception in this function 
+		can be used used to exit early 
+	
 	Examples:
 	(code)
 		//Find all the files and directories, but not sub-directories in the Myna root:
@@ -526,7 +535,7 @@ if (!Myna) var Myna={}
 	* <function.filter>
 	
 	*/
-	Myna.File.prototype.listFiles=function(filter,recursive){
+	Myna.File.prototype.listFiles=function(filter,recursive,maxFiles){
 		var shouldRecurse;
 		if (!filter){
 			filter = function(){return true}
@@ -566,25 +575,34 @@ if (!Myna) var Myna={}
 			columns:"directoryPath,fileName,type,size,lastModified"
 		});
 		var subDirs=[];
-		var files = this.javaFile.listFiles()
-		if (!files) return result;
-		files
-			.map(function(jf){
-				var f = new Myna.File(jf.toURI());
-				if (f.isDirectory() && shouldRecurse(f)){
-					subDirs.push(f)
+		var totalFiles=0
+		try{
+			this.javaFile.listFiles(new java.io.FileFilter({
+				accept:function(jf){
+					if (maxFiles && (++totalFiles) >= maxFiles) throw("MYNA_LIST_FILES_MAX");
+					
+					var f = new Myna.File(jf.toURI());
+					if (jf.isDirectory() && shouldRecurse(f)){
+						subDirs.push(f)
+					}
+					if (filter(f)){
+						result.push(f);
+						
+						return true;
+					}else{
+						return false;
+					}
 				}
-				return f
+			}))
+			
+			subDirs.forEach(function(f){
+				f.listFiles(filter,true,maxFiles?maxFiles-result.length:null)
+					.forEach(function(subf){
+						result.push(subf);
+					})
 			})
-			.filter(filter)
-			.forEach(function(f){
-				result.push(f)
-			})
-		subDirs.forEach(function(f){
-			f.listFiles(filter,true).forEach(function(subf){
-				result.push(subf);
-			})
-		})
+		} catch (e if e == "MYNA_LIST_FILES_MAX"){}
+		
 		return result;
 	}
 /* Function: readBinary
@@ -595,17 +613,102 @@ if (!Myna) var Myna={}
 		var FileUtils = Packages.org.apache.commons.io.FileUtils;
 		return FileUtils.readFileToByteArray(this.javaFile);
 	}
+/* Function: readLine
+	returns the contents of a specific line number in a file, or null if the line does not exist
+	
+	Paramters:
+		lineNumber		-	*Optional, default 1*
+							The 1-indexed line number to read from the file
+	*/
+	Myna.File.prototype.readLine = function(lineNumber){
+		var result =  this.readLines(lineNumber,lineNumber)
+		if (result.length) {
+			return result[0];
+		} else return null
+	}
 /* Function: readLines
 	returns the contents of this file as an array of strings representing each line
 	
+	Parameters:
+		start	-	*Optional, default 0*
+					The first 1-indexed line number from which to read from the file. 
+					If negative, then this is "minus n lines from _end_"
+		end		-	*Optional, default end of file*
+					The last 1-indexed line number from which to read from the file. 
+					If negative, then this is this is "minus n lines from end of file"
+					
+	Examples:
+	(code)
+		var f = new Myna.File("lines.txt")
+		//create a 20 line file with line numbers
+		Array.dim(20).forEach(function(d,i){
+			f.appendString(i);
+		}) 
+		
+		
+		f.readLines();		//returns every line (20 lines)
+		f.readLines(2);		//returns second line forward (19 lines)
+		f.readLines(2,2);	//returns only the second line (1 line) See <readLine>
+		f.readLines(2,1);	//returns empty array, because end is before start (0 lines)
+		f.readLines(2,5);	//returns lines 2-5 inclusive (4 lines)
+		f.readLines(2,-5);	//returns lines 2-15 inclusive or " the second line though EOF -5" (14 lines)
+		f.readLines(-2);	//returns last 2 lines or (2 lines)
+		f.readLines(-2,-1);	//returns second-to-last line (1 lines)
+		f.readLines(-2,-5);	//returns empty array, because end is before start (0 lines)
+		f.readLines(-2,5);	//returns line 3 and 4, or "the 2 lines before 5" (2 lines)
+		f.readLines(25);	//returns empty array, because start is beyond end of file (0 lines)
+		f.readLines(1,25);	//returns only existing 20 lines, because end is beyond end of file (20 lines)
+		
+	(end)
 	*/
-	Myna.File.prototype.readLines = function(){
+	Myna.File.prototype.readLines = function(start,end){
+		/* if (parseInt(end) == end && parseInt(start) == start && Math.abs(end) < math.abs(start)){
+			throw new Error("end must be greater start, or undefined")
+		} */
+		if (!start) start=1
+		var hasPositiveEnd = (end == parseInt(end) && end > 0);
+		var hasNegativeEnd = (end == parseInt(end) && end < 0);
 		var FileUtils = Packages.org.apache.commons.io.FileUtils;
-		return FileUtils.readLines(this.javaFile).toArray()
-		.map(function(line){
-			return String(line);
-		});
+		var result=[]
+		var li = this.getLineIterator()
+		var size;
+		var pos=1
+		if (start < 0) {
+			//this won't work
+			if (hasNegativeEnd && Math.abs(end) >= Math.abs(start)){
+				return []
+			}
+			size = Math.abs(start);
+			start=1
+			
+			
+		} else if (hasPositiveEnd && end < start){ //this won't work
+			return []
+		}
+		try{
+			if (start > 1) {
+				(function(){li.next()}).repeat(start-1)
+				pos=start-1;
+			}
+		} catch (e if e instanceof StopIteration){
+			return [] 	
+		}	
+			
+		for (line in li) {
+			++pos;
+			result.push(line);
+			if (size && pos > size+1) result.shift()
+			if (hasPositiveEnd && pos == end) break;
+		}
+		
+		
+		if (hasNegativeEnd) {
+			if (Math.abs(end) > result.length) return []
+			return result.slice(0,result.length + end )
+		} return result
+		
 	}
+
 /* Function: readString
 	returns the text contents of this file
 	
