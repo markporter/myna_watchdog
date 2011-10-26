@@ -612,7 +612,11 @@ var fusebox={
 		var fpDir = new Myna.File("/shared/js/FlightPath");
 		var frameworkDir = new Myna.File(fpDir,"framework");
 		if (targetDir.exists()){
-			frameworkDir.copyTo(new Myna.File(targetDir,"framework"))
+			if (new Myna.File(targetDir,"app").exists()){
+				frameworkDir.copyTo(new Myna.File(targetDir,"framework"))
+			} else {
+				fpDir.copyTo(targetDir)
+			}
 			return {message:"FlightPath Updated. "}
 		} else {
 			fpDir.copyTo(targetDir)	
