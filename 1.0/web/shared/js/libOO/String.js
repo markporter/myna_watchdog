@@ -902,6 +902,27 @@
 			return "";
 		}
 	};
+/* Function: listAt
+	returns the list value at a specific location, or "".
+	 
+	Parameters: 
+		position		-	0-based position
+		delimiter	- 	*Optional default ','*
+						String delimiter between values 
+		qualifier	-	*Optional, default null* 
+						String that is on both sides of values in the string
+	 
+	*/
+	String.prototype.listAt=function(position,delimiter,qualifier){
+		if (delimiter === undefined) {delimiter=",";}
+		if (qualifier === undefined) {qualifier="";}
+		var a = this.listToArray(delimiter);
+		if (a.length) {
+			return a[position].match(new RegExp(qualifier+"(.*)" + qualifier))[1];
+		} else {
+			return "";
+		}
+	};
 /* Function: listLen 
 	returns the length of a list
 	 
@@ -918,7 +939,7 @@
 		if (!delimiter) {delimiter =",";}
 		return this.listToArray(delimiter).length;
 	};
-/* Function: listMakeUnique 
+/* Function: listGetUnique 
 	returns new list (string) with each item represented only once 
 	 
 	Parameters: 
@@ -929,7 +950,7 @@
 						appended. 
 						returned string
 	*/
-	String.prototype.listMakeUnique=function( delimiter){
+	String.prototype.listMakeUnique=String.prototype.listGetUnique=function( delimiter){
 		var newList = "";
 		if (!delimiter) {delimiter=",";}
 		
@@ -1535,6 +1556,42 @@ String.prototype.toFixedWidth=function(count,pad,placeHolder,truncateFrom){
 		}
 		return result;
 	};
+/* Function: splitCap 
+	returns an array of the "words" in this string as delimited by Capital letters
+	
+	Parameters:
+		everyCap		-	*Optional, default false*
+							Normally groups of capital letters are treated as one term, 
+							i.e "personID" splits to ["person","ID"]. With this set to 
+							true, every capital letter will start a term such that 
+							"personID" splits to ["person","I","D"]
+	Example:
+	
+	> "camelCasedProperty".splitCap(); //returns ["camel","Cased","Property"]
+	
+	 
+	*/
+	String.prototype.splitCap=function splitCap(everyCap){
+		var result = []
+		var start=0;
+		var curWord=[]
+		var inCap =false;
+		for (var i = 0; i < this.length; ++i){
+			var code = this.charCodeAt(i) 
+			if (code >= 65 && code <= 90 && curWord.length){
+				if (everyCap || !inCap){
+					result.push(curWord.join(""));
+					curWord=[];
+				}
+				inCap = true;
+			} else {
+				inCap = false	
+			}
+			curWord.push(this.charAt(i))
+		}
+		result.push(curWord.join(""));
+		return result
+	};
 /* Function: startsWith
 	returns true if this string starts with supplied string
 	
@@ -1570,6 +1627,7 @@ String.prototype.toFixedWidth=function(count,pad,placeHolder,truncateFrom){
 			return text;
 		}).join(" ");
 	};
+	
 /* Function: trim 
 	returns a new string with beginning and trailing whitespace removed
 	*/

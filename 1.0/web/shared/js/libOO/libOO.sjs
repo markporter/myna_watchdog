@@ -19,6 +19,7 @@
 	"CommonJS.sjs",
 	"Ldap.sjs",
 	"ValidationResult.js",
+	"Validation.js",
 	"DataManager.sjs",
 	"Database.sjs",
 	"Table.sjs",
@@ -31,7 +32,7 @@
 	"Cluster.sjs",
 	"Swing.sjs",
 	"Inflector.js",
-	
+	"Admin.sjs"
 	
 ].forEach(function(element){
 	try {

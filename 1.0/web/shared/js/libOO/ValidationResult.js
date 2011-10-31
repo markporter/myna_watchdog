@@ -140,4 +140,247 @@ if (!Myna) var Myna={}
 				thisResult.addError(value,prefix+key);
 			})
 		}
-	}	
+	}
+
+/* Function: validate
+	checks whether an object's properties pass some basic validations
+	
+	Parameters:
+		obj			-	Object to validate
+		config		-	Object where the keys are properties in _obj_ and the values
+							are validation config Objects as described below
+		prefix		-	*Optional, default ""*
+							if defined, this will be inserted in front of property 
+							names before errors are added to this result 
+							
+	Validation Config:
+		label				-	String, default property name. Set this to use a different 
+								name for this field in validation errors
+		            	
+		exists			-	Boolean. If true then this property must exist in the 
+								object, even if it is set to null
+		notNull			- 	Boolean. If true, this property must exist and have a 
+								non-null value
+		nonEmpty			-	Boolean. If true, this property must exist and have a 
+								nonEmpty value, meaning it must not be null or undefined, 
+								nor an empty string, and empty array, or an empty object 
+								with no own properties.
+		type				-	String. If exists, this property must match this type. _type_ 
+								can be one of "string,numeric,date,binary,array,function,struct" 
+								where "struct" is any defined non-null object. If this 
+								property is null or undefined, type checking is skipped
+								Note that loose type checking is performed, so  "5" and 
+								5 and "five" will match the string test but only the 
+								first 2 will match the numeric test 
+		regex				-	RegExp. If this property is a string, it must pass this 
+								regular expression.
+		regexMessage	-	String. default "<field label> is  invalid." Message to 
+								use for regex errors
+		minLength		-	Numeric. If this property is a string or array, then it 
+								must be at least this length
+		maxLength		-	Numeric. If this property is a string or array, then it 
+								must be at most this length
+		minValue			-	Numeric. If this property is numeric or a Date, then it 
+								must be at least this value
+		maxValue			-	Numeric. If this property is numeric or a Date, then it 
+								must be at most this value
+		custom			-	Function. This function will be passed the property value, 
+								property name, and _obj_, this ValidationResult and _prefix_ instance. 
+								This function should return true if this property is valid 
+								or if it directly manipulates the validation result
+		customMessage	-	String. default "<field label> is invalid." Message to
+								use for custom errors
+					
+	Returns:
+		this validation object 
+	Examples:
+	(code)                               
+		var v = new Myna.ValidationResult().validate(obj,{
+			name:{
+				label:"Name",
+				nonEmpty:true,
+				type:"string",
+				regex:/^[A-Za-z ]+$/,
+				regexMessage:"Names must only contain Letters and spaces" 
+			},
+			dob:{
+				label:"Date of Birth",
+				type:"date",
+				
+				minValue:new Date().add(Date.YEAR,-150),
+				maxValue:new Date(),
+				
+			},
+			children:{
+				label:"Children",
+				type:"array",
+				maxLength:12,
+				custom:function(value,name,obj,v,prefix){
+					value.forEach(function(child,index){
+						v.validate(
+							child,
+							{
+								name:{
+									label:"Name",
+									nonEmpty:true,
+									type:"string",
+									regex:/^[A-Za-z ]+$/
+								},
+								dob:{
+									label:"Date of Birth",
+									type:"date",
+									minValue:new Date().add(Date.YEAR,-150),
+									maxValue:new Date(),
+								},
+								relationship:{
+									label:"Relationship",
+									type:"string",
+									nonEmpty:true,
+									regex:/^(son|daughter)$/i,
+									regexMessage:'Relationship must be "Son" or "Daughter"'
+								}
+							},
+							prefix +"{0}[{1}].".format(name,index)
+						)
+					})
+					return true;// return true because we already handled via nested 
+									// validation
+				}
+				
+			}
+		})
+	(end)
+	*/
+	Myna.ValidationResult.prototype.validate=function(obj,config, prefix){
+		var $this = this;
+		if (!config)  return this
+		config.forEach(function(validator,prop){
+			var label = validator.label||prop
+			validator.forEach(function(v,test){
+				switch(test){
+					case "exists":
+						if (v&& (!(prop in obj))) {
+							$this.addError("{0} is required".format(label),(prefix||"")+prop)
+						}
+						break;
+					case "notNull":
+						if (v&&(!(prop in obj) || obj[prop] === null)) {
+							$this.addError("{0} is required".format(label),(prefix||"")+prop)
+						}
+						break;
+					case "nonFalse":
+						if (v&&!obj[prop]) {
+							$this.addError("{0} is required".format(label),(prefix||"")+prop)
+						}
+						break;
+					case "nonEmpty":
+						if (v&&(
+							!(prop in obj) || obj[prop] === null || (
+								typeof obj[prop] == "object"
+								&& "length" in obj[prop] && !obj[prop].length 
+							)
+							|| (
+								typeof obj[prop] == "object" 
+								&& !ObjectLib.getKeys(obj[prop]).length	
+							)
+						)) {
+							$this.addError("{0} is required".format(label),(prefix||"")+prop)
+						}
+						break;
+					case "type":
+						if (prop in obj && obj[prop]){
+							switch (v){
+								case "string":
+									if (String(obj[prop]) != obj[prop] ){
+										$this.addError("{0} must be a text value".format(label),(prefix||"")+prop)
+									}
+									break;
+								case "numeric":
+									if (obj[prop] ==0 && parseFloat(obj[prop]) != obj[prop] ){
+										$this.addError("{0} must be a numeric value".format(label),(prefix||"")+prop)
+									}
+									break;
+								case "date":
+									if (!(obj[prop] instanceof Date) ){
+										$this.addError("{0} must be a Date".format(label),(prefix||"")+prop)
+									}
+									break;
+								
+								case "binary":
+									if (obj[prop] instanceof Array){
+										try{
+											if (value.getClass().getName() != "[B") {
+												$this.addError("{0} must be binary".format(label),(prefix||"")+prop)	
+											}
+										} catch(e){}
+									}
+									break;
+								case "array":
+									if (!(obj[prop] instanceof Array)){
+										$this.addError("{0} must be an Array".format(label),(prefix||"")+prop)	
+									}
+									break;
+								case "struct":
+									if (typeof obj != "object"){
+										$this.addError("{0} must be an Object".format(label),(prefix||"")+prop)	
+									}
+									break;
+								case "function":
+									if (typeof obj != "function"){
+										$this.addError("{0} must be a Function".format(label),(prefix||"")+prop)	
+									}
+									break
+							}
+						}
+						break;
+					case "regex":
+						if (prop in obj && obj[prop]){
+							if (!(v instanceof RegExp)) throw new Error("Value of 'regex' must be a regular expression")
+							if (!v.test(String(obj[prop]))){
+								var msg = validator.regexMessage ||"{0} is invalid."; 
+								$this.addError(msg.format(label),(prefix||"")+prop)
+							}
+						}
+						break;
+					case "minLength":
+						if (prop in obj && obj[prop] 
+								&& "length" in obj[prop] && obj[prop].length < v
+						){
+							$this.addError("The size of {0} must be at least {1}".format(label,v),(prefix||"")+prop)
+						}
+						break;
+					case "maxLength":
+						if (prop in obj && obj[prop] 
+								&& "length" in obj[prop] && obj[prop].length > v
+						){
+							$this.addError("The size of {0} must be at most {1}".format(label,v),(prefix||"")+prop)
+						}
+						break;
+					case "minValue":
+						if (prop in obj && obj[prop] && (obj[prop] instanceof Date || parseFloat(obj[prop]) == obj[prop])){
+							if (obj[prop] < v){
+								$this.addError("{0} must be at least {1}".format(label,v),(prefix||"")+prop)
+							}
+						}
+						break;
+					case "maxValue":
+						if (prop in obj && obj[prop] && (obj[prop] instanceof Date || parseFloat(obj[prop]) == obj[prop])){
+							if (obj[prop] > v){
+								$this.addError("{0} must be at most {1}".format(label,v),(prefix||"")+prop)
+								
+							}
+						}
+						break;
+						
+				}
+				if ("custom" in validator && typeof validator.custom == "function"){
+					var result = validator.custom(obj[prop],prop,obj,$this,prefix)
+					if (!result){
+						var msg = validator.customMessage ||"{0} is invalid."; 
+						$this.addError(msg.format(label),(prefix||"")+prop)
+					}
+				}
+			})
+		})
+		return this
+	}

@@ -32,7 +32,39 @@ Myna.Database = function (ds){
 	
 	return db
 }
-
+/* Property: dbProperties
+	*Static* Global database vender properties
+	
+	This object stores vendor specific information used by Myna's data access 
+	functions. This should not normally need to be accessed directly.
+	
+	This is a JS Object where each key is a vendor type and the values contain at 
+	least the following
+	
+	columnQuoteChar		-	character used to quote strings
+	connectionTestSql		-	SQL query to test connection health
+	dsInfo					-	Default values for datasources, and url string template
+	functions				-	Helper functions for listing tables, schemas, and 
+									dealing with large objects
+	templates				-	String templates with DDL SQL snippets used by 
+									Myna.Table
+	types						-	Map of generic JDBC types to DB native types
+	
+	
+	*/
+	Myna.Database.dbProperties=(function(){
+		var propFiles = new Myna.File("/shared/js/libOO/db_properties").listFiles("sjs");
+		var db_props={}
+		
+		propFiles.forEach(function(propFile){
+			if (!/^[\w]+.sjs$/.test(propFile.getFileName())) return;
+			var vendor = propFile.getFileName().split(/\./)[0];
+			var obj={};
+			Myna.include(propFile,db_props[vendor]={});
+			
+		});
+		return db_props
+	})()
 
 /* Property: con
 		jdbc connection object. Created in <init>, closed on requestEnd
@@ -103,19 +135,11 @@ Myna.Database = function (ds){
 		*/
 		this.dbType=String(this.md.getDatabaseProductName()).toLowerCase();
 		
-		var dbProperties = this.getCacheValue("dbProperties",{})
-		if (!dbProperties[this.dbType]){
-			dbProperties[this.dbType] = {}
-			var dbTemplate ="/shared/js/libOO/db_properties/" + this.dbType.replace(/ /g,"_")+".sjs";
-			if (new Myna.File(dbTemplate).exists()){
-				Myna.include(dbTemplate,dbProperties[this.dbType]);	
-			} else {
-				Myna.include("/shared/js/libOO/db_properties/other.sjs",dbProperties[this.dbType]);	
-			}
-			this.setCacheValue("dbProperties",dbProperties)
+		var vendor ="other"
+		if (this.dbType in Myna.Database.dbProperties){
+			vendor = this.dbType
 		}
-		
-		dbProperties[this.dbType].applyTo(this,true)
+		Myna.Database.dbProperties[vendor].applyTo(this,true)
 		
 	}
 /* Property: schemas

@@ -184,6 +184,7 @@
 		destdir="${build.home}/WEB-INF/classes"
 		debug="${compile.debug}"
 		deprecation="${compile.deprecation}"
+		includeantruntime="false"
 		optimize="${compile.optimize}">
 		
 		<!-- <compilerarg value="-Xlint"/> -->

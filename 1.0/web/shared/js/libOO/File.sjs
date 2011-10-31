@@ -693,7 +693,7 @@ if (!Myna) var Myna={}
 		} catch (e if e instanceof StopIteration){
 			return [] 	
 		}	
-			
+		var line;	
 		for (line in li) {
 			++pos;
 			result.push(line);

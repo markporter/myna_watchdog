@@ -554,6 +554,32 @@
 		}
 		return false;
 	}
+/* Function: appendUnique 
+	adds a new element to this array, if that element is not already in this array. 
+	 
+	Parameters: 
+		val			-	value to append 
+		looseCheck	-	*Optional, default false*
+							Normally this function uses the "same in type and value"
+							operator (===). Setting this argument to true will causes 
+							this function to use the looser, and slower "same in value"
+							operator (==)
+ 
+	Returns: 
+		_val_  	 
+	 
+	*/
+	Array.prototype.appendUnique=function(val,looseCheck){
+		var exists;
+		if (looseCheck){
+			exists = this.some(function(e){return e == val})
+			
+		} else {
+			exists = (this.indexOf(val) != -1)
+		}
+		if (!exists) this.push(val)
+		return val
+	};
 if ("$server_gateway" in this){
 	(function(){
 		var hide = function (o, p) {
