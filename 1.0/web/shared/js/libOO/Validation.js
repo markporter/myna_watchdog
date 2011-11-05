@@ -1,11 +1,9 @@
 if (!Myna) var Myna={}
 
 /* Class: Myna.Validation
+		A store for validation functions that can be used to validate objects
 		
-		Example:
-		(code)
-		
-		(end)
+		See: <validate>
 		
 */
 /* Constructor: Myna.Validation
@@ -20,160 +18,13 @@ if (!Myna) var Myna={}
 	}
 	
 	
-	Myna.Validation.prototype.validatorFunctions={
-		type:function type(obj,property,label,value,options){
-			var v = new Myna.ValidationResult();
-			if (value === null || value===undefined) return v;
-			if (!options) throw new Error(" type validator requires 'type' option")
-			if (typeof options == "string") options = {type:options}
-			
-			var type = typeof options.type =="function"?options.type.apply(this, Array.parse(arguments)):options.type;
-			var msg = options.message||'{0} must be of type "{1}"'.format(label,type)
-			switch(type){
-				
-				case "string":
-					if (String(value) == value) return v
-				case "numeric":
-					if (parseFloat(value) == value) return v
-				case "date":
-					if (value instanceof Date) return v
-				case "binary":
-					if (value instanceof Array){
-						try{
-							if (value.getClass().getName() == "[B") return v
-						} catch(e){}
-					}
-				case "array":
-					if (value instanceof Array){
-						return v	
-					}
-					break;
-				case "function":
-					if (typeof obj == "function"){
-						return v	
-					}
-					break;
-				case "struct":
-					if (value && typeof value == "object"){
-						return v;	
-					}
-					break;
-				default:
-					v.addError(msg,property)
-			}
-			return v;
-		},
-		length:function length(obj,property,label,value,options){
-			var v = new Myna.ValidationResult();
-			if (value === null || value===undefined) return v;
-			var msg = options.message
-			var min = typeof options.min =="function"?options.min.apply(options, Array.parse(arguments)):options.min;
-			var max = typeof options.max =="function"?options.max.apply(options, Array.parse(arguments)):options.max;
-			
-			var hasLength = ("length" in value) && value.length;
-			
-			if (max && hasLength && value.length > max){
-				
-				v.addError(msg ||
-					'Exceeded maximum length for {label} ({max}) by {diff}'.format({
-						label:label,
-						max:max,
-						diff: String(bean.data[property]).length-max
-					}),
-					property
-				)
-			}
-			if (min && (!hasLength || value.length < min)){
-				v.addError(msg ||
-					'{label} must be at least {min} long'.format({
-						label:label,
-						min:min
-					}),
-					property
-				)
-				
-			}
-			return v
-		},
-		value:function length(obj,property,label,value,options){
-			var v = new Myna.ValidationResult();
-			if (value === null || value===undefined) return v;
-			var msg = options.message
-			var min = typeof options.min =="function"?options.min.apply(options, Array.parse(arguments)):options.min;
-			var max = typeof options.max =="function"?options.max.apply(options, Array.parse(arguments)):options.max;
-			
-			
-			
-			if (max && value && value > max){
-				
-				v.addError(msg ||
-					'{label} must be less than {max}'.format({
-						label:label,
-						max:max
-					}),
-					property
-				)
-			}
-			if (min && value && value < min){
-				v.addError(msg ||
-					'{label} must be at least {min}'.format({
-						label:label,
-						min:min
-					}),
-					property
-				)
-				
-			}
-			return v
-		},
-		regex:function regex(obj,property,label,value,options){
-			var v = new Myna.ValidationResult();
-			if (value === null || value===undefined) return v;
-			if (options instanceof RegExp) options = {pattern:options}
-			if (!options.pattern) throw new Error("option 'pattern' is required for the regex validator");
-			var msg= options.message|| label +" is not properly formatted."
-			if (!options.pattern.test(String(value))) v.addError(msg,property);
-			return v
-		},
-		list:function list(obj,property,label,value,options){
-			var v = new Myna.ValidationResult();
-			if (value === null || value===undefined) return v;
-			var oneOf = typeof options.oneOf =="function"?options.oneOf.apply(options, Array.parse(arguments)):options.oneOf;
-			var notOneOf = typeof options.notOneOf =="function"?options.notOneOf.apply(options, Array.parse(arguments)):options.notOneOf;
-			if (oneOf && oneOf.length){
-				var msg= options.message|| "{0} must be {1} '{2}'".format(label,oneOf.length>1?"one of ":"",oneOf.join())
-				
-				if (options.exact){
-					if (oneOf.indexOf(value) == -1) v.addError(msg,property);
-				} else if (options.caseSensitive){
-					if (!oneOf.contains(value)) v.addError(msg,property);
-				} else {
-					if (!oneOf.join().listContainsNoCase(value)) v.addError(msg,property);
-				}
-			} else if (notOneOf && notOneOf.length){
-				msg= options.message|| "{0} must NOT be {1} '{2}'".format(label,notOneOf.length>1?"one of ":"",notOneOf.join())
-				if (options.exact){
-					if (notOneOf.indexOf(value) != -1) v.addError(msg,property);
-				} else if (options.caseSensitive){
-					if (notOneOf.contains(value)) v.addError(msg,property);
-				} else {
-					if (notOneOf.join().listContainsNoCase(value)) v.addError(msg,property);
-				}
-			}
-			return v;
-		},
-		
-		required:function required(obj,property,label,value,options){
-			var v = new Myna.ValidationResult();
-			if (typeof options != "object") options={}
-			var msg= options.message|| label +" is required."
-			if (!value && value != 0 && value !== false){
-				v.addError(msg,property);
-			}
-			return v
-		},
-	}
 	
+/* Function: clone
+	makes a copy of this Validation object, including validators, labels, and 
+	any custom validatorFunctions
+	
+	
+	*/
 	Myna.Validation.prototype.clone=function(){
 		var result = new Myna.Validation();
 		var p;
@@ -207,13 +58,25 @@ if (!Myna) var Myna={}
 
 						
 	Validator Function:
-	The _validator_ function  will be called with these parameters
+	The _validator_ function  will be called with a parameters object with these properties
 		obj			-	Object being validated
 		property		-	Property being validated
 		label			-	result of <getLabel> for _property_
 		value			-	value being validated
-		options		-	validator options
+		options		-	validator options. Most validators define their own 
+							specific options, but all validators accept the options below 
+		
 	
+	Validator Options:
+		when		-	A function that will take the same parameters as a validator 
+						function and return true if the validator should be run. This 
+						is normally used conditionally validate one of the built-in 
+						validators  
+		
+		
+	Returns:
+		this validation instance
+		
 	Examples:
 	
 	(code)
@@ -222,10 +85,17 @@ if (!Myna) var Myna={}
 			max:25
 		})
 		
-		function isBob(obj,property,label,value,options){
+		//only validate spouse_name when married is true
+		manager.addValidator("spouse_name","required",{
+			when:function(params){
+				return params.obj.married
+			}
+		})
+		
+		function isBob(params){
 			var vr = new Myna.ValidationResult();
-			if (value != "Bob"){
-				var msg = options.message || label + " is not Bob!"
+			if (params.value != "Bob"){
+				var msg = params.options.message || params.label + " is not Bob!"
 				vr.addError(msg,colname)
 			}
 			return vr;
@@ -253,10 +123,11 @@ if (!Myna) var Myna={}
 		}
 		
 		this.validators[property].push({
+			property:property,
 			validator:validator,
 			options:options
 		})
-							
+		return this;		
 	}
 /* Function: addValidators
 	add multiple validators
@@ -265,8 +136,12 @@ if (!Myna) var Myna={}
 		validator_config		-	JS Object keyed by property name, with sub-objects
 										keyed by validator name (or "custom" for custom validators),
 										with values equal to validator options (or {}, if no options)
-										
+			
+	Returns:
+		this validation instance 
+		
 	Example:
+	(code)
 		var v = new Myna.Validation()
 		v.addValidators({
 			name:{
@@ -290,9 +165,9 @@ if (!Myna) var Myna={}
 				length:{
 					max:12
 				},
-				custom:function(obj,property,label,value,options){
+				custom:function(params){
 					var vr = new Myna.ValidationResult();
-						value.forEach(function(child,index){
+						params.value.forEach(function(child,index){
 							vr.merge(this.validate(child),"child_" + index "_")	
 						})
 						
@@ -300,6 +175,7 @@ if (!Myna) var Myna={}
 				}
 			}
 		})
+	(end)
 	*/
 	Myna.Validation.prototype.addValidators=function addValidators(validator_config){
 		var $this = this;
@@ -318,6 +194,7 @@ if (!Myna) var Myna={}
 				}
 			}
 		}
+		return this
 	}
 /* Function: genLabel
 	generates a display label from a property name
@@ -388,10 +265,14 @@ if (!Myna) var Myna={}
 	
 	Parameters:
 		colname		-	column name to map
-		label			-	label so set
+		label			-	label to set
+		
+	Returns:
+		this instance
 	*/
 	Myna.Validation.prototype.setLabel=function setLabel(property,label){
 		this.labels[property] = label;
+		return this
 	}
 /* Function: setLabels
 	sets an explicit display label for multiple properties at once
@@ -399,12 +280,15 @@ if (!Myna) var Myna={}
 	Parameters:
 		map		-	JS object where the keys are column names and the values are 
 						labels 
+	Returns:
+		this instance
 	*/
 	Myna.Validation.prototype.setLabels=function setLabels(map){
 		var $this = this
 		map.forEach(function(v,k){
 			$this.setLabel(k,v)
 		})
+		return this
 	}
 /* Function: validate
 	Validates an object against this Validation.
@@ -474,10 +358,10 @@ if (!Myna) var Myna={}
 			}
 		})
 		// adding a single custom validator to test the children array members
-		v.addValidator("children",function(obj,property,label,value,options){
+		v.addValidator("children",function(params){
 			var vr = new Myna.ValidationResult()
 			
-			value.forEach(function(child,index){
+			params.value.forEach(function(child,index){
 				var prefix ="child[{1}].".format(name,index)
 				vr.merge(cv.validate(child),prefix)
 			})
@@ -516,23 +400,30 @@ if (!Myna) var Myna={}
 		var vr = new Myna.ValidationResult()
 		var $this = this
 		var validateProperty = function(property,value){
-			var label = $this.getLabel(property)
-			var args= [obj,property,label,value]
-			function shouldRun(obj){
-				if (typeof obj.when ==="function" && !obj.when(property,value,obj)) return false;
-				if (typeof obj.unless ==="function" && obj.unless(property,value,obj)) return false;
-				//if (!obj.validateWhenNull && value === null) return false;
+			var params ={
+				label:$this.getLabel(property),
+				obj:obj,
+				property:property,
+				value:value
+			}
+			
+			function shouldRun(validatorDef){
+				params.options = validatorDef.options;
+				if ( validatorDef.options && typeof validatorDef.options.when ==="function" && !options.when(params)) return false;
 				return true;
 			}
 			try{
+				
 				if (property in $this.validators){
-					$this.validators[property].filter(shouldRun).forEach(function(obj){
-						vr.merge(obj.validator.call(this,obj,property,label,value,obj.options))
+					$this.validators[property].filter(shouldRun).forEach(function(validatorDef){
+						params.options = validatorDef.options;
+						vr.merge(validatorDef.validator.call($this, params))
 					})
 				}
 				if ("$ALL" in $this.validators){
-					$this.validators.$ALL.filter(shouldRun).forEach(function(obj){
-						vr.merge(obj.validator.call(this, obj,property,label,value,obj.options))
+					$this.validators.$ALL.filter(shouldRun).forEach(function(validatorDef){
+						params.options = validatorDef.options;
+						vr.merge(validatorDef.validator.call($this, params))
 					})
 				}
 			}catch(e){
@@ -566,3 +457,384 @@ if (!Myna) var Myna={}
 		}
 		return vr
 	}
+Myna.Validation.prototype.validatorFunctions={
+/* Function: validatorFunctions.type
+	Validates basic type
+		
+	Options:
+		type	- 	Function or String. One of "string", "numeric", "date", "binary", "array", 
+					or "struct". "binary" means a byte array and "struct" means 
+					a non null/undefined JS object. If this is a Function, it will be 
+					passed the validator arguments and should return one of the above 
+					types 	
+	
+	Note: 
+		if the options to this validator are a single string, that string is 
+		assumed to be the type
+		
+	Example:
+	(code)
+		var v = new Myna.Validation()
+		//options as object, with optional message
+		v.addValidator("first_name","type",{
+			 type:"string",
+			 message:"First Name must be text"
+		})
+		
+		//with implicit type
+		//options as type string
+		v.addValidator("children","type","array")
+		
+		//with custom type generator and applied to all properties
+		v.addValidator(null,"type",function(params){
+			return Myna.Database.dbTypeToJs(params.obj.columns[params.property].data_type)
+		})
+		
+	(end)
+	See:
+		* <addValidator>
+		* <Myna.Database.dbTypeToJs>
+	*/
+	type:function type(params){
+		var v = new Myna.ValidationResult();
+		if (params.value === null || params.value===undefined) return v;
+		if (!params.options) throw new Error(" type validator requires 'type' option")
+		if (typeof params.options == "string") params.options = {type:params.options}
+		
+		var type = typeof params.options.type =="function"?params.options.type.apply(this, Array.parse(arguments)):params.options.type;
+		var msg = params.options.message||'{0} must be of type "{1}"'.format(params.label,type)
+		switch(type){
+			
+			case "string":
+				if (String(params.value) == params.value) return v
+			case "numeric":
+				if (parseFloat(params.value) == params.value) return v
+			case "date":
+				if (params.value instanceof Date) return v
+			case "binary":
+				if (params.value instanceof Array){
+					try{
+						if (params.value.getClass().getName() == "[B") return v
+					} catch(e){}
+				}
+			case "array":
+				if (params.value instanceof Array){
+					return v	
+				}
+				break;
+			case "function":
+				if (typeof params.obj == "function"){
+					return v	
+				}
+				break;
+			case "struct":
+				if (params.value && typeof params.value == "object"){
+					return v;	
+				}
+				break;
+			default:
+				v.addError(msg,params.property)
+		}
+		return v;
+	},
+/* Function: validatorFunctions.length
+	Validates length 
+		
+	Options:
+		min	-	*Optional*
+					minimum length, or function that returns a length. If this is a 
+					Function, it will be passed the validator arguments and should 
+					return a min value
+		max	-	*Optional*
+					maximum length, or function that returns a length. If this is a 
+					Function, it will be passed the validator arguments and should 
+					return a max value
+	
+	Examples:
+	(code)
+		var v = new Myna.Validation()
+		//with optional message
+		v.addValidator("first_name","length",{
+			 max:255,
+			 message:"First Name must be Less that 255 characters"
+		})
+				
+		//with custom max length generator and applied to all properties
+		v.addValidator(null,"length",{
+			max:function(params){
+				return params.obj.columns[params.property].column_size
+			}
+		})
+	(end)
+		
+	See:
+		* <addValidator>
+	*/
+			
+	length:function length(params){
+		var v = new Myna.ValidationResult();
+		if (params.value === null || params.value===undefined) return v;
+		var msg = params.options.message
+		var min = typeof params.options.min =="function"?params.options.min.apply(params.options, Array.parse(arguments)):params.options.min;
+		var max = typeof params.options.max =="function"?params.options.max.apply(params.options, Array.parse(arguments)):params.options.max;
+		
+		var hasLength = ("length" in params.value) && params.value.length;
+		
+		if (max && hasLength && params.value.length > max){
+			
+			v.addError(msg ||
+				'Exceeded maximum length for {label} ({max}) by {diff}'.format({
+					label:params.label,
+					max:max,
+					diff: String(bean.data[params.property]).length-max
+				}),
+				params.property
+			)
+		}
+		if (min && (!hasLength || params.value.length < min)){
+			v.addError(msg ||
+				'{label} must be at least {min} long'.format({
+					label:params.label,
+					min:min
+				}),
+				params.property
+			)
+			
+		}
+		return v
+	},
+	
+/* Function: validatorFunctions.value
+	Validates min/max value 
+		
+	Options:
+		min	-	*Optional*
+					minimum value, or function that returns a value. If this is a 
+					Function, it will be passed the validator arguments and should 
+					return a min value
+		max	-	*Optional*
+					maximum value, or function that returns a value. If this is a 
+					Function, it will be passed the validator arguments and should 
+					return a max value
+	
+	Examples:
+	(code)
+		var v = new Myna.Validation()
+		//with optional message
+		v.addValidator("age","value",{
+			min:16,
+			max:130,
+			message:"Employees must be between the ages of 16 and 130"
+		})
+				
+		//with custom min value generator for use with dates
+		v.addValidator("end_date","value",{
+			min:function(params){
+				return params.obj.start_date.add(Date.DAY,1)
+			},
+			message:"End Date must be at least one day after Start Date"
+		})
+	(end)
+		
+	See:
+		* <addValidator>
+	*/	
+	value:function validateValue(params){
+		var v = new Myna.ValidationResult();
+		if (params.value === null || params.value===undefined) return v;
+		var msg = params.options.message
+		var min = typeof params.options.min =="function"?params.options.min.apply(params.options, Array.parse(arguments)):params.options.min;
+		var max = typeof params.options.max =="function"?params.options.max.apply(params.options, Array.parse(arguments)):params.options.max;
+		
+		
+		
+		if (max && params.value && params.value > max){
+			
+			v.addError(msg ||
+				'{label} must be less than {max}'.format({
+					label:params.label,
+					max:max
+				}),
+				params.property
+			)
+		}
+		if (min && params.value && params.value < min){
+			v.addError(msg ||
+				'{label} must be at least {min}'.format({
+					label:params.label,
+					min:min
+				}),
+				params.property
+			)
+			
+		}
+		return v
+	},
+/* Function: validatorFunctions.regex
+	Validates a value against a regular expression
+		
+	Options:
+		pattern	- regular expression to apply
+		
+	Notes:
+		* If the options to this validator are a single RegExp object, that
+			RegExp is assumed to be the _pattern_
+		* Value will be converted to a string for the comparison. 
+	
+	Examples:
+	(code)
+		var v = new Myna.Validation()
+		//options as object, with optional message
+		v.addValidator("first_name","regex",{
+			 pattern:/^[A-Za-z ]+$/,
+			 message:"First Name must only contain letters and spaces"
+		})
+		
+		//with implicit regex, options as RegExp
+		v.addValidator("zipcode","regex",/^\d{5}(-\d{4})?/)
+	(end)	
+		
+	See:
+		* <addValidator>
+	*/	
+	
+	regex:function regex(params){
+		var v = new Myna.ValidationResult();
+		if (params.value === null || params.value===undefined) return v;
+		if (params.options instanceof RegExp) params.options = {pattern:params.options}
+		if (!params.options.pattern) throw new Error("option 'pattern' is required for the regex validator");
+		var msg= params.options.message|| params.label +" is not properly formatted."
+		if (!params.options.pattern.test(String(params.value))) v.addError(msg,params.property);
+		return v
+	},
+/* Function: validatorFunctions.list
+	Validates a value against a list of values
+		
+	Options:
+		oneOf					- *Optional, default null*
+								Array, or function that returns an Array. If 
+								defined, value must match one of these values. If 
+								this is a Function, it will be passed the validator 
+								arguments and should return an array of values 	
+								
+		notOneOf			- *Optional, default null*
+								Array, or function that returns an Array. If 
+								defined, value must NOT match one of these values. If 
+								this is a Function, it will be passed the validator 
+								arguments and should return an array of values
+								
+		caseSensitive	-	*Optional, default false*
+								If false, the value and the list will be 
+								converted to strings and a case-insensitive 
+								comparison will be made. This property is ignored 
+								if _exact_ is true
+		exact				-	*Optional, default false*
+								If true, values are matched by both class and 
+								value, via === instead of ==. Setting this true 
+								disables _caseSensitive_
+								
+		
+	Note:
+		Just setting _oneOf_ or _notOneOf_ will result in a case insensitive 
+		string match. If both _oneOf_ and _notOneOf_ are defined, _notOneOf_ 
+		will be ignored. If _oneOf_ or _notOneOf_ are functions, they will 
+		be called with the same parameters as the validator. Empty arrays 
+		are ignored as if undefined, thus it is possible to define both 
+		lists and have whichever is not empty match, or have the validator
+		pass if both are empty
+	
+	Examples:
+	(code)
+		var v = new Myna.Validation()
+		v.addValidator("color","list",{
+			oneOf:[
+				"Green",
+				"Yellow",
+				"blue"
+			]
+		})
+				
+		//with custom list value generator for use with dates
+		v.addValidator("scheduled_date","list",{
+			notOneOf:function(params){
+				return new Myna.Query({
+					ds:"event_db",
+					sql:<ejs>
+						select 
+							scheduled_date
+						from events
+						where 
+							id != {id}
+					</ejs>,
+					values:params.obj
+				})
+				.valueArray("scheduled_date")
+				.map(function(date){
+					return date.clearTime()
+				})
+			},
+			exact:true,
+			message:"This date has already been scheduled"
+		})
+	(end)
+		
+	See:
+		* <addValidator>
+	*/
+	list:function list(params){
+		var v = new Myna.ValidationResult();
+		if (params.value === null || params.value===undefined) return v;
+		var oneOf = typeof params.options.oneOf =="function"?params.options.oneOf.apply(params.options, Array.parse(arguments)):params.options.oneOf;
+		var notOneOf = typeof params.options.notOneOf =="function"?params.options.notOneOf.apply(params.options, Array.parse(arguments)):params.options.notOneOf;
+		if (oneOf && oneOf.length){
+			var msg= params.options.message|| "{0} must be {1} '{2}'".format(params.label,oneOf.length>1?"one of ":"",oneOf.join())
+			
+			if (params.options.exact){
+				if (oneOf.indexOf(params.value) == -1) v.addError(msg,params.property);
+			} else if (params.options.caseSensitive){
+				if (!oneOf.contains(params.value)) v.addError(msg,params.property);
+			} else {
+				if (!oneOf.join().listContainsNoCase(params.value)) v.addError(msg,params.property);
+			}
+		} else if (notOneOf && notOneOf.length){
+			msg= params.options.message|| "{0} must NOT be {1} '{2}'".format(params.label,notOneOf.length>1?"one of ":"",notOneOf.join())
+			if (params.options.exact){
+				if (notOneOf.indexOf(params.value) != -1) v.addError(msg,params.property);
+			} else if (params.options.caseSensitive){
+				if (notOneOf.contains(params.value)) v.addError(msg,params.property);
+			} else {
+				if (notOneOf.join().listContainsNoCase(params.value)) v.addError(msg,params.property);
+			}
+		}
+		return v;
+	},
+/* Function: validatorFunctions.required
+	Validates that a value be supplied
+		
+		
+	This that the value is "true" or native 0 or native false. This means NaN, 
+	null, undefined, etc will fail
+	
+	Examples:
+	(code)
+		var v = new Myna.Validation()
+		//options as object, with optional message
+		v.addValidator("first_name","required",{
+			 message:"First Name is required"
+		})
+		
+	(end)	
+		
+	See:
+		* <addValidator>
+	*/	
+	required:function required(params){
+		var v = new Myna.ValidationResult();
+		if (typeof params.options != "object") params.options={}
+		var msg= params.options.message|| params.label +" is required."
+		if (!params.value && params.value != 0 && params.value !== false){
+			v.addError(msg,params.property);
+		}
+		return v
+	},
+}

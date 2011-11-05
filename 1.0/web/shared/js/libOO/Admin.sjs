@@ -8,6 +8,98 @@
 */
 if (!Myna) var Myna={}
 Myna.Admin ={
+	/* Property: dsValidation
+		a <Myna.Validation> object for validating data source configs
+	
+	*/
+	dsValidation:new Myna.Validation().setLabels({
+		desc:"Description",
+		db:"Database"
+	}).addValidators({
+		name:{ 
+			type:"string",
+			required:true, 
+			regex:{
+				pattern:/^[A-Za-z]\w*$/,
+				message:"Invalid name format. Must start with a letter, and only contain letters, numbers or the _ character",
+			},
+			list:{
+				when:function(params){
+					return params.obj.isNew
+				},
+				notOneOf:function(params){
+					return Myna.Admin.getDataSources().map(function(ds){
+						return ds.name
+					})
+				},
+				message:"This Datasource name already exists"
+			}
+		},
+		desc:{
+			type:"string", 
+		},
+		type:{
+			type:"string", 
+			required:true,
+			list:{
+				oneOf:Myna.Database.dbProperties.getKeys()
+			}
+		},
+		driver:{
+			type:"string", 
+			required:true,
+			custom:function(params){
+				var v = new Myna.ValidationResult();
+				try {
+					java.lang.Class.forName(params.value);
+				} catch(e) {
+					v.addError("Driver '{0}' is not available in the classpath.",params.value)
+				}
+				return v;
+			}
+		},
+		location:{ 
+			type:"string",
+			list:{
+				oneOf:["file","network"]	
+			}
+		},
+		file:{ 
+			type:"string", 
+		},
+		server:{
+			type:"string", 
+		},
+		case_sensitive:{ 
+			type:"numeric", 
+			value:{
+				min:0, 
+				max:1
+			}
+		},
+		port:{
+			type:"numeric", 
+			value:{
+				min:1024, 
+				max:65535
+			},
+		},
+		db:{
+			type:"string", 
+		},
+		username:{
+			type:"string", 
+		},
+		password:{
+			type:"string", 
+		},
+		url:{
+			type:"string", 
+			required:true,
+		},
+		
+		
+	}),
 	/* Function: getDataSources
 		returns an array of DS structures currently configured
 		
@@ -22,6 +114,7 @@ Myna.Admin ={
 				});
 		})
 	},
+	
 	
 	
 	/* Function: saveDataSource 
@@ -105,7 +198,7 @@ Myna.Admin ={
 			location:"network",
 			case_sensitive:0,
 		})
-		
+		config.isNew = true;
 		var v = this.validateDataSource(config,isNew);
 		
 		if (v.success){
@@ -131,58 +224,9 @@ Myna.Admin ={
 				config.url=dprops.dsInfo.url.format(config)
 			}
 		}
-		
-		v.validate(config,{
-			name:{ label:"Name", type:"string", notEmpty:true, 
-				regex:/^[A-Za-z]\w*$/,
-				regexMessage:"Invalid name format. Must start with a letter, and only contain letters, numbers or the _ character",
-				custom:function(value,name,obj,v,prefix){
-					if (isNew){
-						var existing = getDataSources().map(function(ds){
-							return ds.name
-						}).join()
-						if (existing.listContainsNoCase(config.name)){
-							v.addError("Datasource '{}' already exists",format(config.name))	
-						}
-					}
-					return true
-				}
-			},
-			desc:{ label:"Description", type:"string", },
-			type:{ label:"type", type:"string", notEmpty:true,
-				custom:function(value,name,obj,v,prefix){
-					if (!Myna.Database.dbProperties.getKeys().join().listContains(value)){
-						v.addError("Invalid vendor type.","type")	
-					}
-					return true;
-				}
-			},
-			driver:{ label:"driver", type:"string", notEmpty:true,
-				custom:function(value,name,obj,v,prefix){
-					try {
-						java.lang.Class.forName(value);
-					} catch(e) {
-						v.addError("Driver '{0}' is not available in the classpath.","driver")
-					}
-					return true;
-				}
-			},
-			location:{ label:"location", type:"string",
-				regex:/^(file|network)$/i,
-				regexMessage:"Location must be either 'network' or 'file'",
-			},
-			file:{ label:"file", type:"string", },
-			server:{ label:"server", type:"string", },
-			case_sensitive:{ label:"case_sensitive", type:"numeric", minValue:0, maxValue:1 },
-			port:{ label:"port", type:"numeric", minValue:1, maxValue:65535},
-			db:{ label:"db", type:"string", },
-			username:{ label:"username", type:"string", },
-			password:{ label:"password", type:"string", },
-			url:{ label:"url", type:"string", notEmpty:true,},
-			
-			
-		})
-		
+		config.isNew = isNew
+		v.merge(this.dsValidation.validate(this))
+		delete config.isNew
 		return v
 	}
 }
