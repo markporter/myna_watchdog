@@ -23,17 +23,7 @@ Myna.Admin ={
 				pattern:/^[A-Za-z]\w*$/,
 				message:"Invalid name format. Must start with a letter, and only contain letters, numbers or the _ character",
 			},
-			list:{
-				when:function(params){
-					return params.obj.isNew
-				},
-				notOneOf:function(params){
-					return Myna.Admin.getDataSources().map(function(ds){
-						return ds.name
-					})
-				},
-				message:"This Datasource name already exists"
-			}
+			
 		},
 		desc:{
 			type:"string", 
@@ -50,10 +40,14 @@ Myna.Admin ={
 			required:true,
 			custom:function(params){
 				var v = new Myna.ValidationResult();
-				try {
-					java.lang.Class.forName(params.value);
-				} catch(e) {
-					v.addError("Driver '{0}' is not available in the classpath.",params.value)
+				if (typeof $server_gateway != "undefined"){
+					
+					try {
+						java.lang.Class.forName(params.value);
+					} catch(e) {
+						v.addError("Driver '{0}' is not available in the classpath.".format(params.value),"driver")
+					}
+					
 				}
 				return v;
 			}
@@ -65,10 +59,22 @@ Myna.Admin ={
 			}
 		},
 		file:{ 
-			type:"string", 
+			type:"string",
+			required:{
+				when:function(params){
+					return params.obj.location == "file"
+				},
+				message:"File is required when location is 'file'"
+			}
 		},
 		server:{
-			type:"string", 
+			type:"string",
+			required:{
+				when:function(params){
+					return params.obj.location == "network"
+				},
+				message:"Server is required when location is 'network'"
+			}
 		},
 		case_sensitive:{ 
 			type:"numeric", 
@@ -79,6 +85,12 @@ Myna.Admin ={
 		},
 		port:{
 			type:"numeric", 
+			required:{
+				when:function(params){
+					return params.obj.location == "network"
+				},
+				message:"Port is required when location is 'network'"
+			},
 			value:{
 				min:1024, 
 				max:65535
@@ -189,6 +201,7 @@ Myna.Admin ={
 			
 	*/
 	saveDataSource:function(config,isNew){
+		var dprops = Myna.Database.dbProperties[config.type]
 		config.setDefaultProperties({
 			driver:(function(){
 				if (dprops){
@@ -198,11 +211,12 @@ Myna.Admin ={
 			location:"network",
 			case_sensitive:0,
 		})
+		
 		config.isNew = true;
 		var v = this.validateDataSource(config,isNew);
 		
 		if (v.success){
-			Myna.saveProperties(config.name.toLowerCase(), $server.rootDir + "WEB-INF/myna/ds/" + config.name + ".ds");
+			Myna.saveProperties(config, $server.rootDir + "WEB-INF/myna/ds/" + config.name.toLowerCase()+ ".ds");
 			$server_gateway.loadDataSource(new Myna.File($server.rootDir + "WEB-INF/myna/ds/" + config.name + ".ds").javaFile,true);
 		}
 		
@@ -225,7 +239,7 @@ Myna.Admin ={
 			}
 		}
 		config.isNew = isNew
-		v.merge(this.dsValidation.validate(this))
+		v.merge(this.dsValidation.validate(config))
 		delete config.isNew
 		return v
 	}

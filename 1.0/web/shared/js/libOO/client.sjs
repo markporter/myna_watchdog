@@ -6,6 +6,7 @@
 	"Function.js",
 	"Date.js",
 	"ValidationResult.js",
+	"Validation.js",
 	"Profiler.js",
 	"DataSet.js",
 	"debug_window.js",

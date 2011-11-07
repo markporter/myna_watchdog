@@ -259,59 +259,44 @@ if (!Myna) var Myna={}
 		
 			*/
 		/* Function: addValidator
-			adds a validation function to this manager
+			adds a validation function to this manager's <validation> object
 			
 			Parameters:
-				colname		-	column to validate. If this is set to null, then this 
-									validator will be called for every column
+				property		-	property to validate. If this is set to null, then this 
+									validator will be called for every property
 									
 				validator	-	Either a String or a validation function. If this is 
 									a string, it must match one of the standard 
-									validation functions stored in <validatorFunctions>.
+									validation functions stored in <Myna.Validation.validatorFunctions>,
+									or the manager-specific validator <validatorFunctions.unique>
 									This function will be called when needed to validate 
-									_colname_ See *Validator Function* below
+									_property_ See *Validator Function* below
 									
-				options		-	*Optional, default {}*
-									this will be used as the "this" scope for the _validator_ 
-									call. If the validator requires any options add them 
-									here. All validators accept certain options. See 
-									*Common Options* below
+				options		-	*Optional, default undefined*
+									any options needed by the validator
 									
-			Common Options:
-				when					-	*Optional, default null*
-											Function. If defined, this function must return true or 
-											this validator will not be executed. This is called with
-											the same scope and parameters as the validation function
-											
-				unless				-	*Optional, default null*
-											Function. If defined, this function must return false or 
-											this validator will not be executed. This is called with
-											the same scope and parameters as the validation function
-											
-				validateWhenNull	-	*Optional, default false*
-											Normally, validators are not executed against null values.
-											Set this to true to run the validator even if the value 
-											is null.
-											*Note* <validatorFunctions.required> will automatically 
-											run on null values
-				
-				message				-	*Optional, default null*
-											If defined, then the validator should return this message 
-											instead of its native one. It is the responsibility of 
-											the _validator_ to honor this option.
- 
+		
 								
 			Validator Function:
-			The _validator_ function  will be called with these parameters
+			The _validator_ function  will be called with a parameters object with these properties
+				obj			-	Object being validated
+				property		-	Property being validated
+				label			-	result of <getLabel> for _property_
+				value			-	value being validated
+				options		-	validator options. Most validators define their own 
+									specific options, but all validators accept the options below 
+				
 			
-				colname				-	The name of the current column being validated
-				value					-	The value being validated
-				validationResult	-	An instance of <Myna.ValidationResult> that 
-											should be updated by calling 
-											<Myna.ValidationResult.addError> for any 
-											validation errors
-				bean					-	The bean instance being validated
-			
+			Validator Options:
+				when		-	A function that will take the same parameters as a validator 
+								function and return true if the validator should be run. This 
+								is normally used conditionally validate one of the built-in 
+								validators  
+				
+				
+			Returns:
+				this validation instance
+				
 			Examples:
 			
 			(code)
@@ -320,12 +305,20 @@ if (!Myna) var Myna={}
 					max:25
 				})
 				
-				function isBob(colname,value,v,bean){
-					if (value != "Bob"){
-						//we should honor a custom message
-						var msg = this.message || bean.manager.getLabel(colname) + " is not Bob!"
-						v.addError(msg,colname)
+				//only validate spouse_name when married is true
+				manager.addValidator("spouse_name","required",{
+					when:function(params){
+						return params.obj.married
 					}
+				})
+				
+				function isBob(params){
+					var vr = new Myna.ValidationResult();
+					if (params.value != "Bob"){
+						var msg = params.options.message || params.label + " is not Bob!"
+						vr.addError(msg,colname)
+					}
+					return vr;
 				}
 				
 				manager.addValidator("first_name",isBob,{
@@ -333,7 +326,66 @@ if (!Myna) var Myna={}
 				})
 				
 			(end)
-			*/
+			
+			See:
+				* <Myna.Validation>
+				* <validation> property
+				* <addValidators>
+				* <BeanObject.validate>
+			*/	
+		/* Function: addValidators
+			add multiple validators to this manager's <validation> object
+			
+			Parameters:
+				validator_config		-	JS Object keyed by property name, with sub-objects
+												keyed by validator name (or "custom" for custom validators),
+												with values equal to validator options (or {}, if no options)
+					
+			Returns:
+				this validation instance 
+				
+			Example:
+			(code)
+				manager.addValidators({
+					name:{
+						required:{},
+						type:"string",
+						regex:{
+							pattern:/^[A-Za-z ]+$/,
+							message:"Names must only contain Letters and spaces"
+						},
+						
+					},
+					dob:{
+						type:"date",
+						value:{
+							min:new Date().add(Date.YEAR,-150),
+							max:new Date()
+						}
+					},
+					children:{
+						type:"array",
+						length:{
+							max:12
+						},
+						custom:function(params){
+							var vr = new Myna.ValidationResult();
+								params.value.forEach(function(child,index){
+									vr.merge(this.validate(child),"child_" + index "_")	
+								})
+								
+							return vr;
+						}
+					}
+				})
+			(end)
+			
+			See:
+				* <Myna.Validation>
+				* <validation> property
+				* <addValidator>
+				* <BeanObject.validate>
+			*/	
 		/* Function: loadTableData
 			internal function to load table data into the manager
 			*/
@@ -347,7 +399,7 @@ if (!Myna) var Myna={}
 			Detail:
 				This function checks for the existence of <softDeleteCol> and will 
 				update it to the current time if available. If no <softDeleteCol> is
-				defined, then <forceDelte> is called to remove the row form the 
+				defined, then <forceDelete> is called to remove the row form the 
 				table. 
 				
 			*/
@@ -1119,83 +1171,8 @@ if (!Myna) var Myna={}
 				map		-	JS object where the keys are column names and the values are 
 								labels 
 			*/
-		/* Function: validatorFunctions.length
-			Validates length of string and numeric types
-				
-			Options:
-				min	-	*Optional*
-							minimum number of characters/integer places, or function that returns a length
-				max	-	*Optional*
-							maximum number of characters/integer places, or function that returns a length
-			
-			Options Functions:
-				If the options are functions, they will be called with the same 
-				parameters as the validator
-				
-			See:
-				* <addValidator>
-			*/
-		/* Function: validatorFunctions.list
-			Validates a value against a regular expression
-				
-			Options:
-				oneOf					- *Optional, default null*
-										Array, or function that returns an Array. If 
-										defined, value must match one of these values
-										
-				notOneOf			- *Optional, default null*
-										Array, or function that returns an Array. If 
-										defined, value must NOT match one of these values
-										
-				caseSensitive	-	*Optional, default false*
-										If false, the value and the list will be 
-										converted to strings and a case-insensitive 
-										comparison will be made. This property is ignored 
-										if _exact_ is true
-				exact				-	*Optional, default false*
-										If true, values are matched by both class and 
-										value, via === instead of ==. Setting this true 
-										disables _caseSensitive_
-										
-				
-			Note:
-				Just setting _oneOf_ or _notOneOf_ will result in a case insensitive 
-				string match. If both _oneOf_ and _notOneOf_ are defined, _notOneOf_ 
-				will be ignored. If _oneOf_ or _notOneOf_ are functions, they will 
-				be called with the same parameters as the validator. Empty arrays 
-				are ignored as if undefined, thus it is possible to define both 
-				lists and have whichever is not empty match, or have the validator
-				pass if both are empty
-				
-				
-			
-			See:
-				* <addValidator>
-			*/
-		/* Function: validatorFunctions.regex
-			Validates a value against a regular expression
-				
-			Options:
-				regex	- regular expression to apply
-				
-			Note: 
-				Value will be converted to a string for the comparison. 
-			
-			See:
-				* <addValidator>
-			*/	
-		/* Function: validatorFunctions.type
-			Validates basic type
-				
-			Options:
-				type	- one of "string", "numeric", "date" or "binary"	
-			
-			See:
-				* <addValidator>
-				* <Myna.Database.dbTypeToJs>
-			*/
-		/* Function: validatorFunctions.unique
-			Validates a value is unique in a column
+			/* Function: validatorFunctions.unique
+			A DataManager-specific validator that validates a value is unique in a column
 				
 			Parameters:
 				caseSensitive			-	*Optional, default false*
@@ -1208,20 +1185,7 @@ if (!Myna) var Myna={}
 			Detail: 
 				This will perform a query against the current table looking for any 
 				instances of this value, NOT associated with this primary key. If 
-				any are found this validator will add an error     
-			
-			See:
-				* <addValidator>
-			*/
-		/* Function: validatorFunctions.required
-			Validates that a value is non-empty
-				
-			Parameters:
-				
-				
-			Detail: 
-				This will add an error if (!value) would return false, and value is 
-				not zero     
+				any are found this validator will add an error .    
 			
 			See:
 				* <addValidator>
@@ -1316,7 +1280,18 @@ if (!Myna) var Myna={}
 				* <forceDelete>
 				
 			*/	
+		/* Property: validation
+			This manager's <Myna.Validation> instance
 			
+			This <Myna.Validation> instance is used to validate beans created by this manager.
+			
+			See:
+				* <Myna.Validation>
+				* <addValidator>
+				* <addValidators>
+				* <BeanObject.validate>
+				
+			*/		
 	/* Class: TreeManagerObject 
 		Table data access object generated and returned by 
 		<Myna.DataManager.getTreeManager> for Modified Pre-order Tree Traversal 
@@ -1531,7 +1506,9 @@ if (!Myna) var Myna={}
 				colname	-	*Optional, default null*
 								If defined, limits validation to a single column
 			See:
-				* <ManagerObject.addValidator>	
+				* <ManagerObject.addValidator>
+				* <ManagerObject.validation>
+				* <Myna.Validation>
 				
 			*/
 			
@@ -2361,7 +2338,7 @@ if (!Myna) var Myna={}
 					}
 			return man;
 		}
-	/* ---------- managerExists --------------------------------------------- */
+	/* ---------- managerExists ---------------------------------------------- */
 		Myna.DataManager.prototype.managerExists = function(name){
 			if (this.db.getTable(name).exists){
 				return true;
@@ -2372,134 +2349,26 @@ if (!Myna) var Myna={}
 			}
 			return false
 		}
-	/* ---------- validatorFunctions -------------------------------------------- */
+	/* ---------- validatorFunctions ----------------------------------------- */
+	
 		Myna.DataManager.validatorFunctions={
-			type:function(colname,value,v,bean){
-				this.checkRequired(["type"])
-				var label = bean.manager.getLabel(colname);
-				var type = typeof this.type =="function"?this.type(colname,value,v,bean):this.type;
-				var msg = this.message||<ejs>
-					<%=label%> must be of type "<%=type%>"
-				</ejs>
-				switch(type){
-					case "string":
-						if (typeof value == "string") return  
-					case "numeric":
-						if (parseFloat(value) == value) return
-					case "date":
-						if (value instanceof Date) return
-					case "binary":
-						if (value instanceof Array){
-							try{
-								if (value.getClass().getName() == "[B") return
-							} catch(e){}
-						}
-					default:
-						v.addError(msg,colname)
-				}
-			},
-			length:function(colname,value,v,bean){
-				var colDef = bean.manager.table.columns[colname]
-				var msg = this.message
-				var min = typeof this.min =="function"?this.min(colname,value,v,bean):this.min;
-				var max = typeof this.max =="function"?this.max(colname,value,v,bean):this.max;
-				if (Myna.Database.dbTypeToJs(colDef.data_type) == "string"){
-					if (max){
-						if (String(value).length > max){
-							
-							v.addError(msg ||
-								<ejs>
-									Exceeded maximum length for <%=bean.manager.getLabel(colname)%> (<%=max%>), 
-									by <%=String(bean.data[colname]).length-max%>
-								</ejs>,
-								colname
-							)
-						}
-					}
-					if (min){
-						if (String(value).length < min){
-							v.addError(msg ||
-								<ejs>
-									<%=bean.manager.getLabel(colname)%> 
-									must be at least <%=String(bean.data[colname]).length-min%> long
-								</ejs>,
-								colname
-							)
-						}
-					}
-					
-				} else if (Myna.Database.dbTypeToJs(colDef.data_type) == "numeric"){
-					if (max){
-						if (String(parseInt(value)).length > max){
-							v.addError(
-								<ejs>
-									Exceeded maximum length for <%=bean.manager.getLabel(colname)%> (<%=max%>), 
-									by <%=String(bean.data[colname]).length-colDef.column_size%>
-								</ejs>,
-								colname
-							)
-						}
-					}
-					if (min){
-						if (String(parseInt(value)).length  < min){
-							v.addError(
-								<ejs>
-									<%=bean.manager.getLabel(colname)%> 
-									must be at least <%=String(bean.data[colname]).length-min%> long
-								</ejs>,
-								colname
-							)
-						}
+			
+			unique:function(params){
+				var v = new Myna.ValidationResult()
+				if (typeof $server_gatway != "undefined"){
+					var msg= params.options.message|| params.obj.manager.getLabel(params.property) +" ("+params.value+"), already exists in another record."
+					var search ={}
+					search[params.property] = params.value
+					var result = params.obj.manager.find(search,this)
+					if (result.length){
+						if (result.length > 1 || result[0] != params.obj.id) v.addError(msg,params.property);
 					}
 				}
+				return v;
 			},
-			regex:function(colname,value,v,bean){
-				this.checkRequired(["regex"])
-				var msg= this.message|| bean.manager.getLabel(colname) +" is not properly formatted."
-				if (!this.regex.test(String(value))) v.addError(msg,colname);
-			},
-			list:function(colname,value,v,bean){
-				var oneOf = typeof this.oneOf =="function"?this.oneOf(colname,value,v,bean):this.oneOf;
-				var notOneOf = typeof this.notOneOf =="function"?this.notOneOf(colname,value,v,bean):this.notOneOf;
-				if (oneOf && oneOf.length){
-					var msg= this.message|| bean.manager.getLabel(colname) 
-								+" must be "+(oneOf.length>1?"one of ":"")+"'" + oneOf.join()+"'"
-					if (this.exact){
-						if (oneOf.indexOf(value) == -1) v.addError(msg,colname);
-					} else if (this.caseSensitive){
-						if (!oneOf.contains(value)) v.addError(msg,colname);
-					} else {
-						if (!oneOf.join().listContainsNoCase(value)) v.addError(msg,colname);
-					}
-				} else if (notOneOf && notOneOf.length){
-					msg= this.message|| bean.manager.getLabel(colname) 
-												+ " must NOT be "+(notOneOf.length>1?"one of ":"")+"'" + notOneOf.join() +"'"
-					if (this.exact){
-						if (notOneOf.indexOf(value) != -1) v.addError(msg,colname);
-					} else if (this.caseSensitive){
-						if (notOneOf.contains(value)) v.addError(msg,colname);
-					} else {
-						if (notOneOf.join().listContainsNoCase(value)) v.addError(msg,colname);
-					}
-				}
-			},
-			unique:function(colname,value,v,bean){
-				var msg= this.message|| bean.manager.getLabel(colname) +" ("+value+"), already exists in another record."
-				var search ={}
-				search[colname] = value
-				var result = bean.manager.find(search,this)
-				if (result.length){
-					if (result.length > 1 || result[0] != bean.id) v.addError(msg,colname);
-				}
-			},
-			required:function(colname,value,v,bean){
-				var msg= this.message|| bean.manager.getLabel(colname) +" is required."
-				if (!value && value != 0 && value !== false){
-					v.addError(msg,colname);
-				}
-			},
+			
 		}
-	/* ---------- getRelated -------------------------------------------- */
+	/* ---------- getRelated ------------------------------------------------- */
 		Myna.DataManager.getRelated=function(bean,alias,type,relatedModelOptions){
 			var dm = bean.manager.dm;
 			var relatedBean
@@ -2600,27 +2469,14 @@ if (!Myna) var Myna={}
 			bean._loadedAliases[alias]=relatedBean
 			return relatedBean;
 		}
-	/* ---------- managerBaseClass -------------------------------------------- */
+	/* ---------- managerBaseClass ------------------------------------------- */
 		Myna.DataManager.managerBaseClass = function(){}
 		Myna.DataManager.managerBaseClass.prototype = {
-			addValidator:function(colname,validator,options){
-				if (!options) options ={}
-				if (!this._validators) this._validators={}
-				if (!colname) colname ="ALL";
-				if (!(colname in this._validators)) this._validators[colname]=[];
-				if (typeof validator === "string"){
-					if (validator == "required") options.validateWhenNull = true;
-					if (validator in Myna.DataManager.validatorFunctions 
-						&& typeof Myna.DataManager.validatorFunctions[validator] === "function"
-					){
-						validator = Myna.DataManager.validatorFunctions[validator]
-					} else throw new  Error(validator + " is not a validation function")
-				}
-				
-				this._validators[colname].push(options.applyTo({
-					validator:validator
-				}))
-									
+			addValidator:function(property,validator,options){
+				return this.validation.addValidator(property,validator,options)
+			},
+			addValidators:function(config){
+				return this.validation.addValidators(config)
 			},
 			loadTableData:function(tableName){//deprecated
 				return this
@@ -2963,7 +2819,7 @@ if (!Myna) var Myna={}
 				})
 			},
 		}
-	/* ---------- beanBaseClass -------------------------------------------- */
+	/* ---------- beanBaseClass ---------------------------------------------- */
 		Myna.DataManager.beanBaseClass = function(data){}
 		Myna.DataManager.beanBaseClass.prototype = {
 			save:function(){

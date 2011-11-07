@@ -28,7 +28,7 @@ if (!Myna) var Myna={}
 	Myna.Validation.prototype.clone=function(){
 		var result = new Myna.Validation();
 		var p;
-		for (p in this.validatators){
+		for (p in this.validators){
 			result.validators[p] = this.validators[p]	
 		}
 		for (p in this.labels){
@@ -80,13 +80,14 @@ if (!Myna) var Myna={}
 	Examples:
 	
 	(code)
-		manager.addValidator("first_name","length",{
+		var v = new Myna.Validation()
+		v.addValidator("first_name","length",{
 			min:3,
 			max:25
 		})
 		
 		//only validate spouse_name when married is true
-		manager.addValidator("spouse_name","required",{
+		v.addValidator("spouse_name","required",{
 			when:function(params){
 				return params.obj.married
 			}
@@ -101,7 +102,7 @@ if (!Myna) var Myna={}
 			return vr;
 		}
 		
-		manager.addValidator("first_name",isBob,{
+		v.addValidator("first_name",isBob,{
 			message:"Inferior name entered."
 		})
 		
@@ -114,7 +115,6 @@ if (!Myna) var Myna={}
 		if (!property) property ="$ALL";
 		if (!(property in this.validators)) this.validators[property]=[];
 		if (typeof validator === "string"){
-			if (validator == "required") options.validateWhenNull = true;
 			if (validator in this.validatorFunctions 
 				&& typeof this.validatorFunctions[validator] === "function"
 			){
@@ -150,7 +150,7 @@ if (!Myna) var Myna={}
 				regex:{
 					pattern:/^[A-Za-z ]+$/,
 					message:"Names must only contain Letters and spaces"
-				},
+				}
 				
 			},
 			dob:{
@@ -196,6 +196,99 @@ if (!Myna) var Myna={}
 		}
 		return this
 	}
+/* Function: removeValidator
+	removes all validators for a property and optionally by == validator type
+	
+	Parameters:
+		property		-	name of property to modify
+		validator	-	*Optional, default null*
+							If defined, this can be either a string or a function 
+							reference representing the specific validator to remove
+							
+		if _validator_ is undefined, then all validators for the property are removed
+			
+	Returns:
+		this validation instance 
+		
+	Example:
+	(code)
+		
+		v.addValidators({
+			name:{
+				required:{},
+				type:"string",
+				regex:{
+					pattern:/^[A-Za-z ]+$/,
+					message:"Names must only contain Letters and spaces"
+				}
+				
+			},
+			dob:{
+				type:"date",
+				value:{
+					min:new Date().add(Date.YEAR,-150),
+					max:new Date()
+				}
+			},
+			children:{
+				type:"array",
+				length:{
+					max:12
+				},
+				custom:function(params){
+					var vr = new Myna.ValidationResult();
+						params.value.forEach(function(child,index){
+							vr.merge(this.validate(child),"child_" + index "_")	
+						})
+						
+					return vr;
+				}
+			}
+		})
+		// cloning Validation for children
+		var cv = v.clone()
+		cv.removeValidator("children")//children don't have children
+		//add in child specific validators
+		cv.addValidators({
+			relationship:{
+				required:true,
+				type:"string",
+				regex:{
+					pattern:/^(son|daughter)$/i,
+					message:'Relationship must be "Son" or "Daughter"'
+				}
+			}
+		})
+		// adding a single custom validator to test the children array members
+		v.addValidator("children",function(params){
+			Myna.printDump(params)
+			var vr = new Myna.ValidationResult()
+			
+			params.value.forEach(function(child,index){
+				var prefix ="child[{1}].".format(name,index)
+				vr.merge(cv.validate(child),prefix)
+			})
+			
+			return vr;
+		})
+	(end)
+	*/
+	Myna.Validation.prototype.removeValidator=function removeValidator(property, validator){
+		if (! (property in this.validators)) return this
+		if (validator){
+			if (typeof validator === "string"){
+				if (validator in this.validatorFunctions 
+					&& typeof this.validatorFunctions[validator] === "function"
+				){
+					validator = this.validatorFunctions[validator]
+				} else throw new  Error(validator + " is not a validation function")
+			}	
+			this.validators[property] =this.validators[property].filter(function(def){
+				return def.validator != validator
+			}) 
+		} else this.validators[property] = []
+		return this
+	}	
 /* Function: genLabel
 	generates a display label from a property name
 	
@@ -243,7 +336,7 @@ if (!Myna) var Myna={}
 		if (property in sr) return sr[property]
 		property = property.splitCap().join("_").toLowerCase()
 		return property.split(/_/).map(function(part){
-			if (sr.getKeys().indexOf(part) >-1) return sr[part]
+			if (part in sr ) return sr[part]
 			return part.titleCap()
 		}).join(" ")
 	}
@@ -290,6 +383,138 @@ if (!Myna) var Myna={}
 		})
 		return this
 	}
+/* Function: toCode
+	returns this Validation object as Javascript source-code
+	
+	Detail:
+		Myna.Validation and <Myna.ValidationResult> are designed to be used 
+		client-side as well as server-side. This function returns the JS code
+		necessary to represent this Validation object in client-side JS.
+		
+	Notes:
+		* The Myna client-side libraries must be loaded:
+		> <script src="<context_root>/shared/js/libOO/client.sjs"></script>
+		* Any custom validators that depend on external properties will fail 
+			because those objects won't exist in the browser. See examples for work 
+			arounds.
+			
+	Examples:
+	(code)
+	// Complex validation with embedded custom validation:
+	var v = new Myna.Validation()
+	
+	//set some label overrides:
+	v.setLabels({
+		dob:"Date of Birth",
+		children:"Dependents"
+	})
+	
+	//add multiple validators at once
+	v.addValidators({
+		name:{
+			required:true,
+			type:"string",
+			regex:{
+				pattern:/^[A-Za-z ]+$/,
+				message:"Names must only contain Letters and spaces"
+			},
+			custom:function(params){
+				var v = new Myna.ValidationResult()
+				//don't run client side
+				if (typeof $server_gateway != "undefined"){
+					var existing new Myna.Query({
+						ds:ds,
+						sql:<ejs>
+							select 
+								name 
+							from names
+							where name = {value} 
+						</ejs>,
+						values:params
+					})
+					if (existing.data.length) {
+						v. addError(
+							"{0} '{1}' already exists".format(params.label,params.value),
+							params.property
+						)
+					}
+				}
+				
+				return v
+			}
+		},
+		startDate:{
+			value:{
+				min:new Date().add(Date.YEAR,-50),
+				max:new Date().add(Date.DAY,-1)
+			}
+		},
+		dob:{
+			type:"date",
+			value:{
+				min:new Date().add(Date.YEAR,-150),
+				max:new Date()
+			}
+		},
+		children:{
+			type:"array",
+			length:{
+				max:12
+			},
+			custom:function(params){
+				// cloning Validation for children
+				var cv = this.clone()
+				cv.removeValidator("children")//children don't have children
+				//add in child specific validators
+				cv.addValidators({
+					relationship:{
+						required:true,
+						type:"string",
+						regex:{
+							pattern:/^(son|daughter)$/i,
+							message:'Relationship must be "Son" or "Daughter"'
+						}
+					}
+				})
+				
+				var vr = new Myna.ValidationResult()
+				
+				params.value.forEach(function(child,index){
+					var prefix ="child[{1}].".format(name,index)
+					var v = cv.validate(child)
+					//console.log(v)
+					vr.merge(v,prefix)
+				})
+				
+				return vr;
+			}
+		}
+	})
+	
+	Myna.print(<ejs>
+		<script src="<%=$server.rootUrl%>shared/js/libOO/client.sjs"></script>
+		<script>
+			var v =<%=v.toCode()%>)
+			var vr = v.validate({
+				dob:"yesterday",
+				startDate:new Date(),
+				children:[{
+					name:"sally",
+					relationship:"pet"
+				}]
+			})
+			debug_window(vr)
+		</script>
+	</ejs>)
+	(end)
+	*/
+	Myna.Validation.prototype.toCode=function(){
+		if (typeof $server_gateway != "undefined"){
+			var code = this.toSource()
+			return "$O({0}).applyTo(new Myna.Validation(),true)".format(code);
+		}
+	}
+	
 /* Function: validate
 	Validates an object against this Validation.
 	
@@ -408,15 +633,15 @@ if (!Myna) var Myna={}
 			}
 			
 			function shouldRun(validatorDef){
-				params.options = validatorDef.options;
-				if ( validatorDef.options && typeof validatorDef.options.when ==="function" && !options.when(params)) return false;
+				var options =params.options = validatorDef.options||{};
+				if ( typeof options.when ==="function" && !options.when(params)) return false;
 				return true;
 			}
 			try{
 				
 				if (property in $this.validators){
 					$this.validators[property].filter(shouldRun).forEach(function(validatorDef){
-						params.options = validatorDef.options;
+							params.options = validatorDef.options || {};
 						vr.merge(validatorDef.validator.call($this, params))
 					})
 				}
@@ -427,12 +652,24 @@ if (!Myna) var Myna={}
 					})
 				}
 			}catch(e){
-				vr.addError("Error in validation. See Administrator log for details",property)
-				Myna.log(
-					"error",
-					"Error in validation for " + property,
-					Myna.formatError(e) +Myna.dump(obj.data,"Obj Data")
-				);
+				if (typeof $server_gateway == "undefined"){
+					//Don't flag as error client-side, just log
+					if (typeof "console" != "undefined" && "log" in  console){
+						console.log(
+							"Error in validation for " + property +", with value: ",
+							value,
+							"Error:",
+							e
+						);
+					}
+				} else {
+					vr.addError("Error in validation. See Administrator log for details",property)
+					Myna.log(
+						"error",
+						"Error in validation for " + property,
+						Myna.formatError(e) +Myna.dump(obj.data,"Obj Data")
+					);
+				}
 			}
 		}
 		
@@ -497,26 +734,31 @@ Myna.Validation.prototype.validatorFunctions={
 	*/
 	type:function type(params){
 		var v = new Myna.ValidationResult();
-		if (params.value === null || params.value===undefined) return v;
+		if (!params.value && params.value !== 0 && params.value !== false || params.value === "") return v;
+		
 		if (!params.options) throw new Error(" type validator requires 'type' option")
 		if (typeof params.options == "string") params.options = {type:params.options}
 		
 		var type = typeof params.options.type =="function"?params.options.type.apply(this, Array.parse(arguments)):params.options.type;
-		var msg = params.options.message||'{0} must be of type "{1}"'.format(params.label,type)
+		var msg = params.options.message||'{0}(value:{1}) must be of type "{2}"'.format(params.label,params.value,type)
 		switch(type){
 			
 			case "string":
 				if (String(params.value) == params.value) return v
+				break;
 			case "numeric":
 				if (parseFloat(params.value) == params.value) return v
+				break;
 			case "date":
 				if (params.value instanceof Date) return v
+				break;
 			case "binary":
 				if (params.value instanceof Array){
 					try{
 						if (params.value.getClass().getName() == "[B") return v
 					} catch(e){}
 				}
+				break;
 			case "array":
 				if (params.value instanceof Array){
 					return v	
@@ -532,9 +774,8 @@ Myna.Validation.prototype.validatorFunctions={
 					return v;	
 				}
 				break;
-			default:
-				v.addError(msg,params.property)
 		}
+		v.addError(msg,params.property)
 		return v;
 	},
 /* Function: validatorFunctions.length
@@ -573,7 +814,7 @@ Myna.Validation.prototype.validatorFunctions={
 			
 	length:function length(params){
 		var v = new Myna.ValidationResult();
-		if (params.value === null || params.value===undefined) return v;
+		if (!params.value && params.value !== 0 && params.value !== false || params.value === "") return v;
 		var msg = params.options.message
 		var min = typeof params.options.min =="function"?params.options.min.apply(params.options, Array.parse(arguments)):params.options.min;
 		var max = typeof params.options.max =="function"?params.options.max.apply(params.options, Array.parse(arguments)):params.options.max;
@@ -641,7 +882,7 @@ Myna.Validation.prototype.validatorFunctions={
 	*/	
 	value:function validateValue(params){
 		var v = new Myna.ValidationResult();
-		if (params.value === null || params.value===undefined) return v;
+		if (!params.value && params.value !== 0 && params.value !== false || params.value === "") return v;
 		var msg = params.options.message
 		var min = typeof params.options.min =="function"?params.options.min.apply(params.options, Array.parse(arguments)):params.options.min;
 		var max = typeof params.options.max =="function"?params.options.max.apply(params.options, Array.parse(arguments)):params.options.max;
@@ -700,7 +941,7 @@ Myna.Validation.prototype.validatorFunctions={
 	
 	regex:function regex(params){
 		var v = new Myna.ValidationResult();
-		if (params.value === null || params.value===undefined) return v;
+		if (!params.value && params.value !== 0 && params.value !== false || params.value === "") return v;
 		if (params.options instanceof RegExp) params.options = {pattern:params.options}
 		if (!params.options.pattern) throw new Error("option 'pattern' is required for the regex validator");
 		var msg= params.options.message|| params.label +" is not properly formatted."
@@ -783,7 +1024,7 @@ Myna.Validation.prototype.validatorFunctions={
 	*/
 	list:function list(params){
 		var v = new Myna.ValidationResult();
-		if (params.value === null || params.value===undefined) return v;
+		if (!params.value && params.value !== 0 && params.value !== false || params.value === "") return v;
 		var oneOf = typeof params.options.oneOf =="function"?params.options.oneOf.apply(params.options, Array.parse(arguments)):params.options.oneOf;
 		var notOneOf = typeof params.options.notOneOf =="function"?params.options.notOneOf.apply(params.options, Array.parse(arguments)):params.options.notOneOf;
 		if (oneOf && oneOf.length){
@@ -832,9 +1073,9 @@ Myna.Validation.prototype.validatorFunctions={
 		var v = new Myna.ValidationResult();
 		if (typeof params.options != "object") params.options={}
 		var msg= params.options.message|| params.label +" is required."
-		if (!params.value && params.value != 0 && params.value !== false){
+		if (!params.value && params.value !== 0 && params.value !== false){
 			v.addError(msg,params.property);
 		}
 		return v
-	},
+	}
 }

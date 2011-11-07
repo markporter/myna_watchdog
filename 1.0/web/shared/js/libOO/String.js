@@ -537,7 +537,8 @@
 		if (args.length > 1) {
 			isArray = true	
 		} else  if (args.length == 1 ){
-			if (args[0] && typeof args[0] == "object" && "length" in args[0] && "concat" in args[0]){
+			if(!args[0]) return new String(this);
+			if ( typeof args[0] == "object" && "length" in args[0] && "concat" in args[0]){
 				args = args[0];
 				isArray=true;
 			} else if (args[0] == parseFloat(args[0]) || typeof args[0] == "string" || "getTime" in args[0] ){

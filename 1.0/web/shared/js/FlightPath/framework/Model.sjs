@@ -20,19 +20,25 @@ function Model(){
 	
 	if (!this.fields) this.fields={}
 	if (!this.fieldNames) this.fieldNames=[]
-	if (!this.validator){	
-		this.validator = new Myna.Validator()
-		this.validator.validatorFunctons.unique=function(colname,value,v,bean){
-			var msg= this.message|| bean.manager.getLabel(colname) +" ("+value+"), already exists in another record."
-			var search ={}
-			search[colname] = value
-			var result = bean.manager.find(search,this)
-			if (result.length){
-				if (result.length > 1 || result[0] != bean.id) v.addError(msg,colname);
-			}
-		},
-		this.validator.getLabel = this.getLabel
-		this.validator.genLabel = this.genLabel
+	if (!this.validation){	
+		this.validation = new Myna.Validation();
+		({
+			unique:function(colname,value,v,bean){
+				var v = new Myna.ValidationResult()
+				if (typeof $server_gatway != "undefined"){
+					var msg= this.message|| bean.manager.getLabel(colname) +" ("+value+"), already exists in another record."
+					var search ={}
+					search[colname] = value
+					var result = bean.manager.find(search,this)
+					if (result.length){
+						if (result.length > 1 || result[0] != bean.id) v.addError(msg,colname);
+					}
+				}
+				return v
+			},
+		}).applyTo(this.validation.validatorFunctions)
+		this.validation.getLabel = this.getLabel
+		this.validation.genLabel = this.genLabel
 		this.addValidator = function(property,validator,options){
 			return this.validation.addValidator(property,validator,options)
 		}
@@ -751,7 +757,6 @@ Model.prototype.beanClass.prototype = {
 		var $this = this;
 		if (!this.deferred) return new Myna.ValidationResult();
 		var v = this.validate()
-		
 		if (v.success){
 			try{
 				//first save/create parent objects

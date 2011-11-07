@@ -188,16 +188,16 @@ function <%=tableName%>_manager(){
 				&& colname != primaryKey
 			){
 			%>
-			this.addValidator("<%=colname%>","required");<%
+			this.addValidator("<%=colname%>","required",{});<%
 			}
 			
 			if (!/date|time/i.test(colDef.type_name)){
 				if ("BLOB,CLOB".listContains(colDef.type_name)){
 				%>
-			this.addValidator("<%=colname%>","length",{max:"2*1024*1024*1024*1024//2 GB"});<%
+			this.addValidator("<%=colname%>","length",{max:2*1024*1024*1024*1024/*2 GB*/});<%
 				} else {
 				%>
-			this.addValidator("<%=colname%>","length",{max:"<%=colDef.column_size%>"});<%
+			this.addValidator("<%=colname%>","length",{max:<%=colDef.column_size%>});<%
 				}
 			}
 			%>
@@ -812,5 +812,10 @@ new Myna.DataManager.beanBaseClass().applyTo(<%=tableName%>_manager.beanClass.pr
 		return Myna.Database.dbTypeToJs(def.data_type)
 	})
 ,null,"   ")%>
+<%=tableName%>_manager.prototype.validation=new Myna.Validation()
+<%=tableName%>_manager.prototype.validation.getLabel = Myna.DataManager.managerBaseClass.prototype.getLabel;
+<%=tableName%>_manager.prototype.validation.genLabel = Myna.DataManager.managerBaseClass.prototype.genLabel;
+Myna.DataManager.validatorFunctions.applyTo(<%=tableName%>_manager.prototype.validation.validatorFunctons,true)
+
 
 new Myna.DataManager.managerBaseClass().applyTo(<%=tableName%>_manager.prototype)
