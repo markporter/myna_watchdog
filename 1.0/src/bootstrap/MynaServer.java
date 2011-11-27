@@ -13,20 +13,30 @@ import java.util.zip.*;
 
 import java.net.*;
 import java.io.*;
+import java.util.*;
 import java.lang.reflect.*;
+
+import org.apache.commons.lang.StringUtils;
 
 public class MynaServer extends Thread
 {
 	public static Server 					server;
 	public static boolean 					hasWatchdog	= false;
 	public static String 					webctx 		= "/";
-	public static String					webroot		= "./myna";
-	public static String					logFile		= null;
-	public static int						port		= 8180;
-	public static Process					p			= null;
+	public static String						webroot		= "./myna";
+	public static String						logFile		= null;
+	public static int							port			= 8180;
+	public static Process					p				= null;
 	public static java.util.List 			javaOpts 	= new java.util.ArrayList();
-	public static java.util.Properties 		props		= new java.util.Properties();
-	public static boolean					 isJar		=false;
+	public static java.util.Properties 	props			= new java.util.Properties();
+	public static boolean					isJar			= false;
+	public static String 					mode 			= "";
+	public static String 					user 			= "nobody";
+	public static Vector						modeOptions	= new Vector();
+	public static String 					classUrl;
+	
+	
+	
 	public static void restart() throws Exception
 	{
 		(new Thread() {
@@ -44,29 +54,44 @@ public class MynaServer extends Thread
 			System.exit(1);      
 		}
 	}
-	public void run() {
+	public void run() 
+	{
 		if (MynaServer.p != null) p.destroy();
-		}
+	}
 	public static void main(String[] args) throws Exception
 	{
-		Thread.sleep(1000);
-		String classUrl = MynaServer.class.getResource("MynaServer.class").toString();
+		modeOptions.add("server");
+		modeOptions.add("upgrade");
+		modeOptions.add("install");
+		classUrl = MynaServer.class.getResource("MynaServer.class").toString();
 		isJar = (classUrl.indexOf("jar") == 0);
+	
+		Thread.sleep(1000);
+		
 		
 		CommandLineParser parser = new PosixParser();
 	
 		// create the Options
 		Options options = new Options();
-		options.addOption( "p", "port", true, "Webserver port. Default: " + port );
 		options.addOption( "c", "context", true, "Webapp context. Must Start with \"/\" Default: " + webctx);
-		options.addOption( "w", "webroot", true, "Webroot to use. Will be created if webroot/WEB-INF does not exist. Default: " + webroot );
-		options.addOption( "l", "logfile", true, "Log file to use. Will be created if it does not exist. Default: ./<context>.log" );
 		options.addOption( "h", "help", false, "Displays help." );
+		options.addOption( "l", "logfile", true, "Log file to use. Will be created if it does not exist. Default: ./<context>.log" );
+		options.addOption( "m", "mode", true, "Mode: one of "+modeOptions.toString()+". \n"+
+			"*server:	 unpacks to webroot and launches  Myna Server\n"+
+			"*upgrade: upgrades myna installation in webroot and exits"
+		);
+		options.addOption( "p", "port", true, "Webserver port. Default: " + port );
+		options.addOption( "w", "webroot", true, "Webroot to use. Will be created if webroot/WEB-INF does not exist. Default: " + webroot );
+		options.addOption( "u", "user", true, "User to own and run the Myna installation. Only applies to unix installs. Default: nobody" );
+		
 		HelpFormatter formatter = new HelpFormatter();
 		
-		String cmdSyntax = "MynaServer [options] [ -- [jvm arguments]]";
+		String cmdSyntax = "MynaServer -m <mode> [options] [ -- [jvm arguments]]";
 		try {
-			
+			if (args.length == 0){
+				formatter.printHelp(cmdSyntax, options );
+				System.exit(1);	
+			}
 			CommandLine line = parser.parse( options, args );
 			
 			if( line.hasOption( "help" ) ) {
@@ -74,11 +99,24 @@ public class MynaServer extends Thread
 				System.exit(0);
 			}
 			
+			if( line.hasOption( "mode" ) ) {
+				mode = line.getOptionValue( "mode" );
+				if (!modeOptions.contains(mode)){
+					System.err.println( "Invalid Arguments.  Reason: Mode must be in " + modeOptions.toString());
+					formatter.printHelp( cmdSyntax, options );
+					System.exit(0);
+				}
+				
+			}
+			
 			if( line.hasOption( "port" ) ) {
 				port = Integer.parseInt(line.getOptionValue( "port" ));
 			}
 			if( line.hasOption( "context" ) ) {
 				webctx=line.getOptionValue( "context" );
+			}
+			if( line.hasOption( "user" ) ) {
+				user=line.getOptionValue( "user" );
 			}
 			if( line.hasOption( "logfile" ) ) {
 				logFile= line.getOptionValue( "logfile" );
@@ -98,66 +136,101 @@ public class MynaServer extends Thread
 			formatter.printHelp(cmdSyntax, options );
 			System.exit(1);
 		}
-		//unpack webroot if necessary
 		File wrFile = new File(webroot);
 		webroot= wrFile.toString();
-		if (!wrFile.exists()){
-			System.out.println("Unpacking Myna to '"+wrFile.toString()+"'...");
-			wrFile.mkdirs();
-			
-			if (isJar){
-				String jarFilePath = classUrl.substring(
-					classUrl.indexOf(":")+1,
-					classUrl.indexOf("!")
-				);
-				//System.out.println("path = " + jarFilePath);
-				File jarFile = new File(new java.net.URL(jarFilePath).toURI());
-				//System.out.println("java path = " + jarFile.toString());
-				
-				ZipFile zipFile= new ZipFile(jarFile);
-				
-				for (ZipEntry entry :	java.util.Collections.list(zipFile.entries())){
-					File outputFile = new File(
-						wrFile.toURI().resolve(java.net.URLEncoder.encode(entry.getName()))
-					);
-					if(entry.isDirectory()) {
-						outputFile.mkdirs();
-					} else {
-						boolean isSame = false;
-						
-						java.io.InputStream is = zipFile.getInputStream(entry);
-						java.io.OutputStream os = FileUtils.openOutputStream(outputFile);
-						IOUtils.copyLarge(is,os);
-						is.close();
-						os.close();
-					}
+		//unpack myna if necessary
+		if (!wrFile.exists() || mode.equals("upgrade") || mode.equals("install")){
+			upgrade(wrFile);
+		}
+		
+		if (mode.equals("install")){
+			if (java.lang.System.getProperty("os.name").toLowerCase().equals("windows")){
+				System.out.println("installation is currently only supported on Linux platforms using /etc/init.d");
+			} else if (new File("/etc/init.d").exists()){
+				String curUser=java.lang.System.getProperty("user.name") ;
+				if (!curUser.equals("root")){
+					System.out.println("Install mode must be run as root.");
+					System.exit(1);
 				}
-				zipFile.close();
-				System.out.println("Done unpacking.");
+				
+				String server = "main";
+				if (!webctx.equals("/")){
+					server =webctx.split("/")[0];
+				}
+				if (!new File(logFile).isAbsolute()){
+					logFile = new File(wrFile.toURI().resolve("WEB-INF/" + logFile)).toString();
+				}
+				File templateFile = new File(
+					wrFile.toURI().resolve("WEB-INF/myna/install/linux/init_script")
+				);          
+				String initScript=FileUtils.readFileToString(templateFile)
+				.replaceAll("\\{webctx\\}",webctx)      
+				.replaceAll("\\{server\\}",server)
+				.replaceAll("\\{user\\}",user)
+				.replaceAll("\\{webroot\\}",webroot)
+				.replaceAll("\\{logfile\\}",logFile)
+				.replaceAll("\\{port\\}",new Integer(port).toString());
+				
+				File scriptFile =new File(
+					wrFile.toURI().resolve("WEB-INF/myna_" + server)
+				);          
+				
+				FileUtils.writeStringToFile(scriptFile,initScript);
+				
+				/*templateFile = new File(
+					wrFile.toURI().resolve("WEB-INF/myna/install/linux/install_script")
+				);  
+				String installScript=FileUtils.readFileToString(templateFile)
+				.replaceAll("\\{init_script\\}",scriptFile.toString())
+				.replaceAll("\\{webctx\\}",webctx)      
+				.replaceAll("\\{server\\}",server)
+				.replaceAll("\\{user\\}",user)
+				.replaceAll("\\{webroot\\}",webroot)
+				.replaceAll("\\{logfile\\}",logFile)
+				.replaceAll("\\{port\\}",new Integer(port).toString()); */
+				
+				
+				exec("chown  -R "+user+" "+webroot);
+				exec("chown root " +scriptFile.toString());
+				exec("chmod 700 " +scriptFile.toString());
+				exec("cp " +scriptFile.toString() +" /etc/init.d/");
+				
+
+				
+				System.out.println("\nInit script '/etc/init.d/myna_" + server +"' created with the following settings:\n");
+				System.out.println("user=" + user);
+				System.out.println("memory=256MB");
+				System.out.println("server="+ server);
+				System.out.println("context=" +webctx);
+				System.out.println("port=" + port);
+				System.out.println("myna_home=" + webroot);
+				System.out.println("logfile=" + logFile);
+				
+				
+				System.out.println("\nEdit this file to customize startup behavior");
 			} else {
-				System.err.println( "Webroot '" + webroot +"' does not exist.");
-				formatter.printHelp(cmdSyntax, options );
-				System.exit(1);
+				System.out.println("installation is currently only supported on Linux platforms using /etc/init.d");
 			}
 		}
 		
-		
-		try {
-			FileOutputStream fileOut = new FileOutputStream(logFile,true);
-			PrintStream newOut= new PrintStream(fileOut,true);
-			System.out.println("Launching Myna Server. See " + new File(logFile).getCanonicalPath() +" for details.");
-			System.setOut(newOut);
-			System.setErr(newOut);
-			System.out.println("logging to: " + logFile);
-		} catch(Exception logEx){
-			System.out.println("Unable to log output to '" + logFile+"'. Make sure the path exists and is writable by this user.");	
-		}
-		
-		hasWatchdog = System.getProperty("myna.hasWatchdog") != null;
-		if (hasWatchdog){
-			runAsServer();
-		} else {//run as watchdog and spawn a separate process
-			runAsWatchdog();
+		if (mode.equals("server")){
+			try {
+				FileOutputStream fileOut = new FileOutputStream(logFile,true);
+				PrintStream newOut= new PrintStream(fileOut,true);
+				System.out.println("Launching Myna Server. See " + new File(logFile).getCanonicalPath() +" for details.");
+				System.setOut(newOut);
+				System.setErr(newOut);
+				System.out.println("logging to: " + logFile);
+			} catch(Exception logEx){
+				System.out.println("Unable to log output to '" + logFile+"'. Make sure the path exists and is writable by this user.");	
+			}
+			
+			hasWatchdog = System.getProperty("myna.hasWatchdog") != null;
+			if (hasWatchdog){
+				runAsServer();
+			} else {//run as watchdog and spawn a separate process
+				runAsWatchdog();
+			}
 		}
 	}
 	public static void runAsServer() throws Exception{
@@ -372,5 +445,109 @@ public class MynaServer extends Thread
 				}
 			}
 	}
-	
+	public static boolean exec(String cmd) throws Exception{
+		int exitVal = -1;
+		try
+		{            
+			Runtime rt = Runtime.getRuntime();
+			Process proc = rt.exec(new String[] {"/bin/bash", "-c", cmd});
+			
+			OutputHandler err = new 
+			OutputHandler(proc.getErrorStream(), cmd);            
+			err.start();
+			
+			OutputHandler out = new 
+			OutputHandler(proc.getInputStream(), cmd);
+			out.start();
+			
+						
+			
+			exitVal = proc.waitFor();
+			
+		} catch (Throwable t)
+		{
+			t.printStackTrace();
+			
+		}
+		return (exitVal == 0);
+	}
+	public static void upgrade(File wrFile) throws Exception
+	{
+		System.out.println("Installing/upgrading Myna in '"+wrFile.toString()+"'...");
+		wrFile.mkdirs();
+		File web_inf =  new File(wrFile.toURI().resolve("WEB-INF"));
+		boolean isUpgrade = false;
+		File backupDir = null;
+		if (web_inf.exists()){
+			
+			String dateString = new java.text.SimpleDateFormat("MM-dd-yyyy_HH.mm.ss.S").format(new Date());
+			String backupBase = 	"WEB-INF/upgrade_backups/backup_" + dateString;
+			backupDir = new File(wrFile.toURI().resolve(backupBase));
+			backupDir.mkdirs();
+			isUpgrade=true;
+			System.out.println("Backups stored in " + backupDir);
+		}
+		
+		if (isJar){
+			String jarFilePath = classUrl.substring(
+				classUrl.indexOf(":")+1,
+				classUrl.indexOf("!")
+			);
+			File jarFile = new File(new java.net.URL(jarFilePath).toURI());
+			ZipFile zipFile= new ZipFile(jarFile);
+			
+			for (ZipEntry entry :  java.util.Collections.list(zipFile.entries())){
+				;
+				File outputFile = new File(
+					wrFile.toURI().resolve(java.net.URLEncoder.encode(entry.getName()))
+				);
+				File backupFile = null;
+				if (isUpgrade){
+					backupFile= new File(
+						backupDir.toURI().resolve(java.net.URLEncoder.encode(entry.getName()))
+					);
+				}
+				if(entry.isDirectory()) {
+					outputFile.mkdirs();
+					if (isUpgrade) backupFile.mkdirs();
+				} else {
+					if (isUpgrade && outputFile.exists()){
+						
+						java.io.InputStream sourceIS = zipFile.getInputStream(entry);
+						java.io.InputStream targetIS = FileUtils.openInputStream(outputFile);
+						boolean isSame =IOUtils.contentEquals(sourceIS,targetIS);
+						sourceIS.close();
+						targetIS.close();
+						
+						if (isSame
+							|| entry.toString().equals("index.html")
+							|| entry.toString().equals("application.sjs")
+							|| entry.toString().equals("WEB-INF/classes/general.properties")
+							|| entry.toString().startsWith("WEB-INF/myna/ds")
+						){
+							continue;
+						} else { 
+							System.out.println("...backing up " + entry);
+							FileUtils.copyFile(outputFile, backupFile, true) ;
+							//outputFile.copyTo(backupFile);
+							//fusebox.upgradeLog("Backup: " + backupFile);
+						}
+						
+						
+					} 
+					java.io.InputStream is = zipFile.getInputStream(entry);
+					java.io.OutputStream os = FileUtils.openOutputStream(outputFile);
+					IOUtils.copyLarge(is,os);
+					is.close();
+					os.close();
+					
+				}
+			}
+			zipFile.close();
+			//FileUtils.deleteDirectory()
+			
+			System.out.println("Done unpacking.");
+		}
+		 
+	}
 }

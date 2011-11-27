@@ -275,7 +275,7 @@
    	manifest="MANIFEST.MF"
    /> -->
    <jar destfile="${dist.home}/${app.name}-${build.version}.war">
-		<fileset dir="${build.home}/WEB-INF/classes" includes="bootstrap/MynaServer.class"/>
+		<fileset dir="${build.home}/WEB-INF/classes" includes="bootstrap/*.class"/>
 		<restrict>
 			<name regex="^(?!.*(SF|RSA|DSA)).*$" />
 			<name regex="^(?!.*(about_files|about.html|plugin.properties)).*$" />
