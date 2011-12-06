@@ -131,7 +131,7 @@ var functions={
 		</ejs>
 	},
 	offsetSql:function(sql,limit,offset){
-		
+		var offset = offset||0
 		return <ejs>
 		
 			SELECT * FROM (
@@ -142,7 +142,7 @@ var functions={
 				FROM(
 					<%=sql%>
 				) a 
-				WHERE rownum <= <%=limit%>
+				WHERE rownum <= <%=limit+offset%>
 			)
 			<@if offset>
 			WHERE rnum ><%=offset%>

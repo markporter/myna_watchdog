@@ -153,10 +153,7 @@ public class MynaServer extends Thread
 					System.exit(1);
 				}
 				
-				String server = "main";
-				if (!webctx.equals("/")){
-					server =webctx.split("/")[0];
-				}
+				String serverName = webctx.replaceAll("\\/","")
 				if (!new File(logFile).isAbsolute()){
 					logFile = new File(wrFile.toURI().resolve("WEB-INF/" + logFile)).toString();
 				}
@@ -165,14 +162,14 @@ public class MynaServer extends Thread
 				);          
 				String initScript=FileUtils.readFileToString(templateFile)
 				.replaceAll("\\{webctx\\}",webctx)      
-				.replaceAll("\\{server\\}",server)
+				.replaceAll("\\{server\\}",serverName)
 				.replaceAll("\\{user\\}",user)
 				.replaceAll("\\{webroot\\}",webroot)
 				.replaceAll("\\{logfile\\}",logFile)
 				.replaceAll("\\{port\\}",new Integer(port).toString());
 				
 				File scriptFile =new File(
-					wrFile.toURI().resolve("WEB-INF/myna_" + server)
+					wrFile.toURI().resolve("WEB-INF/" + serverName)
 				);          
 				
 				FileUtils.writeStringToFile(scriptFile,initScript);
@@ -197,10 +194,10 @@ public class MynaServer extends Thread
 				
 
 				
-				System.out.println("\nInit script '/etc/init.d/myna_" + server +"' created with the following settings:\n");
+				System.out.println("\nInit script '/etc/init.d/" + serverName +"' created with the following settings:\n");
 				System.out.println("user=" + user);
 				System.out.println("memory=256MB");
-				System.out.println("server="+ server);
+				System.out.println("server="+ serverName);
 				System.out.println("context=" +webctx);
 				System.out.println("port=" + port);
 				System.out.println("myna_home=" + webroot);

@@ -60,10 +60,10 @@ function getNextRunDate(){
 	//adds leading zero if necessary and returns a string
 	function z(timeUnit){
 		var result = new String(timeUnit)
-		if (result.length = 0){
+		if (result.length == 0){
 			return "00"	
 		}
-		if (result.length = 1){
+		if (result.length == 1){
 			return "0" + result	
 		}
 		return result
