@@ -153,7 +153,7 @@ public class MynaServer extends Thread
 					System.exit(1);
 				}
 				
-				String serverName = webctx.replaceAll("\\/","")
+				String serverName = webctx.replaceAll("\\/","");
 				if (!new File(logFile).isAbsolute()){
 					logFile = new File(wrFile.toURI().resolve("WEB-INF/" + logFile)).toString();
 				}
@@ -209,8 +209,8 @@ public class MynaServer extends Thread
 				System.out.println("installation is currently only supported on Linux platforms using /etc/init.d");
 			}
 		}
-		
-		if (mode.equals("server")){
+		hasWatchdog = System.getProperty("myna.hasWatchdog") != null;
+		if (mode.equals("server")|| hasWatchdog){
 			try {
 				FileOutputStream fileOut = new FileOutputStream(logFile,true);
 				PrintStream newOut= new PrintStream(fileOut,true);
@@ -222,7 +222,7 @@ public class MynaServer extends Thread
 				System.out.println("Unable to log output to '" + logFile+"'. Make sure the path exists and is writable by this user.");	
 			}
 			
-			hasWatchdog = System.getProperty("myna.hasWatchdog") != null;
+			
 			if (hasWatchdog){
 				runAsServer();
 			} else {//run as watchdog and spawn a separate process
