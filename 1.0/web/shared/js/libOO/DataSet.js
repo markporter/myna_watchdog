@@ -152,11 +152,12 @@
 		if (!compare 
 			|| (
 				!(compare instanceof RegExp ) 
-				&& !(typeof compare  =="string") 
+				&& !(typeof compare  =="string" || String(compare) == compare) 
 				&& !(compare instanceof Function)
+				
 			)
 		) throw new SyntaxError("compare is required, and must be either a RegExp object,a string regular expression, or a function") 
-		if (typeof compare=="string") compare = new RegExp("^"+compare.escapeRegex()+"$");
+		if (typeof compare=="string" || String(compare) == compare) compare = new RegExp("^"+String(compare).escapeRegex()+"$");
 		if (compare instanceof RegExp){
 			var regex = compare;
 			compare = function(columnValue){
@@ -311,22 +312,22 @@
 		var $this = this
 		if (!ds || !("columns" in ds)) throw new Error("First Param must be an instance of DataSet")
 		var myColumns = this.columns.join()
-		var newColumns=[]
 		ds.columns.forEach(function(colname){
 			if (!myColumns.listContains(colname)) {
 				$this.columns.push(colname)
-				newColumns.push(colname)
 			}
 		})
 		$this.forEach(function(row){
 			var relatedRow= ds.findFirstByCol(column,row[column])
 			if (relatedRow){
-				newColumns.forEach(function(col){
+				ds.columns.filter(function(colname){ 
+					return colname != column}
+				).forEach(function(col){
 					row[col] = relatedRow[col]
 				})
 			}
 		})
-	}	
+	}		
 /* Function: minByCol
 	returns the "smallest" value of a column.
 	
