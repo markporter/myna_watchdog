@@ -17,9 +17,9 @@ $application.after("onRequestStart",function(){
 	} */
 	
 	if ("view_source" in $req.data){
-		var here = new Myna.File(".")
+		var here = new Myna.File(".").toString()
 		var path = new Myna.File($server.requestDir+$server.requestScriptName)
-		if (path.toString().left(here.length) != here){
+		if (path.toString().left(here.length) != here.toString()){
 			Myna.abort("Invalid path")
 		}
 		//var path = ($server.requestDir+$server.requestScriptName).replace(/\.\./g,"FAIL");
