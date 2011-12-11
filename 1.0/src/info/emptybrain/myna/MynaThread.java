@@ -26,7 +26,7 @@ import org.openid4java.consumer.ConsumerManager;
 *
 */
 
-public class MynaThread {
+public class MynaThread implements java.lang.Runnable{
 	//static public Log logger = LogFactory.getLog(MynaThread.class);
 	static public volatile CopyOnWriteArrayList 	runningThreads 		= new CopyOnWriteArrayList();
 	static public volatile CopyOnWriteArrayList 	recentThreads 			= new CopyOnWriteArrayList();
@@ -622,17 +622,12 @@ public class MynaThread {
 		} */
 	}
 	
-	public void callFunction (MynaThread parentThread, String f,Object[] args) throws Exception{
+
+	
+	public void callFunction (String f,Object[] args) throws Exception{
 		runningThreads.add(this);
 		runtimeStats.put("threadId",this.toString());
 		runtimeStats.put("started",this.started);
-		
-		this.rootDir = parentThread.rootDir;
-		this.rootUrl = parentThread.rootUrl;
-		this.currentDir = parentThread.currentDir;
-		this.requestDir = parentThread.requestDir;
-		this.scriptName = parentThread.scriptName;
-		this.requestScriptName = parentThread.requestScriptName;
 		this.requestTimeout= Integer.parseInt(generalProperties.getProperty("request_timeout"));
 		
 		
@@ -645,9 +640,8 @@ public class MynaThread {
 			private MynaThread pt;
 			private String f;
 			private Object[] args;
-			public LocalContextAction (MynaThread pt,MynaThread mt,String f,Object[] args){
+			public LocalContextAction (MynaThread mt,String f,Object[] args){
 				this.mt = mt;
-				this.pt = pt;
 				this.f = f;
 				this.args = args;
 			}
@@ -698,7 +692,7 @@ public class MynaThread {
 				}
 			}
 		}
-		new CustomContextFactory().call(new LocalContextAction(parentThread,this,f,args));  
+		new CustomContextFactory().call(new LocalContextAction(this,f,args));  
 	}
 	/**
 	* handles errors during JS execution
@@ -1425,62 +1419,48 @@ public class MynaThread {
 	}
 	
 	public Object spawn(String func, Object[] args) throws Exception{
-		Runner runner= new Runner(func, args);
-		Hashtable retval = new Hashtable();
+		MynaThread mt = new MynaThread();
+		mt.environment.put("threadFunctionSource", func);
+		mt.environment.put("threadFunctionArguments", new Vector(java.util.Arrays.asList(args)));
+		mt.rootDir = rootDir;
+		mt.rootUrl =rootUrl;
+		mt.currentDir =currentDir;
+		mt.requestDir =requestDir;
+		mt.scriptName =scriptName;
+		mt.requestScriptName =requestScriptName; 
+		mt.threadChain = new Vector(threadChain);
+		mt.threadChain.add(func);	
 		
-		runner.currentThread = new MynaThread();
-		runner.parentThread = this;
-		String f = (String) this.environment.get("threadFunctionSource");
-		/* if ( this.threadChain.contains(func)){
-			log("ERROR","A thread cannot call itself","Thread Function:<br><textarea rows=10 cols=70>" +f + "</textarea>");
-			System.err.println("A thread cannot call itself: \n" + f);
-			return null;
-		} */
-		if (this.threadChain.size() > 5){
+		if (mt.threadChain.size() > 5){
 			log("ERROR","thread chains cannot descend more than 5 levels.","Thread Chain:<br> " +this.threadChain);
 			throw new Exception("thread chains cannot descend more than 5 levels.");
 		} //else {System.err.println("\n\nthis.threadChain="+this.threadChain);}
 		
-		Thread thread = new Thread(runner);
+		Thread thread = new Thread(mt);
+		Hashtable retval = new Hashtable();
+		
 		thread.start();
 		
 		retval.put("javaThread",thread);
-		retval.put("mynaThread",runner.currentThread);
+		retval.put("mynaThread",mt);
 		return retval;
-    }
-	
-	class Runner implements Runnable {
-			Runner( String func, Object[] args) {
-					f = func;
-					this.args = args;
+   }
+   
+   public void run (){
+		try {
+			String f = (String) environment.get("threadFunctionSource");
+			Object [] args = ((Vector)(environment.get("threadFunctionArguments"))).toArray();
+			//System.out.println("thread size=" + this.threadChain.size() +" function:"  + f.substring(0,25));		
+			callFunction(f,args);
+			
+			
+			
+		} catch (Exception e){
+			try {
+				handleError(e);
+			} catch (Exception e2){
+				java.lang.System.err.println(e2);	
 			}
-			public void run()
-			{
-				try {
-					currentThread.environment.put("threadFunctionSource", f);
-					currentThread.environment.put("threadParent", this.parentThread);
-					currentThread.threadChain = new Vector(parentThread.threadChain);
-					currentThread.threadChain.add(f);
-					currentThread.callFunction(parentThread,f,args);
-					
-					String threadId = java.lang.Thread.currentThread().getName();
-					//parentThread.environment.put("subthread_" + threadId, currentThread);
-					
-					
-				} catch (Exception e){
-					try {
-						handleError(e);
-					} catch (Exception e2){
-						java.lang.System.err.println(e2);	
-					}
-				}
-				
-			}
-	
-			private String f;
-			private MynaThread parentThread;
-			private Object[] args;
-			public MynaThread currentThread;
+		}
 	}
-		
 }
