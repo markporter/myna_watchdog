@@ -29,7 +29,7 @@ start)
 	exit 0
     ;;
 start-nowatchdog)
-	watchdog_jvm_args="-Dmyna.name=$server -Xmx600m -Dmyna.hasWatchdog=true -server -cp $web_inf/lib/*:$web_inf/classes/"
+	watchdog_jvm_args="-Dmyna.name=$server -Xmx${mem}m -Dmyna.hasWatchdog=true -server -cp $web_inf/lib/*:$web_inf/classes/"
 	
 	
 	myna_args="-c $context -p $port -w $webroot -l $logfile "

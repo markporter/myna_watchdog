@@ -16,16 +16,17 @@ import java.lang.reflect.*;
 
 public class MynaInstaller
 {
-	public static String 					webctx 		= "/";
-	public static String						webroot		= "./myna";
-	public static String						logFile		= null;
-	public static int							port			= 8180;
-	public static java.util.List 			javaOpts 	= new java.util.ArrayList();
-	public static java.util.Properties 	props			= new java.util.Properties();
+	public static String 					webctx 			= "/";
+	public static String 					serverName		= "myna";
+	public static String					webroot			= "./myna";
+	public static String					logFile			= null;
+	public static int						port			= 8180;
+	public static java.util.List 			javaOpts	 	= new java.util.ArrayList();
+	public static java.util.Properties 		props			= new java.util.Properties();
 	public static boolean					isJar			= false;
 	public static String 					mode 			= "";
 	public static String 					user 			= "nobody";
-	public static Vector						modeOptions	= new Vector();
+	public static Vector					modeOptions	= new Vector();
 	public static String 					classUrl;
 	
 	public static void main(String[] args) throws Exception
@@ -51,7 +52,9 @@ public class MynaInstaller
 		options.addOption( "h", "help", false, "Displays help." );
 		options.addOption( "p", "port", true, "Webserver port. Default: " + port );
 		options.addOption( "w", "webroot", true, "Webroot to use. Will be created if webroot/WEB-INF does not exist. Default: " + webroot );
-			
+		options.addOption( "l", "logfile", true, "Log file to use. Will be created if it does not exist. Default: ./<context>.log" );
+		options.addOption( "s", "servername", true, "Name of this instance. Defaults to either \"myna\" or the value of <context> if defined" );
+		
 		modeOptions.add("upgrade");
 		modeOptions.add("install");
 		options.addOption( "m", "mode", true, "Mode: one of "+modeOptions.toString()+". \n"+
@@ -91,7 +94,16 @@ public class MynaInstaller
 			}
 			if( line.hasOption( "context" ) ) {
 				webctx=line.getOptionValue( "context" );
+				if (!webctx.startsWith("/")){
+					webctx = "/" + webctx;	
+				}
 			}
+			if( line.hasOption( "servername" ) ) {
+				serverName=line.getOptionValue( "servername" );
+			} else if (!webctx.equals("/")){
+				serverName= webctx.substring(1);	
+			}
+				
 			if( line.hasOption( "user" ) ) {
 				user=line.getOptionValue( "user" );
 			}
@@ -123,7 +135,6 @@ public class MynaInstaller
 		if (mode.equals("install")){
 			String javaHome = System.getProperty("java.home");
 			webroot=new File(webroot).getCanonicalPath();
-			String serverName = webctx.replaceAll("\\/","");
 			if (serverName.length() == 0) serverName = "myna";
 			if (java.lang.System.getProperty("os.name").toLowerCase().indexOf("win") >= 0){
 				if (!new File(logFile).isAbsolute()){
@@ -134,7 +145,7 @@ public class MynaInstaller
 				);   
 				
 				String initScript=FileUtils.readFileToString(templateFile)
-				.replaceAll("\\{webctx\\}",Matcher.quoteReplacement(webctx))      
+				.replaceAll("\\{webctx\\}",webctx)      
 				.replaceAll("\\{server\\}",Matcher.quoteReplacement(serverName))
 				.replaceAll("\\{webroot\\}",Matcher.quoteReplacement(webroot))
 				.replaceAll("\\{logfile\\}",Matcher.quoteReplacement(logFile))
