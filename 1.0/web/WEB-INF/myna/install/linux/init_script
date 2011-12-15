@@ -23,7 +23,7 @@ start)
 	server_jvm_args="-Dmyna.name=$server -Xmx${mem}m -server"
 	
 	myna_args="-c $context -p $port -w $webroot -l $logfile -- $server_jvm_args"
-	su $user -c "java  $watchdog_jvm_args  info.emptybrain.myna.MynaServer $myna_args "&
+	su $user -l -c "java  $watchdog_jvm_args  info.emptybrain.myna.MynaServer $myna_args "&
 	echo "Myna instance '$server' Starting. tail -f $logfile for details."
 	
 	exit 0
@@ -33,7 +33,8 @@ start-nowatchdog)
 	
 	
 	myna_args="-c $context -p $port -w $webroot -l $logfile "
-	java  $watchdog_jvm_args  info.emptybrain.myna.MynaServer $myna_args &
+	su $user -l -c "java  $watchdog_jvm_args  info.emptybrain.myna.MynaServer $myna_args "&
+	#java  $watchdog_jvm_args  info.emptybrain.myna.MynaServer $myna_args &
 	echo "Myna instance '$server' Starting. tail -f $logfile for details."
 	
 	exit 0

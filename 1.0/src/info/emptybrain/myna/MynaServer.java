@@ -178,11 +178,11 @@ public class MynaServer extends Thread
 	}
 	public static void runAsServer() throws Exception{
 		String appBase = new File(webroot).getCanonicalPath();
-		System.out.println("app base = " +appBase);
+		System.out.println("webroot = " +appBase);
 		Tomcat tomcat = new Tomcat();
 		tomcat.setPort(port);
 		
-		tomcat.setBaseDir(".");
+		tomcat.setBaseDir(System.getProperty("java.io.tmpdir"));
 		tomcat.getHost().setAppBase(appBase);
 		
 		
