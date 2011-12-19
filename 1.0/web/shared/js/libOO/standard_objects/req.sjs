@@ -8,11 +8,11 @@ var $req={
 		will return the username part, otherwise "".
 	*/
 	get authUser(){
-		if ("Authorization" in $req.headers 
-			&& $req.headers.Authorization[0].listFirst(" ") == "Basic"
+		if ("authorization" in $req.headers 
+			&& $req.headers.authorization[0].listFirst(" ") == "Basic"
 		){
 			var decoder = Packages.org.apache.commons.codec.binary.Base64;
-			var token = $req.headers.Authorization[0].listLast(" ");
+			var token = $req.headers.authorization[0].listLast(" ");
 			token = String(new java.lang.String((decoder.decodeBase64(new java.lang.String(token).getBytes()))));
 			return token.listFirst(":");
 		} else {
@@ -24,11 +24,11 @@ var $req={
 		will return the password part, otherwise "".
 	*/
 	get authPassword(){
-		if ("Authorization" in $req.headers 
-			&& $req.headers.Authorization[0].listFirst(" ") == "Basic"
+		if ("authorization" in $req.headers 
+			&& $req.headers.authorization[0].listFirst(" ") == "Basic"
 		){
 			var decoder = Packages.org.apache.commons.codec.binary.Base64;
-			var token = $req.headers.Authorization[0].listLast(" ");
+			var token = $req.headers.authorization[0].listLast(" ");
 			token = String(new java.lang.String((decoder.decodeBase64(new java.lang.String(token).getBytes()))));
 			return token.listLast(":");
 		} else {
