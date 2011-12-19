@@ -371,79 +371,127 @@
 	}
 
 
-Controller.prototype.callAction = function callAction(action,params){
-	params = ({action:action}).setDefaultProperties(params||{});
-	var renderstate = this.rendered;
-	this.rendered = true
-	var ret= this.handleAction(params,true)
-	this.rendered = renderstate
-	return ret;
-}
-
-Controller.prototype.include = function include(action,params){
+/* Function: callAction
+	Call an action as an inline function.
 	
-	params = ({
-		controller:this.name,
-		action:action
-	}).setDefaultProperties(params||{});
-	return this.handleAction(params)
-}
+	Parameters:
+		action	-	action name to execute
+		params	-	*Optional, default {}*
+					params to pass to the action
 
-Controller.prototype.handleAction = function handleAction(params,inline){
-	this.$params =params = params.applyTo({$inline:inline})
-	var c = this;
-	var action = params.action;
-	if (inline){
-		var content = $res.getContent()
-	}
-	//beforeAction filters
-	if(
-		! this.getFilters("beforeAction",params.action)
-		.every(function(filter){
-			var localResult = filter.call(c, action,params)
-			
-			if (localResult === undefined) return true;
-			if (localResult === false) return false;
-			
-			params = localResult;
-			return true
-		})
-	) return;//if any of the beforeAction filters return false, abort this action
+	Detail:
+	Calling this function on a controller will execute the specified action 
+	"inline", meaning without generating output, and will return whatever the 
+	action returns. Before and after action filters are also triggered. This 
+	can be useful for marshaling several actions in one request, or for providing
+	alternate ways of calling actions (see <framework.controllers.DirectController>)
 	
-	//Merge in id var
-	if (params.id && c.model) {
-		var idField = c.model.primaryKey
-		params[idField] =params.id;
+	Example:
+	(code)
+		//triggers filters, so will fail if cur user is not authorized
+		var empList = $FP.getController("employee").callAction("list",params);
+	(end)
+	
+	Note: 
+	You can also call actions directly from a controller, but filters won't be
+	triggered.
+	
+	(code)
+		// does not run filters, but might render output if render() or 
+		// renderContent() is called inside this action
+		var empList = $FP.getController("employee").list(params);
+	(end)
+	
+		
+	*/
+	Controller.prototype.callAction = function callAction(action,params){
+		params = ({action:action}).setDefaultProperties(params||{});
+		var renderstate = this.rendered;
+		this.rendered = true
+		var ret= this.handleAction(params,true)
+		this.rendered = renderstate
+		return ret;
 	}
-	var result;
-	var shouldRender;
-	if (params.action in c) {
-		result = c[params.action](params)||c.data;
-		//afterAction filters
-		shouldRender =this.getFilters("afterAction",params.action)
+
+/* Function: include
+	Call an action and includes its output in the current request
+	
+	Parameters:
+		action	-	action name to execute
+		params	-	*Optional, default {}*
+					params to pass to the action
+
+	Detail:
+	Calling this function on a controller will execute the specified action, 
+	appending any output generated to the current request. This will also return 
+	any response from the action. Before and after action filters are also 
+	triggered. This can be useful for including several actions in one request.
+	
+	Example:
+	(code)
+		// triggers filters, so will fail if cur user is not authorized
+		// includes employee listing table in the current view
+		$FP.getController("employee").callAction("list",params);
+	
+	(end)
+	
+		
+	*/
+	Controller.prototype.include = function include(action,params){
+		
+		params = ({
+			controller:this.name,
+			action:action
+		}).setDefaultProperties(params||{});
+		return this.handleAction(params)
+	}
+/* handleAction
+	internal function to execute an action and return the result 
+	*/
+	Controller.prototype.handleAction = function handleAction(params,inline){
+		//this.$params =params = params.applyTo({$inline:inline})
+		var c = this;
+		var action = params.action;
+		if (inline){
+			var content = $res.getContent()
+		}
+		//beforeAction filters
+		if(
+			! this.getFilters("beforeAction",params.action)
 			.every(function(filter){
-				var localResult = filter.call(c, action,params,result)
+				var localResult = filter.call(c, action,params)
 				
 				if (localResult === undefined) return true;
 				if (localResult === false) return false;
 				
-				result = localResult;	
+				params = localResult;
 				return true
 			})
-		if (!inline && shouldRender){
-			//beforeRender filters
-			shouldRender =this.getFilters("beforeRender",params.action)
+		) return;//if any of the beforeAction filters return false, abort this action
+		
+		//Merge in id var
+		if (params.id && c.model) {
+			var idField = c.model.primaryKey
+			params[idField] =params.id;
+		}
+		var result;
+		var shouldRender;
+		if (params.action in c) {
+			result = c[params.action](params)||c.data;
+			//afterAction filters
+			shouldRender =this.getFilters("afterAction",params.action)
 				.every(function(filter){
-					var localResult = filter.call(c, action, params,result)
+					var localResult = filter.call(c, action,params,result)
 					
 					if (localResult === undefined) return true;
 					if (localResult === false) return false;
+					
+					result = localResult;	
 					return true
 				})
-			if (shouldRender){
-				c.render({action:params.action});
-				//afterRender filters
-				this.getFilters("afterRender",params.action)
+			if (!inline && shouldRender){
+				//beforeRender filters
+				shouldRender =this.getFilters("beforeRender",params.action)
 					.every(function(filter){
 						var localResult = filter.call(c, action, params,result)
 						
@@ -451,23 +499,28 @@ Controller.prototype.handleAction = function handleAction(params,inline){
 						if (localResult === false) return false;
 						return true
 					})
+				if (shouldRender){
+					c.render({action:params.action});
+					//afterRender filters
+					this.getFilters("afterRender",params.action)
+						.every(function(filter){
+							var localResult = filter.call(c, action, params,result)
+							
+							if (localResult === undefined) return true;
+							if (localResult === false) return false;
+							return true
+						})
+				}
 			}
 		}
+		if (inline){
+			$res.clear()
+			Myna.print(content)
+		} 
+		
+		return result;
 	}
-	if (inline){
-		$res.clear()
-		Myna.print(content)
-	} 
-	
-	return result;
-}
 
-
-Controller.prototype.afterAction = function afterAction(params){
-}
-Controller.prototype.beforeAction = function beforeAction(params){
-	return params
-}
 Controller.prototype.init = function init(controllerName){
 	({
 		name:controllerName,

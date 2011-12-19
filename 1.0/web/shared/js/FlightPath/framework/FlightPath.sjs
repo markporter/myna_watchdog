@@ -1,38 +1,45 @@
 /* Class: FlightPath
 	Core framework class for Myna FlightPath
-*/
-$server_gateway.threadScope.$FP=null;//this saves 500ms, don't ask me why
-/*  */
+	*/
+	$server_gateway.threadScope.$FP=null;//this saves 500ms, don't ask me why
 /* Property: dir
-	shortcut to $application.directory
-*/
-var dir = $application.directory
+	MynaPath to the base directory for this FLightPath app
+	
+	Example:
+	> file:/www/myna_dev/my_app
+	
+	See: <$application.directory>
+	*/
+	var dir = $application.directory
 
 /* Property: url
-	shortcut to $application.url
-*/
-var url = $application.url
-var initialized=false;
-var config={
+	URL to the FlightPath app, minus server name	
 	
-}
+	Example:
+	> myna_dev/my_app/
+	
+	See: <$application.url>
+	*/
+	var url = $application.url
 
 /* Property: version 
 	FlightPath version
-*/
-var version="1.0"
+	*/
+	var version="1.0"
 
 
-/* Property: _controllerClasses 
+/* _controllerClasses 
 	private controller cache
-*/
-var _controllerClasses={}
+	*/
+	var _controllerClasses={}
 
-/* Property: _modelClasses 
+/*  _modelClasses 
 	private model cache
-*/
-var _modelClasses={}
-/* mergeModels */
+	*/
+	var _modelClasses={}
+/* mergeModels
+	private factory function to merge models
+	*/
 	function mergeModels(model,modelName){
 		var classList = [
 			model,
@@ -76,7 +83,8 @@ var _modelClasses={}
 		//Myna.printDump(result.getProperties(),modelName)
 		return result;
 	}
-/* Function: init
+/* init
+	Internal initialization, should not be called by apps
 	*/
 	function init(forceReload){
 		var core;
@@ -643,8 +651,5 @@ var _modelClasses={}
 		//Myna.abort("<a href="+url+">"+url+"</a")
 		
 	}
-/* Class: FlightPath.Html
-	This is a library within FLightPath for creating HTML snippets 
-*/
 
 

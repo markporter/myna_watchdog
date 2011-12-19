@@ -1204,8 +1204,11 @@ var $application={
 					Stack:<@loop array="error.jsStack" element="line">
 					<%=line%>
 					</@loop>
-				</ejs>)	
-				java.lang.System.exit(1);
+				</ejs>)
+				//if initThread is commandLine, then we are not a server and should terminate
+				if ($server_gateway.isInitThread){
+					java.lang.System.exit(1);
+				}
 			} else {
 				$res.print(formattedError)
 			}

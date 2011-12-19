@@ -1,3 +1,9 @@
+/* Class: framework.controllers.DirectController
+	Framework controller class for working with Ext.Direct
+	
+	See:
+	* http://www.sencha.com/products/extjs/extdirect
+*/
 function api(params){
 	var API ={
 		url:$server.serverUrl+$application.url+$FP.c2f(this.name)+"/router",

@@ -120,6 +120,7 @@ Group: Myna FlightPath  {
    File: Model  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Model.sjs)
    File: $flash  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Flash.sjs)
    File: $helpers.Html  (/data/home_mark/myna/web/shared/js/FlightPath/framework/helpers/Html.sjs)
+   File: framework.controllers.DirectController  (/data/home_mark/myna/web/shared/js/FlightPath/framework/controllers/direct_controller.sjs)
    }  # Group: Myna FlightPath
 
 Group: Index  {
