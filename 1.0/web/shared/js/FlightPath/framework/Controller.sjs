@@ -520,34 +520,48 @@
 		
 		return result;
 	}
-
-Controller.prototype.init = function init(controllerName){
-	({
-		name:controllerName,
-		rendered:false,
-		layouts:[
-			"default",//global default
-			$FP.c2f(controllerName)+"/layout.ejs" // controller default
-		],
-		data:{},
-		filters:{
-			beforeAction:{},
-			afterAction:{},
-			beforeRender:{},
-			afterRender:{}
-		},
-		$page:{
-			css:[],
-			icon:"",
-			scripts:[],
-			title:"",
-			tags:[],
-			keywords:[],
-			description:null
-		}
-	}).applyTo(this)
-	this.model =this[this.name] =$FP.getModel(this.name);
-}
+/* Function: init
+	Initializes a the controller instance
+	
+	Whenever a controller is instantiated, init() is run to configure the 
+	instance. First the init() in the controller base class is run, then the 
+	init() in app/controllers/global.sjs, and finally the init() in 
+	app/controllers/<name>_controller.sjs
+	
+	This is a good place to call this.applyBehavior, this.addFilter and this.add/setLayout
+	
+	See Also:
+	* <applyBehavior>
+	* <addFilter>
+	* <addLayout>
+	*/
+	Controller.prototype.init = function init(controllerName){
+		({
+			name:controllerName,
+			rendered:false,
+			layouts:[
+				"default",//global default
+				$FP.c2f(controllerName)+"/layout.ejs" // controller default
+			],
+			data:{},
+			filters:{
+				beforeAction:{},
+				afterAction:{},
+				beforeRender:{},
+				afterRender:{}
+			},
+			$page:{
+				css:[],
+				icon:"",
+				scripts:[],
+				title:"",
+				tags:[],
+				keywords:[],
+				description:null
+			}
+		}).applyTo(this)
+		this.model =this[this.name] =$FP.getModel(this.name);
+	}
 /* Function: render
 	renders a view
 	
@@ -576,11 +590,15 @@ Controller.prototype.init = function init(controllerName){
 		the view is included. Once the view is rendered, it is wrapped in any 
 		defined layouts (see <addLayout>)  The following variables are available 
 		in view scope, and can be directly referenced:
+	
+	View Scope properties:
+		$controller			- A reference to the controller that called this view
+		$model				- A reference to this controllers default model, may be null
+		$params				- A reference to the params of the most recent action
+		$page				- a reference to this controller's <$page> property
+		[Helper classes]	- "Html" refers to $helpers.Html, etc
+		 
 		
-		*	Myna functions, i.e. createUuid() instead of Myna.createUuid(),
-		*	$FP properties, all $FP functions and properties can be directly referenced
-		* 	$controller, a reference to the controller that called this view
-		*	$helpers, a reference to $FP.helpers
 		*	$page, a reference to this controller's <$page> property
 		*	renderElement a reference to <renderElement>
 		*	This controller's <data> properties 
@@ -725,19 +743,20 @@ Controller.prototype.init = function init(controllerName){
 	Directly render content, bypassing default render 
 	
 	Parameters: 
-			data 			-  String content, or binary data from 
-								<Myna.File.readBinary> or from binary database query 
-								(byte [])
-							
-			contentType -	*Optional, default text/html for strings and application/octet-stream for binary* 
-								MIME type of _content_. If "" or null, the default will
-								be used
-							
-			filename		-	*Optional, default null* if defined, a 
-								"Content-disposition" response header is set to present 
-								the standard "Save or Open?" dialog to the client. Use 
-								this if offering a file for download, but not if you 
-								expect the content to be rendered inline 
+		data 			-  String content, or binary data from 
+							<Myna.File.readBinary> or from binary database query 
+							(byte [])
+						
+		contentType		-	*Optional, default text/html for strings, 
+								application/octet-stream for binary* 
+							MIME type of _data_. If "" or null, the default will
+							be used
+						
+		filename		-	*Optional, default null* if defined, a 
+							"Content-disposition" response header is set to present 
+							the standard "Save or Open?" dialog to the client. Use 
+							this if offering a file for download, but not if you 
+							expect the content to be rendered inline 
 	
 	See:
 		<$res.printBinary>
@@ -753,17 +772,30 @@ Controller.prototype.init = function init(controllerName){
 		$res.printBinary(data,contentType,filename)
 		this.rendered =true;
 	}
-Controller.prototype.renderElement = function renderElement(element,options){
-	if (!options) options = {}
-	return Myna.includeContent(
-		$application.directory +"app/views/elements/" + element + ".ejs",
-		$FP.mergeClasses([
-			Myna,
-			$FP,
-			options
-		])
-	)
-}
+	/* Function: getElement 
+		renders an HTML template returns the content as a string
+		
+		Parameters:
+			
+	*/
+	Controller.prototype.getElement = function renderElement(element,options){
+		if (!options) options = {}
+		return Myna.includeContent(
+			$application.directory +"app/views/elements/" + element + ".ejs",
+			$FP.mergeClasses([
+				$FP.helpers,
+				{
+					$controller:this,
+					$model:this.model,
+					$page:this.$page,
+					$params:this.$params,
+					getElement:$this.getElement
+				},
+				$this.data,
+				options
+			])
+		)
+	}
 
 Controller.prototype.set = function set(prop,val){
 	if (arguments.length == 1){

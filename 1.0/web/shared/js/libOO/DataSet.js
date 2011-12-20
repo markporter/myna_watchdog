@@ -396,13 +396,17 @@
 			var files = new Myna.File("/").listFiles()
 			files.sortByCol("fileName",String.compareNatural)
 		(end)
-						
+	Returns:
+		* a reference to this DataSet
+	
 	*/
 	DataSet.prototype.sortByCol = function(column,compare) {
 		if (!compare) compare=String.compareAlpha;
 		this.sort(function(a,b){
 			return compare(a[column],b[column])
 		})
+		
+		return this;
 	}
 /* Function: avgByCol
 	returns an average of the column.

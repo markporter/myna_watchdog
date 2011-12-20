@@ -200,6 +200,12 @@
 		return 0;
 
 	};
+/* Function: compareAlphaNoCase
+	*Static* A case-insensitive version of <String.compareAlpha>
+	*/
+	String.compareAlphaNoCase = function(a,b) {
+		return String.compareAlpha(String(a).toLowerCase(),String(b).toLowerCase()); 
+	}
 /* Function: compareAlphaReverse
 	*Static* A descending version of <compareAlpha>.
 	
@@ -218,6 +224,12 @@
 	String.compareAlphaReverse = function(a,b) {
 		return String.compareAlpha(b,a);
 	};
+/* Function: compareAlphaReverseNoCase
+	*Static* A case-insensitive version of <String.compareAlphaReverse>
+	*/
+	String.compareAlphaReverseNoCase = function(a,b) {
+		return String.compareAlphaReverse(String(a).toLowerCase(),String(b).toLowerCase()); 
+	}
 /* Function: compareNatural
 	*Static* A static sort function that will compare two strings in a natural way.
 	
@@ -321,6 +333,12 @@
 		//print("returning " + retVal)
 		return retVal;
 	};
+/* Function: compareNaturalNoCase
+	*Static* A case-insensitive version of <String.compareNatural>
+	*/
+	String.compareNaturalNoCase = function(a,b) {
+		return String.compareNatural(String(a).toLowerCase(),String(b).toLowerCase()); 
+	}
 /* Function: compareNaturalReverse
 	*Static* A descending version of <compareNatural>.
 	
@@ -339,6 +357,12 @@
 	String.compareNaturalReverse = function(a,b) {
 		return String.compareNatural(b,a);
 	};
+/* Function: compareNaturalReverseNoCase
+	*Static* A case-insensitive version of <String.compareNaturalReverse>
+	*/
+	String.compareNaturalReverseNoCase = function(a,b) {
+		return String.compareNaturalReverse(String(a).toLowerCase(),String(b).toLowerCase()); 
+	}
 /* Function: compareNumeric
 	*Static* A static sort function that will compare two strings by lexigraphical order.
 	
