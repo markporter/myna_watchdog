@@ -119,8 +119,12 @@ Group: Myna FlightPath  {
    File: Controller  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Controller.sjs)
    File: Model  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Model.sjs)
    File: $flash  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Flash.sjs)
-   File: $helpers.Html  (/data/home_mark/myna/web/shared/js/FlightPath/framework/helpers/Html.sjs)
+   File: $FP.helpers.Html  (/data/home_mark/myna/web/shared/js/FlightPath/framework/helpers/Html.sjs)
    File: framework.controllers.DirectController  (/data/home_mark/myna/web/shared/js/FlightPath/framework/controllers/direct_controller.sjs)
+   File: Layouts  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Layouts.txt)
+   File: Views  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Views.txt)
+   File: Behaviors  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Behaviors.txt)
+   File: framework.behaviors.MynaAuth  (/data/home_mark/myna/web/shared/js/FlightPath/framework/behaviors/controllers/myna_auth.sjs)
    }  # Group: Myna FlightPath
 
 Group: Index  {

@@ -6,43 +6,97 @@
 	}
 /* Property: $page
 	$page metadata object
+	
+	This can contain arbitrary metadata about the current page, but these 
+	properties  are used by the default layout file in app/views/layouts/default.ejs
+	
+	Default Properties:
+		css				-	*String Array.* 
+							each entry should be either a complete 
+							<link> tag or a URL to a css file, 
+							e.g $FP.url +"static/css/global.css". If a URL does 
+							NOT start with "/" or "http" it is assumed to be 
+							relative to app/static/
+		icon			-	*String.* favicon url. 
+							Defaults to $server.rootUrl +"favicon.ico"
+		scripts			-	*String/Object Array.* 
+							String entries should be URLs to JavaScript source 
+							files. Object entries should be in the form of 
+							{type:"mime/type",src:"url"}. If a URL does NOT 
+							start with "/" or "http" it is assumed to be 
+							relative to app/static/   			
+		title			-	*String.* Page Title. 
+							Defaults to $controller.name + "."+$params.action
+		tags			-	*Object Array.*
+							Meta tags to add to header. Entries in the form of 
+							{name:"meta tag name",content:"tag content"}
+		keywords		-	*String Array.*
+							"keywords" meta tag. Each entry will be joined into 
+							a comma-separated list
+		description		-	*String.*
+							Description meta tag
+		content			-	Set by <render> when including layout files. This 
+							represents the current content that needs to be 
+							included in the layout 
+	
+	
+	Example:
+	(code)
+		//in test_controller.sjs
+		function init(){
+			This.$page.title ="Test"
+		}
+		
+		function index(params){
+			this.$page.css.push("css/default.css")
+			this.$page.scripts.push("/app/admin.js")
+		}
+		
+		//loads js and CSS to support a ExtJs application with Ext.Direct support
+		function extIndex(params){
+			// using concat instead of directly assigning values preserves any 
+			// existing values set in init() 
+			
+			this.$page.css =this.$page.css.concat([
+				"extjs/resources/css/ext-all.css",
+				"css/default.css"
+			])
+			this.$page.scripts =this.$page.scripts.concat([
+				"extjs/ext-all-debug.js",
+				// this is a JSONP callback to load the API from 
+				// framework.controller.DirectController
+				$FP.helpers.Html.url({
+					controller:"Direct",
+					action:"api",
+					params:{
+						callback:"Ext.Direct.addProvider",
+						namespace:"$FP"
+					}
+				})
+			])
+		}
+		
+	(end)
+*/
+/* Property: data
+	local request-specific data to be passed to views
+	
+	See:
+	* <set>
 */
 
 /* Function: addLayout 
 	adds a layout layer to this this request
 	
 	Parameters:
-		layoutName  -	String. Layout name, or path relative to app/layouts
+		layout  -	String. Layout name, or path relative to app/layouts
 		
-	
-	Detail:
-		Layouts are templates that wrap the content produced in a view. Layouts 
-		are stored in app/views/layouts/layoutName.ejs. Layouts are layered like 
-		so:
-	(code)
-		/app/views/layouts/default.ejs wraps
-			/app/views/layouts/controllername/default.ejs wraps
-				/app/views/controllername/actionname.ejs
-	(end)
-	
-	Calling this function adds additional layouts that wrap the view, like so:
-	
-	(code)
-		function init(){
-			this.addLayout("mylayout1")
-			this.addLayout("otherController/mylayout2.ejs")
-		}
-		
-	//results in 
-	/app/views/layouts/default.ejs wraps
-		/app/views/layouts/controllername/default.ejs wraps
-			/app/views/layouts/mylayout1.ejs wraps
-				/app/views/layouts/otherController/mylayout2.ejs wraps
-					/app/views/controllername/actionname.ejs	
-		
-	(end)
+	This layout will in included after the global default layout, the controller 
+	default layout, and any previously defined layouts for this controller 
 	
 	
+	See:
+		* <Layouts>
 
 	*/
 	Controller.prototype.addLayout = function addLayout(layout){
@@ -56,40 +110,22 @@
 						app/layouts, or false to disable all layouts
 						
 	Detail:
-		Layouts are templates that wrap the content produced in a view. Layouts 
-		are stored in app/views/layouts/layoutName.ejs. Layouts are layered like 
-		so:
-	(code)
-		/app/views/layouts/default.ejs wraps
-			/app/views/layouts/controllername/default.ejs wraps
-				/app/views/controllername/actionname.ejs
-	(end)
+		 disables global and controller default layouts. If _layout_ is a layout 
+		 name or path, then that will be the only layout applied 
 	
-	Calling this function adds a single additional layout that wrap the view, like so:
 	
-	(code)
-		function init(){
-			this.setLayout("mylayout1")
-		}
-		
-	//results in 
-	/app/views/layouts/default.ejs wraps
-		/app/views/layouts/controllername/default.ejs wraps
-			/app/views/layouts/mylayout1.ejs wraps
-				/app/views/controllername/actionname.ejs	
-		
-	(end)
-	
+	See:
+		* <Layouts>
 	*/	
 	Controller.prototype.setLayout = function setLayout(layout){
 		if (layout){
-			this.layouts.push(layout)
+			this.layouts =[layout]
 		} else {
 			this.layouts=[]
 		}
 	}
 /* Function: addFilter 
-	adds an action filter
+	Adds an action filter
 	
 	Parameters:
 		filter		-	Function or Array. Filter function to execute, or Array of 
@@ -97,7 +133,7 @@
 							below
 							
 		options		-  *Optional, default see below*
-							JS struct, see *Options:* below		
+							JS struct, see *Options* below		
 	
 	Options:
 		when			-	*Optional, default "beforeAction"*
@@ -112,7 +148,7 @@
 							action names. Mutually exclusive with _only_
 	
 	Filter Function Parameters:
-		controller	-	Object reference to the controller to which this filer is applied
+		controller	-	Object reference to the controller to which this filter is applied
 		action		-	String name of action requested
 		params		-	the "params" argument passed to the action
 		response		-	The return from the action. This is always null for 
@@ -120,41 +156,42 @@
 		
 	Events:
 		beforeAction		-	fired before executing an action function. Return 
-									false to cancel execution, return a JS object to 
-									supply new "params" to the action. Normally used to 
-									alter params or cancel routing. such as for authentication
+								false to cancel execution, return a JS object to 
+								supply new "params" to the action. Normally used to 
+								alter params or cancel routing, such as for authentication
 									
 		afterAction			-	Fired after the action is complete but before default 
-									rendering. If the action contains an explicit <render>
-									or <renderContent> call then that will be executed 
-									first, without triggering "beforeRender" or 
-									"afterRender". Return false or make a call to <render> 
-									or <renderContent> to cancel the default render. 
-									Normally used for altering/adding properties to 
-									controller.data prior to rendering. Might also be 
-									used for custom rendering, but "beforeRender" is 
-									generally a better choice for that.
+								rendering. If the action contains an explicit <render>
+								or <renderContent> call then that will be executed 
+								first, without triggering "beforeRender" or 
+								"afterRender". Return false or make a call to <render> 
+								or <renderContent> to cancel the default render. 
+								Normally used for altering/adding properties to 
+								controller.data prior to rendering. Might also be 
+								used for custom rendering, but "beforeRender" is 
+								generally a better choice for that.
 									
 		beforeRender		-	Fired before rendering the default view. Return false 
-									or make a call to <render> or <renderContent> to 
-									cancel the default render. Normally used for custom 
-									renders that replace the default, such as rendering as 
-									RSS, or returning JSON
+								or make a call to <render> or <renderContent> to 
+								cancel the default render. Normally used for custom 
+								renders that replace the default, such as rendering as 
+								RSS, or returning JSON
 									
 		afterRender			-	Fired after the default render. Any changes to output
-									should be made through <$res.clear>, <$res.getContent>, 
-									<$res.print>, etc. Normally used to convert generated 
-									output such as converting to PDF or XHTML
+								should be made through <$res.clear>, <$res.getContent>, 
+								<$res.print>, etc. Normally used to convert generated 
+								output such as converting to PDF or XHTML
 									
 	
 	Detail:
-		Filters are function run before or after actions and rendering for actions. 
+		Filters are functions run before or after actions and/or before and 
+		after rendering the view for an action. 
 		Filters, by default, are run before every action, but can be applied to
 		only specific actions. Great uses of filters are authentication and 
-		logging. Filters are only executed in <handleAction>, such as calls from 
-		web requests or <include>, vs. <call> or direct execution from another 
-		action.
-		
+		logging. Filters are only executed in standard request handling, 
+		<callAction>, and <include>. Direct execution of an action will not 
+		trigger filters.
+				
 		
 	Examples:
 	(code)
@@ -186,15 +223,16 @@
 		}
 		
 		
-		//Functions that begin with "_" are excluded from browser requests
+		// Functions that begin with "_" are not considered actions and 
+		// are excluded from browser requests
 		function _auth(controller,action,params){
 			if (!$cookie.getAuthUser()){
 				$FP.redirectTo({
 					controller:"Auth",
 					action:"login"
 				})
-				//unnecessary, but good practice
-				return false; //cancels actino
+				//unnecessary, becasue redirecTo halts processing, but good practice
+				return false; //cancels action
 			}
 		}
 		
@@ -211,6 +249,7 @@
 		
 		function _pdfView(controller, action, params){
 			if (params.format =="pdf"){
+				// calling render or renderContent prevents default view from rendering
 				this.renderContent(
 					Myna.xmlToPdf(
 						Myna.htmlToXhtml(
@@ -308,6 +347,9 @@
 			});
 		}
 	(end)
+	
+	See:
+		* <Behaviors>
 	*/	
 	Controller.prototype.applyBehavior = function applyBehavior(name,options){
 		if (!(name instanceof Array)){
@@ -552,7 +594,7 @@
 			},
 			$page:{
 				css:[],
-				icon:"",
+				icon:$server.rootUrl +"favicon.ico",
 				scripts:[],
 				title:"",
 				tags:[],
@@ -570,7 +612,7 @@
 							String or Object or null. If a string, the filename of the 
 							view in app/views to load, minus the extension. If this is 
 							null, then rendering is canceled. If this is an object or 
-							undefined, see *Options:* below
+							undefined, see *Options* below:
 							
 	Options:
 		controller		-	*Optional, default current controller*
@@ -592,18 +634,13 @@
 		in view scope, and can be directly referenced:
 	
 	View Scope properties:
-		$controller			- A reference to the controller that called this view
-		$model				- A reference to this controllers default model, may be null
-		$params				- A reference to the params of the most recent action
-		$page				- a reference to this controller's <$page> property
-		[Helper classes]	- "Html" refers to $helpers.Html, etc
-		 
-		
-		*	$page, a reference to this controller's <$page> property
-		*	renderElement a reference to <renderElement>
-		*	This controller's <data> properties 
-		
-		
+		$controller				- A reference to the controller that called this view
+		$model					- A reference to this controllers default model, may be null
+		$params					- A reference to the params of the most recent action
+		$page					- a reference to this controller's <$page> property
+		getElement				- a reference to <getElement>
+		[data properties]		- all of this controller's <data> properties are available as global variables
+		[$FP.helpers classes]	- "Html" refers to $FP.helpers.Html, etc
 		
 	Examples:
 	(code)
@@ -622,8 +659,9 @@
 			// this.render({controller:this.name,action:"doStuff"})
 		}
 		
-		//in app/viwes/person/do_stuff.ejs
-		<form action="<%=$helpers.Html.url({action:"save",id:bean.id})%>" method="post"> 
+		//in app/views/person/do_stuff.ejs
+		<%=getElement("form_wrap",{title:"Edit Employee"})%>
+		<form action="<%=Html.url({action:"save",id:bean.id})%>" method="post"> 
 		<table width="100%" height="1" cellpadding="0" cellspacing="0" border="0" >
 			<tr>
 				<th class="">ID:</th><td><%=bean.id%><td>
@@ -645,6 +683,19 @@
 			</tr>
 		</table>
 		</form>
+		<%=getElement("form_wrap",{type:"end"})%>
+		
+		
+		//in app/elements/form_wrap.ejs
+		<@if type == "end">
+			</div>
+		<@else>
+			<div class="form_wrap">
+			<div class="caption"><%=title||""%></div>
+		</@if>
+		
+		//in app/elements/form_footer.ejs
+		</div>
 	(end)
 								
 	
@@ -699,7 +750,7 @@
 					$model:$this.model,
 					$page:$this.$page,
 					$params:$this.$params,
-					renderElement:$this.renderElement
+					getElement:$this.getElement
 				},
 				$this.data
 			])
@@ -713,8 +764,7 @@
 				var path = $application.directory +"app/views/layouts/" + layout
 				if (!/.[e|s]js$/.test(path)) path += ".ejs"
 				layout = new Myna.File(path)
-				/* Myna.printDump(scope)
-				Myna.abort() */
+				
 				if (layout.exists()){
 					scope.$page.content = $res.clear()
 					Myna.include(
@@ -772,10 +822,24 @@
 		$res.printBinary(data,contentType,filename)
 		this.rendered =true;
 	}
-	/* Function: getElement 
-		renders an HTML template returns the content as a string
+/* Function: getElement 
+	renders an HTML template returns the content as a string
+	
+	Parameters:
+		element		-	name of an element template, should map to 
+						app/views/elements/_element_.ejs
+		options		-	any extra global properties to pass to the template
 		
-		Parameters:
+	Element Scope properties:
+		$controller				- A reference to the controller that called this element
+		$model					- A reference to this controllers default model, may be null
+		$params					- A reference to the params of the most recent action
+		$page					- a reference to this controller's <$page> property
+		[data properties]		- all of this controller's <data> properties are available as global variables
+		[options properties]	- all _options_ properties are available as global variables
+		[$FP.helpers classes]	- "Html" refers to $FP.helpers.Html, etc
+		
+	This function is normally used inside view templates. See <render> for example usage
 			
 	*/
 	Controller.prototype.getElement = function renderElement(element,options){
@@ -796,19 +860,39 @@
 			])
 		)
 	}
-
-Controller.prototype.set = function set(prop,val){
-	if (arguments.length == 1){
-		this.data = prop
-	} else {
-		this.data[prop] = val
+/* Function: set
+	Sets a property on <data>
+	
+	Parameters:
+		prop		-	Either String property name to set, or JS object containing 
+						key/value pairs. This will overwrite same-named properties 
+						but will preserver any other existing properties  
+		val			-	value to set
+		
+	All top level properties of <data> become global variables in views and elements. 
+		
+	Examples:
+	(code)
+	function myAction(params){
+		//set single property
+		this.set("firstName","Bob")
+		
+		//set multiple properties, preserves "firstName" set earlier
+		this.set({
+			lastName:"Dobb",
+			age:56
+		})
+		
+		//you can also directly manipulate the data object
+		this.data.position="Slackmaster"
 	}
-	return val;
-}
-
-Controller.prototype.setLayout = function setLayout(layout){
-	this.layouts =[layout]	
-}
-
-Controller.prototype.afterRender = function afterAction(params,data,rawData){
-}
+	(end)
+	*/
+	Controller.prototype.set = function set(prop,val){
+		if (arguments.length == 1){
+			prop.applyTo(this.data,true);
+		} else {
+			this.data[prop] = val
+		}
+		return val;
+	}

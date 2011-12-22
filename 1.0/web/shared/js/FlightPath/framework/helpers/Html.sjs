@@ -1,4 +1,4 @@
-/* Class: $helpers.Html */
+/* Class: $FP.helpers.Html */
 
 /* Function: link
 	Returns an HTML link for a specified controller and action

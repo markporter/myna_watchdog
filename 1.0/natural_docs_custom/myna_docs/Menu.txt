@@ -52,11 +52,15 @@ SubTitle: JavaScript documentation
 Group: FlightPath  {
 
    File: $flash  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Flash.sjs)
-   File: $helpers.Html  (/data/home_mark/myna/web/shared/js/FlightPath/framework/helpers/Html.sjs)
+   File: $FP.helpers.Html  (/data/home_mark/myna/web/shared/js/FlightPath/framework/helpers/Html.sjs)
+   File: Behaviors  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Behaviors.txt)
    File: Controller  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Controller.sjs)
    File: FlightPath  (/data/home_mark/myna/web/shared/js/FlightPath/framework/FlightPath.sjs)
+   File: framework.behaviors.MynaAuth  (/data/home_mark/myna/web/shared/js/FlightPath/framework/behaviors/controllers/myna_auth.sjs)
    File: framework.controllers.DirectController  (/data/home_mark/myna/web/shared/js/FlightPath/framework/controllers/direct_controller.sjs)
+   File: Layouts  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Layouts.txt)
    File: Model  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Model.sjs)
+   File: Views  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Views.txt)
    }  # Group: FlightPath
 
 Group: LibOO  {

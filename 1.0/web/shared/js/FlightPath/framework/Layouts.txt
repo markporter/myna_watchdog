@@ -1,0 +1,41 @@
+Topic: Layouts
+
+A layout file is a specialized view (see: <Views>) that is intended to wrap content before 
+sending it to the browser. 
+
+
+Layout Locations:
+	Global Default		-	app/views/layouts/default.ejs
+	Controller Default	-	app/views/layouts/<controller name>/default.ejs
+	General Layouts		-	app/views/layouts/<layout name>.ejs
+	
+General layouts are stored in app/views/layouts/<layout name>.ejs. 
+The global default layout is stioreController default layouts are store 
+Layouts are applied by calling <Controller.addLayout> or <Controller.setLayout>  
+
+Layouts can wrap other layouts. For example the global default layout wraps the controller 
+Layouts are layered like so:
+(code)
+	/app/views/layouts/default.ejs wraps
+		/app/views/layouts/controllername/default.ejs wraps
+			/app/views/controllername/actionname.ejs
+(end)
+
+Calling this function adds additional layouts that wrap the view, like so:
+
+(code)
+	function init(){
+		this.addLayout("mylayout1")
+		this.addLayout("otherController/mylayout2.ejs")
+	}
+	
+//results in 
+/app/views/layouts/default.ejs wraps
+	/app/views/layouts/controllername/default.ejs wraps
+		/app/views/layouts/mylayout1.ejs wraps
+			/app/views/layouts/otherController/mylayout2.ejs wraps
+				/app/views/controllername/actionname.ejs	
+	
+(end)
+
+
