@@ -27,7 +27,10 @@
 	FlightPath version
 	*/
 	var version="1.0"
-
+/* Property: config
+	Config from $application.config
+	*/
+	var config={}
 
 /* _controllerClasses 
 	private controller cache
@@ -68,8 +71,8 @@
 		}
 		if (!m){	//check in the framework
 			m = new Myna.File(
-				$FP.dir,
-				"framework/models",
+				$FP.frameworkFolder,
+				"models",
 				c2f(modelName) + "_model.sjs"
 			);
 		}
@@ -98,6 +101,8 @@
 			this.config.purpose[$server.purpose.toLowerCase()].applyTo(this.config,true)
 		}
 		
+		if (!this.config.frameworkFolder) this.config.frameworkFolder = this.dir
+				
 		this.appname = $application.appname
 		
 		this.modelManagers ={}
@@ -106,7 +111,7 @@
 				this.config.ds={"default":this.config.ds}	
 			}
 			this.config.ds.forEach(function(ds,alias){
-				core.modelManagers[alias] = new Myna.DataManager(new Myna.Template(ds).apply(this))
+				core.modelManagers[alias] = new Myna.DataManager(ds)
 	
 				core.modelManagers[alias].getModel = core.modelManagers[alias].getManager
 				core.modelManagers[alias].modelExists = core.modelManagers[alias].managerExists
@@ -123,14 +128,12 @@
 				}
 				return model;
 			}) */
-			
 		}
 		
-		
-		Myna.include("framework/Controller.sjs",this)
-		Myna.include("framework/Model.sjs",this)
+		Myna.include($FP.frameworkFolder + "/Controller.sjs",this)
+		Myna.include($FP.frameworkFolder +"/Model.sjs",this)
 		this.helpers={}
-		new Myna.File("framework/helpers").listFiles("sjs").forEach(function(f){
+		new Myna.File($FP.frameworkFolder +"/helpers").listFiles("sjs").forEach(function(f){
 			var name =f2c(f.fileName.listBefore("."),true);
 			core.helpers[name]=Myna.include(f,{});
 		})
@@ -146,7 +149,7 @@
 		this.loadedAt = new Date()
 		
 		$FP = core;
-		Myna.include("framework/Flash.sjs")
+		Myna.include($FP.frameworkFolder +"/Flash.sjs")
 		
 		return core;
 	}
@@ -245,8 +248,8 @@
 			
 			if (!controller){	//check in the framework
 				controller = new Myna.File(
-					$FP.dir,
-					"framework/controllers",
+					$FP.frameworkFolder,
+					"controllers",
 					c2f(controllerName) + "_controller.sjs"
 				);
 			}
@@ -315,7 +318,7 @@
 		})
 		//search framework for controllers
 		names =names.concat(
-			new Myna.File($FP.dir,"framework/controllers").listFiles("sjs")
+			new Myna.File($FP.frameworkFolder,"controllers").listFiles("sjs")
 			.filter(function(file){
 				return /_controller.sjs$/.test(file.fileName);
 			})

@@ -1,5 +1,7 @@
-/* Class: framework.controllers.DirectController
+/* Class: Controller: DirectController
 	Framework controller class for working with Ext.Direct
+	
+	Stored in framework/controller/direct_controller.sjs
 	
 	See:
 	* http://www.sencha.com/products/extjs/extdirect

@@ -215,7 +215,7 @@ Model.prototype={
 			name.forEach(function(name){
 				var b=new Myna.File($FP.dir,"app/behaviors/models",$FP.c2f(name)+".sjs")
 				if (!b.exists()) {//check in framework
-					b=new Myna.File($FP.dir,"framework/behaviors/models",$FP.c2f(name)+".sjs")
+					b=new Myna.File($FP.frameworkFolder,"behaviors/models",$FP.c2f(name)+".sjs")
 				}
 				if (!b.exists()) throw new Error("Behavior '"+name + "' does not exist.");
 					

@@ -3056,6 +3056,7 @@ var C ={
 	/* ---------------- main ------------------------------------------------ */
 		C.fp.main=function(){
 			var path = prompt("Path to app relative to the Myna root. If it does not exist it will be created.")
+			if (!path) return;
 			Ext.Ajax.request({
 				url:"?fuseaction=update_fp_app",
 				params:{

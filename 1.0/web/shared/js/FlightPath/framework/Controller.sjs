@@ -362,7 +362,7 @@
 		name.forEach(function(name){
 			var b=new Myna.File($FP.dir,"app/behaviors/controllers",$FP.c2f(name)+".sjs")
 			if (!b.exists()) {//check in framework
-				b=new Myna.File($FP.dir,"framework/behaviors/controllers",$FP.c2f(name)+".sjs")
+				b=new Myna.File($FP.frameworkFolder,"behaviors/controllers",$FP.c2f(name)+".sjs")
 			}
 			if (!b.exists()) throw new Error("Behavior '"+name + "' does not exist.");
 				

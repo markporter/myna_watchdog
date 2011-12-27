@@ -1,4 +1,4 @@
-Topic: FlightPath
+Topic: Overview
 Myna FlightPath is a Model-View-Controller(MVC) web application framework inspired by 
 CakePHP, CFWheels and Ruby On Rails. 
 
@@ -11,14 +11,14 @@ infrastructure web developers typically have to create to start working on a web
 application. 
 
 FlightPath Features:
-	Strong separation of data, business logic and display - Each of these can be 
-		manipulated independent of the others. 
+	MVC framework - Strong separation of data, business logic and display.Each
+		of these can be manipulated independent of the others. 
 		
 	Automatic model generation - 	If your application has a single datasource, 
 		FlightPath will create models for that datasource automatically, just when 
 		needed. FlightPath will also analyze foreign key relationships and create 
 		related models. Data type constraints are also analyzed and become 
-		validators. <Model>
+		validators. See: <Model>
 		
 	URL "routes"	-	It is possible with FlightPath to map virtually any URL to 
 		an action. "appdir/book/get/12", "appdir/mypage.html", 
@@ -26,8 +26,151 @@ FlightPath Features:
 		action can even have multiple routes assigned to it. 
 		
 	Ext.Direct support	-	FlightPath provides a builtin-in controller to handle 
-		Ext.Direct API calls <framework.controller.DirectController>
+		Ext.Direct API calls. See: <Controller: DirectController>
 		
 	Authentication and authorization	-	FlightPath comes with an optional 
 		permissions behavior that can secure individual controllers or whole 
-		applications <>
+		applications. See: <Behavior: MynaAuth>
+
+Topic: Glossary
+	Terms used when talking about Myna FlightPath Applications
+	
+	Terms:
+		Model			-	Refers to either a <Model> class or instance. Models 
+							in FlightPath are static singletons (Only one 
+							instance per request). Model Functions can return 
+							one or more <beanClass> instances that contain 
+							the actual model data
+		Controller		-	Refers to either a <Controller> class or instance.
+		
+		
+Topic: Getting Started
+	To create a FilghtPath template, navigate to the Myna Administrator and select  
+	"Add/Update FlightPath App", and enter a path folder name, relative to the Myna 
+	web root. If this directory does not exist, it will be created. Once The FlightPath
+	template has been unpacked you will see a directory structure like this:
+	
+	
+	(code)
+	  +-application.sjs
+	  +-app/
+	  +-framework/
+	(end)
+	
+	"application.sjs" is a standard Myna application definition (See: <$application>),
+	With custom "config" section specific to FlightPath (See: <FlightPath Config>) 
+	
+	The "app" folder contains your application. These files will not be altered by 
+	future uses of the "Add/Update FlightPath App" feature.
+	
+	The "framework" folder contains the FlightPath framework code. These files 
+	will be overwritten future uses of the "Add/Update FlightPath App" feature.
+	
+	
+	(code)                                   
+	
+	App Dir/
+	  +-application.sjs
+	  +-app/
+		+-behaviors/                                       
+		| +-controllers/                                   
+		| \-models/
+		+-controllers/
+		| \-global.sjs 
+		+-models/
+		| \-global.sjs 
+		+-modules/                 
+		+-static/                       
+		\-views/
+		  +-elements/
+		  +-home.ejs                                 
+		  +-layouts/
+		  | \-default.ejs
+		  \-themes/
+	  +-framework/
+		+-Behaviors.txt
+		+-Controller.sjs                           
+		+-Elements.txt 
+		+-Flash.sjs
+		+-FlightPath.txt
+		+-FlightPath.sjs
+		+-Model.sjs
+		+-Views.txt
+		+-behaviors/
+		| +-controllers/
+		| | +-format_json.sjs
+		| | +-format_pdf.sjs
+		| | \-myna_auth.sjs
+		| \-models/
+		+-controllers/
+		| +-direct_controller.sjs 
+		| \-page_controller.sjs 
+		+-helpers/
+		| \-Html.sjs 
+		+-Layouts.txt 
+		\-models/
+		
+	(end)
+
+Topic: FlightPath Config
+	FlightPath configuration is stored in the "config" property of $application.
+
+	Here is the default FlightPath config
+	(code)
+	//--------- FlightPath config -----------------------------------------
+		config:{
+			ds:{
+				"default":"flight_path_app"
+			},
+			homeRoute:{
+				controller:"Main",
+				action:"index"
+			},
+			routes:[{
+				name:"pages",
+				pattern:"page/$page",
+				controller:"page",
+				action:"display",
+				page:"$page"
+			},{
+				name:"default",
+				pattern:"$controller/$action/$id",
+				controller:"$controller",
+				action:"$action",
+				id:"$id"
+			}],
+			//frameworkFolder:"file:/home/mark/myna/web/shared/js/FlightPath/framework",
+			MyCustomProperty:"woot!"
+		},
+	(end)
+	
+	"ds":
+	This structure lists data sources and their manager aliases, where the property 
+	is the alias, and the value is the DS name. Normally you only 
+	need the default data source. However, if you need access to models from multiple 
+	data sources, list them here. Note that you also need to set the manager property 
+	of the model to match the manager alias defined here, for any models beyond the 
+	default model/DS
+	
+	"homeRoute":
+	Defines the default route the will be executed when no url is provided, 
+	i.e. "http/server.com/appname/". This structure should include everything that 
+	should be passed as "params" to the action 
+	
+	"routes":
+	Defines what routes are available in this app. See: <Routes>
+	
+	"frameworkFolder":
+	Defaults to "framework". This is the <MynaPath> to where the framework 
+	folder is located. Setting this to a central location will allow all 
+	FlightPath apps to share these files and be upgraded at once. Using the 
+	example path of "file:/home/mark/myna/web/shared/js/FlightPath/framework" 
+	will cause the app to always use the version of the FlightPath framework 
+	included with the server. When Myna is upgraded, this folder is as well. 
+	
+	"MyCustomProperty":
+	All properties in the config will be applied to <$FP> and are available there from
+	any model, controller or view
+
+Topic: Routes
+	Routes are URL patterns that can be mapped to controllers and actions

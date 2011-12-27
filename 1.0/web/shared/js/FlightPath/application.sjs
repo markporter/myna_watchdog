@@ -17,10 +17,8 @@
 	
 	//--------- FlightPath config -----------------------------------------
 	config:{
-		purpose:{
-			dev:{
-				ds:"dev_{appname}",
-			},
+		ds:{
+			"default":"flight_path_app"
 		},
 		homeRoute:{
 			controller:"Main",
@@ -38,7 +36,9 @@
 			controller:"$controller",
 			action:"$action",
 			id:"$id"
-		}]
+		}],
+		//frameworkFolder:"/shared/js/FlightPath/framework",
+		MyCustomProperty:"woot!"
 	},
 	//--------- init method ----------------------------------------------
 	init:function(){	// this is run before any workflow methods to setup the application.
@@ -50,7 +50,16 @@
 		
 	},
 	onRequestStart:function(){ // run directly before requested file
-		Myna.include("framework/FlightPath.sjs",{}).init().handleRequest();
+		/* Example of changing ds based on server purpose */
+		/*
+		
+		if ($server.purpose.toLowerCase() != "prod"){
+			this.config.ds["default"] +="_"+$server.purpose.toLowerCase() 	
+		}
+		
+		*/
+		var frameworkFolder=this.config.frameworkFolder||this.dir + "framework" 
+		Myna.include(frameworkFolder+"/FlightPath.sjs",{}).init().handleRequest();
 	},
 	onRequestEnd:function(){ // run directly after requested file
 	

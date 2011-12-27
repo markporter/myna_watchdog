@@ -353,7 +353,7 @@
 	
 		<!-- Copy static content of this web application -->
 		<copy todir="${build.home}">
-			<fileset dir="${web.home}"/>
+			<fileset dir="${web.home}" excludes="**/*.marks **/~* **/*~"/>
 		</copy>
 		<!-- <copy todir="${build.home}/shared/js/ext_latest">
 			<fileset dir="${basedir}/ext_latest"/>

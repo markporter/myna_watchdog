@@ -1,9 +1,26 @@
-/* Topic:  MynaAuth
-	Applies action.controller based authentication and rights checking to controllers
+/* Class:  Behavior: MynaAuth
+	Applies action.controller based authentication and rights checking to controllers.
 	
+	This behavior uses Myna's centralized authentication and permissions system 
+	to authenticate this controller's actions. Each action is treated as a right 
+	in the form of "<controllerName>.<actionName>". If the current user is not 
+	authenticated, they are sent to Myna's centralized login page and 
+	authenticated against one of the defined AuthTypes (see: <AuthAdapters>) 
+	
+	Parameters:
+		whiteList		-	*Optional, default []*
+							Array of action names that do not require authentication
+		providers		-	*Optional, default <Myna.Permissions.getAuthTypes>*
+							Array of provider names (AuthTypes) to make available from authentication,
+		redirectParams	-	*Optional, default {}*
+							Any extra parameters to <$res.redirectLogin>. 
+							This behavior will automatically set the callbackUrl 
+							to the originally requested action 
+							
+							
 	Usage:
 	(code)
-		// used in a single contoller
+		// used in a single controller
 		//main_controller.sjs
 		function init(){
 			this.applyBehavior("MynaAuth",{
@@ -48,7 +65,7 @@ function _mynaAuth(action, params){
 	var right = this.name + "." + action;
 	var isWhitelisted = my.options.whitelist.some(function(item){
 		if (!(item instanceof RegExp)){
-			item = new RegExp(String(item).replace(/\./,"\\."))
+			item = new RegExp("^" +String(item).replace(/\./,"\\.") +"$")
 		}
 		return item.test() 	
 	})
