@@ -1,7 +1,16 @@
+
 /* Class: Model
-	base model class. 
+	Data Modeling base class
+	
+	In FlightPath, models (the M in MVC) are split into two classes: Manager and Bean
 	
 	This class is intended to be extended rather than used directly. 
+*/
+/* Topic: Models
+	Overview of FlightPath models
+*/
+/* Function: Model
+	Model constructor
 */
 function Model(){
 	if (!this._labels) 	this._labels={}
@@ -48,6 +57,7 @@ function Model(){
 		
 	}
 }
+
 /* Function: validation.validatorFunctions.unique
 	Validates a value is unique in a field
 		
@@ -636,7 +646,10 @@ Model.prototype={
 	}
 	
 }
-	
+
+/* Class: beanClass
+	A model's bean class
+*/
 Model.prototype.beanClass = function(data,model){
 	this.model = model
 	var $this = this;

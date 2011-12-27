@@ -11,14 +11,14 @@ Generally <Layouts> wrap view templates, and view templates include <Elements>
 Views <Layouts> and <Elements> have access to several global properties 
 
 View Properties:
-	$controller				- A reference to the controller that called this view
-	$model					- A reference to this controllers default model, may be null
-	$params					- A reference to the params of the most recent action
-	$page					- A reference to this controller's <Controller.$page> property
-	getElement				- A reference to <getElement>
-	[data properties]		- All of the calling controller's <Controller.data> 
-							  properties are available as global variables
-	[$FP.helpers classes]	- "Html" refers to $FP.helpers.Html, etc
+	$controller					- 	A reference to the controller that called this view
+	$model						- 	A reference to this controllers default model, may be null
+	$params						- 	A reference to the params of the most recent action
+	$page							- 	A reference to this controller's <Controller.$page> property
+	getElement					- 	A reference to <getElement>
+	[data properties]			- 	All of the calling controller's <Controller.data> 
+								 		properties are available as global variables
+	[$FP.helpers classes]	- 	"Html" refers to $FP.helpers.Html, etc
 	
 	
 

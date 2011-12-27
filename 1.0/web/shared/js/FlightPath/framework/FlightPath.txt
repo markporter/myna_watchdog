@@ -1,0 +1,33 @@
+Topic: FlightPath
+Myna FlightPath is a Model-View-Controller(MVC) web application framework inspired by 
+CakePHP, CFWheels and Ruby On Rails. 
+
+Before you begin:
+* What is MVC? http://wikipedia.org/wiki/Model-view-controller
+* What is CoC? (convention over configuration)? http://wikipedia.org/wiki/Convention_over_configuration
+
+Myna FlightPath is an application template that implements may of the repetitive 
+infrastructure web developers typically have to create to start working on a web 
+application. 
+
+FlightPath Features:
+	Strong separation of data, business logic and display - Each of these can be 
+		manipulated independent of the others. 
+		
+	Automatic model generation - 	If your application has a single datasource, 
+		FlightPath will create models for that datasource automatically, just when 
+		needed. FlightPath will also analyze foreign key relationships and create 
+		related models. Data type constraints are also analyzed and become 
+		validators. <Model>
+		
+	URL "routes"	-	It is possible with FlightPath to map virtually any URL to 
+		an action. "appdir/book/get/12", "appdir/mypage.html", 
+		"appdir/index.sjs?controller=test&action=run" are all valid URLs. An 
+		action can even have multiple routes assigned to it. 
+		
+	Ext.Direct support	-	FlightPath provides a builtin-in controller to handle 
+		Ext.Direct API calls <framework.controller.DirectController>
+		
+	Authentication and authorization	-	FlightPath comes with an optional 
+		permissions behavior that can secure individual controllers or whole 
+		applications <>

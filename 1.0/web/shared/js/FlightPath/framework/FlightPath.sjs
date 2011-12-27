@@ -1,5 +1,6 @@
-/* Class: FlightPath
-	Core framework class for Myna FlightPath
+/* Class: $FP
+	Core framework instance for Myna FlightPath
+	
 	*/
 	$server_gateway.threadScope.$FP=null;//this saves 500ms, don't ask me why
 /* Property: dir

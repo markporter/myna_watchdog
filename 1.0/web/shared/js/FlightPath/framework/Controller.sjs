@@ -84,7 +84,10 @@
 	See:
 	* <set>
 */
-
+/* Property: name
+	The name of this controller
+	
+*/
 /* Function: addLayout 
 	adds a layout layer to this this request
 	
@@ -826,8 +829,11 @@
 	renders an HTML template returns the content as a string
 	
 	Parameters:
-		element		-	name of an element template, should map to 
-						app/views/elements/_element_.ejs
+		element		-	name of an element template, should map to
+						app/views/elements/_element_,
+						app/views/elements/<current controller name>_element_.ejs, or
+						app/views/elements/_element_.ejs, 
+						
 		options		-	any extra global properties to pass to the template
 		
 	Element Scope properties:
@@ -841,11 +847,25 @@
 		
 	This function is normally used inside view templates. See <render> for example usage
 			
+	Examples:
+	(code)
+		//in app/views/test/index.ejs
+		
+		<%=getElement("shared/common_commonlinks.ejs")%>
+		<%=getElement()%>
+	(end)
 	*/
 	Controller.prototype.getElement = function renderElement(element,options){
 		if (!options) options = {}
+		var e = new Myna.File($application.directory ,"app/views/elements",element)
+		if (!e.exists()){
+			e =new Myna.File($application.directory ,"app/views/elements",this.name , element + ".ejs")
+		}
+		if (!e.exists()){
+			e = new Myna.File($application.directory ,"app/views/elements", element + ".ejs")
+		}
 		return Myna.includeContent(
-			$application.directory +"app/views/elements/" + element + ".ejs",
+			e,
 			$FP.mergeClasses([
 				$FP.helpers,
 				{
