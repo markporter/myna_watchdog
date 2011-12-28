@@ -26,7 +26,7 @@
 		},
 		routes:[{
 			name:"pages",
-			pattern:"page/$page",
+			pattern:"page/$page*",
 			controller:"page",
 			action:"display",
 			page:"$page"

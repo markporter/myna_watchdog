@@ -103,8 +103,19 @@
 			url += template
 				.replace(/\$controller/g,controller)
 				.replace(/\$action/g,action)
-				.replace(/\/\$id/g,id?"/"+id:"") 
+				.replace(/\/\$id\*?/g,id?"/"+id:"")
+					
+			template.replace(/\$(\w+)\*?/g,function(str,p){
+				if ("params" in options && p in options.params){
+					var val =options.params[p];
+					delete options.params[p]
+					return String(val||"")
+				} else {
+					return ""	
+				}
+			})
 		}
+		
 		
 		if ("params" in options){
 			var q = $FP.objectToUrl(options.params,!template)

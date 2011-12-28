@@ -26,7 +26,7 @@ FlightPath Features:
 		action can even have multiple routes assigned to it. 
 		
 	Ext.Direct support	-	FlightPath provides a builtin-in controller to handle 
-		Ext.Direct API calls. See: <Controller: DirectController>
+		Ext.Direct API calls. See: <Controller: Direct>
 		
 	Authentication and authorization	-	FlightPath comes with an optional 
 		permissions behavior that can secure individual controllers or whole 
@@ -36,12 +36,60 @@ Topic: Glossary
 	Terms used when talking about Myna FlightPath Applications
 	
 	Terms:
+		$flash			-	Global temporary message store. Intended for displaying 
+							messages to the user regardless of which action will 
+							be next loaded. Used by <$FP.redirectTo> and the default 
+							_Layout_. See: <$flash>
+							
+		$FP				-	Global FlightPath object that contains functions 
+							accessible from everywhere in a FlightPath application. See: <$FP>
+							
+		Action			-	A function on a _Controller_ that takes input from a 
+							web request, sets data on the controller instance, 
+							and picks a _View_ to render the data back to the 
+							browser.
+							
+		Behavior		-	A mixin class that overrides, alters, or appends 
+							functionality to a class. Behaviors can be applied to
+							either _Controllers_ or _Models_. See: <Behaviors>
+							
+		Controller		-	Refers to either a <Controller> class or instance. 
+							Controllers contain _Actions_ manage _Layouts_, an 
+							contain _Behaviors_, and _Filters_
+							
+		Element			-	Specialized _View_ template for containing output 
+							snippets to be included in a _View_
+							
+		Filter			-	A function applied in the init() function of a 
+							Controller to be executed before or after an _Action_. 
+							This can be used to alter how actions are performed 
+							without changing the actions themselves. For example 
+							authentication and permissions checks can be 
+							performed in filters and certain actions can be 
+							denied or audited. See: <Controller.addFilter>
+							
+		Helpers			-	Helpers are function libraries used inside of 
+							_Views_ and _Actions_ for repetitive tasks, usually 
+							related to generating output. See: <$FP.helpers.Html>
+							
+		Layout			-	Specialized _View_ template set in a _Controller_ to 
+							wrap content created by an _Action_
+							
 		Model			-	Refers to either a <Model> class or instance. Models 
 							in FlightPath are static singletons (Only one 
 							instance per request). Model Functions can return 
 							one or more <beanClass> instances that contain 
 							the actual model data
-		Controller		-	Refers to either a <Controller> class or instance.
+							
+		Route			-	A URL pattern that maps to a controller an d action. 
+							A FlightPath application can support multiple routes. 
+							See: <Routes>
+							
+		View			-	An .ejs template intended to be sent to the browser.
+							There are also specialized views: <Layouts> and <Elements>
+		
+		
+		
 		
 		
 Topic: Getting Started
@@ -54,8 +102,16 @@ Topic: Getting Started
 	(code)
 	  +-application.sjs
 	  +-app/
+	  	+...
 	  +-framework/
+	  	+...
 	(end)
+	
+	The "framework" folder contains the FlightPath framework code. These files 
+	will be overwritten future uses of the "Add/Update FlightPath App" feature.
+	Here you will find built-in controllers and behaviors such as 
+	<Controller: Direct> and <Behavior: MynaAuth>. You should not 
+	modify any files in this folder.
 	
 	"application.sjs" is a standard Myna application definition (See: <$application>),
 	With custom "config" section specific to FlightPath (See: <FlightPath Config>) 
@@ -63,15 +119,8 @@ Topic: Getting Started
 	The "app" folder contains your application. These files will not be altered by 
 	future uses of the "Add/Update FlightPath App" feature.
 	
-	The "framework" folder contains the FlightPath framework code. These files 
-	will be overwritten future uses of the "Add/Update FlightPath App" feature.
-	
-	
 	(code)                                   
-	
-	App Dir/
-	  +-application.sjs
-	  +-app/
+	+-app/
 		+-behaviors/                                       
 		| +-controllers/                                   
 		| \-models/
@@ -87,30 +136,36 @@ Topic: Getting Started
 		  +-layouts/
 		  | \-default.ejs
 		  \-themes/
-	  +-framework/
-		+-Behaviors.txt
-		+-Controller.sjs                           
-		+-Elements.txt 
-		+-Flash.sjs
-		+-FlightPath.txt
-		+-FlightPath.sjs
-		+-Model.sjs
-		+-Views.txt
-		+-behaviors/
-		| +-controllers/
-		| | +-format_json.sjs
-		| | +-format_pdf.sjs
-		| | \-myna_auth.sjs
-		| \-models/
-		+-controllers/
-		| +-direct_controller.sjs 
-		| \-page_controller.sjs 
-		+-helpers/
-		| \-Html.sjs 
-		+-Layouts.txt 
-		\-models/
-		
 	(end)
+	
+	"app" sub-folders:
+		behaviors		-	Stores <Controller> behaviors in the "controllers" folder
+							and <Model> behaviors in the "model" folder. See <Behaviors>
+		controllers		-	Stores <Controller> files. File names should be lower case 
+							with underbars (_) between words and "_controller" on the end, 
+							e.g. MyItem becomes my_item_controller.sjs. The global.sjs 
+							file is included before every controller file. Use this file 
+							for global initialization and/or to add common functions to 
+							all controllers. The init() in the global.sjs file is executed 
+							before the controller's init()
+		models			-	Stores <Model> files. File names should be lower case 
+							with underbars (_) between words and "_model" on the end, 
+							e.g. MyItem becomes my_item_model.sjs. The global.sjs 
+							file is included before every model file. Use this file 
+							for global initialization and/or to add common functions to 
+							all models. The init() in the global.sjs file is executed 
+							before the model's init()
+		modules			-	Modules are self-contained FlightPath applications that can be embedded in 
+							other applications. These controllers, models and views can be accessed as 
+							if they were in the main application. See: <Modules>
+		static			-	This folder contains static content that will not be interpreted as Myna or 
+							FlightPath code. These files are accessed via http://server.tld/appname/static/filename
+							This is a good place for images, client-side JavaScript files and css files
+		views			-	This folder contains a sub-folder for each controller that has views. For example
+							the view for the Main controller's index() action would be views/main/index.ejs
+		views/home.ejs	-	default page loaded if no homeRoute is defined (see: <FlightPath Config>)
+		views/
+							
 
 Topic: FlightPath Config
 	FlightPath configuration is stored in the "config" property of $application.
@@ -128,7 +183,7 @@ Topic: FlightPath Config
 			},
 			routes:[{
 				name:"pages",
-				pattern:"page/$page",
+				pattern:"page/$page*",
 				controller:"page",
 				action:"display",
 				page:"$page"
@@ -154,7 +209,7 @@ Topic: FlightPath Config
 	
 	"homeRoute":
 	Defines the default route the will be executed when no url is provided, 
-	i.e. "http/server.com/appname/". This structure should include everything that 
+	i.e. "http/server.tld/appname/". This structure should include everything that 
 	should be passed as "params" to the action 
 	
 	"routes":
@@ -171,6 +226,172 @@ Topic: FlightPath Config
 	"MyCustomProperty":
 	All properties in the config will be applied to <$FP> and are available there from
 	any model, controller or view
+	
+	
+Topic: Behaviors
+	Behaviors are functions that are applied to the current object. 
+	
+	Behaviors can be 
+	applied to either models or controllers to modify their functionality. If you 
+	want to add a set of functions multiple controllers or models behaviors are a 
+	good mechanism.
+	
+	* Built-in controller behaviors are stored in framework/behaviors/controllers/<behavior name>.sjs
+	* Custom controller behaviors are stored in app/behaviors/controllers/<behavior name>.sjs
+	* Built-in model behaviors are stored in framework/behaviors/models/<behavior name>.sjs
+	* Custom model behaviors are stored in app/behaviors/models/<behavior name>.sjs
+	
+	In the case of a name conflict, custom behaviors hide built-in behaviors
+	
+	Example:
+	(code)
+		//in some_controller.sjs
+		function init(){
+			// loads the built-in PDF andJSON filters
+			// Each of these has an "init" function that adds the appropriate 
+			// before and after filters
+			this.applyBehavior([
+				"FormatPdf",
+				"FormatJson"
+			]);
+			
+			//loads a single behavior with options
+			this.applyBehavior("MynaAuth",{
+				whitelist:[
+					"Main.index",
+					"Main.logout"
+				],
+				redirectParams:{
+					message: "Enter your AD domain credentials",
+					providers:["ldap_ad"]
+				}
+			});
+		}
+	(end)
+
+Topic: Elements
+	An element file is a specialized view (see: <Views>) that is intended to contain 
+	a fragment of output (usually HTML) that can be used in a view 
+	
+	
+	Element Locations:
+		General Elements		-	app/views/elements/<element name>.ejs
+		
+	General elements are stored in app/views/elements/<element name>.ejs. 
+	The global default element is stioreController default elements are store 
+	Elements are applied by calling <Controller.addElement> or <Controller.setElement>  
+	
+	Elements can wrap other elements. For example the global default element wraps the controller 
+	Elements are layered like so:
+	(code)
+		/app/views/elements/default.ejs wraps
+			/app/views/elements/controllername/default.ejs wraps
+				/app/views/controllername/actionname.ejs
+	(end)
+	
+	Calling this function adds additional elements that wrap the view, like so:
+	
+	(code)
+		function init(){
+			this.addElement("myelement1")
+			this.addElement("otherController/myelement2.ejs")
+		}
+		
+	//results in 
+	/app/views/elements/default.ejs wraps
+		/app/views/elements/controllername/default.ejs wraps
+			/app/views/elements/myelement1.ejs wraps
+				/app/views/elements/otherController/myelement2.ejs wraps
+					/app/views/controllername/actionname.ejs	
+		
+	(end)
+	
+Topic: Layouts
+	A layout file is a specialized view (see: <Views>) that is intended to wrap content before 
+	sending it to the browser. 
+	
+	
+	Layout Locations:
+		Global Default		-	app/views/layouts/default.ejs
+		Controller Default	-	app/views/layouts/<controller name>/default.ejs
+		General Layouts		-	app/views/layouts/<layout name>.ejs
+		
+	General layouts are stored in app/views/layouts/<layout name>.ejs. 
+	The global default layout is stioreController default layouts are store 
+	Layouts are applied by calling <Controller.addLayout> or <Controller.setLayout>  
+	
+	Layouts can wrap other layouts. For example the global default layout wraps the controller 
+	Layouts are layered like so:
+	(code)
+		/app/views/layouts/default.ejs wraps
+			/app/views/layouts/controllername/default.ejs wraps
+				/app/views/controllername/actionname.ejs
+	(end)
+	
+	Calling this function adds additional layouts that wrap the view, like so:
+	
+	(code)
+		function init(){
+			this.addLayout("mylayout1")
+			this.addLayout("otherController/mylayout2.ejs")
+		}
+		
+	//results in 
+	/app/views/layouts/default.ejs wraps
+		/app/views/layouts/controllername/default.ejs wraps
+			/app/views/layouts/mylayout1.ejs wraps
+				/app/views/layouts/otherController/mylayout2.ejs wraps
+					/app/views/controllername/actionname.ejs	
+		
+	(end)	
+	
+Topic: Modules
+	Modules are self-contained FlightPath applications that can be embedded in 
+	other applications. These controllers, models and views can be accessed as 
+	if they were in the main application.  
 
 Topic: Routes
-	Routes are URL patterns that can be mapped to controllers and actions
+	Routes are URL patterns that can be mapped to controllers and actions. Routes 
+	are defined in the config section of the application.sjs for your app 
+	(See: <FlightPath Config>).  
+	
+	Route Parameters:
+		name	-	name of the route. This is used by <$FP.helpers.Html.url> and 
+					<$FP.helpers.Html.link> to create URL's that match a particular
+					route.
+		pattern	-	String. Pattern to match. see *Pattern Definitions* below
+
+	Pattern Definitions:
+	Patterns are a series of tokens separated by slashes(/). tokens can be:
+	
+	* string literals,  ex: "page", 
+	* variable placeholders, ex: "$page"
+	* globbing variable placeholders (must be last token), ex: "$page*"
+	* Regular Expressions, ex: "rpt\d{3}\.doc"
+	
+	
+	
+Topic: Views
+	View Templates are .ejs templates used to render the result of an action. They 
+	are stored in app/views. Normally views are loaded automatically for a given controller and 
+	action by looking in app/views/<controller name>/<action_name>.ejs. Views can 
+	also be directly rendered via <Controller.render>
+	
+	There are also two specialized kinds of view files: <Layouts> and <Elements>. 
+	Generally <Layouts> wrap view templates, and view templates include <Elements>
+	
+	Views <Layouts> and <Elements> have access to several global properties 
+	
+	View Properties:
+		$controller					- 	A reference to the controller that called this view
+		$model						- 	A reference to this controllers default model, may be null
+		$params						- 	A reference to the params of the most recent action
+		$page							- 	A reference to this controller's <Controller.$page> property
+		getElement					- 	A reference to <getElement>
+		[data properties]			- 	All of the calling controller's <Controller.data> 
+											properties are available as global variables
+		[$FP.helpers classes]	- 	"Html" refers to $FP.helpers.Html, etc
+	
+	
+
+.

@@ -129,11 +129,11 @@
 				return model;
 			}) */
 		}
-		
-		Myna.include($FP.frameworkFolder + "/Controller.sjs",this)
-		Myna.include($FP.frameworkFolder +"/Model.sjs",this)
+		this.frameworkFolder = this.config.frameworkFolder; 
+		Myna.include(this.frameworkFolder + "/Controller.sjs",this)
+		Myna.include(this.frameworkFolder +"/Model.sjs",this)
 		this.helpers={}
-		new Myna.File($FP.frameworkFolder +"/helpers").listFiles("sjs").forEach(function(f){
+		new Myna.File(this.frameworkFolder +"/helpers").listFiles("sjs").forEach(function(f){
 			var name =f2c(f.fileName.listBefore("."),true);
 			core.helpers[name]=Myna.include(f,{});
 		})
@@ -418,16 +418,20 @@
 		var routes=this.config.routes
 		if (restParams.length){
 			var controllerNames = getControllerNames()
-			routes.some(function(route){
+			routes.some(function(route,index){
 				if (!route.pattern.listLen("/") == restParams.length) return false;
 				
 				var localParams={}
 				var matchedAll = route.pattern.split("/").every(function(p,index){
 					if (p.left(1) == "$"){
-						localParams[p.after(1)] = restParams[index];
+						if (p.right(1) == "*"){
+							localParams[p.after(1).before(1)] = restParams.slice(index).join("/")
+						} else {
+							localParams[p.after(1)] = restParams[index];
+						}
 						return true
 					} else {
-						return p == restParams[index].toLowerCase() || new RegExp(restParams[index],"i").test(p)
+						return p == restParams[index].toLowerCase() || new RegExp(p,"i").test(restParams[index])
 					}
 				})
 				

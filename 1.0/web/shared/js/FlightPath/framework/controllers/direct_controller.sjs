@@ -1,4 +1,4 @@
-/* Class: Controller: DirectController
+/* Class: Controller: Direct
 	Framework controller class for working with Ext.Direct
 	
 	Stored in framework/controller/direct_controller.sjs
@@ -8,7 +8,7 @@
 */
 function api(params){
 	var API ={
-		url:$server.serverUrl+$application.url+$FP.c2f(this.name)+"/router",
+		url:$application.url+$FP.c2f(this.name)+"/router",
 		type:"remoting",
 		actions:{}
 	}

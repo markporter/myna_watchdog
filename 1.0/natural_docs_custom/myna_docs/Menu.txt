@@ -54,14 +54,12 @@ Group: FlightPath  {
    File: $flash  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Flash.sjs)
    File: $FP  (no auto-title, /data/home_mark/myna/web/shared/js/FlightPath/framework/FlightPath.sjs)
    File: $FP.helpers.Html  (no auto-title, /data/home_mark/myna/web/shared/js/FlightPath/framework/helpers/Html.sjs)
-   File: Behaviors  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Behaviors.txt)
    File: Controller  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Controller.sjs)
-   File: Controller: DirectController  (/data/home_mark/myna/web/shared/js/FlightPath/framework/controllers/direct_controller.sjs)
+   File: Controller: Direct  (/data/home_mark/myna/web/shared/js/FlightPath/framework/controllers/direct_controller.sjs)
+   File: Controller: Page  (/data/home_mark/myna/web/shared/js/FlightPath/framework/controllers/page_controller.sjs)
    File: FlightPath.txt  (/data/home_mark/myna/web/shared/js/FlightPath/framework/FlightPath.txt)
-   File: Layouts  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Layouts.txt)
    File: Model  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Model.sjs)
    File: MynaAuth  (no auto-title, /data/home_mark/myna/web/shared/js/FlightPath/framework/behaviors/controllers/myna_auth.sjs)
-   File: Views  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Views.txt)
    }  # Group: FlightPath
 
 Group: LibOO  {
