@@ -32,10 +32,12 @@
 			page:"$page"
 		},{
 			name:"default",
-			pattern:"$controller/$action/$id",
+			pattern:"[$method]$controller/$action/$id/$rest*",
 			controller:"$controller",
 			action:"$action",
-			id:"$id"
+			id:"$id",
+			method:"$method",
+			extraPath:"$rest"
 		}],
 		//frameworkFolder:"/shared/js/FlightPath/framework",
 		MyCustomProperty:"woot!"

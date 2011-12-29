@@ -22,62 +22,62 @@ import org.apache.commons.logging.LogFactory;
 public class JSServlet extends HttpServlet {
 	 public String type="GET";
 	 public void init(ServletConfig config) throws ServletException {
-				// Store the ServletConfig object and log the initialization
-				super.init(config);
-				ServletContext sc = config.getServletContext();
+		// Store the ServletConfig object and log the initialization
+		super.init(config);
+		ServletContext sc = config.getServletContext();
+		
+		try{
+			MynaThread thread = new MynaThread();
+			thread.environment.put("servlet",this);
+			thread.rootDir = new File(sc.getRealPath("/")).toURI().toString();
+			thread.loadGeneralProperties();
+			if (thread.generalProperties.getProperty("webroot") != null){
+				thread.rootDir = thread.generalProperties.getProperty("webroot");
 				
-				try{
-					MynaThread thread = new MynaThread();
-					thread.environment.put("servlet",this);
-					thread.rootDir = new File(sc.getRealPath("/")).toURI().toString();
-					thread.loadGeneralProperties();
-					if (thread.generalProperties.getProperty("webroot") != null){
-						thread.rootDir = thread.generalProperties.getProperty("webroot");
-						
+			}
+			try {
+				String [] serverStartScripts = thread.generalProperties.getProperty("server_start_scripts").split(",");
+				
+				URI sharedPath = new URI(thread.rootDir).resolve("shared/js/");
+				for (int x=0;x < serverStartScripts.length;++x){
+					String path = serverStartScripts[x];
+					URI curUri = new java.net.URI(path);
+					if (!curUri.isAbsolute()){
+						curUri = sharedPath.resolve(curUri);
 					}
-					try {
-						String [] serverStartScripts = thread.generalProperties.getProperty("server_start_scripts").split(",");
-						
-						URI sharedPath = new URI(thread.rootDir).resolve("shared/js/");
-						for (int x=0;x < serverStartScripts.length;++x){
-							String path = serverStartScripts[x];
-							URI curUri = new java.net.URI(path);
-							if (!curUri.isAbsolute()){
-								curUri = sharedPath.resolve(curUri);
-							}
-							if (!curUri.isAbsolute() || !new File(curUri).exists()){
-								throw new IOException("Cannot find '" +path +"' in system root directory or in '"
-								+sharedPath.toString() 
-								+"'. See server_start_scripts in WEB-INF/classes/general.properties.");	
-							}
-							thread.handleRequest(curUri.toString());
-						}
-						//thread.rootUrl = req.getContextPath() + "/";
-					} catch(Exception threadException){
-						thread.handleError(threadException);
+					if (!curUri.isAbsolute() || !new File(curUri).exists()){
+						throw new IOException("Cannot find '" +path +"' in system root directory or in '"
+						+sharedPath.toString() 
+						+"'. See server_start_scripts in WEB-INF/classes/general.properties.");	
 					}
-					sc.log("======================= myna "+thread.generalProperties.getProperty("version")+" init complete ===========================");
-				} catch (Exception e){
-					sc.log(e.toString());
-					System.out.println("============== Error ============");
-					System.out.println("============== Stacktrace ============");
-					
-					e.printStackTrace(System.out);
-					e.printStackTrace(System.err);
-					
+					thread.handleRequest(curUri.toString());
 				}
-				
-				
+				//thread.rootUrl = req.getContextPath() + "/";
+			} catch(Exception threadException){
+				thread.handleError(threadException);
+			}
+			sc.log("======================= myna "+thread.generalProperties.getProperty("version")+" init complete ===========================");
+		} catch (Exception e){
+			sc.log(e.toString());
+			System.out.println("============== Error ============");
+			System.out.println("============== Stacktrace ============");
+			
+			e.printStackTrace(System.out);
+			e.printStackTrace(System.err);
+			
 		}
+			
+			
+	 }
 
 	/**
-	* Servlet entry point for get http method. 
+	* Servlet request handler 
 	* 
 	*
 	* @param  req Servlet request object
 	* @param  res Servlet response object
 	*/
-	public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
+	public void handleRequest(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
 		//System.out.println("type = " + this.type);
 		try{
 			MynaThread thread = new MynaThread();
@@ -223,6 +223,19 @@ public class JSServlet extends HttpServlet {
 	}
 	
 	/**
+	* Servlet entry point for get http method. 
+	* 
+	*
+	* @param  req Servlet request object
+	* @param  res Servlet response object
+	*/
+	public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
+		this.type="GET";
+		//System.out.println("called get");
+		handleRequest(req,res);
+	}
+	
+	/**
 	* Servlet entry point for post http method. 
 	* 
 	*
@@ -232,14 +245,14 @@ public class JSServlet extends HttpServlet {
 	public void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
 		this.type="POST";
 		//System.out.println("called post");
-		doGet(req,res);	
+		handleRequest(req,res);	
 	}
 	
 	public void doHead(HttpServletRequest req, HttpServletResponse res)
 		throws ServletException, IOException
 	{
 		this.type="HEAD";
-		doGet(req,res);
+		handleRequest(req,res);
 	}
 	
 	/**
@@ -251,7 +264,7 @@ public class JSServlet extends HttpServlet {
 	*/
 	public void doPut(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
 		this.type="PUT";
-		doGet(req,res);	
+		handleRequest(req,res);	
 	}
 	
 	/**
@@ -263,7 +276,7 @@ public class JSServlet extends HttpServlet {
 	*/
 	public void doDelete(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
 		this.type="DELETE";
-		doGet(req,res);	
+		handleRequest(req,res);	
 	}
 	
 }

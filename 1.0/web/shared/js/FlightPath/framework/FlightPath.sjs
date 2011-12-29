@@ -421,23 +421,54 @@
 			routes.some(function(route,index){
 				if (!route.pattern.listLen("/") == restParams.length) return false;
 				
-				var localParams={}
-				var matchedAll = route.pattern.split("/").every(function(p,index){
+				var localParams=route.filter(function(v,k){
+					return !"name,pattern".listContains(k)
+				})
+				//Myna.println(route.pattern)
+				function testToken(p,value){
 					if (p.left(1) == "$"){
+						var paramName = p;
 						if (p.right(1) == "*"){
-							localParams[p.after(1).before(1)] = restParams.slice(index).join("/")
-						} else {
-							localParams[p.after(1)] = restParams[index];
+							paramName = p.before(1)
+							value = restParams.slice(index).join("/")
+						} else if (p.right(1) == ")"){
+							var parts = p.match(/^(\$\w+)\((.*?)\)$/);
+							paramName =parts[1];
+							var regex = new RegExp(parts[2],"i")
+							/* Myna.abort("debug",[
+								regex,
+								restParams[index],
+								regex.test(restParams[index])
+							]) */
+							if (!regex.test(value)) return false
 						}
+						
+						route.forEach(function(v,k){
+							//Myna.println(k +";" + paramName + ":" +v)
+							if (v == paramName){
+								localParams[k] = value
+							}
+						})
+						//Myna.abort()
 						return true
 					} else {
-						return p == restParams[index].toLowerCase() || new RegExp(p,"i").test(restParams[index])
+						return p == value.toLowerCase() || new RegExp(p,"i").test(value)
 					}
+				}
+				var matchedAll = route.pattern.split("/").every(function(p,index){
+					if (index == 0 && p.left(1) == "["){
+						var method  = p.match(/^\[(.*?)\]/)[1];
+						
+						if (!testToken(method,$req.type)) return false
+						p = p.after(p.indexOf("]")+1)
+						//Myna.abort(p)
+					}
+					return testToken(p,restParams[index])
 				})
 				
 				if (!matchedAll) return false;
-				
-				[
+
+				/*[
 					"controller",
 					"action",
 					"id"
@@ -449,10 +480,11 @@
 							localParams[name] = route[name];
 						}
 					}
-				})
-				//Myna.printDump(localParams)
+				})*/ 
+				
 				var controller = $FP.f2c(localParams.controller||"",true);
 				var action = $FP.f2c(localParams.action||""); 
+				//Myna.abort("debug",controller)
 				if (controllerNames.contains(controller)){
 					if (getController(controller).getActions().contains(function(a){return a.action==action})){
 						params = localParams;
@@ -461,6 +493,7 @@
 					} else return false
 				} else return false
 			})
+			//Myna.abort("debug")
 		} else {
 			
 		}
@@ -472,7 +505,7 @@
 		})
 		
 		params = $req.rawData.setDefaultProperties(params);
-		
+		 
 		if (
 			params.controller 
 			&& /^[a-z0-9-_]+$/.test(params.controller)
@@ -513,13 +546,13 @@
 				$res.serveFile(f)
 			} else {
 				var params =$req.params = getParams();
+				
 				if(!params.controller){
 					$application._onError404();
 				}
 				
 				var c = getController(params.controller)	
 				if (!params.action) params.action ="index"
-				
 				c.handleAction(params);
 				$req.handled=true;
 			}

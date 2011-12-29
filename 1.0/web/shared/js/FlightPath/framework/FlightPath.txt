@@ -189,10 +189,11 @@ Topic: FlightPath Config
 				page:"$page"
 			},{
 				name:"default",
-				pattern:"$controller/$action/$id",
+				pattern:"$controller/$action/$id/$restParams*",
 				controller:"$controller",
 				action:"$action",
 				id:"$id"
+				restParams:"$restParams"
 			}],
 			//frameworkFolder:"file:/home/mark/myna/web/shared/js/FlightPath/framework",
 			MyCustomProperty:"woot!"
@@ -353,21 +354,141 @@ Topic: Modules
 Topic: Routes
 	Routes are URL patterns that can be mapped to controllers and actions. Routes 
 	are defined in the config section of the application.sjs for your app 
-	(See: <FlightPath Config>).  
+	(See: <FlightPath Config>). An incoming URL is matched against the routes 
+	array from top to bottom, exiting early if a match is found
 	
 	Route Parameters:
-		name	-	name of the route. This is used by <$FP.helpers.Html.url> and 
-					<$FP.helpers.Html.link> to create URL's that match a particular
-					route.
-		pattern	-	String. Pattern to match. see *Pattern Definitions* below
+		name		-	name of the route. This is used by <$FP.helpers.Html.url> and 
+						<$FP.helpers.Html.link> to create URL's that match a particular
+						route.
+		pattern		-	String. Pattern to match. see *Pattern Definitions* below
+		controller	-	String. Either the URL name of a controller or the placeholder
+						variable that should contain the controller name
+		action		-	String. Either the URL name of an action or the placeholder
+						variable that should contain the action name
+		id			-	*Optional* String. Either a hard-coded id value or the 
+						placeholder variable that should contain the id
+		<other>		-	*Optional* any other properties will become parameters 
+						to the action. Value can be a literal or a placeholder variable						
+		
 
 	Pattern Definitions:
 	Patterns are a series of tokens separated by slashes(/). tokens can be:
 	
-	* string literals,  ex: "page", 
-	* variable placeholders, ex: "$page"
-	* globbing variable placeholders (must be last token), ex: "$page*"
-	* Regular Expressions, ex: "rpt\d{3}\.doc"
+	String literals										-	  "page", 
+	Variable placeholders								-	 "$page"
+	Globbing variable placeholders (must be last token)	-	 "$page*"
+	Regular expressions									-	 "rpt\\d+\\.\\w{3}"
+	Regular expression variable placeholders			-	 "$report(rpt\\d+\\.\\w{3})"
+	Request method prefix (only before first token) 	-	"[GET]<first token>/<next token...>"
+	Request method prefix variable placeholder (before first token) -  "[$method]<first token>/<next token...>"
+	
+	Examples:
+	The URL is examined from left to right matching URL tokens to route tokens.
+	
+	*Literal tokens* are matched as if they were lower case 
+	
+	(code)
+		name:"home",
+        pattern:"index.html",
+        controller:"main",
+        action:"index"
+        /*
+			"server.tld/<appname>/index.html"
+				controller:"main",
+				action:"index"
+        */
+	(end)
+	
+	*Variable placeholders* start with $ and can only consist of letters, numbers 
+	and the underbar (_). Variable placeholders capture the token in the URL at 
+	the position where they appear and assign that value to the route property 
+	that has the same value as the placeholder.
+	
+	(code)
+		name:"emp",
+        pattern:"emp/$empnum",
+        controller:"emp",
+        action:"display",
+        id:"$empnum"
+        /*
+			"server.tld/<appname>/emp/22045563"
+				controller:"emp",
+				action:"display",
+				id:"22045563"
+        */
+	(end)
+		
+	
+	*Globbing variable placeholders* capture the rest of the URL, including slashes(/)
+	
+	(code)
+		name:"pages",
+        pattern:"page/$page*",
+        controller:"page",
+        action:"display",
+        page:"$page"
+        /*
+			"server.tld/<appname>/page/archive/2011/dec/christmas-party"
+				controller:"page",
+				action:"display",
+				page:"archive/2011/dec/christmas-party"
+        */
+	(end)
+	
+	*Regular expressions* need to be matched but don't capture. Note that they 
+	still only match one token
+	
+	(code)
+		name:"deleted",
+        pattern:"oldstuff/.*",
+        controller:"deleted",
+        action:"error-deleted-content",
+        /*
+			"server.tld/<appname>/oldstuff/some-random-file.xls"
+				controller:"deleted",
+				action:"error-deleted-content",
+        */
+	(end)
+	
+	*Regular expression variable placeholders* capture the matched token
+	
+	(code)
+		name:"reports",
+		pattern:"reports/$report(rpt\\d+\\.\\w{3})",
+		controller:"report",
+		action:"generate_report",
+		id:"$report"
+		/*
+			"server.tld/<appname>/reports/rpt12345.doc"
+				controller:"page",
+				action:"generate_report",
+				report:"rpt12345.doc"
+        */
+	(end)
+	
+	The *Request method prefix* can be used to test or capture the method used 
+	to submit the web request (GET,POST,PUT,DELETE,HEAD). This can be a literal 
+	or a variable placeholder.
+	
+	(code)
+		name:"default",
+		pattern:"[$method]$controller/$action/$id/$rest*",
+		controller:"$controller",
+		action:"$action",
+		id:"$id",
+		method::"$method",
+		extraPath:"$rest"
+		
+		/*
+			"server.tld/<appname>/emp/get/22012/pdf"
+				controller:"emp",
+				action:"get",
+				id:"22012",
+				method:"GET"
+				extraPath:"pdf"
+        */
+	(end)
 	
 	
 	

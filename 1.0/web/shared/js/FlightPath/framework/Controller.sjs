@@ -515,7 +515,7 @@
 		) return;//if any of the beforeAction filters return false, abort this action
 		
 		//Merge in id var
-		if (params.id && c.model) {
+		if (params.id && c.model && c.model.primaryKey) {
 			var idField = c.model.primaryKey
 			params[idField] =params.id;
 		}
