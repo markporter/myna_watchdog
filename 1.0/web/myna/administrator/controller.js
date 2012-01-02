@@ -785,7 +785,7 @@ var C ={
 							editable:false,
 							width:50,
 							allowBlank:false
-						},{
+						},/* {
 							xtype:"combo",
 							fieldLabel: 'Run cron tasks in a separate JVM?',
 							hiddenName: 'cron_tasks_via_mynacmd',
@@ -801,7 +801,7 @@ var C ={
 							editable:false,
 							width:50,
 							allowBlank:false
-						},{
+						}, */{
 							/* xtype:"textarea", */
 							fieldLabel: 'Max Requests',
 							name: 'max_running_threads',

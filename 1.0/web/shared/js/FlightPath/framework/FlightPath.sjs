@@ -77,7 +77,7 @@
 			);
 		}
 		if (!m.exists()){
-			m ={init:function(){}}
+			m ={init:function(){},notDefined:true}
 		}
 		
 		classList.push(m)
@@ -361,7 +361,7 @@
 				try{
 					var manager = mm.getModel(realName)
 				} catch(e){
-					manager={}	
+					manager={notTable:true}	
 				}
 				//Myna.abort()
 				
@@ -369,8 +369,15 @@
 				manager.after("init",model.init)
 				_modelClasses[modelName]=model = manager;
 				
-				
-				
+				/*
+				if (
+					(model.notDefined&&model.notTable) 
+					&& $FP.modelManagers.getKeys().length
+				){
+					Myna.printDump(model,model.name,7)
+					throw new Error("Unable to find model '" + modelName + "' in FlightPath's Model definition, nor in any database")	
+				}
+				*/
 			}
 			//Myna.printConsole("before init.. " +modelName)
 			model.init()
@@ -426,11 +433,12 @@
 				})
 				//Myna.println(route.pattern)
 				function testToken(p,value){
+					//Myna.println(p +":"+value)
 					if (p.left(1) == "$"){
 						var paramName = p;
 						if (p.right(1) == "*"){
 							paramName = p.before(1)
-							value = restParams.slice(index).join("/")
+							value = restParams.slice(index+1).join("/")
 						} else if (p.right(1) == ")"){
 							var parts = p.match(/^(\$\w+)\((.*?)\)$/);
 							paramName =parts[1];
@@ -466,7 +474,7 @@
 					return testToken(p,restParams[index])
 				})
 				
-				if (!matchedAll) return false;
+				if (!matchedAll && index < routes.length) return false;
 
 				/*[
 					"controller",
@@ -483,7 +491,8 @@
 				})*/ 
 				
 				var controller = $FP.f2c(localParams.controller||"",true);
-				var action = $FP.f2c(localParams.action||""); 
+				localParams.action = localParams.action||"index";
+				var action = $FP.f2c(localParams.action); 
 				//Myna.abort("debug",controller)
 				if (controllerNames.contains(controller)){
 					if (getController(controller).getActions().contains(function(a){return a.action==action})){

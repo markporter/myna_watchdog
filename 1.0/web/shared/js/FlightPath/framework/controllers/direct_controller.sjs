@@ -4,7 +4,155 @@
 	Stored in framework/controller/direct_controller.sjs
 	
 	See:
-	* http://www.sencha.com/products/extjs/extdirect
+		* <Overview>
+		* http://www.sencha.com/products/extjs/extdirect
+	
+Topic: Overview
+	Normally this is all that is needed to enable Ext and Ext.Direct support in a 
+	FlightPath application:
+	
+	(code)
+		// in app/controllers/<controller_name>_controller.sjs
+		// assumes Ext 3.x or 4.x is installed to static/extjs
+		function index(){
+			this.$page.css =this.$page.css.concat([
+				"extjs/resources/css/ext-all.css",
+				"default.css"
+			])
+			this.$page.scripts =this.$page.scripts.concat([
+				"extjs/ext-all.js",
+				$FP.helpers.Html.url({
+					controller:"Direct",
+					action:"api",
+					params:{
+						callback:"Ext.Direct.addProvider",
+						namespace:"$FP"
+					}
+				})
+			])
+		}
+	(end)
+	
+	This will create a global variable "$FP" in the browser that contains a 
+	property for each controller name, which in turn will have a function for 
+	each action on that controller. The signature for these functions is 
+	function(params,callback){} where "params" is an object that should be used 
+	as the params to the action, and "callback" is a function that will be called 
+	when the AJAX callback is complete, and will contain as its first parameter, 
+	the result of the action.
+	
+	Actions called in this way will execute their
+	filters, but not produce any output. Instead, any output from the action's 
+	return will be used as the return to the direct function.
+	
+	Examples:
+	(code)
+		// in app/controllers/post_controller.sjs
+		// assumes Ext 3.x or 4.x is installed to static/extjs
+		function index(){
+			this.$page.css =this.$page.css.concat([
+				"extjs/resources/css/ext-all.css",
+				"default.css"
+			])
+			this.$page.scripts =this.$page.scripts.concat([
+				"extjs/ext-all.js",
+				$FP.helpers.Html.url({
+					controller:"Direct",
+					action:"api",
+					params:{
+						callback:"Ext.Direct.addProvider",
+						namespace:"$FP"
+					}
+				})
+			])
+		}
+		
+		function edit(params){
+			// getData() dereferences associated beans, one level deep
+			// getData(0) forces only this bean's data to be returned,
+			// essentially the same as bean.data
+			return this.model.get(params).getData();
+		}
+	(end)
+	
+	(code)
+		// in app/views/post/post_index.ejs
+		
+		<script>
+			Ext.onReady(function(){
+				
+				//makes a callback to Post.list.
+				
+				$FP.Post.edit({},function(result){
+					// this will be the data for a new Post
+					// including "id" and  default values
+					console.log(result)
+				})
+			})
+		</script>
+	(end)
+	
+	
+		
+*/
+
+/* Action: api
+	returns an Ext.Direct api.
+	
+	
+	Parameters:
+		namespace		-	*Optional, default null*
+								if defined, then this namepace will be added to the 
+								generated API. This results in the Controller objects 
+								being scoped to this namespace. Without this property, 
+								the Controllers will be created as global variables. 
+								See _scriptvar_ for special JavaScript 
+								
+		scriptvar		-	*Optional, default null*
+								If set, the response will be JavaScript like this: 
+								"var _scriptvar_ = {API}". If _namespace_ is defined 
+								then a call to Ext.namespace() will be made first, and 
+								_scriptvar_ will be set in that namespace
+		callback			-	*Optional, default null*
+								If set, the response will be JSONP. cat call to the 
+								client-side function _callback_ will be made
+	
+	Detail:
+		Returns an API of all controllers, and their actions, available in this application, including 
+		framework controllers and module controllers.
+		By default, raw JSON is returned from this action, which makes it 
+		appropriate for being called from an Ext.Ajax.request(). Passing _scriptvar_
+		will return JavaScript appropriate for a <script src=""> call. Passing callback
+		will return JavaScript appropriate for a <script src=""> that calls a callback 
+		function to set up the the Direct API.  
+		
+		The easiest way to load the Direct API is to use _callback_ and include 
+		the API in the scripts list in the default layout for a particular action
+	
+		(code)
+			// in app/controllers/<controller_name>_controller.sjs
+			// assumes Ext 3.x or 4.x is installed to static/extjs
+			function index(){
+				this.$page.css =this.$page.css.concat([
+					"extjs/resources/css/ext-all.css",
+					"default.css"
+				])
+				this.$page.scripts =this.$page.scripts.concat([
+					"extjs/ext-all.js",
+					$FP.helpers.Html.url({
+						controller:"Direct",
+						action:"api",
+						params:{
+							callback:"Ext.Direct.addProvider",
+							namespace:"$FP"
+						}
+					})
+				])
+			}
+		(end)
+		
+	See:
+		* JSONP http://wikipedia.org/wiki/JSONP
 */
 function api(params){
 	var API ={

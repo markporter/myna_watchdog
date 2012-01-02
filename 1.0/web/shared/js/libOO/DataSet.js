@@ -1,4 +1,4 @@
-/* Class: DataSet
+/* Class: Myna.DataSet
 	A specialized array for working with tabular data 
 */
 /* Constructor: DataSet

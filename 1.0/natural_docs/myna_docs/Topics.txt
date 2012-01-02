@@ -90,3 +90,12 @@ Topic Type: Global Variable
 
    Keywords:
       global
+
+
+Topic Type: Action
+
+   Plural: Actions
+   Break Lists: Yes
+
+   Keywords:
+      action, actions

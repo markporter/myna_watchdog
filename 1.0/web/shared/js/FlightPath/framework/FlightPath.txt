@@ -1,4 +1,4 @@
-Topic: Overview
+Topic: FlightPath Overview
 Myna FlightPath is a Model-View-Controller(MVC) web application framework inspired by 
 CakePHP, CFWheels and Ruby On Rails. 
 
@@ -6,9 +6,12 @@ Before you begin:
 * What is MVC? http://wikipedia.org/wiki/Model-view-controller
 * What is CoC? (convention over configuration)? http://wikipedia.org/wiki/Convention_over_configuration
 
-Myna FlightPath is an application template that implements may of the repetitive 
+Myna FlightPath is an application template that implements much of the 
 infrastructure web developers typically have to create to start working on a web 
-application. 
+application. This allows you to write your business logic as plain JavaScript 
+functions, your displays as EJS templates, and have your data objects 
+automatically generated from the database, nearly eliminating the need to write 
+SQL.
 
 FlightPath Features:
 	MVC framework - Strong separation of data, business logic and display.Each
@@ -48,11 +51,20 @@ Topic: Glossary
 							web request, sets data on the controller instance, 
 							and picks a _View_ to render the data back to the 
 							browser.
-							
+		bean			-	An instance of a _beanClass_. Represents a single object 
+							from a <Model> data store. 
+		beanClass	-	A class associated with a Model that represents a "row" of 
+							data from that model. This class contains functions for 
+							getting and setting values, validating values, field metadata, 
+							etc. Also contains liks to related _beans_ from related <models> 					
 		Behavior		-	A mixin class that overrides, alters, or appends 
 							functionality to a class. Behaviors can be applied to
 							either _Controllers_ or _Models_. See: <Behaviors>
 							
+		camelCase		-	name format where all words are lower case, first letter 
+							of each word after the first capitalized, with no 
+							separation. ex: employeeAction
+		
 		Controller		-	Refers to either a <Controller> class or instance. 
 							Controllers contain _Actions_ manage _Layouts_, an 
 							contain _Behaviors_, and _Filters_
@@ -68,12 +80,15 @@ Topic: Glossary
 							performed in filters and certain actions can be 
 							denied or audited. See: <Controller.addFilter>
 							
+		file_case		- a name format where all words are lower case, and 
+							separated by underbars(_). ex: employee_action
+		
 		Helpers			-	Helpers are function libraries used inside of 
 							_Views_ and _Actions_ for repetitive tasks, usually 
 							related to generating output. See: <$FP.helpers.Html>
 							
 		Layout			-	Specialized _View_ template set in a _Controller_ to 
-							wrap content created by an _Action_
+							wrap content created by an _Action_, See: Layouts
 							
 		Model			-	Refers to either a <Model> class or instance. Models 
 							in FlightPath are static singletons (Only one 
@@ -81,9 +96,15 @@ Topic: Glossary
 							one or more <beanClass> instances that contain 
 							the actual model data
 							
+		ProperCase	-	 name format where all words are lower case, first letter 
+							capitalized with no separation. ex: EmployeeAction
+							
 		Route			-	A URL pattern that maps to a controller an d action. 
 							A FlightPath application can support multiple routes. 
 							See: <Routes>
+							
+		url-case		- a name format where all words are lower case, and 
+							separated by underbars(_) or dashs(-). ex: employee-action, employee_action
 							
 		View			-	An .ejs template intended to be sent to the browser.
 							There are also specialized views: <Layouts> and <Elements>
@@ -93,8 +114,8 @@ Topic: Glossary
 		
 		
 Topic: Getting Started
-	To create a FilghtPath template, navigate to the Myna Administrator and select  
-	"Add/Update FlightPath App", and enter a path folder name, relative to the Myna 
+	To create a FlightPath template, navigate to the Myna Administrator and select  
+	"Add/Update FlightPath App", and enter a path and folder name, relative to the Myna 
 	web root. If this directory does not exist, it will be created. Once The FlightPath
 	template has been unpacked you will see a directory structure like this:
 	
@@ -161,12 +182,436 @@ Topic: Getting Started
 		static			-	This folder contains static content that will not be interpreted as Myna or 
 							FlightPath code. These files are accessed via http://server.tld/appname/static/filename
 							This is a good place for images, client-side JavaScript files and css files
-		views			-	This folder contains a sub-folder for each controller that has views. For example
+		views				-	This folder contains a sub-folder for each controller that has views. For example
 							the view for the Main controller's index() action would be views/main/index.ejs
 		views/home.ejs	-	default page loaded if no homeRoute is defined (see: <FlightPath Config>)
-		views/
-							
+		views/elements	-	This folder contains any _Elements_ defined for the app
+		views/layouts	-	This folder contains any _Layouts_ defined for the app, including the global layout.
+								This folder may also contain sub-folders by controller name. 
+		views/layouts	-	reserved for future use					
 
+	Hello World!:
+	First, let's edit our application.sjs file and disable our default datasource,
+	for now
+	(code)
+		// in application.sjs
+		...
+		config:{
+			ds:{
+				//"default":"flight_path_app"
+			},
+		...
+	(end)
+	You should probably edit the appname and other metadata properties while you are here
+	
+	Let's create a Main controller and an index() action:
+	(code)
+		// in app/controllers/main_controller.sjs
+		
+		function index(){
+			this.renderContent("Hello World!")
+		}
+	(end)
+	
+	You can now access this via  /yourapp/
+	
+	This works because the default route (See: <FlightPath Config>) is set to 
+	Main.index. The full URL would be /yourapp/main/index
+	
+	This is fine for a single line of text, but it is not very flexible for HTML. 
+	Lets add a view:
+	
+	(code)
+		// in app/controllers/main_controller.sjs
+		
+		function index(){
+			this.set("text","Hello World!");
+		}
+	(end)
+	(code)
+		<%-- in app/views/main/main_index.ejs --%>
+		<h1><%=text%></h1>
+	(end)
+	
+	In our controller we set some data that then appears as a global variable in 
+	our view. If you view source on this page you'll see something like this:
+	(code)
+		<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+		<html xmlns="http://www.w3.org/1999/xhtml">
+		<head>
+			<meta name="description" content="" />
+			<meta name="keywords" content="" />
+			<title>Main.index</title>
+			<link rel="shortcut icon" href="/dev/favicon.ico" >
+			<script type="text/javascript" src="/dev/shared/js/libOO/client.sjs"></script>
+		</head>
+		<body>
+		<div class="flash_message_container">
+		</div>
+		<h1>Hello World!</h1>
+		</body>
+		</html>
+	(end)
+	
+	All that extra HTML wrapping your view is coming from the default layout in 
+	app/views/layouts/default.ejs. Unless you make a call to <Controller.setLayout>
+	all views in your app will be wrapped in this layout. You can manipulate the 
+	metadata in this layout by setting properties on <Controller.$page>. Let's 
+	set a title for our page.
+	
+	(code)
+		// in app/controllers/main_controller.sjs
+		
+		function index(){
+			this.$page.title = "Howdy"
+			this.set("text","Hello World!");
+		}
+	(end)
+	
+	
+	Working with databases:
+	That's entertaining, but it would be nice to work with some actual data. 
+	Let's create a database to work with
+	
+	(code)
+		// in application.sjs
+		...
+		config:{
+			ds:{
+				"default":"fp_app"
+			}
+			...
+		}
+		...
+		onRequestStart:function(){ // run directly before requested file
+			if (!Myna.Admin.dsExists("fp_app")){
+				Myna.Admin.createLocalDatabase("fp_app")
+				var db = new Myna.Database("fp_app");
+				db.getTable("authors").create({
+					recreate:true,
+					columns:[{
+						name:"id",
+						isPrimaryKey:true,
+						type:"VARCHAR",
+						maxLength:255,
+						allowNull:false,
+					},{
+						name:"name",
+						type:"VARCHAR",
+						maxLength:255,
+						
+					}]
+				});
+				
+				db.getTable("posts").create({
+					recreate:true,
+					columns:[{
+						name:"id",
+						isPrimaryKey:true,
+						type:"VARCHAR",
+						maxLength:255,
+						allowNull:false,
+					},{
+						name:"slug",
+						type:"VARCHAR",
+						maxLength:255,
+						
+					},{
+						name:"created",
+						type:"DATE",
+					},{
+						name:"author_id",
+						type:"VARCHAR",
+						maxLength:255,
+						references:{
+							table:"authors",
+							column:"id",
+							onDelete:"cascade",
+							onUpdate:"cascade",
+						}
+					}]
+				});
+				
+				db.getTable("post_contents").create({
+					recreate:true,
+					columns:[{
+						name:"id",
+						isPrimaryKey:true,
+						type:"VARCHAR",
+						maxLength:255,
+						allowNull:false,
+					},{
+						name:"post_id",
+						type:"VARCHAR",
+						maxLength:255,
+						references:{
+							table:"posts",
+							column:"id",
+							onDelete:"cascade",
+							onUpdate:"cascade",
+						}
+					},{
+						name:"content",
+						type:"TEXT"
+					}]
+				});
+				
+				db.getTable("tags").create({
+					recreate:true,
+					columns:[{
+						name:"id",
+						isPrimaryKey:true,
+						type:"VARCHAR",
+						maxLength:255,
+						allowNull:false,
+					},{
+						name:"tag_name",
+						type:"VARCHAR",
+						maxLength:255,
+					}]
+				});
+				
+				db.getTable("posts_tags").create({
+					recreate:true,
+					columns:[{
+						name:"post_id",
+						type:"VARCHAR",
+						maxLength:255,
+						allowNull:false,
+					},{
+						name:"tag_id",
+						type:"VARCHAR",
+						maxLength:255,
+						allowNull:false,
+					}]
+				});
+				
+				
+				
+			}
+			
+			var frameworkFolder=this.config.frameworkFolder||this.dir + "framework" 
+			Myna.include(frameworkFolder+"/FlightPath.sjs",{}).init().handleRequest();
+		}
+		...
+	(end)
+	This creates a local database with some example tables for a blog application.
+	Have a look at <Myna.Admin>, <Myna.Database> and <Myna.Table> for more details. 
+	If you were including this in a real application, you might limit it to 
+	development environments or at least move it to onApplicationStart which runs 
+	less often.
+	
+	Notice that the names are plural, and the primary and foreign keys are 
+	defined. This is important for the <Models> to properly auto generate 
+	(See: <Model.Model Conventions>). 
+	
+	Creating a post editor:
+	Lets create a way to edit our posts.
+	
+	(code)
+		//in app/controllers/post_controller.sjs
+		function edit(params){
+			// Generate ID for new record if none-supplied. That way ID will be in 
+			// the URL and refreshing the page won't create a new record
+			if (!params.id){
+				$FP.redirectTo({
+					id:this.model.genKey()
+				})
+			}
+			
+			// only get here if not re-directed
+			this.set("bean",this.model.get(params));
+		}
+	(end)
+	Here we're creating an "edit" action that can be used for both new posts and 
+	existing posts. New posts will generate a unique key that will be used when
+	the post is saved. If you looks at <ManagerObject.genKey>, you will see that 
+	for tables with a varchar primary key, the default key generator outputs UUID's.
+	This can be overridden in <Model> definitions. See <$FP.redirectTo> for how 
+	redirects work. 
+	
+	Finally, we set a local "bean" property with the result of 
+	"this.model.get(params)" (See: <Model.get>). This creates a temporary _bean_ 
+	that contains either the data of an existing _bean_, or the default values for 
+	a new _bean_ 
+	
+	Now we need a view to display it:
+	(code)
+		<%-- in app/views/post/post_edit.ejs --%>
+		
+		<form action="<%=Html.url({action:"save",id:bean.id})%>" method="post"> 
+			<table width="100%" height="1" cellpadding="0" cellspacing="0" border="0" >
+				<tr>
+					<th ><%=bean.getLabel("id")%>:</th><td><%=bean.id%>, <%=bean.getLabel("created")%>: <%=bean.get_created()%><td>
+				</tr>
+				<tr>
+					<th><%=bean.getLabel("slug")%>:</th>
+					<td><input name="slug" value="<%=String(bean.get_slug()||"")%>"><td>
+				</tr>
+				<tr>
+					<th><%=bean.Author().getLabel("name")%>:</th>
+					<td><input name="Author.name" value="<%=String(bean.Author().name||"")%>"><td>
+				</tr>
+				<tr>
+					<th colspan="2" align="left"><%=bean.PostContent().getLabel("content")%>:</th>
+				</tr>
+				<tr>
+					<td colspan="2" align="left">
+						<textarea cols="70" rows="50" name="PostContent.content"><%=String(bean.PostContent().content||"")%></textarea>
+					<td>
+				</tr>
+				<tr>
+					<td colspan="2" align="right">
+						<button type="submit">Save</button>
+					</td>
+				</tr>
+			</table>
+		</form>
+	(end)
+	
+	Note the form action. Here we are using the Html helper 
+	(see: <$FP.helpers.Html>) to make a URL for our "save" action. Next, note 
+	that the "bean" property we set in the action is now a global variable in the 
+	view (See: <Views>). We're using <Model.beanClass.getLabel> to get a label for 
+	each field. This allows for centralized field name definition in Model files, 
+	and potentially even international language translation. 
+	
+	The bean's getters (get_created, get_slug, etc) will return either the current 
+	value or the default value defined in the Model file, depending on whether 
+	this is a new or an existing record.
+	
+	Notice the line containing "bean.Author()". This is accessing the related 
+	parent author bean. Myna knows that Posts belongTo Authors because of the 
+	foreign key defined on the posts table. If this is a new post then there will 
+	not be an associated parent Author record. In this case a new parent record 
+	will be created. Normally you would probably want to have a <select> here and 
+	have a separate Author controller manage Author records. On the next line, 
+	notice that the name for the input field is "Author.name". Myna recognizes 
+	structure and array notation in query variables and attempts to reconstruct 
+	complex objects from them (See: <$req.data> and <Object.setByPath>) This 
+	means that the "params" object passed the "save" action will have an Author 
+	object with a "name" property. Because the Post model knows that it belongsTo 
+	Author, it will automatically create or load the related Author record and set 
+	its "name" property. More on that when we get to save()
+	
+	Notice that we are doing something similar with PostContent. Because the 
+	post_contents table has a foreign key to posts, the Post model knows it 
+	potentially has a "hasMany" or "hasOne" relationship with post_contents. 
+	By using "PostContent.content" we are using the "hasOne" relationship to 
+	create a content row and associate it with this post. 
+	
+	Ok, now we need to write a "save" action:
+	
+	(code)
+		// in app/controllers/post_controller.sjs
+		...		
+		function save(params){
+			var bean = this.model.get(params);
+			var validation = bean.save();
+			
+			if (validation.success) {
+				$FP.redirectTo({
+					action:"index",
+					success:"Record Saved." 
+				})
+			} else {
+				$FP.redirectTo({
+					action:"edit",
+					id:bean.id,
+					error:validation
+				})
+			}
+		}
+	(end)
+	
+	Here we create a temporary bean via <Model.get> and the attempt to save it
+	via <Model.beanClass.save>, which returns a <Myna.ValidationResult>. If 
+	successful we redirect to the index page, otherwise back to the edit page. 
+	The extra parameters to redirectTo ("success" and "error") are converted into 
+	<$flash> messages and displayed via the default layout
+
+	All that is left now is to make the index page to display our posts
+
+	(code)
+		// in app/controllers/post_controller.sjs
+		...		
+		function index(params){
+			//this will pass paging info from params to the underlying query
+			params.setDefaultProperties({
+				page:1,
+				pageSize:25
+			})
+			this.set("rows",this.model.findBeans({},params))
+		}
+	(end)
+	
+	(code)
+		<%-- in app/views/post/post_index.ejs --%>
+		
+		<%=Html.link({
+			action:"edit",
+			text:"Add Post"
+		})%>
+		<table width="100%" height="1" cellpadding="0" cellspacing="0" border="0" >
+			<tr>
+				<th><%=$controller.model.getLabel("id")%></th>
+				<th><%=$controller.model.getLabel("slug")%></th>
+				<th><%=$controller.model.getLabel("created")%></th>
+				<th><%=$controller.model.Author.getLabel("name")%></th>
+			</tr>
+			<@loop array="rows" element="bean" index="i">
+				<tr>
+					<td>
+						<%=Html.link({
+							action:"edit",
+							id:bean.id,
+							text:bean.id
+						})%>
+					</td>
+					<td><%=bean.get_slug()%></td>
+					<td><%=bean.get_created().format("m/d/Y H:i:s")%></td>
+					<td><%=bean.Author().get_name()%></td>
+				</tr>
+			</@loop>
+		</table>
+		<table width="100%" height="1" cellpadding="0" cellspacing="0" border="0" >
+			<tr>
+				<td nowrap>
+					<@if $params.page != 1>
+						<%=Html.link({
+							params:{
+								page:parseInt($params.page)-1
+							},
+							text:"&lt;&lt; previous page"
+						})%>				
+					</@if>
+				</td>
+				<td width="100%">&nbsp;</td>
+				<td nowrap>
+					<@if rows.length == $params.pageSize>
+						<%=Html.link({
+							params:{
+								page:parseInt($params.page)+1
+							},
+							text:"next page >>"
+						})%>				
+					</@if>
+				</td>
+			</tr>
+		</table>
+		
+	(end)
+	
+	Now we can page through our results and add new posts.
+	
+	Next Steps:
+	* learn how to customize database <Models>
+	* Work with custom <Layouts>
+	* Apply controller <Behaviors> 
+	* Review built-in extensions: <Controller: Direct>, <Behavior: FormatJson>,
+		<Behavior: FormatPdf>, <Behavior: MynaAuth
+	   
+	
 Topic: FlightPath Config
 	FlightPath configuration is stored in the "config" property of $application.
 
@@ -232,10 +677,9 @@ Topic: FlightPath Config
 Topic: Behaviors
 	Behaviors are functions that are applied to the current object. 
 	
-	Behaviors can be 
-	applied to either models or controllers to modify their functionality. If you 
-	want to add a set of functions multiple controllers or models behaviors are a 
-	good mechanism.
+	Behaviors can be applied to either models or controllers to modify their 
+	functionality. If you want to add a set of functions multiple controllers or 
+	models behaviors are a good mechanism.
 	
 	* Built-in controller behaviors are stored in framework/behaviors/controllers/<behavior name>.sjs
 	* Custom controller behaviors are stored in app/behaviors/controllers/<behavior name>.sjs
@@ -269,6 +713,10 @@ Topic: Behaviors
 			});
 		}
 	(end)
+	
+	See:
+	* <Controller.applyBehavior>
+	* <Model.applyBehavior>
 
 Topic: Elements
 	An element file is a specialized view (see: <Views>) that is intended to contain 
@@ -276,36 +724,18 @@ Topic: Elements
 	
 	
 	Element Locations:
-		General Elements		-	app/views/elements/<element name>.ejs
-		
-	General elements are stored in app/views/elements/<element name>.ejs. 
-	The global default element is stioreController default elements are store 
-	Elements are applied by calling <Controller.addElement> or <Controller.setElement>  
-	
-	Elements can wrap other elements. For example the global default element wraps the controller 
-	Elements are layered like so:
-	(code)
-		/app/views/elements/default.ejs wraps
-			/app/views/elements/controllername/default.ejs wraps
-				/app/views/controllername/actionname.ejs
-	(end)
-	
-	Calling this function adds additional elements that wrap the view, like so:
+	* app/views/elements/<name>.ejs,
+	* app/views/elements/<controller name>/<name>.ejs
 	
 	(code)
-		function init(){
-			this.addElement("myelement1")
-			this.addElement("otherController/myelement2.ejs")
-		}
+		//in app/views/test/index.ejs
 		
-	//results in 
-	/app/views/elements/default.ejs wraps
-		/app/views/elements/controllername/default.ejs wraps
-			/app/views/elements/myelement1.ejs wraps
-				/app/views/elements/otherController/myelement2.ejs wraps
-					/app/views/controllername/actionname.ejs	
-		
+		<%=getElement("shared/common_commonlinks.ejs")%>
+		<%=getElement()%>
 	(end)
+	
+	See:
+	* <Controller.getElement>
 	
 Topic: Layouts
 	A layout file is a specialized view (see: <Views>) that is intended to wrap content before 
@@ -349,8 +779,15 @@ Topic: Layouts
 Topic: Modules
 	Modules are self-contained FlightPath applications that can be embedded in 
 	other applications. These controllers, models and views can be accessed as 
-	if they were in the main application.  
-
+	if they were in the main application. 
+	
+	A module can be created from a FlightPath application by copying its "app" 
+	folder to the new application's "app/modules" folder and then renaming it to 
+	the module name. Then all folders except "models", "controllers" and "views"
+	should be removed. Local models, controllers and views are always found before
+	module models, controllers and views, so published modules should have names 
+	that are unique for these objects. 
+	
 Topic: Routes
 	Routes are URL patterns that can be mapped to controllers and actions. Routes 
 	are defined in the config section of the application.sjs for your app 
@@ -495,7 +932,7 @@ Topic: Routes
 Topic: Views
 	View Templates are .ejs templates used to render the result of an action. They 
 	are stored in app/views. Normally views are loaded automatically for a given controller and 
-	action by looking in app/views/<controller name>/<action_name>.ejs. Views can 
+	action by looking in app/views/<controller name>/<controller_name>_<action_name>.ejs. Views can 
 	also be directly rendered via <Controller.render>
 	
 	There are also two specialized kinds of view files: <Layouts> and <Elements>. 

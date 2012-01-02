@@ -1,3 +1,271 @@
+Release Name: 1.0_beta_8
+Notes:
+
+This release contains a major change to $application, introduces 
+application import/export, enhanced cluster support, performance 
+enhancements, minor bug fixes and documentation updates
+
+
+Introducing Myna FlightPath
+---------------------------
+
+  Myna FlightPath is a Model-View-Controller(MVC) web application framework 
+  inspired by CakePHP, CFWheels and Ruby On Rails. This allows you to write your
+  business logic as plain JavaScript functions, your displays as EJS templates, 
+  and have your data objects automatically generated from the database, nearly 
+  eliminating the need to write SQL.     
+
+MynaServer
+-----------
+
+  Myna now has an embedded Tomcat server that can be used instead of deploying 
+  Myna inside an existing application server. Executing "java -jar myna-<version>.war" 
+  will now offer options for ugrading anexising Myna folder or installing Myna, 
+  including startup files for the embedded Tomcat server. On Linux system, the 
+  installer will create your init scripts for you and install them to 
+  /etc/init.d. When Myna is run this way, a watchdog process is spawned that 
+  periodically checks on the Mynaserver to make sure that it is running and 
+  performing well, and will restart it if it is failing.  
+  
+     
+DataManager Improvements:
+---------------
+* DataManager: added manager.query
+* DataManager: added manager.createdCol
+* DataManager: added manager.modifiedCol
+* DataManager: added manager.addValidator
+* DataManager: added manager.genLabel
+* DataManager: added manager.setLabel
+* DataManager: added manager.setLabels
+* DataManager: added manager.getDefault
+* DataManager: added manager.setDefault
+* DataManager: added manager.setDefaults
+* DataManager: added manager.belongsTo
+* DataManager: added manager.hasOne
+* DataManager: added manager.hasMany
+* DataManager: added manager.validatorFunctions
+* DataManager: added manager.validatorFunctions.length
+* DataManager: added manager.validatorFunctions.list
+* DataManager: added manager.validatorFunctions.regex
+* DataManager: added manager.validatorFunctions.type
+* DataManager: added manager.validatorFunctions.unique
+* DataManager: added manager.get()
+* DataManager: added manager.getNew()
+* DataManager: added manager.save()
+* DataManager:	added managerExists()
+* DataManager: added bean.deferred
+* DataManager: added bean.forceDelete
+* DataManager: added bean.getLabel
+* DataManager: added bean.remove
+* DataManager: added bean.validate
+* DataManager: added bean.isDirty
+* added where clause support to Manger.find/findBeans
+* DataManager: added logging of validation errors
+* DataManager: added explicit BLOB/CLOB detection in length validation
+* DataManager: lazy load related models
+* DataManager: added toJSON function that returns getData(). This means that 
+  someBean.toJson() will get data fro related records also
+* Added native pagination for PostgreSql, MySql, and Oracle
+* DataManager: findBeans() now natively calls query, instead of running a
+  separate query for each bean
+* added DataManager class generation and caching. This can have a significant 
+  speed increase for optimization levels > -1
+* added getField, getFields and getType to DataManager
+* changed DataManager to use Myna.Validation for validation 
+
+Other new features:
+----------------------
+* Added NoCase versions of String.compareNatural and String.compareAlpha
+* Myna.File: Added "maxFiles" param to listFiles
+* Myna.File: Optimized listFiles to directly apply filter, and allow for 
+  exceptions to halt directory recursion
+* Myna.File: Added readLine(pos) function 
+* Myna.File: modified readLines() to readLines(start,end) to allow efficient 
+  windowing
+* added Myna.Admin
+* Added Validation.js, generic validation object that returns a ValidationResult
+* Array: added appendUnique
+* String: added getField, getFields and getType to DataManager
+* Database: cache table instances
+* Added function Object/ObjectLb.setByPath
+* added Object.toStruct() and ObjectLib.toStruct()
+* added $O wrapper to ObjectLib. 
+* added soft delete support to Myna.DataManager
+* Made DataSet browser compatible
+* Added DataSet.toStruct
+* Added DataSet.pivot
+* Added Date.parseInterval
+* $req.data params with dots("SomeVar.name=bob") will be turned into objects(SomeVar={name:"bob"}) via Object.setByPath
+* added Inflector class
+* String.after now accepts strings and RegExp objects
+* String.before now accepts strings and RegExp objects
+* Added String.startsWith
+* Added String.endsWith
+* Added String.escapeJs
+* Myna.File() now accepts multiple path parts as arguments. These will be joined 
+  to together inserting and removing "/"s as necessary
+* added request url to timeout error logs
+* added a file filter to File.copyTo
+* Upgrade postgresql driver to 9.0-801
+* Added Function.cache() for making run-once-and-cache functions
+* Objet/ObjectLib.toJson() now honors toJSON functions on objects in a manner 
+  compatible with JSON.stringify()
+* Added commons-cli.jar
+* Added MynaServer class
+* added $server.mynaCmd
+* added $req.data.argArray for raw commandline arguments
+* added raw inputStream, errorInputStream and process instance to executeShell result
+* added watchdog features to MynaServer via general.properties
+* added bootstrap.MynaServer as the main class for the war file
+* better info on the running requests screen
+* added Object.map() and filter()
+* added String.format()
+
+Bug Fixes:
+-----------
+* updated H2 drop constraint SQL
+* restored currentDir functionality to Myna.include
+* $cookie.get() is now case insensitive
+* $cookie.set() now returns the value set
+* fixed spelling error in content type for printBinary
+* Removed interval requirement for saving cron jobs in Administrator
+* Now ignoring errors generated by $res.flush()
+* Removed lock from cron runs
+* Bug fix for Myna.dump() to properly display contents of queries
+* ObjectLib::before()/after(), expandos on the function object are now preserved 
+  when converting to a chain function
+* added 2 minute delay after server startup for running cron tasks
+* fixed bugs in toFixedWidth
+* $cookie: auth cookies now set on the application url path, instead of the current subpath
+* $res.serveFile now fires $application.onError404 instead of throwing an error
+* JSServlet: normalized getOutputStream/getWriter usage
+* JSServlet: set initial contentType to text/html
+* CronThread: now finds webroot relative to general.properties instead of "."
+* removed "openid" provider type
+* Fixed bug in directory listings. Now properly honors Admin setting.
+* Modified Myna.log() to directly insert instead of using the DataManager
+* moved db properties into Myna.Database
+* added dsValidation property to Myna.Admin
+* Fixed bug in Myna.Thread that caused jetty/tomcat to lose request parameters
+* Created bootstrap.MynaInstaller for install/upgrade form war file
+* Created info.emptybrain.myna.MynaServer for running Myna from an installation directory
+* added individual cron reload
+* modified ldap adapter to properly check for filter property in config
+* increased default watchdog delay to 180 seconds to allow Tomcat to generate 
+  session key on first startup
+* added -l to unix init_script to prevent "access denied" error when running 
+  from cron 
+* DataSet.sortByCol now returns a reference to "this" for chaining
+
+
+     
+--------------------------------------------------------------------------------
+Release Name: 1.0_beta_7
+Notes:
+
+Includes bug fixes and the experimental commandline feature
+
+New Features: 
+--------------------------------
+* PDF Creation	 Myna can now generate PDF's from XML or XHTML content.  See Myna.xmlToPdf
+* Myna.Swing	 Intended to be used with Command Line Mode, this allows scripting of the Java Swing GUI library for creating dialogs.  See Myna.Swing
+* Tree Organized Tables	 The new DataManager function getTreeManager() allows for the manipulation of Modified Pre-order Tree Traversaal (MPTT) organized tables. This method allows for storage of hierarchical information in table in an efficient manner. See http://blogs.sitepoint.com/hierarchical-data-database-2/ for an overview of MPTT
+* Other Changes:
+
+Other Changes:
+* Added Myna.Table.getSqlColumnName()
+* Added $application.clear()
+* Added $application.reload()
+* Added Added beanClass property to DataManager manger objects
+* Added manager caching to DataManager
+* Optimized bean.setFields to issue a single update statement
+* Now loading Hazelcast in background Thread
+* Added Myna.Swing Library
+* Added $res.setExitCode for setting exit code from commandLine. Special exit
+  code of -1 will cause Myna to run in background for GUI apps
+* Modified MynaThread to not cache shared scope when in -1 optimization level
+* Added bespin editor to db_manager
+* Added maxRows and offsetRows templates to db properties files
+* Added Object.prototype.createProxy()
+* Object/ObjectLib.hideProperty now using ES5 syntax
+* Added improved logging for authentication failures
+* Added improved logging for ldap authentication failures
+* Fixed authentication bug that caused JSON symbols in request parameters to
+  terminate argument processing
+* fixed bug causing 404's to not actually return a 404 error code
+* removed REST param processing for threads
+* Directory listings are now only shown if the application does not handle the
+  request
+* Several improvements to Myna.profiler: getAveragesArray(), getAveragesHtml(),
+  getAveragesText()
+* Completed improved scheduling
+* HttpConnection now allows circular redirects
+* Added Date.monthsBetween()
+* Changes/fixes to scheduling
+* Added Myna.threadSafeSet()
+* Removed console.debug from Administrator
+* Added Table.hasIndex
+* Added Array.contains()
+* Added $res.setExitCode for setting exit code from commandLine. Special exit
+  code of -1 will cause Myna to run in background for GUI apps
+* Cron bugfixes
+* Doc updates
+* Added Date.diff
+* Added Myna.executeWinBatch
+* Added Array.first() and Array.last()
+* Removed background memory management form Myna.Cache to improve performance
+* HttpConnection.connect() now returns a reference to itself, to allow chaining
+* Added commons.net and jsch libraries
+* Added Myna.xmlToPdf function via Flying Saucer
+* Added Myna.htmlToXhtml to clean up bad HTML
+* Added ext 3.3.1 to /myna/, updated Myna apps to match
+* Added String.toXmlDoc() for creating an org.w3c.dom.Document from an XML string
+* Removed abort error message from permission redirects
+* added slate theme for admin apps
+* added icons to permissions
+* added TreeManagerObject to DataManager for manipulating mptt tables
+* updated E4X docs on looping
+* added XML detection to Array.parse
+* Myna.Query: removed generated key detection since it caused intermittent
+  insert/update failure in Oracle
+* Administrator, Scheduled Tasks: Fixed bug in weekday display
+* Added custom SocketFactory so that LDAP and HTTPS connections can be made to
+  servers with untrusted (self-signed) SSL certificates
+* added better loggging for authentication failures
+* changed auth adapter caching to $req scope
+* fixed bug in chainFunction that caused recursive calls in to the chain to
+  poison the chain stack
+* Updated Ext.Direct tree example to use DataManager.getTreeManager to demo
+  mptt-organized tables
+* Myna.WebService: Service function are now mapped directly on the service
+  object, where there is not a name conflict
+* Myna.JavaUtils.beanToObject now handles get_ and set_ functions
+* H2 datasources now use AUTO_SERVER=TRUE for lock management
+* Many updates to TreeManager behavior in DataManager
+* Examples are now enabled via application.sjs rather than forcing a login
+* Modified JSServlet to return a binary stream.
+* Modified db_manager to return JSON as application/json
+* Added native JSON parsing to db_manager
+* Fixed pager toolbar updates in the administrator
+* Added native JSON parsing to String.parseJson(), when available
+* Added better searching to myna auth adapter
+* WebService: added "action" param to Ext.Direct API
+* DataManager: fixed case sensitivity bug in find()
+* DataManager: fixed TreeManager bugs
+* DataManager: default genKey function now uses UUIDs for text primary keys
+* $cookie: clear() now now has a deleteParentPaths param
+* $application: fixed bug in rights import
+* Myna.Query: now using column labels instead of column names in results to
+  properly detect column aliases
+* Fixed bug in db_manager foreign key detection
+* Modified URL processing to allow application.sjs to override urls that end in /
+* DataManager: added logQueries property
+* DataManager: fixed bg in find() case sensitivity
+* Added DataSet.js, a client-side compatible version of DataSet
+* Added Query.log property
+
+---------------------------------------------------------------------------------
+
 Release Name: 1.0_beta_6-1
 Notes:
 

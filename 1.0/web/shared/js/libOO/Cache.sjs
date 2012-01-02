@@ -138,7 +138,7 @@ if (!Myna) var Myna={}
 			})) throw new Error("Unable to lock cache store")
 		}
 		if (!Myna.lock("MYNA:cacheStore:update",10,function(){
-			var row = cacheStore.findFirst("name",$this.name);
+			var row = cacheStore.findFirstByCol("name",$this.name);
 			if (row) {
 				$this.applyTo(row,true);
 				$this.cacheKeys = row.cacheKeys;
@@ -244,7 +244,7 @@ if (!Myna) var Myna={}
 		var $this = this;
 		var c = org.apache.jcs.JCS.getInstance("value");
 		var args = Array.parse(arguments); 
-		var storeEntry  = $server.get("MYNA:cacheStore").findFirst("name",this.name);
+		var storeEntry  = $server.get("MYNA:cacheStore").findFirstByCol("name",this.name);
 	
 		var key = $this.name+ ":" +new java.lang.String(
 			(this.ignoreArguments||args.toJson())
@@ -370,7 +370,7 @@ if (!Myna) var Myna={}
 	Myna.Cache.getByName=function CacheGetByName(name){
 		var cacheStore = $server.get("MYNA:cacheStore");
 		if (!cacheStore) return null
-		return cacheStore.findFirst("name",name)
+		return cacheStore.findFirstByCol("name",name)
 	}
 /* Function: getByTags 
 	Static function that returns a <Myna.DataSet> of cache objects that match 

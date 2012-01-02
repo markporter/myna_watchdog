@@ -79,7 +79,7 @@
 		})
 		
 		if (routes.length ){
-			template=routes[0].pattern;
+			template=routes[0].pattern.replace(/^\[.*?\]/,"").replace(/\*$/,"");
 		} else {
 			if (options.route) {//oops! we asked for a non-existent route
 				throw new Error("No route '" +options.route+"' in configuration.")
@@ -114,6 +114,7 @@
 					return ""	
 				}
 			})
+			
 		}
 		
 		
@@ -121,6 +122,18 @@
 			var q = $FP.objectToUrl(options.params,!template)
 			if (q) url+="?"+q	
 		}
+		
+		var first= url.listFirst("?")
+		var query = ""
+		if (url.listLen("?") > 1){
+			query = "?"+url.listAfter("?")	
+		}
+		
+		first = first.split("/").filter(function(token){
+			return !/\$/.test(token)
+		}).join("/")
+		url = first + query
+		
 		if ("anchor" in options) {
 			url+="#"+escape(options.anchor)
 		}

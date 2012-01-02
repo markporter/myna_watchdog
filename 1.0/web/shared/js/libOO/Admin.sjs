@@ -8,127 +8,158 @@
 */
 if (!Myna) var Myna={}
 Myna.Admin ={
+/* Data Sources */
+	
 	/* Property: dsValidation
 		a <Myna.Validation> object for validating data source configs
-	
-	*/
-	dsValidation:new Myna.Validation().setLabels({
-		desc:"Description",
-		db:"Database"
-	}).addValidators({
-		name:{ 
-			type:"string",
-			required:true, 
-			regex:{
-				pattern:/^[A-Za-z]\w*$/,
-				message:"Invalid name format. Must start with a letter, and only contain letters, numbers or the _ character",
+		
+		*/
+		dsValidation:new Myna.Validation().setLabels({
+			desc:"Description",
+			db:"Database"
+		}).addValidators({
+			name:{ 
+				type:"string",
+				required:true, 
+				regex:{
+					pattern:/^[A-Za-z]\w*$/,
+					message:"Invalid name format. Must start with a letter, and only contain letters, numbers or the _ character",
+				},
+				
+			},
+			desc:{
+				type:"string", 
+			},
+			type:{
+				type:"string", 
+				required:true,
+				list:{
+					oneOf:Myna.Database.dbProperties.getKeys()
+				}
+			},
+			driver:{
+				type:"string", 
+				required:true,
+				custom:function(params){
+					var v = new Myna.ValidationResult();
+					if (typeof $server_gateway != "undefined"){
+						
+						try {
+							java.lang.Class.forName(params.value);
+						} catch(e) {
+							v.addError("Driver '{0}' is not available in the classpath.".format(params.value),"driver")
+						}
+						
+					}
+					return v;
+				}
+			},
+			location:{ 
+				type:"string",
+				list:{
+					oneOf:["file","network"]	
+				}
+			},
+			file:{ 
+				type:"string",
+				required:{
+					when:function(params){
+						return params.obj.location == "file"
+					},
+					message:"File is required when location is 'file'"
+				}
+			},
+			server:{
+				type:"string",
+				required:{
+					when:function(params){
+						return params.obj.location == "network"
+					},
+					message:"Server is required when location is 'network'"
+				}
+			},
+			case_sensitive:{ 
+				type:"numeric", 
+				value:{
+					min:0, 
+					max:1
+				}
+			},
+			port:{
+				type:"numeric", 
+				required:{
+					when:function(params){
+						return params.obj.location == "network"
+					},
+					message:"Port is required when location is 'network'"
+				},
+				value:{
+					min:1024, 
+					max:65535
+				},
+			},
+			db:{
+				type:"string", 
+			},
+			username:{
+				type:"string", 
+			},
+			password:{
+				type:"string", 
+			},
+			url:{
+				type:"string", 
+				required:true,
 			},
 			
-		},
-		desc:{
-			type:"string", 
-		},
-		type:{
-			type:"string", 
-			required:true,
-			list:{
-				oneOf:Myna.Database.dbProperties.getKeys()
-			}
-		},
-		driver:{
-			type:"string", 
-			required:true,
-			custom:function(params){
-				var v = new Myna.ValidationResult();
-				if (typeof $server_gateway != "undefined"){
-					
-					try {
-						java.lang.Class.forName(params.value);
-					} catch(e) {
-						v.addError("Driver '{0}' is not available in the classpath.".format(params.value),"driver")
-					}
-					
-				}
-				return v;
-			}
-		},
-		location:{ 
-			type:"string",
-			list:{
-				oneOf:["file","network"]	
-			}
-		},
-		file:{ 
-			type:"string",
-			required:{
-				when:function(params){
-					return params.obj.location == "file"
-				},
-				message:"File is required when location is 'file'"
-			}
-		},
-		server:{
-			type:"string",
-			required:{
-				when:function(params){
-					return params.obj.location == "network"
-				},
-				message:"Server is required when location is 'network'"
-			}
-		},
-		case_sensitive:{ 
-			type:"numeric", 
-			value:{
-				min:0, 
-				max:1
-			}
-		},
-		port:{
-			type:"numeric", 
-			required:{
-				when:function(params){
-					return params.obj.location == "network"
-				},
-				message:"Port is required when location is 'network'"
-			},
-			value:{
-				min:1024, 
-				max:65535
-			},
-		},
-		db:{
-			type:"string", 
-		},
-		username:{
-			type:"string", 
-		},
-		password:{
-			type:"string", 
-		},
-		url:{
-			type:"string", 
-			required:true,
-		},
+			
+		}),
+	/* Function: createLocalDatabase
+		create a local H2 databsae with the given name
 		
+		Parameters:
+			name	-	name of datasource. Should only contain letters, number and (_)
+			
+		Returns <Myna.ValidationResult>
 		
-	}),
+		See:
+		* <saveDataSource>
+		*/
+		createLocalDatabase:function(name){
+			return this.saveDataSource({
+				name:name,
+				file:"/WEB-INF/myna/local_databases/" + name,
+				type:"h2",
+				location:"file",
+				driver:"org.h2.Driver"
+			},true)
+		},
+	/* Function: dsExists 
+		returns true if a datasource with the supplied name exists.
+		
+		Parameters:
+			name		-	name of a data source
+		*/
+		dsExists:function(name){
+			return this.getDataSources().contains(function(ds){
+				return ds.name == name
+			})
+		},
 	/* Function: getDataSources
 		returns an array of DS structures currently configured
+			
+			
+		*/
+		getDataSources:function getDataSources(){
+			var dataSources =Myna.JavaUtils.mapToObject($server_gateway.dataSources);
+			return dataSources.getKeys().map(function(key){
+				return Myna.JavaUtils.mapToObject(dataSources[key])
+					.map(function(v,k,o){
+						return parseInt(v) == v?parseInt(v):v  
+					});
+			})
+		},
 		
-		
-	*/
-	getDataSources:function getDataSources(){
-		var dataSources =Myna.JavaUtils.mapToObject($server_gateway.dataSources);
-		return dataSources.getKeys().map(function(key){
-			return Myna.JavaUtils.mapToObject(dataSources[key])
-				.map(function(v,k,o){
-					return parseInt(v) == v?parseInt(v):v  
-				});
-		})
-	},
-	
-	
-	
 	/* Function: saveDataSource 
 		updates a data source,
 		
@@ -198,51 +229,62 @@ Myna.Admin ={
 			
 		Returns:
 		<Myna.ValidationResult>
+				
+		*/
+		saveDataSource:function(config,isNew){
+			var dprops = Myna.Database.dbProperties[config.type]
+			config.setDefaultProperties({
+				driver:(function(){
+					if (dprops){
+						return dprops.dsInfo.driver	
+					}
+				})(),
+				location:"network",
+				case_sensitive:0,
+			})
 			
-	*/
-	saveDataSource:function(config,isNew){
-		var dprops = Myna.Database.dbProperties[config.type]
-		config.setDefaultProperties({
-			driver:(function(){
-				if (dprops){
-					return dprops.dsInfo.driver	
+			config.isNew = true;
+			var v = this.validateDataSource(config,isNew);
+			
+			if (v.success){
+				Myna.saveProperties(config, $server.rootDir + "WEB-INF/myna/ds/" + config.name.toLowerCase()+ ".ds");
+				$server_gateway.loadDataSource(new Myna.File($server.rootDir + "WEB-INF/myna/ds/" + config.name + ".ds").javaFile,true);
+			}
+			
+			return v
+		},
+	/* Function: validateDataSource 
+		validates a data source config 	
+	
+		Parameters:
+			config		-	JS Object representing the data for a data source, see <saveDataSource>
+			isNew			-	Boolean. If true, Ds name will also be checked for uniqueness
+			
+		Returns:
+		<Myna.ValidationResult>
+				
+		*/
+		validateDataSource:function(config,isNew){
+			var v= new Myna.ValidationResult()
+			if (!config) {
+				v.addError("No Datasource configuration provided.")
+				return v
+			}
+			var dprops = Myna.Database.dbProperties[config.type]
+			
+			if (!("url" in config) || !config.url){
+				config.setDefaultProperties(dprops.dsInfo)
+				if (config.location == "file"){
+					config.url=dprops.dsInfo.file_url.format(config)	
+				} else {
+					config.url=dprops.dsInfo.url.format(config)
 				}
-			})(),
-			location:"network",
-			case_sensitive:0,
-		})
-		
-		config.isNew = true;
-		var v = this.validateDataSource(config,isNew);
-		
-		if (v.success){
-			Myna.saveProperties(config, $server.rootDir + "WEB-INF/myna/ds/" + config.name.toLowerCase()+ ".ds");
-			$server_gateway.loadDataSource(new Myna.File($server.rootDir + "WEB-INF/myna/ds/" + config.name + ".ds").javaFile,true);
-		}
-		
-		return v
-	},
-	validateDataSource:function(config,isNew){
-		var v= new Myna.ValidationResult()
-		if (!config) {
-			v.addError("No Datasource configuration provided.")
+			}
+			config.isNew = isNew
+			v.merge(this.dsValidation.validate(config))
+			delete config.isNew
 			return v
 		}
-		var dprops = Myna.Database.dbProperties[config.type]
-		
-		if (!("url" in config) || !config.url){
-			config.setDefaultProperties(dprops.dsInfo)
-			if (config.location == "file"){
-				config.url=dprops.dsInfo.file_url.format(config)	
-			} else {
-				config.url=dprops.dsInfo.url.format(config)
-			}
-		}
-		config.isNew = isNew
-		v.merge(this.dsValidation.validate(config))
-		delete config.isNew
-		return v
-	}
 }
 
 	

@@ -45,19 +45,12 @@
 </@loop>
 </head>
 <body>
-<%-- If you'd like some sort of menu to show up on all of your views, include it here --%>
-<div id="header">
-    <div id="menu"></div>
-</div>
 
 <%--  Flash messages --%>
 <%=$flash.getMessages()%>
 
 <%-- Here's where I want my views to be displayed --%>
 <%=$page.content%>
-
-<%-- Add a footer to each displayed page --%>
-<div id="footer"></div>
 
 </body>
 </html>

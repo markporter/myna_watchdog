@@ -46,26 +46,11 @@ if (!Myna) var Myna={}
 			Myna.println (newEmp.emp_id) // calls get_emp_id() on the bean
 			newEmp.mname = "R"; // calls set_emp_id("R") on the bean
 			
-		
-			
-			// you can also add your own functions to mangers and beans
-			empManager.beanTemplate.getBoss=function(){
-				if (this.get_manager_id().length){
-					return this.manager.get_by_id(this.data.manager_id);
-				} else return this.manager.get_by_id(0); //CEO
-			}
-			
-			//this loads the emplyeesBean defined in empManager.beanTemplate
-			var myBoss = empManager.get_by_id(1000012).getBoss();
-			
 			
 		(end)
 		
-		For more about extending DataManager classes, see:
-		* <DataManager.managerTemplate>
-		* <DataManager.beanTemplate>
-		* <ManagerObject.beanTemplate>
 		
+		Tree Organized Tables:
 		The DataManager can also manage MPTT organized tree tables. This is a 
 		method of storing hierarchical data in flat database tables. 
 		
@@ -119,8 +104,7 @@ if (!Myna) var Myna={}
 				Creates a <ManagerObject> for the supplied table. 
 				
 			
-			See: 
-			* <Myna.DataManager.managerTemplate>
+			
 				
 			
 			*/
@@ -171,89 +155,7 @@ if (!Myna) var Myna={}
 			<Myna.Database> object that represents the database this table resides in 
 			
 			*/
-		/* Property: managerTemplate
-			Base template for <ManagerObject>s. 
-			
-			This contains all the functions of <ManagerObject>. Behavior of <ManagerObject>s
-			can be altered by modifying this object:
-			(code)
-				var dm = new Myna.DataManager("hr_datasource");
-				
-				
-				//the init function is called right after instantiating a <ManagerObject> 
-				dm.managerTemplate.init=function(){
-					Myna.log("debug",this.table.tableName +" manager called");
-				}
-				
-				//replace existing function
-				dm.managerTemplate.genKey=function(value){
-					return new Myna.Query({
-						ds:this.ds,
-						sql:<ejs>
-							select sequence_<%=this.table.tableName%>.nextval from dual
-						</ejs>
-					}).data[0].nexval
-				}
-				
-				//append or prepend function
-				dm.managerTemplate.before("remove",function(id){
-					Myna.log(
-						"audit",
-						"Table " +this.table.tableName +
-							" row "+ this.data[this.table.primaryKey] + " removed.",
-						"Removed by " + Myna.dump($cookie.getAuthUser()) +
-							"<br> Values " + Myna.dump(this.getById(id).data)
-					);
-				})
-			(end)
-			See:
-				* <Myna.DataManager.beanTemplate>
-				* <ManagerObject.beanTemplate>
-			
-			*/
-		/* Property: beanTemplate
-			Base template for <BeanObject>s. 
-			
-			This contains all the functions of <BeanObject>. Behavior of <BeanObject>s
-			can be altered by modifying this object:
-			(code)
-				var dm = new Myna.DataManager("hr_datasource");
-				
-				
-				//the init function is called right after instantiating a <BeanObject> 
-				dm.beanTemplate.init=function(){
-					Myna.log(
-						"audit",
-						"Table " +this.manager.table.tableName +
-							
-						"Accessed by " +Myna.dump($cookie.getAuthUser())
-					);
-				}
-				
-				//replace existing function
-				// This would make more sense to be set on a Manager's beanTemplate object
-				dm.beanTemplate.set_age=function(value){
-					//this is a calculated column and should not be set
-					return;
-				}
-				
-				//append or prepend function
-				dm.beanTemplate.before("saveField",function(fname,newval){
-					Myna.log(
-						"audit",
-						"Table " +this.manager.table.tableName +
-							" row "+ this.data[this.table.primaryKey] 
-							+ " column " + fname+" modified",
-						"Modified by " + Myna.dump($cookie.getAuthUser()) +
-							"<br>Old value:" + this.data[fname] +
-							"<br>New value:" + newval
-					);
-				})
-			(end)
-			See:
-				<ManagerObject.beanTemplate>
-			
-		*/			
+					
 	/* Class: ManagerObject 
 		Table data access object generated and returned by <Myna.DataManager.getManager>
 		
@@ -494,7 +396,12 @@ if (!Myna) var Myna={}
 												included in query results  
 				[queryOptions]			-	Any other <Myna.Query> options such as maxRows								
 			
-												
+							
+			Note:
+				The <Myna.DataSet> returned has an extra property, "totalRows" that 
+				contains the number of items that would be returned if the query was 
+				not constrained. This is useful if page, or startRow are passed as options
+				
 			Examples:
 			(code)
 				var employees = new Myna.DataManager("some_ds").getManager("employees");
@@ -554,8 +461,8 @@ if (!Myna) var Myna={}
 										"like" search. A special property _where_ can be 
 										used for complex where clauses, see 
 										*"where" pattern property* below
-										
-				options			-	find options, see *options* below
+				options			-	*Optional, default false*
+										options to pass to the underlying <ManagerObject.query> call						
 			
 			"where" pattern property:
 				This pattern property works much like the _sql_ property of <Myna.Query>.
@@ -564,15 +471,6 @@ if (!Myna) var Myna={}
 				Parameters are replaced from the other properties of _pattern_. 
 				See example below
 				
-			Options:
-				caseSensitive			-	*default false*
-												if true, patterns will be matched in a 
-												case-sensitive manner
-				includeSoftDeleted	-	*default false*
-												if true, soft deleted columns will be 
-												included in find results  
-			
-			
 												
 			Examples:
 			(code)
@@ -633,11 +531,14 @@ if (!Myna) var Myna={}
 										key is expected to by a column name and the value a 
 										pattern to search for. In either mode, the SQL 
 										wildcard (%) can be used for a "like" search.
-				caseSensitive	-	*Optional, default false*
-										if true, patterns will be matched in a 
-										case-sensitive manner
+				options			-	*Optional, default false*
+										options to pass to the underlying <ManagerObject.query> call
 			
-			
+			Note:
+				The <Myna.DataSet> returned has an extra property, "totalRows" that 
+				contains the number of items that would be returned if the query was 
+				not constrained. This is useful if page, or startRow are passed as options
+				
 			Examples:
 			(code)
 				var employees = new Myna.DataManager("some_ds").getManager("employees");
@@ -686,20 +587,6 @@ if (!Myna) var Myna={}
 				means of generating a primary key.   
 				
 					
-				This function can be replaced in <Myna.DataManager.managerTemplate>
-				or by replacing the function in <ManagerObject>
-				(code)
-					var dm = new Myna.DataManager("some datasource");
-					
-					//via manager template
-					dm.managerTemplate.genKey=function(){
-						<your code here returning a key here>
-					}
-					//via the ManagerObject
-					var man = dm.getManager("employees")
-					man.genKey = function(){
-						<your code here returning a key here>
-					}
 					
 				(end)
 			*/
@@ -734,8 +621,6 @@ if (!Myna) var Myna={}
 			* <BeanObject>
 			* <ManagerObject.find>
 			* <ManagerObject.findBeans>
-			* <Myna.DataManager.beanTemplate> 
-			* <ManagerObject.beanTemplate>
 		
 			*/
 		/* Function: get
@@ -1066,7 +951,7 @@ if (!Myna) var Myna={}
 						var Person = dm.getManager("Person")
 						Person.hasMany({
 							name:"Posts",
-							alias:"RecentPosts
+							alias:"RecentPosts",
 							conditions:{
 								where:"published = 1 and modified > {oneYearAgo:date}",
 								oneYearAgo:new Date().add(Date.YEAR,-1).clearTime()
@@ -1080,7 +965,7 @@ if (!Myna) var Myna={}
 						var Person = dm.getManager("Person")
 						Person.hasMany([{
 							name:"Posts",
-							alias:"RecentPosts
+							alias:"RecentPosts",
 							conditions:{
 								where:"published = 1 and modified > {oneYearAgo:date}",
 								oneYearAgo:new Date().add(Date.YEAR,-1).clearTime()
@@ -1121,6 +1006,132 @@ if (!Myna) var Myna={}
 				<ul>
 				<@loop array="person.Posts()" element="post" index="i">
 					<li> <%=post.title%>	
+				</@loop>
+				</ul>
+				
+				(end)
+				
+				
+		*/
+		/* Function: hasBridgeTo
+			Sets a "many-to-many" relationship with another table.
+			
+			This function has 3 parameter patterns:
+			
+				Model Name:
+					name	-	Plural name of model or exact table name to associate. 
+								Plural Model names are the ProperCased table name, e.g 
+								profiles becomes Profiles, and user_profiles would be 
+								UserProfiles
+					
+					(code)
+						//these are equivalent
+						var Person = dm.getManager("Person")
+						Person.hasBridgeTo("Tags")
+						Person.hasBridgeTo("tags")
+						
+					(end)
+				
+				Model Definition object:
+					name			-	Plural name of model exact table name to associate.
+					alias			-	*Optional, default _name_*
+										Name to use when attaching related beans. Using 
+										different alias allows you to model multiple 
+										hasMany relationships to the same table 
+					conditions	-	*Optional, default null*
+										"where" pattern Object to contain this association, 
+										see <ManagerObject.find>. You do NOT need this to 
+										constrain by the foreign key
+										
+					bridgeTable	-	*Optional, default [relatedModel.tableName,thisModel.tableName].sort().join("_")* 
+										name of bridge table. Defaults to the two tables 
+										names in alphabetical order, separated by underbars(_) 
+								
+					localBridgeKey	-	*Optional, default primary key*
+										the field in the bridge table that stores this table's 
+										ids 
+					
+					foreignBridgeKey	-	*Optional, default foreign table primary key*
+										the field in the bridge table that stores the 
+										foreign table's ids
+					
+					foreignKey	-	*Optional, default modelname +"_id" *
+										name of column in related model that refers to this model
+					localKey		-	*Optional, default model's primary key *
+										This is the column in this table that contains the 
+										foreign key value. This is almost always the 
+										primary key of this table
+					orderBy		-	*Optional, default null*
+										Valid SQL order by expression. if defined, this will be used
+										to order the related beans. 
+					cascade		-	*Optional, default false*
+										This affects the treatment of the related model when a 
+										record is deleted from this model. A value of 
+										false, undefined or null will do nothing. The 
+										string "null" will set null values for the
+										_foreignKey_ column in the related table.
+										The string "delete" will delete the related record 
+										in the related table
+										
+					(code)
+						var Person = dm.getManager("Person")
+						Person.hasBridgeTo({
+							name:"Tags",
+							alias:"RecentTags",
+							conditions:{
+								where:"published = 1 and modified > {oneYearAgo:date}",
+								oneYearAgo:new Date().add(Date.YEAR,-1).clearTime()
+							},
+							orderBy:"category_title ASC, date_published DESC"
+						})
+					(end)
+				
+				Model definition object array:
+					(code)
+						var Person = dm.getManager("Person")
+						Person.hasBridgeTo([{
+							name:"Tags",
+							alias:"RecentTags",
+							conditions:{
+								where:"published = 1 and modified > {oneYearAgo:date}",
+								oneYearAgo:new Date().add(Date.YEAR,-1).clearTime()
+							},
+							orderBy:"category_title ASC, date_published DESC"
+						},{
+							name:"Tags",
+							orderBy:"category_title ASC, date_published DESC"
+						}])
+					(end)
+			
+			Detail:
+				This maps a many-to-many relationship with the related table to this 
+				one. This requires a "bridge" table i.e a table that maps the 
+				primary keys of both tables. Once defined, any beans returned by 
+				this manager will include a  function with the same name as the 
+				related alias that represents the 
+				result of <relatedModel>.findBeans(), constrained by the foreign key 
+				relationship. This is best shown by example
+				
+				(code)
+				// --- from a FlightPath MVC app ---
+				//Person Model
+				function init(){
+					this.hasMany("Tags")
+				}
+				//Person controller
+				function edit(params){
+					this.set("person",this.Person.get({id:params.id}));
+				}
+				//person_edit view
+				Name: <input name="name" value:"<%=person.name%>"><br>
+				<!--
+					person.Posts is the same as 
+					$FP.getModel("Post").findBeans({person_id:person.person_id})
+				-->
+				Posts:
+				<ul>
+				<@loop array="person.Tags()" element="tag" index="i">
+					<li> <%=tag.title%>	
 				</@loop>
 				</ul>
 				
@@ -1225,46 +1236,6 @@ if (!Myna) var Myna={}
 		/* Property: columnNames
 			The columnNames array from <Myna.Table.columnNames> for this table
 		
-			*/
-		/* Property: beanTemplate
-			a <ManagerObject> specific base template for <BeanObject>s. 
-			
-			This is a copy of <Myna.DataManager.beanTemplate> which contains all the functions 
-			of <BeanObject>. Changes to this object only affect beans created by this 
-			manager. Behavior of <BeanObject>s can be altered by modifying this object:
-			(code)
-				var dm = new Myna.DataManager("hr_datasource");
-				var man = dm.getManager("employees")
-				
-				//the init function is called right after instantiating a <BeanObject> 
-				man.beanTemplate.init=function(){
-					Myna.log(
-						"audit",
-						"Employee " +this.data.emp_id +
-							
-						"Accessed by " +Myna.dump($cookie.getAuthUser())
-					);
-				}
-				
-				//replace existing function
-				man.beanTemplate.set_age=function(value){
-					//this is a calculated column and should not be set
-					return;
-				}
-				
-				//append or prepend function
-				man.beanTemplate.before("saveField",function(fname,newval){
-					Myna.log(
-						"audit",
-						"Employee + this.data.emp_id + " column " + fname+" modified",
-						"Modified by " + Myna.dump($cookie.getAuthUser()) +
-							"<br>Old value:" + this.data[fname] +
-							"<br>New value:" + newval
-					);
-				})
-			(end)
-			See:
-				<Myna.DataManager.beanTemplate>
 			*/
 		/* Property: softDeleteCol
 			Date or timestamp column to set to current time instead of deleting rows
@@ -1411,7 +1382,7 @@ if (!Myna) var Myna={}
 				
 			Detail:
 				This function will examine each non-function property of fields and
-				call the corosponding "set" function, if available. Properties that do 
+				call the corresponding "set" function, if available. Properties that do 
 				not match a "set" function are ignored 
 		
 			*/
@@ -1435,8 +1406,12 @@ if (!Myna) var Myna={}
 			*/
 			
 		/* Function: getData
-			return a structure of this bean's data
-			
+			returns a structure of this bean's data
+		
+			Parameters:
+				depth	-	*Optional, default 1* 
+							Number of levels of related beans to include in 
+							this data. Set this to 0 to only include this bean's data
 			Detail: 
 			This is a copy of the data, so it will not change when 
 			the object is modified
@@ -1629,7 +1604,7 @@ if (!Myna) var Myna={}
 			*/
 /* ========== code ========================================================== */
 	/* ---------- Constructor ------------------------------------------------ */
-		Myna.DataManager = function (dataSource/* ,managerTemplatePath,beanTemplatePath */){ 
+		Myna.DataManager = function (dataSource){ 
 			
 			this.ds = dataSource;
 			
@@ -2512,9 +2487,9 @@ if (!Myna) var Myna={}
 					} else this.forceDelete(id)
 				} else this.forceDelete(id)
 			},
-			queryCol:function(pattern,options){
+			queryCol:function(colName,pattern,options){
 				var result = this.query(pattern,options);
-				return result.valueArray(result.columns[0]);
+				return result.valueArray(colName);
 			},
 			queryValue:function(pattern,options){
 				var result = this.query(pattern,options);
@@ -2576,6 +2551,10 @@ if (!Myna) var Myna={}
 			_applyRelatedValues:function(bean,values){
 				this.associations.forEach(function(aliases,type){
 					aliases.forEach(function(relatedModelOptions,relatedAlias){
+							
+						if ("hasOne,belongsTo".listContains(relatedModelOptions.type)){
+							Myna.printConsole("relared model",Myna.dumpText(relatedModelOptions))
+						}
 						if (!(relatedAlias in values)) return;	
 						if (bean[relatedAlias]() instanceof Array){
 							var relatedBeans = values[relatedAlias];
@@ -2832,7 +2811,10 @@ if (!Myna) var Myna={}
 					try{
 						//first save/create parent objects
 						this.manager.associations.belongsTo.forEach(function(relatedModelOptions,alias){
+							
 							var relatedValidation = $this[alias]().save()
+							$this.data[relatedModelOptions.localKey] =$this[alias]().id 
+							//Myna.printConsole("relatedModelOptions",Myna.dumpText(relatedModelOptions))
 							v.merge(relatedValidation,alias +".");
 						})
 						var bean =this.manager.create(this.data)
@@ -2947,20 +2929,22 @@ if (!Myna) var Myna={}
 			getLabel:function(colname){
 				return this.manager.getLabel(colname)
 			},
-			getData:function(onelevel){
+			getData:function(depth){
 				var bean=this;
 				var result ={}
 				result.setDefaultProperties(this.data)
-				
-				if (!onelevel){
+				//for backwards compatibility
+					if (depth === true) depth =0
+					if (depth === undefined) depth=1
+				if (depth){
 					this.manager.associations.forEach(function(aliases,type){
 						aliases.forEach(function(relatedModelOptions,alias){
 							if (bean[alias]() instanceof Array){
 								result[alias] = bean[alias]().map(function(relatedBean){
-									return relatedBean.getData(true);
+									return relatedBean.getData(depth-1);
 								})
 							}else{
-								result[alias] = bean[alias]().getData(true)
+								result[alias] = bean[alias]().getData(depth-1)
 							}
 						})
 					})
@@ -2975,7 +2959,7 @@ if (!Myna) var Myna={}
 					if (!fkrow) throw new SyntaxError("No foreign keys in table '" + this.manager.table.sqlTableName +"'")
 					column = fkrow.fkcolumn_name;	
 				} else {
-					fkrow = this.manager.table.foreignKeys.findFirst("fkcolumn_name",new RegExp("^"+column+"$","i"));
+					fkrow = this.manager.table.foreignKeys.findFirstByCol("fkcolumn_name",new RegExp("^"+column+"$","i"));
 				}
 				if (!fkrow) throw new SyntaxError("No foreign key '"+column+"' in table '" + this.manager.table.sqlTableName +"'")
 				return this.manager.dm.getManager(fkrow.pktable_name).getById(this[column.toLowerCase()])
@@ -2986,7 +2970,7 @@ if (!Myna) var Myna={}
 				fkrow = 	this.manager.table.exportedKeys.findAll("fktable_name",new RegExp("^"+table+"$","i"))
 				if (!fkrow.length) throw new SyntaxError("No child relationships with table '"+table+"' found.")
 				if (column && fkrow.length >1){
-					fkrow = fkrow.findFirst(fkcolumn_name,new RegExp("^"+column+"$","i"));
+					fkrow = fkrow.findFirstByCol(fkcolumn_name,new RegExp("^"+column+"$","i"));
 					if (!fkrow) throw new SyntaxError("No foreign key '"+column+"' in table '" + table +"' to this table")
 				} else {
 					fkrow = fkrow[0];

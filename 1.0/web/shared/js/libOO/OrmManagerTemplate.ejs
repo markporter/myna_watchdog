@@ -77,7 +77,7 @@ function <%=tableName%>_manager(){
 					/* make sure getManager will work */
 						var relatedTable = db.getTable(localExport.fktable_name)
 						if (relatedTable.primaryKeys.length == 1){
-							/* now check for bridge only table */
+							/* now check for bridge only table; where every column is either a primary key or foreign key */
 								var bridgeOnly =relatedTable.columnNames.every(function(colname){
 									if (colname.toLowerCase() == relatedTable.primaryKeys[0].toLowerCase()){
 										return true	
@@ -435,7 +435,7 @@ function <%=tableName%>_manager(){
 			}
 			pattern.<%=primaryKey%> = id
 		}
-		return this.queryCol(pattern,options)
+		return this.queryCol("<%=primaryKey.toLowerCase()%>",pattern,options)
 		
 	},
 	findBeans:function findBeans(pattern,options){
@@ -455,16 +455,18 @@ function <%=tableName%>_manager(){
 			Myna.printConsole("DataManager.findBeans: bad pattern " + String(pattern) + " == "+ (typeof pattern))
 		}
 			
-		return new Myna.DataSet({
+		var qry = this.query(pattern,options);
+		var result = new Myna.DataSet({
 			columns:$this.columnNames,
-			data:this.query(pattern,options)
-				.map(function(row){
+			data:qry.map(function(row){
 					var bean = new <%=tableName%>_manager.beanClass(row,$this)
 					bean.deferred = $this.deferred;
 					bean.exists=true;
 					return bean
 				})
 		})
+		result.totalRows = qry.totalRows
+		return result
 	},
 	getSqlColumnName:function getSqlColumnName(colname){
 		if (!colname || !(colname.toLowerCase() in this.columns)){

@@ -1,14 +1,119 @@
 /* Class: Controller
-	base Controller class for FlightPath
+	In FlightPath, controllers (the C in MVC) are represented by the Controller 
+	class. See <Overview>
 	*/
 	function Controller(){
 		
 	}
+/* Topic: Overview
+	In FlightPath, controllers (the C in MVC) are represented by the Controller class.
+	
+	Controllers are responsible for connecting requests to <Models> and <Views> 
+	The consist of one or more _actions_: functions that take parameters from the 
+	route, perform any necessary business logic with <Models> and render a response, 
+	typically with <Views>
+	
+	How to load a controller:
+	Controllers are normally loaded via a route (See: <Routes>), but they can 
+	also be accessed via <$FP.getController>.
+	
+	 
+	
+	See:
+	* <Conventions>
+	* <Defining Controllers>
+	* <FlightPath Overview>
+	
+*/
+
+/* Topic: Conventions
+	* 	Controller Names are singular, ProperCase, ex: EmployeeAction
+	* 	Controller File names are in file_case, ending with "_controller", 
+		ex: app/controllers/employee_action_controller.sjs
+	* 	Controller definitions are discovered in this order: 
+		framework/controllers/<controller_name>_controller.sjs, 
+		app/controllers/<controller_name>.sjs, 
+		app/modules/<module_name>/controllers/<controller_name>_controller.sjs
+	*  The ini() and functions in app/controllers/global.sjs are applied before 
+		any controller definitions discovered
+	*	Actions are functions defined in the Controller definition file.
+	*	init() and any functions starting with "_" are not considered Actions, 
+		and cannot be called from <Routes> 
+	*	Action names are camelCase, ex: changeStartDate()
+	* 	Actions and are typically verbs that might be 
+		applied to the controller, e.g.EmployeeAction.edit() rather than
+		EmployeeAction.editAction()
+	*	in URLs, controller and action names are in url-case, e.g. employee_action/edit/15
+		or employee-action/edit/15
+	*	The default route for FlightPath will connect a URL of employee_action/edit/15
+		to EmployeeAction.edit({id:15})
+	* 	Controllers will look for a <Model> with the same name as the controller, 
+		and store a reference to it in this.model and this.<ModelName>
+	* 	After executing an Action, Controllers will automatically load the View 
+		with the same name as the action, ex: EmployeeAction.edit() will render 
+		app/views/employee_action/edit.ejs
+	*	Calling <render> or <renderContent> will cancel default view rendering
+	*	Any data inteded to be rendered should be passed to the via via <data>
+		or <set>   
+	*/
+/* Topic: Defining Controllers
+	
+	Controller definitions can be stored in app/controllers/<controller_name>_controller.sjs
+	or in a module:app/modules/module_name/controllers/<controller_name>_controller.sjs. 
+	The primary source of configuration is the <init> function. This is executed after the init() 
+	function in app/controllers/global.sjs. Any functions or properties defined in 
+	this file will be added to final Controller instance.
+	
+	Functions called from init:
+	* <applyBehavior>
+	* <addFilter>
+	* <addLayout>
+	
+	
+	
+	Examples:
+		(code)
+		// app/controllers/employee_action.sjs
+		
+		function init(){
+			// See: Behavior: MynaAuth in the docs
+			// If this was in app/controlelr.global.sjs, it would aplpy to all 
+			// controllers, not just EmployeeActino
+			this.applyBehavior("MynaAuth",{
+				whitelist:[],
+				providers:Myna.Permissions.getAuthTypes(),
+				redirectParams:{}
+			})
+		}
+
+		function edit(params){
+			// Generate ID for new record if none-supplied. That way ID will be in 
+			// the URL and refreshing the page won't create a new record
+			if (!params.id){
+				$FP.redirectTo({
+					id:this.model.genKey()
+				})
+			}
+			
+			// only get here if not re-directed
+			this.set("bean",this.model.get(params);
+			// this controller will automatically render 
+			// app/views/employee_action/edit.ejs
+		}
+		(end)
+	
+	See: 
+		* <init>
+		* <set>
+		* <render>
+		* <renderContent>
+	*/
+
 /* Property: $page
 	$page metadata object
 	
-	This can contain arbitrary metadata about the current page, but these 
-	properties  are used by the default layout file in app/views/layouts/default.ejs
+	This can contain arbitrary metadata about the current page, but the following 
+	properties are used by the default layout file in app/views/layouts/default.ejs
 	
 	Default Properties:
 		css				-	*String Array.* 
@@ -63,8 +168,7 @@
 			])
 			this.$page.scripts =this.$page.scripts.concat([
 				"extjs/ext-all-debug.js",
-				// this is a JSONP callback to load the API from 
-				// framework.controller.DirectController
+				// this is a JSONP callback to load the API from Controller: Direct
 				$FP.helpers.Html.url({
 					controller:"Direct",
 					action:"api",
@@ -494,7 +598,7 @@
 	internal function to execute an action and return the result 
 	*/
 	Controller.prototype.handleAction = function handleAction(params,inline){
-		//this.$params =params = params.applyTo({$inline:inline})
+		this.$params =params
 		var c = this;
 		var action = params.action;
 		if (inline){
@@ -566,7 +670,7 @@
 		return result;
 	}
 /* Function: init
-	Initializes a the controller instance
+	Initializes a controller instance
 	
 	Whenever a controller is instantiated, init() is run to configure the 
 	instance. First the init() in the controller base class is run, then the 
@@ -662,7 +766,7 @@
 			// this.render({controller:this.name,action:"doStuff"})
 		}
 		
-		//in app/views/person/do_stuff.ejs
+		//in app/views/person/person_do_stuff.ejs
 		<%=getElement("form_wrap",{title:"Edit Employee"})%>
 		<form action="<%=Html.url({action:"save",id:bean.id})%>" method="post"> 
 		<table width="100%" height="1" cellpadding="0" cellspacing="0" border="0" >
@@ -701,7 +805,8 @@
 		</div>
 	(end)
 								
-	
+	See:
+	* <Views>
 	*/
 	Controller.prototype.render = function render(options){
 		if (this.rendered) return;
@@ -778,9 +883,6 @@
 			});
 			
 			
-			
-			
-			this.afterRender();
 			this.rendered =true
 		} else {
 			if (options.action == "index"){
@@ -830,8 +932,8 @@
 	
 	Parameters:
 		element		-	name of an element template, should map to
-						app/views/elements/_element_,
-						app/views/elements/<current controller name>_element_.ejs, or
+						app/views/elements/_element_ (can be a path like "common/header.ejs")
+						app/views/elements/<current controller name>/_element_.ejs, or
 						app/views/elements/_element_.ejs, 
 						
 		options		-	any extra global properties to pass to the template
@@ -854,6 +956,9 @@
 		<%=getElement("shared/common_commonlinks.ejs")%>
 		<%=getElement()%>
 	(end)
+	
+	See:
+	* <Elements>
 	*/
 	Controller.prototype.getElement = function renderElement(element,options){
 		if (!options) options = {}
@@ -890,7 +995,9 @@
 		val			-	value to set
 		
 	All top level properties of <data> become global variables in views and elements. 
-		
+	
+	Returns _val_
+	
 	Examples:
 	(code)
 	function myAction(params){
@@ -907,6 +1014,7 @@
 		this.data.position="Slackmaster"
 	}
 	(end)
+	
 	*/
 	Controller.prototype.set = function set(prop,val){
 		if (arguments.length == 1){
