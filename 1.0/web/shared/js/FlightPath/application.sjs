@@ -39,6 +39,7 @@
 			method:"$method",
 			extraPath:"$rest"
 		}],
+		frameworkFolder:$application.directory + "framework",
 		//frameworkFolder:"/shared/js/FlightPath/framework",
 		MyCustomProperty:"woot!"
 	},
@@ -60,8 +61,7 @@
 		}
 		
 		*/
-		var frameworkFolder=this.config.frameworkFolder||this.dir + "framework" 
-		Myna.include(frameworkFolder+"/FlightPath.sjs",{}).init().handleRequest();
+		Myna.include(this.config.frameworkFolder+"/FlightPath.sjs",{}).init().handleRequest();
 	},
 	onRequestEnd:function(){ // run directly after requested file
 	
