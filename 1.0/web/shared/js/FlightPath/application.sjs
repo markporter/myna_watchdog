@@ -18,7 +18,15 @@
 	//--------- FlightPath config -----------------------------------------
 	config:{
 		ds:{
-			"default":"flight_path_app"
+			/*set this for automatic model generation*/
+			
+			//"default":"a Myna datasource name",
+			
+			/*Extra alias to other datasources can be defined, use this alias 
+			name in you model to reference*/
+			
+			//"MyAlias":"some_other_datasource",
+			
 		},
 		homeRoute:{
 			controller:"Main",

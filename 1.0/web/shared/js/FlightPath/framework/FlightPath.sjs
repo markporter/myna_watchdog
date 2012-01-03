@@ -357,7 +357,7 @@
 		
 			if (model.manager in $FP.modelManagers){
 				var mm = $FP.modelManagers[model.manager]
-				var realName = model.realName||modelName;
+				var realName = model.tableName||model.realName||modelName;
 				try{
 					var manager = mm.getModel(realName)
 				} catch(e){

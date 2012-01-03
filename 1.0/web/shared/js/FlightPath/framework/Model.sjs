@@ -74,6 +74,15 @@
 		(code)
 		//app/models/employee_action.sjs
 		
+		//if the table name doesn't follow convention, i.e "employee_actions", 
+		//you can force it here:
+		//var tableName="emp_action"
+		
+		//If you model is not in the "default" datasource alias, you can indicate 
+		//which manager to use by alias name here:
+		//var manager="alias from $application.config.ds"
+		
+		
 		//runs after Myna.DataManager and any init() in app/models/global.sjs
 		function init(){
 			 
@@ -261,14 +270,63 @@
 			
 		}
 	}
+/* Property: manager
+	Manager alias for this model. 
+	
+	This is an alias defined in the application.sjs in the config.ds section. 
+	This causes this model to be loaded form the indicated datasource.
+	Defined at the top of the model file before init()
+	
+	Example
+	(code)
+		// in application.sjs
+		...
+		config:{
+			ds:{
+				"default":"hr",
+				"accounting":"gl",	
+			}
+		...
+	(end)
+	
+	(code)
+		// in app/models/account_model.sjs
+		
+		var manager="accounting";
+		
+		function init(){
+		}
+		...
+	(end)
+	
+	*/
+/* Property: tableName
+	table to load instead of the default name. 
+	
+	For database backed Models where the table name does not conform to 
+	convention. Defined at the top of the model file before init()
+	
+	Example
+	
+	(code)
+		// in app/models/account_model.sjs
+		
+		var tableName="acc2012";
+		
+		function init(){
+		}
+		...
+	(end)
+	
+	*/
 /* Property: validation
-	an instance of <Myna.Validation> 
+	an instance of <Myna.Validation>. Normally built up via <addValidator> 
 	*/
 /* Property: name
-	this model's name 
+	this model's name, set by FLightPath
 	*/
 /* Property: idField
-	name of the identifying field 
+	name of the identifying field, normally set in init() for Custom Models 
 	*/	
 
 
