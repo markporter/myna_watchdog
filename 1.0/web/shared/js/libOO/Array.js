@@ -580,6 +580,25 @@
 		if (!exists) this.push(val)
 		return val
 	};
+/* Function: getUnique 
+	returns a copy of this array that only contains unique items 
+	 
+	Parameters: 
+		looseCheck	-	*Optional, default false*
+							Normally this function uses the "same in type and value"
+							operator (===). Setting this argument to true will causes 
+							this function to use the looser, and slower "same in value"
+							operator (==)
+ 
+	 
+	*/
+	Array.prototype.getUnique=function(looseCheck){
+		var result =[]
+		this.forEach(function(val){
+			result.appendUnique(val,looseCheck)
+		})
+		return result
+	};	
 if ("$server_gateway" in this){
 	(function(){
 		var hide = function (o, p) {
