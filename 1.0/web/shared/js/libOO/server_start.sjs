@@ -141,6 +141,8 @@ if (!$server_gateway.environment.containsKey("isCommandline")){
 	
 
 	new Myna.Thread(function(){
+		/* disabled */ return
+		
 		//set up HazelCast
 			var Hazelcast = com.hazelcast.core.Hazelcast;
 			var config = new com.hazelcast.config.XmlConfigBuilder().build();

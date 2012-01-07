@@ -1507,7 +1507,7 @@ if (!Myna) var Myna={}
 			$server_gateway.manageLocksPermit.release();	
 		}
 	}
-/* Function: clusterLock 
+/* Function *disabled* clusterLock 
 		Gets an exclusive lock by name for the whole cluster. 
 		
 		Parameters:
@@ -1537,6 +1537,7 @@ if (!Myna) var Myna={}
 	 
 	*/
 	Myna.clusterLock=function Myna_getLock(name, timeout, func){
+		return Myna.lock(name, timeout, func)
 		var lock = com.hazelcast.core.Hazelcast.getLock("name");
 		if (lock.tryLock(timeout*1000,java.util.concurrent.TimeUnit.MILLISECONDS)){
 			try {

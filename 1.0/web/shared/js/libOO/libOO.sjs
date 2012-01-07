@@ -29,7 +29,7 @@
 	"WebService.sjs",
 	"Permissions.sjs",
 	"Event.sjs",
-	"Cluster.sjs",
+	//"Cluster.sjs",
 	"Swing.sjs",
 	"Inflector.js",
 	"Admin.sjs"
