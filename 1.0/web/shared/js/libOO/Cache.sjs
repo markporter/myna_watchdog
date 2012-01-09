@@ -178,11 +178,13 @@ if (!Myna) var Myna={}
 				updated the cache
 				*/ 
 				
+				//clean the function
+				var f = eval("("+cacheObj.code+")")
 				if (!cacheValue //no value
 					||	c.getElementAttributes(key).getCreateTime() == time //value hasn't changed
 				){
 					cacheValue={
-						value:cacheObj.code.apply(cacheObj,args),
+						value:f.apply(cacheObj,args),
 						content:$res.clear()
 					}
 					

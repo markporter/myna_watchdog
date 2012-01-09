@@ -450,16 +450,20 @@ var $server={
 		return value;
 	},
 /* Function: restart
-	If this instance is running under bootstrap.MynaServer, start a new listerner and exit this one.
+	If this instance is running has watchdog, the exit the JVM
 	
 	Detail:
-		Starts a new JVM running MynaServer and exits this one. Useful for 
-		recovering from out-of-memory errros, "hung" threads and when installing 
-		Myna upgrades 
+		
+	If this instance of Myna has a watchdog process (-Dmyna.hasWatchdog passed 
+	to the JVM), the this will call System.exit(0) and allow the watchdog to 
+	restart the process. Starting Myna via the embedded Tomcat instance will 
+	automatically enable a watchdog process 
+	
 	*/
 	restart:function(){
-		if (Packages.bootstrap.MynaServer.server){
-			Packages.bootstrap.MynaServer.restart();	
+		
+		if (java.lang.System.getProperty("myna.hasWatchdog") != null){
+			java.lang.System.exit(0);	
 		}
 	},
 /* Function: memToScale
