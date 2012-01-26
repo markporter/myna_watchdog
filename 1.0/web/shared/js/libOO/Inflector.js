@@ -23,7 +23,7 @@ Myna.Inflector={
 		  {suffix:/(matr|vert|ind)(?:ix|ex)$/,replacement:"$1ices"},
 		  {suffix:/([m|l])ouse$/,replacement:"$1ice"},
 		  {suffix:/^(ox)$/,replacement:"$1en"},
-		  {suffix:/(quiz)$/,replacement:"$1zes"},
+		  {suffix:/(quiz)$/,replacement:"$1zes"}
 		],
 		singulars:[
 		  {suffix:/s$/,replacement:""},
@@ -50,7 +50,7 @@ Myna.Inflector={
 		  {suffix:/(vert|ind)ices$/,replacement:"$1ex"},
 		  {suffix:/(matr)ices$/,replacement:"$1ix"},
 		  {suffix:/(quiz)zes$/,replacement:"$1"},
-		  {suffix:/(database)s$/,replacement:"$1"},
+		  {suffix:/(database)s$/,replacement:"$1"}
 		],
 		irregulars:[
 		  {singular:"person",plural:"people"},
@@ -59,7 +59,7 @@ Myna.Inflector={
 		  {singular:"sex",plural:"sexes"},
 		  {singular:"move",plural:"moves"},
 		  {singular:"goose",plural:"geese"},
-		  {singular:"foot",plural:"feet"},
+		  {singular:"foot",plural:"feet"}
 		  
 		],
 		uncountables:[
@@ -72,7 +72,7 @@ Myna.Inflector={
 			"moose",
 			"elk",
 			"fish", 
-			"sheep",
+			"sheep"
 		]
 	},
 	/* Function: pluralize

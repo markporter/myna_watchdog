@@ -5,7 +5,7 @@
 
 #user=
 server=dev
-mem=256
+mem=128
 port=8180
 myna_home=./build
 web_inf=$(readlink -m $myna_home/WEB-INF)

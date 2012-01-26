@@ -49,7 +49,7 @@
 								if _count_ is a string, should the match be case sensitive?
 								
 	Returns:
-		string that appears after _count_, or null if not possible
+		string that appears after _count_, or "" if not possible
 		
 	Example:
 	(code)
@@ -74,18 +74,18 @@
 		
 		switch(true){
 			case typeof count == "number" || parseInt(count) == count:
-				if (count<0 || count > this.length) return null;	
+				if (count<0 || count > this.length) return "";	
 				break;
 			case typeof count == "string":
 				var str=count
 				if	(caseSensitive){
 					if (this.left(str.length) == str){
 						count = str.length;	
-					} else return null
+					} else return ""
 				} else {
 					if (this.left(str.length).toLowerCase() == str.toLowerCase()){
 						count = str.length;	
-					} else return null
+					} else return ""
 				}	
 				break;
 			case typeof count == "object" && count instanceof RegExp:
@@ -93,7 +93,7 @@
 				var result = r.exec(this)
 				if (result) {
 					count = result.index + result[0].length
-				} else return null 
+				} else return "" 
 				break;
 		}
 		
@@ -110,7 +110,7 @@
 								if _count_ is a string, should the match be case sensitive?
 								
 	Returns:
-		string that appears before _count_, or null if not possible
+		string that appears before _count_, or "" if not possible
 		
 	Example:
 	(code)
@@ -136,18 +136,18 @@
 	String.prototype.before=function(count){
 		switch(true){
 			case typeof count == "number" || parseInt(count) == count:
-				if (count<0 || count > this.length) return null;	
+				if (count<0 || count > this.length) return "";	
 				break;
 			case typeof count == "string":
 				var str=count
 				if	(caseSensitive){
 					if (this.right(str.length) == str){
 						count = str.length;	
-					} else return null
+					} else return ""
 				} else {
 					if (this.right(str.length).toLowerCase() == str.toLowerCase()){
 						count = str.length;	
-					} else return null
+					} else return ""
 				}	
 				break;
 			case typeof count == "object" && count instanceof RegExp:
@@ -155,7 +155,7 @@
 				var result = r.exec(this)
 				if (result) {
 					count = this.length -result.index
-				} else return null 
+				} else return "" 
 				break;
 				
 		}
