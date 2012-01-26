@@ -827,7 +827,12 @@ Myna.Query.prototype.__defineGetter__("result", function() {
 		/*	Property: columns
 			a reference to the calling query's columns property 
 		*/
-		
+		/*	Property: rowNum
+			the current row number, starting with 1 
+		*/
+		get rowNum(){
+			return this.rs.getRow();	
+		},
 		/* Function: getValue
 			returns the value of the indicated column of the current row
 			
@@ -948,12 +953,7 @@ Myna.Query.prototype.__defineGetter__("result", function() {
 			return result;
 			
 		},
-		/*	Property: rowNum
-			the current row number, starting with 1 
-		*/
-		get rowNum(){
-			return this.rs.getRow();	
-		}
+		
 	}
 /* Class: Myna.QueryParams 
 	Object that contains query parameter information

@@ -326,6 +326,11 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 				id:"idx_user_group_appname",
 				columns:["appname"]
 			})
+			table.addIndex({
+				id:"idx_ug_name_app",
+				unique:true,
+				columns:["name","appname"]
+			})
 		}
 		
 	/* user_group_members table */

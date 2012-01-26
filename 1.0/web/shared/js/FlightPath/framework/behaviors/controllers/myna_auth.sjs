@@ -99,6 +99,7 @@ function _mynaAuth(action, params){
 			}
 			if (user.hasRight(appname,right)) return;
 			if (user.hasRight(appname,"full_admin_access")) return;
+			if (user.hasRight("myna_admin","full_admin_access")) return;
 		
 			
 			//if we got here shouldn't have

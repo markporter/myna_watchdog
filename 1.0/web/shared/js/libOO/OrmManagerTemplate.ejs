@@ -90,8 +90,8 @@ function <%=tableName%>_manager(){
 							//Myna.printConsole("hasOne, from " + manager.table.tableName + " to " + relatedTable.tableName );
 							if (!bridgeOnly){
 								/* hasOne */
-									name = dm.t2m(localExport.fktable_name)
-									alias = name
+									name = localExport.fktable_name;
+									alias = dm.t2m(localExport.fktable_name);
 									fk_name_part = localExport.fkcolumn_name.toLowerCase()
 									if ( //check for aliased FK
 										fk_name_part.listBefore("_") != localExport.pktable_name.toLowerCase()
@@ -111,8 +111,8 @@ function <%=tableName%>_manager(){
 									
 									
 								/* hasMany */
-									name = dm.m2pm(dm.t2m(localExport.fktable_name))
-									alias = name
+									name = localExport.fktable_name
+									alias = dm.m2pm(dm.t2m(localExport.fktable_name))
 									if ( //check for aliased FK
 										fk_name_part.listBefore("_") != localExport.pktable_name.toLowerCase()
 										&& dm.fk2t(fk_name_part) != localExport.pktable_name.toLowerCase()

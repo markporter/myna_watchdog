@@ -95,7 +95,11 @@ Myna.Admin ={
 				},
 				value:{
 					min:1024, 
-					max:65535
+					max:65535,
+					when:function(params){
+						return params.obj.location == "network"
+					},
+					
 				},
 			},
 			db:{

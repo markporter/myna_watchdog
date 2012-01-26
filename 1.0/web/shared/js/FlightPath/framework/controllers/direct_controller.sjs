@@ -247,8 +247,14 @@ function router(params){
 		} else { 
 			result = executeRequest(request);
 		}
-		
-		this.renderContent(JSON.stringify(result),"application/json")
+		try{
+			//faster but more error-prone
+			var content = JSON.stringify(result);
+		}catch(e){
+			//slower but more reliable
+			content = result.toJson();
+		}
+		this.renderContent(content,"application/json")
 		
 	} else {// post/upload request
 		result = executeRequest({

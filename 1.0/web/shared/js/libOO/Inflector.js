@@ -73,6 +73,7 @@ Myna.Inflector={
 			"elk",
 			"fish", 
 			"sheep"
+			"content",
 		]
 	},
 	/* Function: pluralize
