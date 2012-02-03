@@ -57,10 +57,22 @@ function <%=tableName%>_manager(){
 			hasBridgeTo:{},
 		}
 		this.table = this.db.getTable(this.name);
-		 
+
+		
+		
 		this._validators={}
 		var $this = this;
 		options.applyTo(this);
+		
+		this.validation = new Myna.Validation();
+		Myna.DataManager.validatorFunctions.applyTo(this.validation.validatorFunctons,true);
+		
+		this.validation.getLabel = function(colname){
+			return $this.getLabel(colname);
+		}
+		this.validation.genLabel = function(colname){
+			return $this.genLabel(colname);
+		}
 		if (this.columnNames.indexOf(this.modifiedCol.toLowerCase()) == -1){
 			this.modifiedCol = false;
 		}
@@ -102,7 +114,8 @@ function <%=tableName%>_manager(){
 									Myna.print(
 										"\nthis.hasOne("
 										+JSON.stringify({
-											name:dm.t2m(localExport.fktable_name),
+											name:localExport.fktable_name.toLowerCase(),
+											alias:dm.t2m(localExport.fktable_name),
 											localKey:localExport.pkcolumn_name.toLowerCase(),
 											foreignKey:localExport.fkcolumn_name.toLowerCase(),
 										},null,"  ")
@@ -157,8 +170,8 @@ function <%=tableName%>_manager(){
 				})
 			/* foreign keys  */
 				table.foreignKeys.forEach(function(row){
-					name = dm.t2m(row.pktable_name);
-					var alias = name;
+					name = row.pktable_name.toLowerCase();
+					var alias = dm.t2m(row.pktable_name);
 					var fk_name_part = row.fkcolumn_name.toLowerCase();
 					if ( //check for aliased FK
 						fk_name_part.listBefore("_") != row.fktable_name.toLowerCase()
@@ -814,10 +827,7 @@ new Myna.DataManager.beanBaseClass().applyTo(<%=tableName%>_manager.beanClass.pr
 		return Myna.Database.dbTypeToJs(def.data_type)
 	})
 ,null,"   ")%>
-<%=tableName%>_manager.prototype.validation=new Myna.Validation()
-<%=tableName%>_manager.prototype.validation.getLabel = Myna.DataManager.managerBaseClass.prototype.getLabel;
-<%=tableName%>_manager.prototype.validation.genLabel = Myna.DataManager.managerBaseClass.prototype.genLabel;
-Myna.DataManager.validatorFunctions.applyTo(<%=tableName%>_manager.prototype.validation.validatorFunctons,true)
+
 
 
 new Myna.DataManager.managerBaseClass().applyTo(<%=tableName%>_manager.prototype)

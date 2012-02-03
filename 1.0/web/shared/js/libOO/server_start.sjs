@@ -1,5 +1,7 @@
 //only if not running from commandline
 if (!$server_gateway.environment.containsKey("isCommandline")){
+	/* clean ds cache */
+		new Myna.File("/WEB-INF/myna/ds_class_cache").forceDelete()
 	/* if (Packages.bootstrap.MynaServer.server){
 		new Myna.Thread(function(){
 			$req.timeout=0;

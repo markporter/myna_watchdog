@@ -84,7 +84,6 @@
 		
 		var result =mergeClasses(classList)
 		result.name=modelName
-		//Myna.printDump(result.getProperties(),modelName)
 		return result;
 	}
 /* init
@@ -117,17 +116,6 @@
 				core.modelManagers[alias].modelExists = core.modelManagers[alias].managerExists
 				core.modelManagers[alias].getManager = core.getModel
 			})
-			/* this.dm.after("getManager",function(modelName){
-				var chain = arguments.callee.chain
-				var model = chain.lastReturn
-				if (!model._configured){
-					model._configured=true;
-					
-					
-					model = mergeModels(model,modelName)
-				}
-				return model;
-			}) */
 		}
 		this.frameworkFolder = this.config.frameworkFolder; 
 		Myna.include(this.frameworkFolder + "/Controller.sjs",this)
@@ -253,7 +241,6 @@
 					c2f(controllerName) + "_controller.sjs"
 				);
 			}
-			//Myna.abort(controller + controller.exists())
 			if (!controller.exists()) return null
 			classList.push(controller)
 			controllerClass.prototype = mergeClasses(classList)
@@ -280,7 +267,6 @@
 			}
 		}
 		
-		//Myna.printDump(c,"Controller")
 		return new controllerClass()
 	}
 /* Function: getControllerNames
@@ -309,7 +295,6 @@
 				})
 				.valueArray("fileName")
 				.map(function(fileName){
-					//Myna.println(file)
 					return $FP.f2c(fileName.listBefore("_"),true);
 				})
 				.filter(function(name){//prevent duplicate names
@@ -326,7 +311,6 @@
 			})
 			.valueArray("fileName")
 			.map(function(fileName){
-				//Myna.println(file)
 				return $FP.f2c(fileName.listBefore("_"),true);
 			})
 			.filter(function(name){//prevent duplicate names
@@ -335,7 +319,7 @@
 		)
 			
 		
-		//Myna.abort("names " + String(names.columns),names)
+		
 		return names
 	}
 /* Function: getModel
@@ -348,10 +332,8 @@
 		
 		var model;
 		
-		//Myna.printConsole(this.ds +": loading.. " +modelName)
 		if (modelName in _modelClasses) {
 			model=_modelClasses[modelName];
-			//Myna.printConsole("using stored model for " + modelName)
 		} else {
 			model = mergeModels({},modelName);
 			
@@ -366,29 +348,17 @@
 				} catch(e){
 					manager={notTable:true}	
 				}
-				//Myna.abort()
 				
 				manager.setDefaultProperties(model)
 				manager.after("init",model.init)
 				_modelClasses[modelName]=model = manager;
 				
-				/*
-				if (
-					(model.notDefined&&model.notTable) 
-					&& $FP.modelManagers.getKeys().length
-				){
-					Myna.printDump(model,model.name,7)
-					throw new Error("Unable to find model '" + modelName + "' in FlightPath's Model definition, nor in any database")	
-				}
-				*/
+				
 			}
-			//Myna.printConsole("before init.. " +modelName)
 			model.init()
-			//Myna.printConsole("completing.. " +modelName)
 			
 		}
 		
-		//Myna.printDump(c,"Model")
 		
 		return model
 		
@@ -429,11 +399,6 @@
 		}
 		meta.urlParts = restParams
 		
-		
-		/* Myna.printDump(restParams)
-		Myna.printDump($server)
-		Myna.abort("getparams",$req) */
-		
 		var routes=this.config.routes
 		if (restParams.length){
 			var controllerNames = meta.controllerNames=getControllerNames()
@@ -454,12 +419,10 @@
 					return !"name,pattern".listContains(k)
 				})
 				
-				//Myna.println(route.pattern)
 				function testToken(p,value){
 					var mt;
 					mr.tokens[p] = mt ={comparedTo:value}
 					
-					//Myna.println(p +":"+value)
 					if (p.left(1) == "$"){
 						var paramName = p;
 						if (p.right(1) == "*"){
@@ -471,11 +434,6 @@
 							var parts = p.match(/^(\$\w+)\((.*?)\)$/);
 							paramName =parts[1];
 							var regex = new RegExp(parts[2],"i")
-							/* Myna.abort("debug",[
-								regex,
-								restParams[index],
-								regex.test(restParams[index])
-							]) */
 							if (!regex.test(value)) {
 								mt.matched =false
 								mt.reason = "did not match regex " + regex
@@ -484,24 +442,20 @@
 						}
 						
 						route.forEach(function(v,k){
-							//Myna.println(k +";" + paramName + ":" +v)
 							if (v == paramName){
 								localParams[k] = value
 							}
 						})
 						mt.matched = true
-						//Myna.abort()
-						//Myna.println("return true")
 						return true
 					} else {
-						//Myna.println( "return " +p == value.toLowerCase() || new RegExp(p,"i").test(value))
-						if (p == value.toLowerCase() || new RegExp(p,"i").test(value)){
+						if (p == String(value).toLowerCase() || new RegExp(p,"i").test(value)){
 							mt.matched = true
 							return true;
 						} else {
 							mt.matched = false
 							mt.reason = <ejs>
-								p == value.toLowerCase() != <%=p == value.toLowerCase()%>
+								p == value.toLowerCase() != <%=p == String(value).toLowerCase()%>
 								AND
 								new RegExp("<%=p%>","i").test("<%=value%>") !=<%=new RegExp(p,"i").test(value)%>
 							</ejs>
@@ -513,14 +467,11 @@
 				var matchedAll = route.pattern.split("/").every(function(p,index){
 					if (index == 0 && p.left(1) == "["){
 						var method  = p.match(/^\[(.*?)\]/)[1];
-						
 						if (!testToken(method,$req.type)) return false
 						p = p.after(p.indexOf("]")+1)
-						//Myna.abort(p)
 					}
 					return testToken(p,restParams[index])
 				})
-				//Myna.println("matched all: " + matchedAll)
 				
 				if (!matchedAll && index < routes.length){
 					mr.selected = false
@@ -529,73 +480,61 @@
 					</ejs>	
 					return false;
 				}
-
-				/*[
-					"controller",
-					"action",
-					"id"
-				].forEach(function(name){
-					if (name in route){
-						if (route[name].left(1) =="$"){
-							localParams[name] = localParams[route[name].after(1)];
-						} else {
-							localParams[name] = route[name];
-						}
-					}
-				})*/ 
 				
-				var controller = $FP.f2c(localParams.controller||"",true);
+				localParams.controller = localParams.controller||"";
 				localParams.action = localParams.action||"index";
-				var action = $FP.f2c(localParams.action); 
-				//Myna.abort("debug",controller)
-				if (controllerNames.contains(controller)){
-					if (getController(controller).getActions().contains(function(a){return a.action==action})){
+				if (/^[a-z0-9-_]+$/.test(localParams.controller)){
+					localParams.controller = f2c(localParams.controller,true)
+				}
+				
+				if (/^[a-z0-9-_]+$/.test(localParams.action)){
+					localParams.action = f2c(localParams.action,false)
+				}
+				
+				var controllerExists = controllerNames.contains(function(c){
+						return c == localParams.controller
+				})
+				if (controllerExists){
+					var actionExists = getController(localParams.controller).getActions().contains(function(a){
+						return a.action==localParams.action
+					}) 
+					if (actionExists){
 						params = localParams;
-						//Myna.abort("matched",params)
 						mr.selected = true
 						return true
 					} else {
 						mr.selected = false
 						mr.reason = <ejs>
-							Action <%=action%> not found in <%=controller%>
+							Action <%=localParams.action%> not found in <%=localParams.controller%>
 						</ejs>
 						return false
 					}
 				} else {
 					mr.selected = false
 					mr.reason = <ejs>
-						Controller name <%=controller%> not found in controllerNames
+						Controller name <%=localParams.controller%> not found in controllerNames
 					</ejs>
 					return false
 				}
 			})
-			Myna.log("warning","failed route for " + restParams.join("/"),Myna.dump(meta,"Routing Metadata",7));
-			//Myna.abort("debug")
+			if (foundOne){
+				if ($FP.config.debug){
+					Myna.log("debug","Route metadata for " + restParams.join("/"),Myna.dump(meta,"Routing Metadata",7));
+				}
+			}else{
+				Myna.log("warning","failed route for " + restParams.join("/"),Myna.dump(meta,"Routing Metadata",7));
+			}
 		} else {
 			
 		}
 		
-		//Myna.abort("params", params)
-		//convert "" to nulls
 		$req.rawData.forEach(function(v,k){
 			if (v === "") $req.rawData[k] = null 
 		})
 		
 		params = $req.rawData.setDefaultProperties(params);
 		 
-		if (
-			params.controller 
-			&& /^[a-z0-9-_]+$/.test(params.controller)
-		){
-			params.controller = f2c(params.controller,true)
-		}
 		
-		if (
-			params.action 
-			&& /^[a-z0-9-_]+$/.test(params.action)
-		){
-			params.action = f2c(params.action,false)
-		}
 		return params;
 	}
 
@@ -605,7 +544,6 @@
 	function handleRequest(){
 		try{
 			if (this._handling_request) {
-				Myna.printConsole("recursive")
 				return;
 			}
 			this._handling_request=true
@@ -676,7 +614,6 @@
 			
 			return obj
 		},{})
-		//Myna.abort("",result.init.chainArray.map(function(e){return e.toSource()}))
 		return result
 	}
 /* Function: objectToUrl
@@ -763,10 +700,9 @@
 			}
 		})                 
 		$flash.set(options)
-		//if (url.charAt(0) == "/") url= $server.serverUrl + url
 		$res.redirect(url)
 		
-		//Myna.abort("<a href="+url+">"+url+"</a")
+		
 		
 	}
 

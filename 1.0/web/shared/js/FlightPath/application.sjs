@@ -17,6 +17,8 @@
 	
 	//--------- FlightPath config -----------------------------------------
 	config:{
+		//set this to false in production.
+		debug:$server.purpose.toLowerCase() == "dev", 
 		ds:{
 			/*set this for automatic model generation*/
 			

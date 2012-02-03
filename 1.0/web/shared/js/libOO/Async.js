@@ -1,5 +1,5 @@
 /* Class: Async
-	Asynchronous function utilities
+	Web browser asynchronous function utilities
 	
 	
 	Detail:
