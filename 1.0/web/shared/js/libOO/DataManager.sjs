@@ -1824,9 +1824,10 @@ if (!Myna) var Myna={}
 		Myna.DataManager.validatorFunctions={
 			
 			unique:function(params){
+				//Myna.log("debug","got here dm",Myna.dump($req.data));
 				var v = new Myna.ValidationResult()
 				if (typeof $server_gatway != "undefined"){
-					var msg= params.options.message|| params.obj.manager.getLabel(params.property) +" ("+params.value+"), already exists in another record."
+					var msg= params.options.message|| params.label +" ("+params.value+"), already exists in another record."
 					var search ={}
 					search[params.property] = params.value
 					var result = params.obj.manager.find(search,this)
@@ -3000,7 +3001,8 @@ if (!Myna) var Myna={}
 				return this.manager.remove(this.id)
 			},
 			validate:function(colname,type){
-				var v = new Myna.ValidationResult()
+				return this.manager.validation.validate(this,colname)
+				/* var v = new Myna.ValidationResult()
 				var fieldList = colname?[colname]:this.manager.columnNames
 				var manager = this.manager
 				var bean = this;
@@ -3036,7 +3038,7 @@ if (!Myna) var Myna={}
 					}
 				})
 				
-				return v
+				return v */
 			},
 			toJSON:function(){
 				return this.getData()

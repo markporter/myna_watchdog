@@ -221,6 +221,7 @@
 /* Model constructor, used internally by FlightPath
 	*/
 	function Model(){
+		var model = this;
 		if (!this._labels) 	this._labels={}
 		if (!this._defaults) this._defaults={}
 		if (!this._types) this._types={}
@@ -244,14 +245,18 @@
 		if (!this.fieldNames) this.fieldNames=[]
 		if (!this.validation){	
 			this.validation = new Myna.Validation();
+			
 			({
 				unique:function(params){
 					var v = new Myna.ValidationResult()
-					if (typeof $server_gatway != "undefined"){
-						var msg= params.options.message|| params.obj.model.getLabel(colname) +" ("+params.value+"), already exists in another record."
+					//Myna.log("debug","got here "  + String(typeof $server_gatway != "undefined"));
+					if (typeof $server_gateway != "undefined"){
+						//Myna.log("debug","params",Myna.dump(params));
+						var msg= params.options.message|| params.label +" ("+params.value+"), already exists in another record."
 						var search ={}
 						search[params.property] =params.value
 						var result = params.obj.manager.find(search,params.options)
+						//Myna.log("debug","resukt",Myna.dump(result));
 						if (result.length){
 							if (result.length > 1 || result[0] != params.obj.id) v.addError(msg,params.property);
 						}
@@ -1805,6 +1810,27 @@ Model.prototype={
 		instances of this value, NOT associated with this idProperty. If 
 		any are found this validator will add an error     
 	
+	Examples:
+	(code)
+		this.addValidators({
+			name:{
+				required:{},
+			
+			},
+			slug:{
+				required:{},
+				unique:{},//slug must be unique in the table, regardless of case
+				regex:{
+					pattern:/^[a-z0-9-]+$/,
+					message:"Can only contain numbers, lowercase letters, '_' or '-'"
+				}
+	
+			},
+		})
+		//OR
+		this.addValidator("slug","unique")
+	(end)
+		
 	See:
 		* <addValidator>
 	*/

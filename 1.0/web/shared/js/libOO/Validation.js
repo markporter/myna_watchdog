@@ -110,6 +110,7 @@ if (!Myna) var Myna={}
 	*/
 		
 	Myna.Validation.prototype.addValidator=function addValidator(property,validator,options){
+		var type=typeof validator === "string"?validator:"[unknown/custom]"
 		if (!options) options ={}
 		if (!this.validators) this.validators={}
 		if (!property) property ="$ALL";
@@ -124,6 +125,7 @@ if (!Myna) var Myna={}
 		
 		this.validators[property].push({
 			property:property,
+			type:type,
 			validator:validator,
 			options:options
 		})
@@ -622,9 +624,11 @@ if (!Myna) var Myna={}
 		
 	*/
 	Myna.Validation.prototype.validate=function(obj,property){
+		//Myna.printConsole("validating " + property);
 		var vr = new Myna.ValidationResult()
 		var $this = this
 		var validateProperty = function(property,value){
+			//Myna.printConsole("validating " + property);
 			var params ={
 				label:$this.getLabel(property),
 				obj:obj,
@@ -634,6 +638,7 @@ if (!Myna) var Myna={}
 			
 			function shouldRun(validatorDef){
 				var options =params.options = validatorDef.options||{};
+				//Myna.printConsole(validatorDef.type);
 				if ( typeof options.when ==="function" && !options.when(params)) return false;
 				return true;
 			}
