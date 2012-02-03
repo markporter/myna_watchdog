@@ -333,10 +333,10 @@ if (!Myna) var Myna={}
 		var sr={
 			id:"ID"	
 		}
-		if (property in sr) return sr[property]
+		if (typeof sr[property] != "undefined") return sr[property]
 		property = property.splitCap().join("_").toLowerCase()
 		return property.split(/_/).map(function(part){
-			if (part in sr ) return sr[part]
+			if (typeof sr[part] != "undefined") return sr[part]
 			return part.titleCap()
 		}).join(" ")
 	}
@@ -639,13 +639,13 @@ if (!Myna) var Myna={}
 			}
 			try{
 				
-				if (property in $this.validators){
+				if (typeof $this.validators[property] != "undefined"){
 					$this.validators[property].filter(shouldRun).forEach(function(validatorDef){
 							params.options = validatorDef.options || {};
 						vr.merge(validatorDef.validator.call($this, params))
 					})
 				}
-				if ("$ALL" in $this.validators){
+				if (typeof $this.validators.$ALL != "undefined"){
 					$this.validators.$ALL.filter(shouldRun).forEach(function(validatorDef){
 						params.options = validatorDef.options;
 						vr.merge(validatorDef.validator.call($this, params))
@@ -673,7 +673,7 @@ if (!Myna) var Myna={}
 			}
 		}
 		
-		if (property && property in $this.validators) {
+		if (property && typeof $this.validators[property] != "undefined") {
 			validateProperty(property,obj[property])
 		} else {
 			var properties=[]
@@ -819,7 +819,7 @@ Myna.Validation.prototype.validatorFunctions={
 		var min = typeof params.options.min =="function"?params.options.min.apply(params.options, Array.parse(arguments)):params.options.min;
 		var max = typeof params.options.max =="function"?params.options.max.apply(params.options, Array.parse(arguments)):params.options.max;
 		
-		var hasLength = ("length" in params.value) && params.value.length;
+		var hasLength = (typeof params.value.length !== "undefined") && params.value.length;
 		
 		if (max && hasLength && params.value.length > max){
 			
