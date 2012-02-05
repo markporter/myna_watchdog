@@ -969,21 +969,21 @@
 		if (!e.exists()){
 			e = new Myna.File($application.directory ,"app/views/elements", element + ".ejs")
 		}
-		return Myna.includeContent(
-			e,
-			$FP.mergeClasses([
-				$FP.helpers,
-				{
-					$controller:this,
-					$model:this.model,
-					$page:this.$page,
-					$params:this.$params,
-					getElement:$this.getElement
-				},
-				$this.data,
-				options
-			])
-		)
+		var $this = this;
+		var scope = $FP.mergeClasses([
+			$FP.helpers,
+			{
+				$controller:$this,
+				$model:$this.model,
+				$page:$this.$page,
+				$params:$this.$params,
+				getElement:$this.getElement
+			},
+			$this.data,
+			options
+		])
+		
+		return Myna.includeContent(e,scope);
 	}
 /* Function: set
 	Sets a property on <data>

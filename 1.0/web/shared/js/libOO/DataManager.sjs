@@ -2318,19 +2318,28 @@ if (!Myna) var Myna={}
 						},
 						moveNode:function(location){
 							var $this = this;
+							var man = this.manager
 							Myna.clusterLock(
-								this.table.tableName + "_treeManager",
+								man.table.tableName + "_treeManager",
 								0,
 								function(){
 									if (!location) location = {
 										beforeNode:false,
 										underNode:false
 									}
-									var anchorNode;
+									
+									
+									//column name storing "right" values
 									var rightCol = man.table.getSqlColumnName($this.manager.rightCol);
+									//column name storing "left" values
 									var leftCol = man.table.getSqlColumnName($this.manager.leftCol);
+									//the depthColumn, if defined
+									var depthCol = $this.manager.depthCol
+									//the moved node's right value
 									var myRight = $this.data[$this.manager.rightCol];
+									//the moved node's left value
 									var myLeft = $this.data[$this.manager.leftCol];
+									//The "width" of this node and it's children
 									var subTreeSize = (myRight - myLeft) +1
 									var newOffset;
 									
@@ -2342,7 +2351,7 @@ if (!Myna) var Myna={}
 										ds:man.ds,
 										log:man.logQueries,
 										sql:<ejs>
-											update <%=$this.table.sqlTableName%> set 
+											update <%=man.table.sqlTableName%> set 
 												<%=rightCol%> = <%=rightCol%> * -1,
 												<%=leftCol%> = <%=leftCol%> * -1
 											where
@@ -2356,46 +2365,60 @@ if (!Myna) var Myna={}
 									})
 									
 									/* 
-									re-order the downstream tree to backfill
+									re-number the "right" values for nodes right of this one to backfill
 									*/
 									new Myna.Query({
 										ds:man.ds,
 										log:man.logQueries,
 										sql:<ejs>
-											update <%=$this.table.sqlTableName%> set 
+											update <%=man.table.sqlTableName%> set 
 											<%=rightCol%> = <%=rightCol%> - {size:bigint},
 											<%=leftCol%> = <%=leftCol%> - {size:bigint}
 											where
 											<%=leftCol%> > {myRight:bigint}
 										</ejs>,
 										values:{
-											myRight:$this.data[$this.manager.rightCol],
+											myRight:myRight,
 											size:subTreeSize,
 										}
 									})
+									
 									/* 
-									re-order parentNodes to backfill
+									re-number the "right" values for this nodes ancestors to backfill
 									*/
 									new Myna.Query({
 										ds:man.ds,
 										log:man.logQueries,
 										sql:<ejs>
-											update <%=$this.table.sqlTableName%> set 
+											update <%=man.table.sqlTableName%> set 
 											<%=rightCol%> = <%=rightCol%> - {size:bigint}
 											where
 											<%=leftCol%> < {myLeft:bigint}
 											and <%=rightCol%> > {myRight:bigint}
 										</ejs>,
 										values:{
-											myRight:$this.data[$this.manager.rightCol],
-											myLeft:$this.data[$this.manager.leftCol],
+											myRight:myRight,
+											myLeft:myLeft,
 											size:subTreeSize,
 										}
 									})
 									
 									
+									/* Calculate offset and renumberForInsert
+									
+										In this section we determine where the node needs 
+										to move, and what the offset is from this node's 
+										original "left" and it's new "left". We also use 
+										<renumberForInsert> to make a space for this node 
+										to move into
+									
+									*/
+									
+									// node that this node will be moved under or before
+									var anchorNode;
+									
+									//see if the beforeNode element really exists, and remove it if it doesn't
 									if (location.beforeNode != undefined){
-										//see if the beforeNode element really exists
 										anchorNode = man.findBeans(location.beforeNode)
 										if (!anchorNode.length || anchorNode[0].isRootNode()){//node does not exist
 											//treat this as a top level insert   
@@ -2403,18 +2426,37 @@ if (!Myna) var Myna={}
 											location.beforeNode = false;
 										} else {
 											anchorNode = anchorNode[0];
-											
-											$this["set_" +$this.manager.parentCol](anchorNode.data[$this.manager.parentCol]);
-											if ($this.manager.depthCol) {
-												$this["set_" +$this.manager.depthCol](anchorNode.data[$this.manager.depthCol]);
+											//set the parentId of this node to it's new parent node
+											$this.saveField(
+												$this.manager.parentCol,
+												anchorNode.data[$this.manager.parentCol]
+											);
+										
+											if (depthCol) {//fix depth values if necessary
+												var depthOffset = anchorNode.data[depthCol] - $this.data[depthCol];
+												new Myna.Query({
+													ds:man.ds,
+													log:man.logQueries,
+													sql:<ejs>
+														update <%=man.table.sqlTableName%> set 
+														<%=depthCol%> = <%=depthCol%> + ({offset:bigint})
+													
+														where
+															<%=leftCol%> < 0 
+													</ejs>,
+													values:{
+														offset:depthOffset
+													}
+												})
 											}
-											newOffset = anchorNode.data[$this.manager.leftCol] - myLeft						
+											newOffset = anchorNode.data[leftCol] - myLeft						
 											$this.manager.renumberForInsert(location.beforeNode,"before",subTreeSize)
 										}
 									}
 									
-									if (location.underNode != undefined){
-										//see if the underNode element really exists
+									//see if the underNode element really exists, and remove it if it doesn't
+									if (!location.beforeNode && location.underNode != undefined){
+										
 										anchorNode = man.findBeans(location.underNode)
 										if (!anchorNode.length){//node does not exist
 											//treat this as a top level insert   
@@ -2422,27 +2464,60 @@ if (!Myna) var Myna={}
 											location.underNode = false;
 										} else {
 											anchorNode = anchorNode[0];
-											$this["set_" +$this.manager.parentCol](anchorNode[$this.manager.idCol]);
-											if ($this.manager.depthCol) {
-												$this["set_" +$this.manager.depthCol](anchorNode.data[$this.manager.depthCol] + 1);
+											$this.saveField(
+												$this.manager.parentCol,
+												anchorNode.id
+											);
+											
+											if (depthCol) {//fix depth values if necessary
+												var depthOffset = anchorNode.data[depthCol] - $this.data[depthCol] +1;
+												new Myna.Query({
+													ds:man.ds,
+													log:man.logQueries,
+													sql:<ejs>
+														update <%=man.table.sqlTableName%> set 
+														<%=depthCol%> = <%=depthCol%> + ({offset:bigint})
+														
+														where
+															<%=leftCol%> < 0 
+													</ejs>,
+													values:{
+														offset:depthOffset
+													}
+												})
 											}
-											newOffset = anchorNode.data[$this.manager.rightCol] - myLeft				
+											
+											newOffset = anchorNode.data[rightCol] - myLeft				
 											$this.manager.renumberForInsert(location.underNode,"under",subTreeSize)
 										}
 									} 
 									
+									//we assume a move to Under the root node
 									if (!(location.beforeNode || location.underNode)){
-										var search = {}
-										//search for root node
-										search[$this.manager.parentCol] = null;
-										anchorNode = man.findBeans(search)
-										if (anchorNode.length){//there is a root node
-											anchorNode=anchorNode[0]
-											$this["set_" +$this.manager.parentCol](anchorNode[$this.manager.idCol]);
-											if ($this.manager.depthCol) {
-												$this["set_" +$this.manager.depthCol](2);
+										if (man.hasRootNode()){//there is a root node
+											anchorNode=man.getRootNode
+											$this.saveField(
+												$this.manager.parentCol,
+												anchorNode.id
+											);
+											if (depthCol) {//fix depth values if necessary
+												var depthOffset = anchorNode.data[depthCol] - $this.data[depthCol] +1;
+												new Myna.Query({
+													ds:man.ds,
+													log:man.logQueries,
+													sql:<ejs>
+														update <%=man.table.sqlTableName%> set 
+														<%=depthCol%> = <%=depthCol%> + ({offset:bigint})
+														
+														where
+															<%=leftCol%> < 0 
+													</ejs>,
+													values:{
+														offset:depthOffset
+													}
+												})
 											}
-											newOffset = anchorNode.data[$this.manager.rightCol] - myLeft				
+											newOffset = anchorNode.data[rightCol] - myLeft				
 											$this.manager.renumberForInsert(anchorNode.data[$this.manager.idCol],"under",subTreeSize)
 										} else {//insert root node
 											throw new Error("cannot move a node when the is no root node!")
@@ -2455,7 +2530,7 @@ if (!Myna) var Myna={}
 										ds:man.ds,
 										log:man.logQueries,
 										sql:<ejs>
-											update <%=$this.table.sqlTableName%> set 
+											update <%=man.table.sqlTableName%> set 
 											<%=rightCol%> = <%=rightCol%> * -1 + ({offset:bigint}),
 											<%=leftCol%> = <%=leftCol%> * -1 + ({offset:bigint})
 											where
