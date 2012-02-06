@@ -89,4 +89,4 @@ $application.addOpenObject({
 	close:function(){
 		$session.set("$flash",$flash.data)
 	}	
-})
+}) 
