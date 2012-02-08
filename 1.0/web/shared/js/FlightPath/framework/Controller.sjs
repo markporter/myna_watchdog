@@ -858,10 +858,11 @@
 					$model:$this.model,
 					$page:$this.$page,
 					$params:$this.$params,
-					getElement:$this.getElement
+					getElement:function() { return $this.getElement.apply($this, Array.parse(arguments)); }
 				},
 				$this.data
 			])
+			$FP.helpers.forEach(function(helper) { helper.$view = scope; });
 			$res.clear()
 			//include the view
 				Myna.include(viewFile,scope);
@@ -977,7 +978,7 @@
 				$model:$this.model,
 				$page:$this.$page,
 				$params:$this.$params,
-				getElement:$this.getElement
+				getElement:function() { return $this.getElement.apply($this, Array.parse(arguments)) }
 			},
 			$this.data,
 			options
