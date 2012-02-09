@@ -237,7 +237,8 @@
 	Parameters:
 		filter		-	Function or Array. Filter function to execute, or Array of 
 							filter functions to execute. See *Filter Function Parameters*
-							below
+							below. Note that the "this" scope when executed will 
+							be the controller instance being filtered
 							
 		options		-  *Optional, default see below*
 							JS struct, see *Options* below		
@@ -255,7 +256,6 @@
 							action names. Mutually exclusive with _only_
 	
 	Filter Function Parameters:
-		controller	-	Object reference to the controller to which this filter is applied
 		action		-	String name of action requested
 		params		-	the "params" argument passed to the action
 		response		-	The return from the action. This is always null for 

@@ -332,16 +332,22 @@ function <%=tableName%>_manager(){
 			caseSensitive = options
 			options={}
 		}
-
 		var getCriteria=function(colName,pattern){
 			colName= colName.toLowerCase();
+			var op=" = ";
+			if (colName.listLen(" ") > 1){
+				op = " " +colName.listAfter(" ") + " ";
+				colName = colName.listFirst(" ");
+			}
+			var type=$this.columns[colName].data_type;
 			var col = {
 				column:colName,
-				op:"=",
+				op:op,
 				isNull:false,
-				type:$this.columns[colName].data_type,
+				type:type,
 				pattern:pattern
 			}
+			
 			
 			
 			
@@ -351,15 +357,19 @@ function <%=tableName%>_manager(){
 			
 			col.compareColumn =col.column
 			if (pattern === null){
+				col.compareColumn =$this.getSqlColumnName(col.column)
 				col.isNull = true;
+				if (op == " = ") col.op ="is"
 			} else if (Myna.Database.dbTypeToJs($this.columns[colName].data_type) == "string"){
 				if (!caseSensitive){
 					col.pattern = String(col.pattern).toLowerCase();
 					col.column = colName.toLowerCase();
-					col.compareColumn ="LOWER(" + col.column +")"	
+					col.compareColumn ="LOWER(" + $this.getSqlColumnName(col.column) +")"	
 				} else {
-					
+					col.compareColumn =$this.getSqlColumnName(col.column)
 				}
+			} else {
+				col.compareColumn =$this.getSqlColumnName(col.column)
 			}
 			
 			return col
@@ -376,7 +386,7 @@ function <%=tableName%>_manager(){
 					pattern[this.softDeleteCol] = null	
 				}
 				pattern.getKeys().filter(function(colName){
-					return myColumnList.listContains(colName.toLowerCase())
+					return myColumnList.listContains(colName.toLowerCase()) || colName.toLowerCase().listLen(" ") >1
 				}).forEach(function(colName){
 					
 					criteria.push(getCriteria(colName,pattern[colName]))
@@ -417,10 +427,14 @@ function <%=tableName%>_manager(){
 				sql:[ejs]
 					select <|=select|>
 					from <%=sqlTableName%>
-					where 1=1
+					where 
+					<#if !options.includeSoftDeleted && $this.softDeleteCol in $this.columnNames>
+						<|=$this.getSqlColumnName($this.softDeleteCol)|> is null and
+					</#if>
+					1=1
 					<#loop array="criteria" element="col" >
 						<#if col.isNull>
-						and <|=col.column|> is null
+						and <|=col.compareColumn|> <|=col.op|> null
 						<#else>
 						and <|=col.compareColumn|> <|=col.op|> <|=p.addValue(col.pattern,col.type,!!col.pattern)|>
 						</#if>
@@ -613,6 +627,16 @@ function <%=tableName%>_manager(){
 	Object.defineProperty(
 		$this, 
 		"manager", 
+		{
+			value:manager,
+			writeable:false,
+			enumerable: false,  
+			configurable: false
+		}
+	);
+	Object.defineProperty(
+		$this, 
+		"model", 
 		{
 			value:manager,
 			writeable:false,

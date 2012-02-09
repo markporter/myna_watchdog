@@ -376,16 +376,19 @@ if (!Myna) var Myna={}
 				options			-	query options, see *options* below
 			
 			Special Pattern Properties:
-				select	-	*default, "*"*
-								This is the select expression to use for this query. 
-								Any valid SQL will work
-				where 	-	*default, false*
-								This pattern property works much like the _sql_ property of <Myna.Query>.
-								Any valid SQL can be used here, and parameter placeholders can be used
-								just as in <Myna.Query>. Parameters are replaced from the other 
-								properties of _pattern_. See example below
-				orderBy	-	*default, false*
-								if defined, this is a valid SQL order by expression
+				select				-	*default, "*"*
+										This is the select expression to use for this query. 
+										Any valid SQL will work
+				where 				-	*default, false*
+										This pattern property works much like the _sql_ property of <Myna.Query>.
+										Any valid SQL can be used here, and parameter placeholders can be used
+										just as in <Myna.Query>. Parameters are replaced from the other 
+										properties of _pattern_. See example below
+				orderBy				-	*default, false*
+										if defined, this is a valid SQL order by expression
+				"colname operation"	-	*default, false*
+										if defined, will perform _operation_ against _colname_
+										with the value of this property. e.g : "age <":12
 				
 				
 			Options:
@@ -409,14 +412,15 @@ if (!Myna) var Myna={}
 				
 				//Find all employees of a given supervisor
 				var grunts = man.query({
-					supervisor_id:"0102236"
-				}) 
+					supervisor_id:"0102236",
+					"inactive is not":null
+				})                                                          
 				
 								
 				//more complicated search with wildcards
 				var assitants = employees.find({
 					supervisor_id:"0102236"
-					job_title:"%assitant%"
+					job_title:"%assistant%"
 				})
 				
 				// an even more complicated search with "select",
@@ -1477,9 +1481,13 @@ if (!Myna) var Myna={}
 		/* Function: save
 			Saves a deferred bean and returns a <Myna.ValidationResult> object 
 			
-			If called against a <deferred> BeanObject, all values in <data> are 
-			persisted to the database. Afterwards, this bean's <deferred> status is 
-			set to the manager's <deferred> status 
+			If called against a <deferred> BeanObject, then <validate> is called. 
+			If successful, then all values in <data> are 
+			persisted to the database. Afterwards, this bean's <deferred> status 
+			is set to the manager's <deferred> status
+			
+			If this bean is not <deferred> then a successful <Myna.ValidationResult>
+			is immediately returned
 			
 			*/
 			
@@ -2092,9 +2100,28 @@ if (!Myna) var Myna={}
 				return bean;
 			},
 			get:function(values){
+				var man = this;
 				//Myna.printConsole("get","values " + values.toJson())
 				var searchParams ={}
-				searchParams[this.primaryKey] = values[this.primaryKey];
+				 
+				var pkType= Myna.Database.dbTypeToJs(man.columns[man.primaryKey].data_type);
+				var pkvalue =values[this.primaryKey];
+				
+				if (pkType == "numeric" && parseFloat(pkvalue) != pkvalue){
+					pkvalue = null;	
+				}
+				if (pkType == "date" && (!pkvalue || !(pkvalue instanceof Date))){
+					pkvalue = null;	
+				}
+				if (pkType == "binary" && (!pkvalue || !(pkvalue instanceof Array))){
+					pkvalue = null;	
+				}
+				if (pkvalue === undefined || pkvalue===""){
+					pkvalue = null;	
+				}
+				searchParams[this.primaryKey] = pkvalue
+				if (searchParams[this.primaryKey] === undefined) searchParams[this.primaryKey] =null
+				
 				//make a local copy
 				//values=values.applyTo(this.getDefaults(),true)
 				

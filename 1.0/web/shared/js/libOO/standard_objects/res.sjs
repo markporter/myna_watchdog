@@ -78,9 +78,10 @@ var $res = {
 			var padding ="";
 			
 			new Array(paddingSize).forEach(function(){padding+=" "});
-			$server.response.getOutputStream().print(padding);
-			$server.response.getOutputStream().print($res.getContent());
 			try {//we don't care if flushing fails
+				$server.response.getOutputStream().print(padding);
+				$server.response.getOutputStream().print($res.getContent());
+			
 				$server.response.flushBuffer();
 			} catch(e){}
 			return $res.clear();	

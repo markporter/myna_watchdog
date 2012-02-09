@@ -155,7 +155,7 @@ var $req={
 					
 					result[name] =values;
 					result[name.toLowerCase()]=result[name];
-					result.hideProperty(name.toLowerCase());
+					/* result.hideProperty(name.toLowerCase()); */
 				}
 			});
 		} catch(e){}
