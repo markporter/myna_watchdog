@@ -156,12 +156,9 @@ var fusebox={
 					$res.metaRedirect(rawData.callback);
 					
 				} else {
-					//metaRedirect
-					$res.metaRedirect($server.serverUrl
-						+$server.requestUrl
-						+$server.requestScriptName
-						+"?fuseaction=login"
-						+"&message=" + escape("Authentication Failed")
+					$res.redirect($req.rawData.login_page
+						+(/\?/.test($req.rawData.login_page)?"&":"?")
+						+"message=" + escape("Authentication Failed")
 						+"&provider=" + escape(rawData.provider)
 						+"&providers=" + escape(rawData.providers)
 						+"&callback=" + escape(rawData.callback)
@@ -177,12 +174,9 @@ var fusebox={
 						+ Myna.dump($req.data,"data") 
 						+ Myna.dump($req.rawData,"rawData")
 				);
-				//metaRedirect
-				$res.metaRedirect($server.serverUrl
-					+$server.requestUrl
-					+$server.requestScriptName
-					+"?fuseaction=login"
-					+"&message=" + escape("Authentication Failed - Error " + e.message)
+				$res.redirect($req.rawData.login_page
+					+(/\?/.test($req.rawData.login_page)?"&":"?")
+					+"message=" + escape("Authentication Failed - Error " + e.message)
 					+"&provider=" + escape(rawData.provider)
 					+"&providers=" + escape(rawData.providers)
 					+"&callback=" + escape(rawData.callback)

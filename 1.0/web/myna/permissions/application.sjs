@@ -20,10 +20,10 @@
 
 	},
 	onRequestStart:function(){ // run directly before requested file
-		ds = $application.ds;
-		db = new Myna.Database(ds);
+		$server.globalScope.ds = $application.ds;
+		$server.globalScope.db = new Myna.Database(ds);
 		$application.dm = new Myna.DataManager($application.ds);
-		dm = $application.dm;
+		$server.globalScope.dm = $application.dm;
 		dm.managerTemplate.genKey= function(){
 			return Myna.createUuid();
 		}

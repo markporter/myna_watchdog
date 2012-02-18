@@ -772,5 +772,36 @@
 		})
 		return result;
 	}
+/* Function: toMap
+	return a JS object where one column is the keys and another column is the values
+	
+	Parameters:
+		keyCol			-	Column to use for keys
+		valueCol		-	Column to use for values
+		valuesInArray	-	*Optional, default false*
+							If true, values will be in an array in order of 
+							appearance. Otherwise the last value for _valueCol_
+							will be assigned
+							
+	Example:
+	(code)
+		var empMap = empDataSet.toMap("employee_id","employee_name")
+		var selectedName = empMap[selectedEmpId];
+	(end)
+	*/
+	DataSet.prototype.toMap = function(keyCol, valueCol, valuesInArray){
+		if (!this.length) return {}
+		var result ={};
+		var $this = this;
+		this.forEach(function(row,index){
+			if (valuesInArray){
+				if (!result[row[keyCol]]) result[row[keyCol]] = [];
+				result[row[keyCol]].push(row[valueCol])
+			}else {
+				result[row[keyCol]] = row[valueCol]
+			}
+		})
+		return result;
+	}
 if (typeof Myna == "undefined") var Myna={}
 Myna.DataSet = DataSet;

@@ -578,6 +578,7 @@ var C ={
 								{name: 'middle_name'},
 								{name: 'login'},
 								{name: 'email'},
+								{name: 'title'},
 								{name: 'type'}
 							])
 						}),
@@ -628,8 +629,20 @@ var C ={
 								'</tpl>',
 							'</table>'
 						),
-						/* pageSize:15, */ 
-						listWidth:800,
+						tpl:new Ext.XTemplate(
+							'<tpl for="."><div class="search-item">',
+								'<h3>{first_name} {middle_name} {last_name}</h3>',
+								'<span>',
+									'<b>Login:</b> {type}/{login}<br/>', 
+									'<b>Email:</b>{email}<br/>',
+									'<b>Title:</b>{title}',
+								'</span>',
+								'<p/>',
+							'</div></tpl>'
+						),
+						/* pageSize:25, */
+						itemSelector: 'div.search-item',
+						listWidth:250,
 						forceSelection:true,
 						allowBlank:true	,
 						listeners:{}
@@ -965,6 +978,7 @@ var C ={
 			}]
 		}
 		viewport = new Ext.Viewport(config);	
+		if (appname!="myna_admin") C.user_groups_main()
 		
 	}
 /* ---------------- apps_main --------------------------------------------- */

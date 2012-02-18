@@ -193,9 +193,12 @@ Myna.Database = function (ds){
 /*	Function: getTable
 	returns a <Myna.Table> object representing the named table. 
 	*/
-	Myna.Database.prototype.getTable = (function(tableName){
-		return new Myna.Table(this,tableName);
-	}).cache()
+	Myna.Database.prototype.getTable = function(tableName){
+		this.getTable = (function(tableName){
+			return new Myna.Table(this,tableName);
+		}).cache()
+		return this.getTable(tableName)
+	}
 	
 
 /*	Function: dbTypeToJs

@@ -84,6 +84,13 @@ body,td{
 	padding-right:5px;
 }
 
+.search-item{
+	padding:5px;	
+}
+.search-item span{
+	/*font-style:italic;*/	
+}
+
 .x-grid3-row-alt{
 	 background-color:#f1f2f4; 
 }

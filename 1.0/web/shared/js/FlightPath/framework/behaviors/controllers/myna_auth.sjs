@@ -54,9 +54,14 @@ function init(options){
 	this.addFilter(this._mynaAuth)
 	this._mynaAuth.options = (options||{}).setDefaultProperties({
 		whitelist:[],
+		anyUserList:[],
 		providers:Myna.Permissions.getAuthTypes(),
 		redirectParams:{}
 	})
+	this._mynaAuth.options.redirectParams.setDefaultProperties({
+		providers:this._mynaAuth.options.providers,
+	})
+	
 }
 
 function _mynaAuth(action, params){
@@ -67,12 +72,19 @@ function _mynaAuth(action, params){
 		if (!(item instanceof RegExp)){
 			item = new RegExp("^" +String(item).replace(/\./,"\\.") +"$")
 		}
-		return item.test() 	
+		return item.test(right) 	
 	})
 	
 	if (!isWhitelisted){
 		var user = $cookie.getAuthUser();
 		if (!user){
+			if ($FP.config.debug){
+				Myna.log(
+					"debug",
+					"Action " + right + " not whitelisted, redirecting to login",
+					Myna.dump(my.options.whitelist, "MynaAuth whitelist")
+				);	
+			}
 			var redirectParams = ({
 				callbackUrl:$FP.helpers.Html.url({
 					controller:this.name,
@@ -86,30 +98,46 @@ function _mynaAuth(action, params){
 			//unnecessary, but good practice
 			return false; //cancels action
 		} else {
+			var isAnyUser = my.options.anyUserList.some(function(item){
+				if (!(item instanceof RegExp)){
+					item = new RegExp("^" +String(item).replace(/\./,"\\.") +"$")
+				}
+				return item.test(right) 	
+			})
 			
-			var appname= $application.appname;
-				
-			var all_rights=Myna.Permissions.getRightsByAppname(appname)
+			if (!isAnyUser){
+				var appname= $application.appname;
 					
-			if (!all_rights.containsByCol("name",right)){
-				Myna.Permissions.addRight({
-					name:right,
-					appname:appname
-				})
-			}
-			if (user.hasRight(appname,right)) return;
-			if (user.hasRight(appname,"full_admin_access")) return;
-			if (user.hasRight("myna_admin","full_admin_access")) return;
-		
+				var all_rights=Myna.Permissions.getRightsByAppname(appname)
+						
+				if (!all_rights.containsByCol("name",right)){
+					Myna.Permissions.addRight({
+						name:right,
+						appname:appname
+					})
+				}
+				
+				if (user.hasRight(appname,right)) return;
+				if ($FP.config.debug){
+					Myna.log(
+						"debug",
+						"Auth fail for Action " + right + ", User " + user.first_name +" "+ user.last_name,
+						Myna.dump(my.options.whitelist, "MynaAuth whitelist")
+					);	
+				}
+				if (user.hasRight(appname,"full_admin_access")) return;
+				if (user.hasRight("myna_admin","full_admin_access")) return;
 			
-			//if we got here shouldn't have
-			Myna.log(
-				"auth",
-				<ejs>
-					User '<%=user.first_name%> <%=user.last_name%>' does not have access to <%=right%>
-				</ejs>
-			);
-			throw new Error("You do not have access to that feature")
+				
+				//if we got here shouldn't have
+				Myna.log(
+					"auth",
+					<ejs>
+						User '<%=user.first_name%> <%=user.last_name%>' does not have access to <%=right%>
+					</ejs>
+				);
+				throw new Error("You do not have access to that feature")
+			}
 		}
 	}
 }

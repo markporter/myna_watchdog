@@ -110,10 +110,34 @@ if (!Function.prototype.bind)
 		function. The first time this function is called, the original function is 
 		executed, and subsequent calls immediately return the cached value. If 
 		this function takes a single param that can be converted to a string, then 
-		that will be used a s a cahce key, allowing multiple values to be cached
+		that will be used a s a cache key, allowing multiple values to be cached
 		
 	Note:
 		This will only work properly with functions that do not take parameters.
+		
+	Warning:
+		*Do not use this for prototype functions*, unless you intend to cache the 
+		result across ALL instances of this class. To have chaching per instance, 
+		you can set this in the constructor function, or you can create a lazy 
+		loading version like this:
+		
+		(code)
+			var myClass = function(){
+				//define in constructor
+				this.getEmployee=(function(empId){
+				  	...do stuff...
+				}).cache()
+			}
+			
+			//or use lazy-load method
+			myClass.prototype.getManager=function(managerId){
+				this.getManager =(function(managerId){
+				  	...do stuff...
+				}).cache() 
+				return this.getManager(managerId)
+			}
+		(end)
+		
 		
 	Example:
 	(code)

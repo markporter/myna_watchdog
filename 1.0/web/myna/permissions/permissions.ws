@@ -620,51 +620,6 @@
 								})	
 							} else Myna.log("debug","No searchUsers in authAdapter" + type,Myna.dump(p.getProperties()));
 						})
-						var searchQry=new Myna.Query({
-							dataSource:"myna_permissions",
-							sql:<ejs>
-								select
-									login,
-									u.first_name,
-									u.last_name,
-									u.middle_name,
-									u.email,
-									'openid' as type,
-									u.title
-								from 
-									user_logins ul,
-									users u					
-								where u.user_id = ul.user_id
-								and type ='openid'
-								<@if search.length>
-									and (
-											lower(user_login_id ) like {search}
-											or lower(login  ) like {search}
-											or lower(u.user_id ) like {search}
-											or lower(first_name ) like {search}
-											or lower(middle_name ) like {search}
-											or lower(last_name ) like {search}
-											or lower(email) like {search}
-									)
-								</@if>
-								order by last_name,first_name,login 
-							</ejs>,
-							values:{
-								search:"%" + search.toLowerCase() + "%",
-							},
-							rowHandler:function(row){
-								var obj = row.getRow();
-								obj.getKeys().forEach(function(key){
-									if (obj[key] === null){
-										obj[key] = "";
-									}
-								})
-								return obj;
-							}
-						})
-						searchQry.data.forEach(function(row){
-							result.push(row);
-						})
 						
 					}
 					result.sort(function(a,b){

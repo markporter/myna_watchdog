@@ -966,22 +966,35 @@ if (!Myna) var Myna={}
 			}).data.length
 		},
 	/* Function: getLogins
-		returns an array of objects in the form of [{type,login}] of the logins 
+		returns a <DataSet> of objects in the form of [{type,login}] of the logins 
 		associated with this user
+		
+		Parameters:
+			type	-	*Optional, default null*
+						If defined, an array of login name strings matching this
+						type is returned instead of the <DataSet> 
 	 */
-		Myna.Permissions.User.prototype.getLogins = function(){
+		Myna.Permissions.User.prototype.getLogins = function(type){
 			var user = this;
-			return new Myna.Query({
+			var result=new Myna.Query({
 				ds:this.dao.ds,
 				sql:<ejs>
 					select type,login
 					from user_logins
 					where user_id={user_id}
+					<@if type >
+					and type = {type}
+					</@if>
 				</ejs>,
 				values:{
-					user_id:user.get_user_id()
+					user_id:user.get_user_id(),
+					type:type
 				},
 			}).data;
+			
+			if (type) {
+				return result.valueArray("login")
+			} else return result
 		}
 	/* Function: getLoginList
 		returns a list of type/login pairs in the form of "type:login,type:login" of 

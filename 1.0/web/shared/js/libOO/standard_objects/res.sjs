@@ -257,7 +257,7 @@ var $res = {
 			"&title=" + escape(options.title) +
 			"&callback=" + escape($server.resolveUrl(options.callbackUrl))+
 			"&message=" + (options.message)
-		$res.metaRedirect(url);
+		$res.redirect(url);
 		Myna.print("<a href ='" + url +"'>"+options.title+"</a>");
 		Myna.abort();
 	},

@@ -377,7 +377,7 @@
 		}
 	/* plural-modelname-to-modelname */
 		Model.pm2m=function(name){
-			var result = this.name.splitCap()
+			var result = name.splitCap()
 			result.push(Myna.Inflector.singularize(result.pop()))
 			
 			return result.map(function(part){
@@ -1573,7 +1573,6 @@ Model.prototype={
 			work.push(name)
 		}
 		var thisModel = this;
-		
 		
 		//each relationship
 		work.forEach(function (relatedModelOptions){

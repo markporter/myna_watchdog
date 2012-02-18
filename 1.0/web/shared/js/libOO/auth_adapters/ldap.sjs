@@ -147,7 +147,7 @@ function searchUsers(search){
 	var qry ="(|";
 	
 	$this.config.search_columns.split(/,/).forEach(function(col){
-		 qry +="("+col+"=" + search +"*)"
+		 qry +="("+col+"=" + "*"+search +"*)"
 	})
 	
 	qry +=")";
@@ -161,14 +161,15 @@ function searchUsers(search){
 		attributes = attributes.listAppend(v);
 	})
 	
+	Myna.log("debug","ldap search qry " + qry);
 	return new Myna.DataSet({
 		data:$this.getLdap().search(qry,attributes)
 		.filter(function(row){
 			
 			return $this.config.map.login in row.attributes 
 			&& row.attributes[$this.config.map.login].length
-			&& $this.config.map.email in row.attributes
-			&& row.attributes[$this.config.map.email].length
+			/* && $this.config.map.email in row.attributes
+			&& row.attributes[$this.config.map.email].length */
 		})
 		.map(function(row){
 			var result = {

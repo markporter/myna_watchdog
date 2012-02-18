@@ -1723,6 +1723,11 @@ if (!Myna) var Myna={}
 		Myna.DataManager.managerClasses={}
 	/* ---------- getManager ------------------------------------------------- */
 		Myna.DataManager.prototype.getManager=function(table,options){
+			var ds = this.ds
+			if (!(ds in Myna.DataManager.managerClasses)) {
+				Myna.DataManager.managerClasses[ds] ={}
+			}
+			var managerClasses =Myna.DataManager.managerClasses[ds]
 			if (!options) options ={}
 			options.setDefaultProperties({
 				softDeleteCol:"deleted",
@@ -1730,18 +1735,22 @@ if (!Myna) var Myna={}
 				modifiedCol:"modified",
 			})
 			
-			var name;
+			var name,alias=table;
 			var tableName = table
 			if (table instanceof Myna.Table) {
 				name =tableName = table.tableName;
+				alias = this.t2m(tableName)
 			} else {
-				name=table;
 				if (!this.db.getTable(tableName).exists){
 					if (this.db.getTable(this.m2t(tableName)).exists){
-						tableName = this.m2t(tableName)
+						alias = table
+						name = tableName = this.m2t(tableName)
 					}
+				}else {
+					alias = this.t2m(tableName)
 				}
 			}
+			
 			tableName = tableName.toLowerCase();
 			if (!this.db.getTable(tableName).exists){
 				throw new Error(<ejs>
@@ -1766,16 +1775,16 @@ if (!Myna) var Myna={}
 			
 			
 			if (
-				!Myna.DataManager.managerClasses[tableName]
+				!managerClasses[tableName]
 				|| staleClassFile 
 			) {
 				if (!staleClassFile){//now check for DDL changes
 					var t = this.db.getTable(tableName);
 					
 					
-					if (!(tableName+"_manager" in Myna.DataManager.managerClasses)){
+					if (!(tableName+"_manager" in managerClasses)){
 						//Myna.printConsole(tkey +" loading for DDL check")
-						Myna.include(classFile,Myna.DataManager.managerClasses);
+						Myna.include(classFile,managerClasses);
 					}
 					var signature = Object({
 						columns:t.columns,
@@ -1784,7 +1793,7 @@ if (!Myna) var Myna={}
 						exportedKeys:t.exportedKeys
 					}).toJson().hashCode()
 					
-					if (Myna.DataManager.managerClasses[tableName+"_manager"].signature != signature){
+					if (managerClasses[tableName+"_manager"].signature != signature){
 						staleClassFile =true;
 						Myna.printConsole(tkey +" failed DDL check")
 					}
@@ -1800,13 +1809,14 @@ if (!Myna) var Myna={}
 					)
 					//Myna.printConsole("loading model " + classFile)
 				}
-				if (!(tableName+"_manager" in Myna.DataManager.managerClasses)){
+				if (!(tableName+"_manager" in managerClasses)){
 					//Myna.printConsole(tkey +" loading for stale file check")
-					Myna.include(classFile,Myna.DataManager.managerClasses);
+					Myna.include(classFile,managerClasses);
 				}
 			}
-			var manager =this._managers[tkey]= new Myna.DataManager.managerClasses[tableName+"_manager"]();
+			var manager =this._managers[tkey]= new managerClasses[tableName+"_manager"]();
 			
+			manager.alias=alias;
 			
 			return manager._init(this,options)
 		}
@@ -1818,13 +1828,19 @@ if (!Myna) var Myna={}
 		}
 	/* ---------- managerExists ---------------------------------------------- */
 		Myna.DataManager.prototype.managerExists = function(name){
-			if (this.db.getTable(name).exists){
+			try{
+				var man = this.getManager(name)
 				return true;
-			}else {
-				if (this.db.getTable(this.m2t(name)).exists){
-					return true
-				}
+			} catch(e){
+				return false	
 			}
+				/* if (this.db.getTable(name).exists){
+					return true;
+				}else {
+					if (this.db.getTable(this.m2t(name)).exists){
+						return true
+					}
+				} */
 			return false
 		}
 	/* ---------- validatorFunctions ----------------------------------------- */
@@ -1861,9 +1877,14 @@ if (!Myna) var Myna={}
 				}
 			}catch(e){
 				
-				Myna.abort(e.message,Array.parse(arguments))
+				Myna.logSync(
+					"error",
+					"getRelated FAIL from " + bean.manager.tableName + " to " + relatedModelOptions.name,
+					Myna.formatError(e) + Myna.dump(Array.parse(arguments))
+				);
+				throw new Error("Known Bug: DB models cannot be associated with non-DB models")
 			}
-			criteria[relatedModelOptions.foreignKey]=bean.data[relatedModelOptions.localKey]
+			criteria[relatedModelOptions.foreignKey]=bean.data[relatedModelOptions.localKey]||null
 			if (relatedModelOptions.conditions){
 				relatedModelOptions.conditions.getKeys().forEach(function(prop){
 					if (prop=="where"){
@@ -1878,10 +1899,14 @@ if (!Myna) var Myna={}
 				case "belongsTo":
 				case "hasOne":
 					var exists;
-					exists = relatedModel.find(criteria);
-					if (exists.length){
-						relatedBean=relatedModel.getById(exists[0]);
-						relatedBean.deferred =true;
+					if (bean.data[relatedModelOptions.localKey]){
+						exists = relatedModel.find(criteria);
+						if (exists.length){
+							relatedBean=relatedModel.getById(exists[0]);
+							relatedBean.deferred =true;
+						} else {
+							relatedBean=relatedModel.getNew(criteria);
+						}
 					} else {
 						relatedBean=relatedModel.getNew(criteria);
 					}
@@ -1895,7 +1920,7 @@ if (!Myna) var Myna={}
 					}
 					break;
 				case "hasBridgeTo":
-					var bridgeTable =dm.db.getTable(relatedModelOptions.bridgeTable);
+					
 					relatedModelOptions.setDefaultProperties({
 						localKey:thisModel.primaryKey,
 						foreignKey:relatedModel.primaryKey,
@@ -1903,6 +1928,9 @@ if (!Myna) var Myna={}
 						localBridgeKey:dm.m2fk(dm.t2m(thisModel.tableName)),
 						foreignBridgeKey:dm.m2fk(dm.t2m(relatedModel.tableName))
 					})
+					var bridgeTable =dm.db.getTable(relatedModelOptions.bridgeTable);
+					/* Myna.printDump(relatedModelOptions)
+					Myna.printDump(bridgeTable) */
 					relatedBean =new Myna.Query({
 						ds:dm.ds,
 						sql:<ejs>
@@ -1935,7 +1963,8 @@ if (!Myna) var Myna={}
 					relatedBean.relatedModelOptions = relatedModelOptions;
 					relatedBean.getNew = function(initialValues){
 						var values = (initialValues||{}).applyTo({});
-						var newBean = relatedBean[relatedBean.length]=relatedModel.getNew(values)
+						var newBean = relatedBean[relatedBean.length]=relatedModel.get(values)
+						
 						newBean._hasBridgeTo = relatedBean.relatedModelOptions;
 						return newBean
 					}
@@ -2182,7 +2211,7 @@ if (!Myna) var Myna={}
 				} else if (typeof name === "string"){
 					work.push({
 						name:name
-					})
+					})                 
 				} else {
 					work.push(name)
 				}
@@ -2190,25 +2219,28 @@ if (!Myna) var Myna={}
 				
 				//each relationship
 				work.forEach(function (relatedModelOptions){
-					var relatedModelName = relatedModelOptions.name
+					var relatedModelName = relatedModelOptions.name;
+					var relatedModel = thisModel.dm.getManager(relatedModelName)
+					//Myna.printConsole(relatedModel.name,relatedModel.manager)
 					var relatedAlias = relatedModelOptions.alias = relatedModelOptions.alias || relatedModelOptions.name
-					 
+					                                                                      
 					if (relatedModelOptions._belongsTo){
 						if (relatedAlias in thisModel.associations.belongsTo) {
 							relatedModelOptions.setDefaultProperties(thisModel.associations.belongsTo[relatedAlias])	
 						}
 						relatedModelOptions.setDefaultProperties({
 							localKey:thisModel.dm.m2fk(relatedAlias==relatedModelName?relatedModelName:relatedAlias),
-							foreignKey:thisModel.primaryKey
+							foreignKey:relatedModel.primaryKey,//thisModel.primaryKey                  
 						})
 						thisModel.associations.belongsTo[relatedAlias] = relatedModelOptions;
-					} else {
+					} else {                                                       
 						if (relatedAlias in thisModel.associations.hasOne) {
 							relatedModelOptions.setDefaultProperties(thisModel.associations.hasOne[relatedAlias])	
 						}
-						relatedModelOptions.setDefaultProperties({
+						var myAlias = thisModel.alias|| thisModel.name
+						relatedModelOptions.setDefaultProperties({            
 							localKey:thisModel.primaryKey,
-							foreignKey:thisModel.dm.m2fk(relatedAlias==relatedModelName?thisModel.modelName:relatedAlias)
+							foreignKey:thisModel.dm.m2fk(myAlias)
 						})
 						thisModel.associations.hasOne[relatedAlias] = relatedModelOptions;
 					}
@@ -2223,7 +2255,7 @@ if (!Myna) var Myna={}
 			hasMany:function hasMany(name){
 				
 				var work =[]
-				if (name instanceof Array){
+				if (name instanceof Array){       
 					work = name
 				} else if (typeof name === "string"){
 					work.push({
@@ -2238,7 +2270,7 @@ if (!Myna) var Myna={}
 				//each relationship
 				work.forEach(function (relatedModelOptions){
 					
-					
+					var defaultAlias =relatedModelOptions.name 
 					/* singularize if this is a model name */
 					if (relatedModelOptions.name.toLowerCase() != relatedModelOptions.name){
 						
@@ -2251,14 +2283,14 @@ if (!Myna) var Myna={}
 					}
 					
 					var relatedModelName = relatedModelOptions.name;
-					var relatedAlias = relatedModelOptions.alias = relatedModelOptions.alias || relatedModelOptions.name;
+					var relatedAlias = relatedModelOptions.alias = relatedModelOptions.alias || defaultAlias;
 					if (relatedAlias in thisModel.associations.hasMany) {
 						relatedModelOptions.setDefaultProperties(thisModel.associations.hasMany[relatedAlias])	
 					}
 					
 					if (!thisModel.dm.managerExists(relatedModelName)) {
 						throw new Error("Model '"+relatedModelName+"' does not exist.")	
-					}
+					}                                                           
 					
 					//singular model name calculated above, like Person
 					var foreignKeyName = thisModel.modelName;
@@ -2266,10 +2298,13 @@ if (!Myna) var Myna={}
 						//Convert plural model alias to singular, e.g. CustomWidgets to CustomWidget
 						foreignKeyName = thisModel.dm.t2m(thisModel.dm.pm2t(relatedAlias))
 					}
+					
+					var myAlias = thisModel.alias|| thisModel.name
+					                                  
 					relatedModelOptions.setDefaultProperties({
 						localKey:thisModel.primaryKey,
-						foreignKey:thisModel.dm.m2fk(foreignKeyName)
-					})
+						foreignKey:thisModel.dm.m2fk(myAlias)
+					})                                                             
 					
 					thisModel.associations.hasMany[relatedAlias] = relatedModelOptions;
 					thisModel.__defineGetter__(relatedModelName, function() { 
@@ -2497,7 +2532,7 @@ if (!Myna) var Myna={}
 											);
 											
 											if (depthCol) {//fix depth values if necessary
-												var depthOffset = anchorNode.data[depthCol] - $this.data[depthCol] +1;
+												depthOffset = anchorNode.data[depthCol] - $this.data[depthCol] +1;
 												new Myna.Query({
 													ds:man.ds,
 													log:man.logQueries,
@@ -2926,15 +2961,16 @@ if (!Myna) var Myna={}
 				if (!this.deferred) return new Myna.ValidationResult();
 				var v = this.validate()
 				var manager = this.manager
-				
+				//Myna.printConsole("got here firstest")
 				if (v.success){
 					try{
 						//first save/create parent objects
 						this.manager.associations.belongsTo.forEach(function(relatedModelOptions,alias){
-							
+							if ($this.data[relatedModelOptions.localKey] == null) return 
 							var relatedValidation = $this[alias]().save()
 							$this.data[relatedModelOptions.localKey] =$this[alias]().id 
 							//Myna.printConsole("relatedModelOptions",Myna.dumpText(relatedModelOptions))
+							//Myna.printConsole(alias +".",$this.data[relatedModelOptions.localKey])
 							v.merge(relatedValidation,alias +".");
 						})
 						var bean =this.manager.create(this.data)
@@ -2943,19 +2979,24 @@ if (!Myna) var Myna={}
 						this.isDirty = false;
 						this.exists=true
 						var localBean = this;
+						//Myna.printConsole("got here first")
+						
 						this._loadedAliases.forEach(function(relatedBean,alias){
 							//already handled parents
 							if (alias in $this.manager.associations.belongsTo) return;
 							
+							var relatedModelOptions = relatedBean.relatedModelOptions;
 							if (relatedBean instanceof Array){
-								relatedBean.forEach(function(bean){
+								relatedBean.forEach(function(relatedBean){
 									var relatedValidation = bean.save()
 									v.merge(relatedValidation,alias +"."+bean.id +".");
 									//bridge tables are a pain
+									//Myna.println(relatedBean._hasBridgeTo + " && " +relatedValidation.success)
 									if (relatedBean._hasBridgeTo && relatedValidation.success){
+										//Myna.printDump(relatedBean,"bridgeto save")
 										//Fire a blind insert into bridge table	
 										try {
-											var bridgeTable =dm.db.getTable(relatedModelOptions.bridgeTable);
+											var bridgeTable =$this.manager.db.getTable(relatedModelOptions.bridgeTable);
 											var lbk=relatedBean._hasBridgeTo.localBridgeKey;
 											var fbk=relatedBean._hasBridgeTo.foreignBridgeKey;
 											new Myna.Query({
@@ -2971,11 +3012,13 @@ if (!Myna) var Myna={}
 														
 												</ejs>,
 												values:{
-													localId:localBean.id,
-													foreignId:bean.id
+													localId:localBean.data[relatedBean._hasBridgeTo.localKey],
+													foreignId:bean.data[relatedBean._hasBridgeTo.foreignKey]
 												}
 											})
-										}catch(e){}
+										}catch(e){
+											Myna.logSync("Error","Error saving bridge ",Myna.formatError(e)+Myna.dump(relatedBean));
+										}
 									}
 								})	
 							} else {

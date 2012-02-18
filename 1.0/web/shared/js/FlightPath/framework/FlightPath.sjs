@@ -343,17 +343,27 @@
 			if (model.manager in $FP.modelManagers){
 				var mm = $FP.modelManagers[model.manager]
 				var realName = model.tableName||model.realName||modelName;
+				
 				try{
 					var manager = mm.getModel(realName)
 				} catch(e){
-					manager={notTable:true}	
+					manager={notTable:true}
+					//ok, lets try the other managers:
+					$FP.config.ds.getKeys().some(function(alias){
+						if (alias!=model.manager){ //this one already failed
+							var mm = $FP.modelManagers[alias]
+							try{
+								manager = mm.getModel(realName)
+								return true;
+							} catch(e){
+								return false;
+							}
+						}
+					})
 				}
-				
 				manager.setDefaultProperties(model)
 				manager.after("init",model.init)
 				_modelClasses[modelName]=model = manager;
-				
-				
 			}
 			model.init()
 			
