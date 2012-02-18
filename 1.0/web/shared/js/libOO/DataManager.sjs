@@ -1903,17 +1903,19 @@ if (!Myna) var Myna={}
 						exists = relatedModel.find(criteria);
 						if (exists.length){
 							relatedBean=relatedModel.getById(exists[0]);
-							relatedBean.deferred =true;
 						} else {
 							relatedBean=relatedModel.getNew(criteria);
+							bean.deferred=true
 						}
 					} else {
 						relatedBean=relatedModel.getNew(criteria);
+						bean.deferred=true
 					}
 					break;
 				case "hasMany":
 					relatedBean =relatedModel.findBeans(criteria);
 					relatedBean.getNew = function(initialValues){
+						bean.deferred=true
 						var values = (initialValues||{}).applyTo({});
 						values.setDefaultProperties(criteria)
 						return relatedBean[relatedBean.length]=relatedModel.getNew(values)
@@ -1966,6 +1968,7 @@ if (!Myna) var Myna={}
 						var newBean = relatedBean[relatedBean.length]=relatedModel.get(values)
 						
 						newBean._hasBridgeTo = relatedBean.relatedModelOptions;
+						bean.deferred = true
 						return newBean
 					}
 					break;
@@ -3007,13 +3010,13 @@ if (!Myna) var Myna={}
 														<%=fbk%>
 													) values (
 														{localId:<%=bridgeTable.columns[lbk].data_type%>},
-														{foreignId:<%=bridgeTable.columns[fbk].data_type%>},
+														{foreignId:<%=bridgeTable.columns[fbk].data_type%>}
 													)
 														
 												</ejs>,
 												values:{
 													localId:localBean.data[relatedBean._hasBridgeTo.localKey],
-													foreignId:bean.data[relatedBean._hasBridgeTo.foreignKey]
+													foreignId:relatedBean.data[relatedBean._hasBridgeTo.foreignKey]
 												}
 											})
 										}catch(e){
