@@ -178,6 +178,7 @@ try{
 					target=new Myna.File(
 						"/WEB-INF/myna/parser_debug/" 
 						+ sourcePath.toString().after($server.rootDir.length).listBefore(".").replace(/\W+/g,"_")
+						+"_"
 						+ sourcePath.toString().listLast(".")
 					);
 				} 
@@ -187,6 +188,7 @@ try{
 						target=new Myna.File(
 							"/WEB-INF/myna/parser_debug/" 
 							+ newSourcePath.toString().after($server.rootDir.length).listBefore(".").replace(/\W+/g,"_")
+							+"_"
 							+ newSourcePath.toString().listLast(".")
 						);
 					} 

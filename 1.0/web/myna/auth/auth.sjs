@@ -14,23 +14,20 @@ var fusebox={
 		}).join()
 		data.providers.split(/,/)
 		.forEach(function(p){
-			if (p == "openid"){
+			/* if (p == "openid"){
 				data.providerMap[p]={
 					name:"OpenID: Google, Yahoo, AOL, and more",
 					desc:"Select your login service:"
 				}
-			} else {
+			} else { */
 				var adapter = Myna.Permissions.getAuthAdapter(p);
 				data.providerMap[p]={
 					name:adapter.config.prettyName,
 					desc:adapter.config.desc
 				}
-			}
+			/* } */
 		})
-		data.login_page=$server.serverUrl
-			+$server.requestUrl
-			+$server.requestScriptName
-			+"?fuseaction=login"
+		data.login_page=+"?fuseaction=login"
 		$session.set("_LOGIN_REQUEST_",data)
 		Myna.include("dsp_login.ejs",data);
 	},

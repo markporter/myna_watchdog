@@ -154,6 +154,7 @@ Topic: Overview
 	See:
 		* JSONP http://wikipedia.org/wiki/JSONP
 */
+var model=null
 function api(params){
 	var API ={
 		url:$application.url+$FP.c2f(this.name)+"/router",

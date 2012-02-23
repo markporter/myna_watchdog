@@ -45,6 +45,7 @@
 	private factory function to merge models
 	*/
 	function mergeModels(model,modelName){
+		
 		var classList = [
 			model,
 			new $FP.Model(),
@@ -56,6 +57,7 @@
 			"app/models",
 			c2f(modelName) + "_model.sjs"
 		);
+		
 		if (!m.exists()){	//check for module path
 			m = new Myna.File($FP.dir,"app/modules")
 				.listFiles(function(f){return f.isDirectory() && /^\w+$/.test(f.fileName)})
@@ -82,7 +84,9 @@
 		
 		classList.push(m)
 		
+		
 		var result =mergeClasses(classList)
+		
 		result.name=modelName
 		return result;
 	}
@@ -111,11 +115,12 @@
 			}
 			this.config.ds.forEach(function(ds,alias){
 				core.modelManagers[alias] = new Myna.DataManager(ds)
-	
 				core.modelManagers[alias].getModel = core.modelManagers[alias].getManager
 				core.modelManagers[alias].modelExists = core.modelManagers[alias].managerExists
 				core.modelManagers[alias].getManager = core.getModel
 			})
+			
+			this.defaultDs = this.config.ds["default"] 
 		}
 		this.frameworkFolder = this.config.frameworkFolder; 
 		Myna.include(this.frameworkFolder + "/Controller.sjs",this)
@@ -138,6 +143,8 @@
 		
 		$FP = core;
 		Myna.include($FP.frameworkFolder +"/Flash.sjs")
+		
+		
 		
 		return core;
 	}
@@ -329,13 +336,16 @@
 		modelName	- name of model to load	
 	*/
 	function getModel(modelName){
-		
 		var model;
 		
 		if (modelName in _modelClasses) {
 			model=_modelClasses[modelName];
+		/* }else if ($server.get(modelName)){
+			model=$server.get(modelName); */
 		} else {
+			
 			model = mergeModels({},modelName);
+			
 			
 			if (!model.manager) model.manager ="default"
 			
@@ -343,9 +353,10 @@
 			if (model.manager in $FP.modelManagers){
 				var mm = $FP.modelManagers[model.manager]
 				var realName = model.tableName||model.realName||modelName;
-				
+				var manager
 				try{
-					var manager = mm.getModel(realName)
+					manager = mm.getModel(realName)
+					//manager.logQueries = $FP.config.debug
 				} catch(e){
 					manager={notTable:true}
 					//ok, lets try the other managers:
@@ -361,12 +372,17 @@
 						}
 					})
 				}
+				
 				manager.setDefaultProperties(model)
 				manager.after("init",model.init)
-				_modelClasses[modelName]=model = manager;
+				modelName,_modelClasses[modelName]=model = manager;
+			
 			}
+			
+			
 			model.init()
 			
+				
 		}
 		
 		

@@ -46,7 +46,7 @@ var fusebox={
 			this.new_password_form({});
 		} else {
 			$res.redirectLogin({
-				callbackUrl:$server.requestScriptName +"?fuseaction=" +$application.mainFuseAction,
+				callbackUrl:$server.requestUrl +$server.requestScriptName +"?fuseaction=" +$application.mainFuseAction,
 				title:"Myna Administrator Login",
 				message:data.message||""
 			})

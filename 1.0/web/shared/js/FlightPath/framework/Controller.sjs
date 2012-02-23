@@ -478,7 +478,6 @@
 			}
 			if ("init" in b) b.init.call($this, options)
 		})
-		
 	}
 /* Function: getFilters
 	returns the filter array for the requested event and action.
@@ -709,7 +708,9 @@
 				description:null
 			}
 		}).applyTo(this)
-		this.model =this[this.name] =$FP.getModel(this.name);
+		if (!this.model && this.model !== null){
+			this.model =this[this.name] =$FP.getModel(this.name);
+		}
 	}
 /* Function: render
 	renders a view

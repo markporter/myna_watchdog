@@ -12,6 +12,15 @@
 							DataSet so that <DataSet.columns> can be inferred. If this 
 							is an object it should conform to the Options Object 
 							defined below.
+		accessFunction		-	*Optional, default function(obj,index){return obj[index]}*
+									Only used if _options_ is an array like object.
+									Function that takes _obj_ and an index and returns 
+									the item at that index
+		lengthFunction		-	*Optional, default function(obj){return obj.length}*
+									Only used if _options_ is an array like object.
+									Function that takes _obj_ and returns the length of 
+									the collection
+		
 		
 	Options Object:
 		data		-	*Optional default []*
@@ -29,12 +38,15 @@
 		of a query, but does not need to come from a query. DataSet's provide a 
 		normalized way to represent any tabular data 
 	*/
-	var DataSet =function DataSet(options){
+	var DataSet =function DataSet(options,accessFunction,lengthFunction){
 		if (!options) return ObjectLib.applyTo(this,[],true)
 		
 		var ds
 		if (! (this instanceof DataSet)) throw new SyntaxError("DataSet is an object contructor. Please use the  'new' operator");
-		
+		/* var optionsArray =Array.parse(options,accessFunction,lengthFunction)
+		if (optionsArray){
+			options = optionsArray
+		} */
 		if (options instanceof Array){
 			//shallowly copies the data on to this object
 			ObjectLib.applyTo(this,options,true)

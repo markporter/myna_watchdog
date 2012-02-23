@@ -2085,7 +2085,7 @@ if (!Myna) var Myna={}
 		java.lang.Thread.sleep(time);
 	}	
 	
-/* Function sync
+/* Function: sync
 	returns a synchronized version of a function that can only executed by one 
 	thread at a time.
 	
@@ -2098,7 +2098,7 @@ if (!Myna) var Myna={}
 	Myna.sync=function(func){
 		return Myna.JavaUtils.createSyncFunction(func);
 	}
-/* Function threadSafeSet
+/* Function: threadSafeSet
 	sets a property on an object, if not already set, in a thread-safe manner
 		
 	Parameters:

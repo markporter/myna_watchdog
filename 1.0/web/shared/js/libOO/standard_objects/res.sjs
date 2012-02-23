@@ -254,9 +254,9 @@ var $res = {
 		var url = options.loginPage + 
 			(/\?/.test(options.loginPage)?"&":"?") + "providers=" +
 			(typeof options.providers ==="string"?options.providers.split(/,/):options.providers) +
-			"&title=" + escape(options.title) +
-			"&callback=" + escape($server.resolveUrl(options.callbackUrl))+
-			"&message=" + (options.message)
+			"&title=" + options.title +
+			"&callback=" + options.callbackUrl+
+			"&message=" + options.message
 		$res.redirect(url);
 		Myna.print("<a href ='" + url +"'>"+options.title+"</a>");
 		Myna.abort();

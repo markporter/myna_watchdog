@@ -564,16 +564,22 @@
 							operator (===). Setting this argument to true will causes 
 							this function to use the looser, and slower "same in value"
 							operator (==)
- 
+		accessor	-	*Optional, default false*
+						function to run against each item to retrieve the compared value
 	Returns: 
 		_val_  	 
 	 
 	*/
-	Array.prototype.appendUnique=function(val,looseCheck){
+	Array.prototype.appendUnique=function(val,looseCheck,accessor){
 		var exists;
+		
 		if (looseCheck){
-			exists = this.some(function(e){return e == val})
+			if (!accessor) accessor = function(e){return e}
+			exists = this.some(function(e){return accessor(e) == accessor(val)})
 			
+		} else if (accessor){
+			if (!accessor) accessor = function(e){return e}
+			exists = this.some(function(e){return accessor(e) === accessor(val)})
 		} else {
 			exists = (this.indexOf(val) != -1)
 		}
@@ -589,16 +595,58 @@
 							operator (===). Setting this argument to true will causes 
 							this function to use the looser, and slower "same in value"
 							operator (==)
+		accessor	-	*Optional, default false*
+						function to run against each item to retrieve the compared value
  
-	 
+	Examples:
+	(code)
+		//exact matching 1 != "1"
+		someArray.getUnique();
+		
+		//loose matching 1 == "1"
+		someArray.getUnique(true);
+		
+		//exact object matching 1 != "1"
+		someArray.getUnique(false,function(e){return e.name});
+		
+		//loose object matching 1 == "1"
+		someArray.getUnique(true,function(e){return e.name});
+	(end)
 	*/
-	Array.prototype.getUnique=function(looseCheck){
-		var result =[]
-		this.forEach(function(val){
-			result.appendUnique(val,looseCheck)
+	Array.prototype.getUnique=function(looseCheck,accessor){
+		if (!accessor) accessor = function(e){return e}
+		return this.filter(function(curVal,i,a){
+			return !a.slice(i+1).some(function(futureVal){
+				if (looseCheck){
+					return accessor(curVal) == accessor(futureVal)
+				} else {
+					return accessor(curVal) === accessor(futureVal)
+				}
+			})
 		})
-		return result
-	};	
+	};
+
+/* Function: toDataSet 
+	returns a new DataSet object based on this array 
+	 
+	Parameters: 
+		columns		-	*Optional, default first row properties*
+						Array of strings. If defined this overrides DataSet's 
+						column detection
+						
+	Note:
+	if DataSet is not included, this array is returned
+ 
+	
+	*/
+	Array.prototype.toDataSet=function(columns){
+		if (typeof DataSet != "undefined"){
+			return new DataSet({
+				columns:columns||ObjectLib.getKeys(this[0]),
+				data:this
+			})	
+		} else return thi
+	};		
 if ("$server_gateway" in this){
 	(function(){
 		var hide = function (o, p) {
