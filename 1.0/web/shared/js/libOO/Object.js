@@ -90,7 +90,7 @@
 		Existing functions are preserved and executed after the supplied function.
 		This is a shortcut for creating chain functions and is the equivalent of
 		(code)
-		obj[functionName] = obj[functionName].before(functionObj) 
+		obj[functionName] = obj[functionName].after(functionObj) 
 		(end)
 		See <Function.createChainFunction> for how chain functions work.
 		

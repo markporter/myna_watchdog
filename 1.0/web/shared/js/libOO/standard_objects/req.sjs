@@ -176,7 +176,7 @@ var $req={
 		The type of http request. One of GET,POST,PUT or DELETE.
 	*/
 	get type(){
-		return String($server.servlet.type);
+		return $server_gateway.environment.get("http_method");
 	},
 /* Property: rawData
 		Stores raw parameters to the request. 

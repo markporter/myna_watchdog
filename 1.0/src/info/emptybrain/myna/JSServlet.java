@@ -77,13 +77,14 @@ public class JSServlet extends HttpServlet {
 	* @param  req Servlet request object
 	* @param  res Servlet response object
 	*/
-	public void handleRequest(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
+	public void handleRequest(HttpServletRequest req, HttpServletResponse res, String type) throws ServletException, IOException{
 		//System.out.println("type = " + this.type);
 		try{
 			MynaThread thread = new MynaThread();
 			thread.environment.put("request",req);
 			thread.environment.put("response",res);
 			thread.environment.put("servlet",this);
+			thread.environment.put("http_method",type);
 			String servletPath = req.getServletPath();
 			if (
 					req.getAttribute("javax.servlet.forward.servlet_path") != null
@@ -232,7 +233,7 @@ public class JSServlet extends HttpServlet {
 	public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
 		this.type="GET";
 		//System.out.println("called get");
-		handleRequest(req,res);
+		handleRequest(req,res,"GET");
 	}
 	
 	/**
@@ -245,14 +246,14 @@ public class JSServlet extends HttpServlet {
 	public void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
 		this.type="POST";
 		//System.out.println("called post");
-		handleRequest(req,res);	
+		handleRequest(req,res,"POST");	
 	}
 	
 	public void doHead(HttpServletRequest req, HttpServletResponse res)
 		throws ServletException, IOException
 	{
 		this.type="HEAD";
-		handleRequest(req,res);
+		handleRequest(req,res,"HEAD");
 	}
 	
 	/**
@@ -264,7 +265,7 @@ public class JSServlet extends HttpServlet {
 	*/
 	public void doPut(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
 		this.type="PUT";
-		handleRequest(req,res);	
+		handleRequest(req,res,"PUT");	
 	}
 	
 	/**
@@ -276,7 +277,7 @@ public class JSServlet extends HttpServlet {
 	*/
 	public void doDelete(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
 		this.type="DELETE";
-		handleRequest(req,res);	
+		handleRequest(req,res,"DELETE");	
 	}
 	
 }

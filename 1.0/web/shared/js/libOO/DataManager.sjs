@@ -2650,6 +2650,8 @@ if (!Myna) var Myna={}
 							return $this;
 						}
 					}).applyTo(man.beanClass.prototype,true)
+					
+					
 					man.beanClass.prototype.__defineGetter__("childIds",function (){
 						var parentCol = man.table.getSqlColumnName(options.parentCol);
 						var leftCol = man.table.getSqlColumnName(options.leftCol);
@@ -2747,13 +2749,28 @@ if (!Myna) var Myna={}
 							chain.args =[data];
 							function processArgs(data,location){
 								//Myna.printConsole("processing",Myna.dumpText(Array.parse(arguments)))
-								if (!location) location = {
-									beforeNode:false,
-									underNode:false
-								}
+								
 								var anchorNode;
 								var rightCol = man.table.getSqlColumnName(options.rightCol);
 								var leftCol = man.table.getSqlColumnName(options.leftCol);
+							
+								if (data[man.primaryKey.toLowerCase()] && man.find(data[man.primaryKey.toLowerCase()]).length){
+									delete data[options.rightCol];
+									delete data[options.leftCol];
+									delete data[options.parentCol];
+									if (options.depthCol){
+										delete data[options.depthCol];
+									}
+									return; //this is not really a create, so no need to monkey with the tree	
+								}
+								
+								if (!location){
+									location = data._treenode_location||{
+										beforeNode:false,
+										underNode:false
+									}
+								}
+								
 								if (location.beforeNode){
 									//see if the beforeNode element really exists
 									anchorNode = man.findBeans(location.beforeNode)
@@ -2825,7 +2842,22 @@ if (!Myna) var Myna={}
 							
 							//now we fall thorough to ManagerObject.create(data)
 						})
+					
 						
+					/* get */
+						man.after("get",function(data,location){
+							var bean = arguments.callee.chain.lastReturn;
+							//experimental
+							//bean.data._treenode_location = location
+							return bean
+						})	
+						
+					/* getNew */
+						man.before("getNew",function(data,location){
+							var bean = arguments.callee.chain.lastReturn;
+							//bean.data._treenode_location = location
+							return bean
+						})	
 					
 					/* remove */
 						man.before("remove",function(id){
