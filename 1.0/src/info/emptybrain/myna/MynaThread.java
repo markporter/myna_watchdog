@@ -5,7 +5,9 @@ import java.net.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.sql.DataSource;
+import java.lang.reflect.*;
 import org.mozilla.javascript.*;
+import org.mozilla.javascript.serialize.*;
 import org.mozilla.javascript.commonjs.module.*;
 import org.mozilla.javascript.commonjs.module.provider.*;
 import java.util.*;
@@ -100,19 +102,19 @@ public class MynaThread implements java.lang.Runnable{
 	}
 	static class CustomContextFactory extends ContextFactory{
 		 // Override makeContext()
-     protected Context makeContext()
-     {
-         MynaContext cx = new MynaContext();
-         // Make Rhino runtime to call observeInstructionCount
-         // each 10000 bytecode instructions
-         cx.setInstructionObserverThreshold(10000);
+    	protected Context makeContext()
+    	{
+    	    MynaContext cx = new MynaContext();
+    	    // Make Rhino runtime to call observeInstructionCount
+    	    // each 10000 bytecode instructions
+    	    cx.setInstructionObserverThreshold(10000);
 				 cx.getWrapFactory().setJavaPrimitiveWrap(false);
-         return cx;
-     }
-
+    	    return cx;
+    	}
+    	
 		 // Override observeInstructionCount(Context, int)
-     protected void observeInstructionCount(Context cx, int instructionCount)
-     {
+    	protected void observeInstructionCount(Context cx, int instructionCount)
+    	{
 				int timeout=0;
 				long currentTime = System.currentTimeMillis();
 				long startTime =0;
@@ -147,15 +149,15 @@ public class MynaThread implements java.lang.Runnable{
 						+ "request time of "+ ((currentTime - startTime)/1000) +" seconds exceeded timeout of " + timeout +" seconds."  
 					);
 				}
-     }
+    	}
 
 		protected boolean hasFeature(Context cx, int featureIndex)
 		{
-      MynaContext mcx =null;
-      try{
-        mcx = (MynaContext)cx;
-        if (mcx.mynaThread == null) mcx =null;
-      } catch(Throwable e){}
+    		MynaContext mcx =null;
+    		try{
+    		  mcx = (MynaContext)cx;
+    		  if (mcx.mynaThread == null) mcx =null;
+    		} catch(Throwable e){}
       
 			if (			featureIndex == Context.FEATURE_DYNAMIC_SCOPE 
 					|| 	featureIndex == Context.FEATURE_LOCATION_INFORMATION_IN_ERROR
@@ -1444,9 +1446,9 @@ public class MynaThread implements java.lang.Runnable{
 		retval.put("javaThread",thread);
 		retval.put("mynaThread",mt);
 		return retval;
-   }
+	}
    
-   public void run (){
+	public void run (){
 		try {
 			String f = (String) environment.get("threadFunctionSource");
 			Object [] args = ((Vector)(environment.get("threadFunctionArguments"))).toArray();
@@ -1462,5 +1464,31 @@ public class MynaThread implements java.lang.Runnable{
 				java.lang.System.err.println(e2);	
 			}
 		}
+	}
+   
+			
+	public void serializeToStream(Scriptable obj, java.io.OutputStream os)
+		throws IOException
+	{
+		ScriptableOutputStream out = new ScriptableOutputStream(os, this.threadScope);
+		out.writeObject(obj);
+		out.close();
+	}
+
+	public Object deserializeFromStream(java.io.InputStream is)
+		throws IOException, ClassNotFoundException
+	{
+		
+		ObjectInputStream in = new ScriptableInputStream(is, this.threadScope);
+		Object deserialized = in.readObject();
+		in.close();
+		return this.threadContext.toObject(deserialized, this.threadScope);
+	}
+	
+	public Object importObject(Scriptable obj)
+		throws IOException, ClassNotFoundException
+	{
+		obj.setParentScope(this.threadScope);
+		return this.threadContext.toObject(obj, this.threadScope);
 	}
 }

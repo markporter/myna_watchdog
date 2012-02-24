@@ -2261,6 +2261,7 @@ if (!Myna) var Myna={}
 				
 				//each relationship
 				work.forEach(function (relatedModelOptions){
+					relatedModelOptions.checkRequired(["name"])
 					var relatedModelName = relatedModelOptions.name;
 					var relatedModel = thisModel.dm.getManager(relatedModelName)
 					//Myna.printConsole(relatedModel.name,relatedModel.manager)
@@ -2311,7 +2312,7 @@ if (!Myna) var Myna={}
 				
 				//each relationship
 				work.forEach(function (relatedModelOptions){
-					
+					relatedModelOptions.checkRequired(["name"])
 					var defaultAlias =relatedModelOptions.name 
 					/* singularize if this is a model name */
 					if (relatedModelOptions.name.toLowerCase() != relatedModelOptions.name){

@@ -419,7 +419,7 @@ var $server={
 		}
 		return mynaCmd.javaFile.toString()
 	},	
-/* property: get
+/* Function: get
 	retrieves a server variable
 	
 	Parameters:
@@ -429,8 +429,11 @@ var $server={
 		<$server.set>, 
 	*/	
 	get:function(key,value){
-		return $server_gateway.serverVarMap.get(key)
+		var result = $server_gateway.serverVarMap.get(key)
+		this.reParent(result)
+		return result
 	},
+	
 /* Function: set
 	Sets a variable that is available across all requests. Server varaiables are 
 	not preserved across Myna restarts
@@ -448,6 +451,38 @@ var $server={
 	set:function(key,value){
 		$server_gateway.serverVarMap.put(key,value);
 		return value;
+	},
+/* Function: reParent
+	changes parent scope of all the functions in _obj_
+	
+	Parameters:
+		obj		-	Function or Object to reparent
+	*/
+	reParent:function reParent(obj,index){
+		if (typeof obj != "object" && typeof obj != "function") return;
+		var scope = $server.globalScope
+		if (!index) index=[];
+			
+		if (index.indexOf(obj) != -1) return ;
+		
+		index.push(obj)	
+		if (typeof obj === "function") obj.__parent__ = scope;
+		
+		for (var p in obj){
+			if (obj.hasOwnProperty(p)){
+				//Myna.printConsole(p)
+				
+				switch (typeof obj[p]){
+					case "function":
+						obj[p].__parent__ = scope
+						reParent(obj[p],index)
+						break;
+					case "object":
+						reParent(obj[p],index)
+						break;
+				}
+			}
+		}
 	},
 /* Function: restart
 	If this instance is running has watchdog, the exit the JVM

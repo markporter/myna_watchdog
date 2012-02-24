@@ -1008,16 +1008,20 @@ if (!Myna) var Myna={}
 			if (e.fileName !== undefined && e.lineNumber !== undefined && e.message !== undefined){
 				e.fileName = String(e.fileName).split(/#/)[0];
 				var lines ;
+				var startNum = Math.max(0,parseInt(e.lineNumber) -10)
 				try{
-					lines =new Myna.File(e.fileName).readLines().map(function(element,index){
+					lines =new Myna.File(e.fileName).readLines(
+						startNum,
+						parseInt(e.lineNumber) +10
+					).map(function(element,index){
 						return {
-							lineNumber:index+1,
+							lineNumber:startNum +index,
 							lineText:element.escapeHtml()+"\n"
 						}
 					})
-					.filter(function(element,index){
+					/* .filter(function(element,index){
 						return e.lineNumber -10 < element.lineNumber && element.lineNumber < e.lineNumber +10; 
-					})
+					}) */
 					
 				}catch(e){lines="unavailable"}
 					
@@ -1048,7 +1052,7 @@ if (!Myna) var Myna={}
 							return e.lineNumber -10 < element.lineNumber && element.lineNumber < e.lineNumber +10; 
 						})
 				}
-					data.jsStack=e.rhinoException?Myna.parseJsStack(e):Myna.dump(e);
+					data.jsStack=(e.rhinoException || e.stack)?Myna.parseJsStack(e):Myna.dump(e);
 					data.javaStack=e.rhinoException?Myna.parseJavaStack(e):"unavailable";	
 				if (e.query){
 					data.query = Myna.dump(e.query)	
