@@ -1,3 +1,4 @@
+var model=null
 /* Class: Controller: Page
 	Framework controller class for serving simple pages out of the 
 	app/views folder.

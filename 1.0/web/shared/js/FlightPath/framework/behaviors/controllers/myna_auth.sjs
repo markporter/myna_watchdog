@@ -16,6 +16,10 @@
 							Any extra parameters to <$res.redirectLogin>. 
 							This behavior will automatically set the callbackUrl 
 							to the originally requested action 
+		userFunction	-	*Optional, default $cookie.getAuthUser*
+							Function to call to acquire the user to test against 
+							permissions. This function will be passed a 
+							reference to the controller, and this options object
 							
 							
 	Usage:
@@ -44,7 +48,10 @@
 					/^Public\./
 				],
 				providers:Myna.Permissions.getAuthTypes(),
-				redirectParams:{}
+				redirectParams:{},
+				userFunction:function(controller,options){
+					return controller._getUser()
+				}
 			})
 		}
 	(end)
@@ -65,8 +72,8 @@ function init(options){
 }
 
 function _mynaAuth(action, params){
-	
 	var my = arguments.callee;
+	if (!my.options.userFunction) my.options.userFunction = $cookie.getAuthUser;
 	var right = this.name + "." + action;
 	var isWhitelisted = my.options.whitelist.some(function(item){
 		if (!(item instanceof RegExp)){
@@ -76,7 +83,8 @@ function _mynaAuth(action, params){
 	})
 	
 	if (!isWhitelisted){
-		var user = $cookie.getAuthUser();
+		var user = my.options.userFunction(this,my.options);
+		//Myna.log("debug","User = " + user.first_name + " " + user.last_name);
 		if (!user){
 			if ($FP.config.debug){
 				Myna.log(

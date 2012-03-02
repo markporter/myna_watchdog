@@ -166,8 +166,8 @@ function api(params){
 	if (params.namespace) API.namespace = params.namespace;
 	$FP.getControllerNames().forEach(function(name){
 		var controller = $FP.getController(name)
-		Myna.println(name)
-		Myna.println(controller.name)
+		/* Myna.println(name)
+		Myna.println(controller.name) */
 		API.actions[name]=[]
 		controller.getActions().forEach(function(def){
 			API.actions[name].push({

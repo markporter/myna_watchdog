@@ -468,21 +468,22 @@ var $server={
 		index.push(obj)	
 		if (typeof obj === "function") obj.__parent__ = scope;
 		
-		for (var p in obj){
-			if (obj.hasOwnProperty(p)){
-				//Myna.printConsole(p)
-				
-				switch (typeof obj[p]){
-					case "function":
-						obj[p].__parent__ = scope
-						reParent(obj[p],index)
-						break;
-					case "object":
-						reParent(obj[p],index)
-						break;
-				}
+		Object.getOwnPropertyNames(user.manager).forEach(function(p){
+			var d = Object.getOwnPropertyDescriptor( obj, p )  
+			if (typeof d.get == "function"){
+				d.get.__parent__ = scope;
 			}
-		}
+			
+			switch (typeof d.value){
+				case "function":
+					d.value.__parent__ = scope
+					reParent(d.value,index)
+					break;
+				case "object":
+					reParent(d.value,index)
+					break;
+			}
+		})
 	},
 /* Function: restart
 	If this instance is running has watchdog, the exit the JVM

@@ -1896,7 +1896,12 @@ if (!Myna) var Myna={}
 			var thisModel = bean.manager;
 			var criteria={}
 			if (type != "hasBridgeTo"){
-			
+				/* sanity check */
+				if (relatedModel.table){
+					if (!relatedModel.table.columnNames.contains(relatedModelOptions.foreignKey)){
+						throw new Error(type +": foreignKey '" +relatedModelOptions.foreignKey +"' does not exist in table '" +  thisModel.table.tableName)	
+					} 	
+				}
 				try{
 					var criteria  = {
 						where:<ejs>
@@ -1926,6 +1931,7 @@ if (!Myna) var Myna={}
 			switch(type){
 				case "belongsTo":
 				case "hasOne":
+					
 					var exists;
 					if (bean.data[relatedModelOptions.localKey]){
 						exists = relatedModel.find(criteria);
@@ -1965,6 +1971,25 @@ if (!Myna) var Myna={}
 					
 					var bridgeTable =new Myna.Database(relatedModelOptions.bridgeDs)
 						.getTable(relatedModelOptions.bridgeTable);
+					/* sanity checks */	
+					if (relatedModel.table){
+						if (!relatedModel.table.columnNames.contains(relatedModelOptions.foreignKey)){
+							throw new Error(type +": foreignKey '" +relatedModelOptions.foreignKey +"' does not exist in table '" +  thisModel.table.tableName)	
+						} 	
+					}
+					
+					if (bridgeTable.exists){
+						if (!bridgeTable.columnNames.contains(relatedModelOptions.localBridgeKey)){
+							throw new Error(type +": localBridgeKey '" +relatedModelOptions.localBridgeKey +"' does not exist in table '" +  bridgeTable.tableName)	
+						}
+						if (!bridgeTable.columnNames.contains(relatedModelOptions.foreignBridgeKey)){
+							throw new Error(type +": foreignBridgeKey '" +relatedModelOptions.foreignBridgeKey +"' does not exist in table '" +  bridgeTable.tableName)	
+						}						
+					} else {
+						throw new Error(type +": bridgeTable '" +relatedModelOptions.bridgeTable +"' does not exist in DS '" +  relatedModelOptions.bridgeDs)
+					}
+					
+						
 					/* Myna.printDump(relatedModelOptions)
 					Myna.printDump(bridgeTable) */
 					var qry =new Myna.Query(
@@ -2275,6 +2300,9 @@ if (!Myna) var Myna={}
 							localKey:thisModel.dm.m2fk(relatedAlias==relatedModelName?relatedModelName:relatedAlias),
 							foreignKey:relatedModel.primaryKey,//thisModel.primaryKey                  
 						})
+						if (!thisModel.table.columnNames.contains(relatedModelOptions.localKey)){
+							throw new Error("belongsTo: Column '" +relatedModelOptions.localKey +"' does not exist in table '" +  thisModel.table.tableName)	
+						}
 						thisModel.associations.belongsTo[relatedAlias] = relatedModelOptions;
 					} else {                                                       
 						if (relatedAlias in thisModel.associations.hasOne) {
@@ -2285,6 +2313,9 @@ if (!Myna) var Myna={}
 							localKey:thisModel.primaryKey,
 							foreignKey:thisModel.dm.m2fk(myAlias)
 						})
+						if (!thisModel.table.columnNames.contains(relatedModelOptions.localKey)){
+							throw new Error("hasOne: Column '" +relatedModelOptions.localKey +"' does not exist in table '" +  thisModel.table.tableName)	
+						}
 						thisModel.associations.hasOne[relatedAlias] = relatedModelOptions;
 					}
 					
@@ -2348,7 +2379,9 @@ if (!Myna) var Myna={}
 						localKey:thisModel.primaryKey,
 						foreignKey:thisModel.dm.m2fk(myAlias)
 					})                                                             
-					
+					if (!thisModel.table.columnNames.contains(relatedModelOptions.localKey)){
+						throw new Error("hasMany: localKey '" +relatedModelOptions.localKey +"' does not exist in table '" +  thisModel.table.tableName)	
+					}
 					thisModel.associations.hasMany[relatedAlias] = relatedModelOptions;
 					thisModel.__defineGetter__(relatedModelName, function() { 
 						
@@ -2392,6 +2425,16 @@ if (!Myna) var Myna={}
 						return thisModel.dm.getManager(relatedModelName);
 						
 					});
+					
+					relatedModelOptions.setDefaultProperties({
+						localKey:thisModel.primaryKey,
+						bridgeDs:dm.db.ds,
+						localBridgeKey:dm.m2fk(dm.t2m(thisModel.tableName)),
+					})
+					
+					if (!thisModel.table.columnNames.contains(relatedModelOptions.localKey)){
+						throw new Error("hasBridgeTo: localKey '" +relatedModelOptions.localKey +"' does not exist in table '" +  thisModel.table.tableName)	
+					}
 
 					thisModel.associations.hasBridgeTo[relatedAlias] = relatedModelOptions;
 					

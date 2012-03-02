@@ -59,6 +59,7 @@ if (!Myna) var Myna={}
 						
 	Validator Function:
 	The _validator_ function  will be called with a parameters object with these properties
+	
 		obj			-	Object being validated
 		property		-	Property being validated
 		label			-	result of <getLabel> for _property_
@@ -642,40 +643,43 @@ if (!Myna) var Myna={}
 				if ( typeof options.when ==="function" && !options.when(params)) return false;
 				return true;
 			}
-			try{
-				
-				if (typeof $this.validators[property] != "undefined"){
-					$this.validators[property].filter(shouldRun).forEach(function(validatorDef){
-							params.options = validatorDef.options || {};
-						vr.merge(validatorDef.validator.call($this, params))
-					})
-				}
-				if (typeof $this.validators.$ALL != "undefined"){
-					$this.validators.$ALL.filter(shouldRun).forEach(function(validatorDef){
-						params.options = validatorDef.options;
-						vr.merge(validatorDef.validator.call($this, params))
-					})
-				}
-			}catch(e){
-				if (typeof $server_gateway == "undefined"){
-					//Don't flag as error client-side, just log
-					if (typeof "console" != "undefined" && "log" in  console){
-						console.log(
-							"Error in validation for " + property +", with value: ",
-							value,
-							"Error:",
-							e
+			
+			var work = []
+			if ($this.validators[property]){
+				work = work.concat($this.validators[property].filter(shouldRun))	
+			}
+			if ($this.validators$ALL){
+				work = work.concat($this.validators$ALL.filter(shouldRun))	
+			}
+			work.forEach(function(validatorDef){
+				params.options = validatorDef.options || {};
+				try{
+					vr.merge(validatorDef.validator.call($this, params))
+				}catch(e){
+					if (typeof $server_gateway == "undefined"){
+						//Don't flag as error client-side, just log
+						//on second thought, just supress these
+						/* if (typeof "console" != "undefined" && "log" in  console){
+							console.log(
+								"Error in validation for " + property +", with value: ",
+								value,
+								"def:",
+								validatorDef,
+								"Error:" + e.message,
+								e
+							);
+						} */
+					} else {
+						vr.addError("Error in validation. See Administrator log for details",property)
+						Myna.log(
+							"error",
+							"Error in validation for " + property,
+							
+							Myna.formatError(e) +Myna.dump(obj.data,"Obj Data")+Myna.dump(validatorDef,"validatorDef") 
 						);
 					}
-				} else {
-					vr.addError("Error in validation. See Administrator log for details",property)
-					Myna.log(
-						"error",
-						"Error in validation for " + property,
-						Myna.formatError(e) +Myna.dump(obj.data,"Obj Data")
-					);
 				}
-			}
+			})
 		}
 		
 		if (property && typeof $this.validators[property] != "undefined") {
@@ -854,15 +858,18 @@ Myna.Validation.prototype.validatorFunctions={
 	Validates min/max value 
 		
 	Options:
-		min	-	*Optional*
+		min	-	*Optional, default null*
 					minimum value, or function that returns a value. If this is a 
 					Function, it will be passed the validator arguments and should 
 					return a min value
-		max	-	*Optional*
+		max	-	*Optional, default null*
 					maximum value, or function that returns a value. If this is a 
 					Function, it will be passed the validator arguments and should 
 					return a max value
 	
+	Note:
+		if _min_ or _max_ are null, false or undefined, then they are ignored
+		
 	Examples:
 	(code)
 		var v = new Myna.Validation()
@@ -894,19 +901,19 @@ Myna.Validation.prototype.validatorFunctions={
 		
 		
 		
-		if (max && params.value && params.value > max){
+		if ((max || max ==0)&& params.value && params.value > max){
 			
 			v.addError(msg ||
-				'{label} must be less than {max}'.format({
+				'{label} cannot be more than {max}'.format({
 					label:params.label,
 					max:max
 				}),
 				params.property
 			)
 		}
-		if (min && params.value && params.value < min){
+		if ((min || min==0) && params.value && params.value < min){
 			v.addError(msg ||
-				'{label} must be at least {min}'.format({
+				'{label} must be {min} or more'.format({
 					label:params.label,
 					min:min
 				}),
