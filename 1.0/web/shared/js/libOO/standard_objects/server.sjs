@@ -467,23 +467,30 @@ var $server={
 		
 		index.push(obj)	
 		if (typeof obj === "function") obj.__parent__ = scope;
-		
-		Object.getOwnPropertyNames(user.manager).forEach(function(p){
+		var value;
+		for (p in obj){
+			value =null;
 			var d = Object.getOwnPropertyDescriptor( obj, p )  
-			if (typeof d.get == "function"){
-				d.get.__parent__ = scope;
+			if (d){
+				if (d.get) {
+					value = d.get
+				}else {
+						value = d.value	
+				}
+			} else {
+				value= obj[p]	
+			}
+			if (typeof value == "function"){
+				value.__parent__ = scope;
 			}
 			
-			switch (typeof d.value){
+			switch (typeof value){
 				case "function":
-					d.value.__parent__ = scope
-					reParent(d.value,index)
-					break;
 				case "object":
-					reParent(d.value,index)
+					reParent(value,index)
 					break;
 			}
-		})
+		}
 	},
 /* Function: restart
 	If this instance is running has watchdog, the exit the JVM

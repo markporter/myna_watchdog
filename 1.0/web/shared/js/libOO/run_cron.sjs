@@ -14,7 +14,10 @@ config = config.parseJson();
 if (//has the end date passed already?
 	(config.end_date instanceof Date) 
 	&& config.end_date.clearTime(true) > now.clearTime(true)
-) Myna.abort();
+) {
+	if (config.remove_on_expire) Myna.Admin.removeTask(config.name)
+	Myna.abort();
+}
 
 
 var name = config.name;

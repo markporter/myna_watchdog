@@ -785,15 +785,17 @@
 		return result;
 	}
 /* Function: toMap
-	return a JS object where one column is the keys and another column is the values
+	return a JS object where a column is used for the keys
 	
 	Parameters:
 		keyCol			-	Column to use for keys
-		valueCol		-	Column to use for values
+		valueCol			-	*Optional, default null*
+								If defined, column to use for values. Otherwise the 
+								entire row will be the value
 		valuesInArray	-	*Optional, default false*
-							If true, values will be in an array in order of 
-							appearance. Otherwise the last value for _valueCol_
-							will be assigned
+								If true, values will be in an array in order of 
+								appearance. Otherwise the last value for _valueCol_
+								will be assigned
 							
 	Example:
 	(code)
@@ -806,11 +808,12 @@
 		var result ={};
 		var $this = this;
 		this.forEach(function(row,index){
+			var value = valueCol?row[valueCol]:row
 			if (valuesInArray){
 				if (!result[row[keyCol]]) result[row[keyCol]] = [];
-				result[row[keyCol]].push(row[valueCol])
+				result[row[keyCol]].push(value)
 			}else {
-				result[row[keyCol]] = row[valueCol]
+				result[row[keyCol]] = value
 			}
 		})
 		return result;

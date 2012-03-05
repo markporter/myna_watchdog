@@ -794,3 +794,59 @@ var ObjectLib = {}
 		})
 		return newObj
 	}	
+/* Function: toArray
+	returns an Array of objects with a "key" property and a "value" property 
+	mapping to the  keys and values of this object
+	 
+	Parameters: 
+		obj					-	Object to loop over	
+		includeFunctions	- *Optional, default false*
+									By default only properties that are not functions are 
+									mapped. Set this to true to include functions
+		localOnly			-	*Optional, default false*
+									By default both local and prototype properties are 
+									mapped, set this to true limit to only local 
+									properties
+ 
+		
+	Note: 
+		if <Myna.DataSet> is available, then a DataSet is returned, which allows 
+		recreating the object via result.toMap("key","value")   
+		
+	Example:
+		(code)
+		var obj = {first_name:"Bob",last_name:"Dobb"}
+		var array = ObjectLib.toArray(obj)
+		//returns [{key:"first_name",value:"Bob"},{key:"lasst_name",value:"Dobb"}]
+		
+		
+		(end)
+	 
+	*/
+	ObjectLib.toArray=function (obj,includeFunctions,localOnly){
+		var result =[]
+		result.columns = []
+		
+		for (var p in obj){
+			if (!localOnly || obj.hasOwnProperty(p)){
+				var value,d;
+				if ("getOwnPropertyDescriptor" in Object
+					&& (d =Object.getOwnPropertyDescriptor(obj,p))
+				){
+					value=("get" in d)?d.get:d.value;
+				}else{
+					value = obj[p]
+				}
+				if (includeFunctions || typeof value != "function"){
+					result.columns.push(p)
+					result.push({
+						key:p,
+						value:value
+					})
+				}
+			}
+		}
+		return (typeof Myna.DataSet != "undefined")
+			? new Myna.DataSet(result)
+			: result
+	}	

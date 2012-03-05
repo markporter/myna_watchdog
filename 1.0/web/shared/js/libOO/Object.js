@@ -750,6 +750,38 @@
 		})
 		return outer;      
 	}
+	
+/* Function: toArray
+	returns an Array of objects with a "key" property and a "value" property 
+	mapping to the  keys and values of this object
+	 
+	Parameters: 
+		includeFunctions	- *Optional, default false*
+									By default only properties that are not functions are 
+									mapped. Set this to true to include functions
+		localOnly			-	*Optional, default false*
+									By default both local and prototype properties are 
+									mapped, set this to true limit to only local 
+									properties
+ 
+		
+	Note: 
+		if <Myna.DataSet> is available, then a DataSet is returned, which allows 
+		recreating the object via result.toMap("key","value")   
+		
+	Example:
+		(code)
+		var obj = {first_name:"Bob",last_name:"Dobb"}
+		var array = obj.toArray()
+		//returns [{key:"first_name",value:"Bob"},{key:"lasst_name",value:"Dobb"}]
+		
+		
+		(end)
+	 
+	*/
+	Object.prototype.toArray=function (includeFunctions,localOnly){
+		return ObjectLib.toArray(this,includeFunctions,localOnly)
+	}
 if ("$server_gateway" in this){
 
 	

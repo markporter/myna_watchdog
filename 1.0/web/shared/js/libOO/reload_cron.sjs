@@ -2,6 +2,7 @@ var $this = this;
 var gotlock =Myna.lock("MYNA_ADMIN:reload_cron",0,function(){
 	if (new Myna.File("/WEB-INF/classes/cron.properties").exists()){
 		var cronProperties = Myna.loadProperties("/WEB-INF/classes/cron.properties");
+		var cronFound = false;
 		cronProperties
 		.filter(function(propJson,name){
 			if($this.name){
@@ -11,6 +12,7 @@ var gotlock =Myna.lock("MYNA_ADMIN:reload_cron",0,function(){
 			}
 		})
 		.forEach(function(propJson,name){
+			cronFound = true;
 			$profiler.mark("Loading Cron: " + name+", waiting for lock")
 			try{
 				var threadPermit = Packages.info.emptybrain.myna.ScriptTimerTask.threadPermit
@@ -40,6 +42,15 @@ var gotlock =Myna.lock("MYNA_ADMIN:reload_cron",0,function(){
 				Myna.log("error","Cron: " + name +":" +e,Myna.formatError(e));
 			}
 		})
+		//cancel deleted cron
+		if ($this.name && notFound){
+			var timer = $server_gateway.cron.get($this.name);
+			//clear the old timer
+			if (timer){   
+				timer.cancel();
+				timer.purge();
+			}
+		}
 	}
 })
 if (!gotlock) {
