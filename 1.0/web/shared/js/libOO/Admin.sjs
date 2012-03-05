@@ -288,7 +288,130 @@ Myna.Admin ={
 			v.merge(this.dsValidation.validate(config))
 			delete config.isNew
 			return v
-		}
+		},
+/* Scheduled Tasks */
+	/* Property: taskValidation
+		a <Myna.Validation> object for validating Scheduled task
+		
+		*/
+		taskValidation:new Myna.Validation().setLabels({
+			script:"Script Path or Url",
+		}).addValidators({
+			name:{ 
+				type:"string",
+				required:true, 
+				/* regex:{
+					pattern:/^[A-Za-z]\w*$/,
+					message:"Invalid name format. Must start with a letter, and only contain letters, numbers or the _ character",
+				}, */
+				custom:function(o){
+					var v = new Myna.ValiationResult();
+					var tasks = Myna.Admin.getTasks();
+					var exists = (o.obj.name in tasks);
+					if (exists) v.addError("A task '" + o.obj.name +"' already exists","name");
+					return v;
+				}
+				
+			},
+			description:{
+				type:"string", 
+			},
+			type:{
+				type:"string", 
+				required:true,
+				list:{
+					oneOf:"Simple,Hourly,Daily,Weekly,MonthlyByDate,MonthlyByWeekday,Yearly".split(",")
+				}
+			},
+			
+		})/* .setDefaults({
+			type:"Simple",
+			start_date:function(){ return new Date()}
+		}) */,
+	/* Function: getTasks
+		returns a JS object where the keys are task names and the values are task configs
+			
+		*/
+		getTasks:function getTasks(){
+			var cronProperties = Myna.loadProperties("/WEB-INF/classes/cron.properties");
+			
+			return cronProperties.map(function(v,k){
+					return v.parseJson()
+			})
+			/* return new Myna.DataSet({
+				columns:[
+					"name",
+					"description",
+					"type",
+					"interval",
+					"scale",
+					"hourly_repeat",
+					"hourly_minutes",
+					"daily_repeat",
+					"daily_time",
+					"weekly_repeat",
+					"weekly_days",
+					"weekly_time",
+					"monthly_by_date_repeat",
+					"monthly_by_date_time",
+					"monthly_by_weekday_repeat",
+					"monthly_by_weekday_daycount",
+					"monthly_by_weekday_day",
+					"monthly_by_weekday_time",
+					"yearly_repeat",
+					"yearly_date",
+					"yearly_time",
+				],
+				data:rows
+			}) */
+			
+		},
+	/* Function: saveTask 
+		creates/updates a task,
+		
+		Parameters:
+			config	-	Config Object, see *Config* below
+			isNew		-	set to true for new tasks. This checks for the 
+							existence if a same-named data source and prevents 
+							overwrites 
+			
+		Returns:
+		<Myna.ValidationResult>
+				
+		*/
+		saveTask:function(config,isNew){
+			
+			
+			config.isNew = isNew;
+			var v = this.validateDataSource(config,isNew);
+			
+			if (v.success){
+				var cronProperties = Myna.loadProperties("/WEB-INF/classes/cron.properties");
+				cronProperties[config.name] = config.toJson();
+				Myna.saveProperties(config, "/WEB-INF/classes/cron.properties");
+				include("/shared/js/libOO/reload_cron.sjs",{name:config.name})
+			}
+			
+			return v
+		},
+	/* Function: removeTask 
+		removes a task,
+		
+		Parameters:
+			name		-	name of task to remove
+			 
+		*/
+		saveTask:function(name){
+			if (v.success){
+				var cronProperties = Myna.loadProperties("/WEB-INF/classes/cron.properties");
+				delete cronProperties[name];
+				Myna.saveProperties(config, "/WEB-INF/classes/cron.properties");
+				include("/shared/js/libOO/reload_cron.sjs",{name:name})
+			}
+			
+			return v
+		},
+	
 }
 
 	
