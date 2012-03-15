@@ -12,6 +12,10 @@
 	See: <$application.directory>
 	*/
 	var dir = $application.directory
+/* Property: defaultDs
+	Shortcut to $FP.config.ds["default"], the default datsource for this FlightPath app
+	
+	*/
 
 /* Property: url
 	URL to the FlightPath app, minus server name	
