@@ -1,3 +1,82 @@
+Release Name: 1.0_beta_9
+Notes:
+
+bug fixes and minor enhancments
+
+Improvements
+--------------
+* added Array.getUnique
+* Added config.debug FlightPath option (set in application.sjs). 
+* FlightPath: Behavior: MynaAuth: Now checks for server admin access
+* FlightPath: $FP.getParams now logs routing failures with metadata about what 
+  matched and what didn't. In debug mode, logs successful routes as well
+* added cached ORM template clearing on server startup.
+* added DataManager:ManagerObject::makeTree(). This will convert a normal 
+  ManageObject into a TreeManagerObject
+* Added Async.js to shared/js/libOO/client.sjs
+* added DataSet.toMap: treats two columns as key/value tuples and returns the equivalent JS object
+* added routing metadata to FlightPath. If debug is true, then this will log 
+  information about every attempted route. If debug is false, this will only log 
+  metadata for failed routes
+* Myna.Permissions: getLogins now takes a type filter. If provided, and array of login strings is returned instead
+* DataManager: added alias property to managers. This is model form of the tablename
+* FlightPath: MynaAuth behavior: added anyUserList for action that just require an authenticated user
+* FlightPath: MynaAuth behavior: added logging of failed authorizations when $FP.config.debug
+* FlightPath: getModel: If a model is not found, all managers are now searched. 
+* Array.appendUnique now takes an accessor function
+* DataSet can now promote array-like objects to a DataSet
+* FlightPath: added defaultDs property
+* added $server.reParent (experimental)
+* FlightPath: MynaAuth Behavior: added userFunction
+* added toArray to ObjectLib and Object
+* added remove_on_expire option to run_cron.sjs remove a task after it has expired (future use)
+* added option to DataSet.toMap to map whole rows
+* modified reload_cron.sjs to to clear the timer is a named task does not exist
+
+Changes
+--------------
+* removed Hazelcast and dependent functions in Myna and $session
+* Inflector: added "content" as an "uncountable"
+* removed openid search from adduser dropdown in permissions
+* LDAP auth adapter: Made searches broader, and fixed bug in search that would suppress results that did not have an email address
+* DataManager: autocreation of parent bean when saving a bean with a a belongsTo association is now disabled if the relatedField is set to null
+* DataManager: manager.exists() now actually tries to instantiate a manager. This allows for replacing getManager with an external manager factory, such as in FlightPath
+* updated docs for Funciton.prototype.cache to warn about use in class prototypes
+
+Bug Fixes
+--------------
+* FlightPath: Controller: Direct: Falls back to Object.toJson() if JSON.stringify fails
+* FlightPath: $FP.getControllers now returns a raw array rather than a broken DataSet
+* Myna.Admin: Datasource validation: no longer validates port if location == file
+* Myna.DataManager/FlightPath.Model Automatic hasOne and hasMany associations 
+  correctly map raw table name when it does not match the convention
+* DataManager now uses the actual table name for hasOne and belongsTo 
+  relationships
+* DataManager:getLabel and genLabel now bind properly to models
+* fixed bug in client-side compatibility of Validation.toCode()
+* bug fixes for DataManager:TreeNodeObject: moveNode
+* Bug fixes for FlightPath::Controller:getElement
+* modified permissions/auth.sjs to honor a passed loginPage
+* Cosmetic changes to adduser dropdown in permissions
+* DataManager: Fixed bug where same named tables in different datasources could overwrite each other in the class cache
+* DataManager: Fixed bug where "" was not considered null in the primarykey field
+* DataManager: fixed default column names for associations
+* DataManager: added better error handing for relatedBean dereferencing errors
+* fixed bug in Database.getTable() that was causing problems with same named tables in different datasources
+* FlightPath: Models: fixed bug related to converting plural model names to singular
+* changes to centralized login to better handle proxied sites
+* added required properties checking to DataManager association definitions
+* DataManger: Added sanity checks for associatations
+* Validation: made more browser-side friendly
+* Fixed subtle bug in $req.type that caused it to report the wrong HTTP method
+* DataManager: TreeManager: create() no longer sets tree related columns when 
+	the bean exists. Should use TreeNodeObject.moveNode to manipulate tree columns
+
+
+
+
+--------------------------------------------------------------------------------
+
 Release Name: 1.0_beta_8
 Notes:
 
