@@ -45,16 +45,86 @@
 	private model cache
 	*/
 	var _modelClasses={}
+/* loadPath
+	private function for loading a cached script path
+	*/
+	function loadPath(path){
+		var key =path
+		var text =$application.get(key)
+		
+		if (!text||$FP.config.debug) {
+			$application.set(key,text =new Myna.File(path).readString()) 
+		}
+		
+		var result = {}
+		$server_gateway.executeJsString(result,text,path)
+		return result;
+	}
 /* mergeModels
 	private factory function to merge models
 	*/
 	function mergeModels(model,modelName){
 		
+		
+		
 		var classList = [
+			model,
+			new $FP.Model(),
+			loadPath("app/models/global.sjs"),
+		]
+		var pathKey ="modelPath:"+modelName
+		var modelPath = $application.get(pathKey)
+		if (!modelPath || $FP.config.debug){
+			var m = new Myna.File(
+				$FP.dir,
+				"app/models",
+				c2f(modelName) + "_model.sjs"
+			);
+			
+			if (!m.exists()){	//check for module path
+				m = new Myna.File($FP.dir,"app/modules")
+					.listFiles(function(f){return f.isDirectory() && /^\w+$/.test(f.fileName)})
+					.map(function(f){
+						return new Myna.File(
+							f,
+							"models",
+							c2f(modelName) + "_model.sjs"
+						)
+					})
+					.filter(function(f){return f.exists()})
+					.first(false)
+			}
+			if (!m){	//check in the framework
+				m = new Myna.File(
+					$FP.frameworkFolder,
+					"models",
+					c2f(modelName) + "_model.sjs"
+				);
+			}
+			if (m.exists()){
+				modelPath =  $application.set(pathKey,m.toString())	
+			} else {
+				modelPath =  $application.set(pathKey,"none")					
+			}
+		}
+		if (modelPath !="none"){
+			classList.push(loadPath(modelPath))
+		} else {
+			classList.push({init:function(){},notDefined:true})
+		}
+		
+		var result =mergeClasses(classList)
+		
+		result.name=modelName
+		return result;
+		
+		
+		/* var classList = [
 			model,
 			new $FP.Model(),
 			"app/models/global.sjs",
 		]
+		
 		
 		var m = new Myna.File(
 			$FP.dir,
@@ -92,7 +162,7 @@
 		var result =mergeClasses(classList)
 		
 		result.name=modelName
-		return result;
+		return result; */
 	}
 /* init
 	Internal initialization, should not be called by apps
@@ -284,6 +354,9 @@
 	returns an array containing all the available controller names
 	*/
 	function getControllerNames(){
+		var key = "$FP::controllerNames";
+		if (!$FP.config.debug && $application.get(key)) return $application.get(key)
+			
 		var names= new Myna.File("app/controllers")
 			.listFiles("sjs")
 			.filter(function(file){
@@ -330,7 +403,7 @@
 		)
 			
 		
-		
+		$application.set(key,names)
 		return names
 	}
 /* Function: getModel
@@ -351,7 +424,12 @@
 			model = mergeModels({},modelName);
 			
 			
-			if (!model.manager) model.manager ="default"
+			if (!model.manager){
+				if (!$FP.config.debug){
+					model.manager =$application.get("$FP::manager:" + modelName)
+				}
+				if (!model.manager) model.manager="default"
+			}
 			
 		
 			if (model.manager in $FP.modelManagers){
@@ -364,25 +442,35 @@
 				} catch(e){
 					manager={notTable:true}
 					//ok, lets try the other managers:
-					$FP.config.ds.getKeys().some(function(alias){
+					var found =$FP.config.ds.getKeys().some(function(alias){
 						if (alias!=model.manager){ //this one already failed
+							
 							var mm = $FP.modelManagers[alias]
 							try{
 								manager = mm.getModel(realName)
+								//lets remember where we found this manager
+								$application.set("$FP::manager:" + modelName,alias)
 								return true;
 							} catch(e){
 								return false;
 							}
 						}
 					})
-				}
+					if (!found){
+						//lets remember that this is an unmanaged model
+						$application.set("$FP::manager:" + modelName,"__NO_MANAGER__")
+					}
+				} 
 				
-				manager.setDefaultProperties(model)
-				manager.after("init",model.init)
-				modelName,_modelClasses[modelName]=model = manager;
+				
 			
+			} else{
+				manager={notTable:true}	
 			}
 			
+			manager.setDefaultProperties(model)
+			manager.after("init",model.init)
+			modelName,_modelClasses[modelName]=model = manager;
 			
 			model.init()
 			
