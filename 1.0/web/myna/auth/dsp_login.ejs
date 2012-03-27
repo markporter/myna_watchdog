@@ -116,7 +116,7 @@
 					<input type="hidden" name="provider" value="<%=provider%>">
 					<input type="hidden" name="providers" value="<%=providers%>">
 					<input type="hidden" name="callback" value="<%=callback%>">
-					<input type="hidden" name="login_page" value="<%=login_page%>">
+					<input type="hidden" name="login_page" value="<%=$server.rootUrl+"myna/auth/auth.sjs?fuseaction=login"%>">
 					<fieldset>
 						<legend ><%=providerMap[provider].desc%></legend>
 						

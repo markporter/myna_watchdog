@@ -1903,7 +1903,7 @@ if (!Myna) var Myna={}
 					} 	
 				}
 				try{
-					var criteria  = {
+					criteria  = {
 						where:<ejs>
 							<%=relatedModel.getSqlColumnName(relatedModelOptions.foreignKey)%> = {<%=relatedModelOptions.foreignKey%>}
 						</ejs>
@@ -2649,7 +2649,7 @@ if (!Myna) var Myna={}
 												anchorNode.id
 											);
 											if (depthCol) {//fix depth values if necessary
-												var depthOffset = anchorNode.data[depthCol] - $this.data[depthCol] +1;
+												depthOffset = anchorNode.data[depthCol] - $this.data[depthCol] +1;
 												new Myna.Query({
 													ds:man.ds,
 													log:man.logQueries,

@@ -593,7 +593,20 @@ if (!Myna) var Myna={}
 				return new Myna.Permissions.UserGroup(bean)
 			})
 		},
-		
+	/* Function: getUserGroupByName
+		returns a UserGroup reference or null
+			
+			Parameters:
+				appname			-	app name to filter by
+				groupname		-	group name to return
+		*/
+		getUserGroupByName:function(appname,groupname){
+			return Myna.Permissions.getUserGroupsByAppname($application.appname)
+				.toStruct(["name"])
+				.map(function(v,k){
+					return v.first()
+				})[groupname]||null
+		},	
 	/* Function: getUserGroupById
 			returns the user group object that matches the supplied id or null
 			
@@ -1264,7 +1277,7 @@ if (!Myna) var Myna={}
 			right_id_list		-	array or list of right_ids of user to add
 			
 	 */
-		Myna.Permissions.UserGroup.prototype.removeUsers = function(right_id_list){
+		Myna.Permissions.UserGroup.prototype.removeRights = function(right_id_list){
 			if (right_id_list instanceof Array){
 				right_id_list = right_id_list.join();
 			}
@@ -1273,11 +1286,10 @@ if (!Myna) var Myna={}
 				ds:this.ds,
 				sql:<ejs>
 					delete from assigned_rights 
-					where right_id in ({list})
+					where right_id in (<%=right_id_list.listQualify("'",',')%>)
 						and user_group_id = {id}
 				</ejs>,
 				values:{
-					list:right_id_list,
 					id:ug.get_user_group_id()
 				}
 			})

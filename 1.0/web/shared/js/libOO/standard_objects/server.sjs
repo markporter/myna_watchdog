@@ -430,7 +430,7 @@ var $server={
 	*/	
 	get:function(key,value){
 		var result = $server_gateway.serverVarMap.get(key)
-		this.reParent(result)
+		//this.reParent(result)
 		return result
 	},
 	
@@ -461,16 +461,31 @@ var $server={
 	reParent:function reParent(obj,index){
 		if (typeof obj != "object" && typeof obj != "function") return;
 		var scope = $server.globalScope
-		if (!index) index=[];
-			
+		if (!index) {
+			index=[];
+			index.maxDepth=10
+		}
+		
+		if (--index.maxDepth <0) return;
 		if (index.indexOf(obj) != -1) return ;
 		
 		index.push(obj)	
 		if (typeof obj === "function") obj.__parent__ = scope;
+		
+		//reparent prototype first
+		if (obj &&  obj.__proto__){
+			reParent(obj.__proto__,index)
+			
+		}
 		var value;
-		for (p in obj){
+		
+		for (var p in obj){
+			
 			value =null;
-			var d = Object.getOwnPropertyDescriptor( obj, p )  
+			var d=null;
+			try{
+				d = Object.getOwnPropertyDescriptor( obj, p )
+			} catch(e){}
 			if (d){
 				if (d.get) {
 					value = d.get
@@ -478,6 +493,7 @@ var $server={
 						value = d.value	
 				}
 			} else {
+				if (!Object.hasOwnProperty(p)) return;
 				value= obj[p]	
 			}
 			if (typeof value == "function"){
@@ -487,6 +503,7 @@ var $server={
 			switch (typeof value){
 				case "function":
 				case "object":
+					
 					reParent(value,index)
 					break;
 			}

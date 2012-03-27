@@ -131,7 +131,7 @@ var functions={
 		</ejs>
 	},
 	offsetSql:function(sql,limit,offset){
-		var offset = offset||0
+		offset = offset||0
 		return <ejs>
 		
 			SELECT * FROM (

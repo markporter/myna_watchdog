@@ -161,7 +161,7 @@ function searchUsers(search){
 		attributes = attributes.listAppend(v);
 	})
 	
-	Myna.log("debug","ldap search qry " + qry);
+	//Myna.log("debug","ldap search qry " + qry);
 	return new Myna.DataSet({
 		data:$this.getLdap().search(qry,attributes)
 		.filter(function(row){

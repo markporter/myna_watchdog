@@ -157,7 +157,7 @@ if (!Myna) var Myna={}
 	Returns:
 		Myna.Thread instance
 	*/	
-	Myna.Cache.prototype.backgroundRefresh = function CacheBackgroundRefresh(args){
+	Myna.Cache.prototype.backgroundRefresh = function CacheBackgroundRefresh(args,localContext){
 		var $this = this;
 		var c = org.apache.jcs.JCS.getInstance("value");
 		var key = $this.name+ ":" +new java.lang.String(
@@ -168,8 +168,7 @@ if (!Myna) var Myna={}
 		if (c.get(key)) {
 			time = c.getElementAttributes(key).getCreateTime()
 		}
-		
-		return new Myna.Thread(function(cacheObj,args,key,time){
+		var exec = function(cacheObj,args,key,time){
 			var c = org.apache.jcs.JCS.getInstance("value");
 			var cacheValue = c.get(key); 
 			var gotLock =Myna.lock(key,0, function(){
@@ -199,7 +198,10 @@ if (!Myna) var Myna={}
 				
 			})
 			return cacheValue||c.get(key);
-		},[$this,args,key,time])
+		}
+		
+		if (localContext) return exec($this,args,key,time)
+		return new Myna.Thread(exec,[$this,args,key,time])
 	}
 /* Function: refresh 
 	refresh this cache and return cached value object;
@@ -217,7 +219,7 @@ if (!Myna) var Myna={}
 			(this.ignoreArguments||args.toJson())
 		).hashCode();
 		
-		var result = this.backgroundRefresh(args).join();
+		var result = this.backgroundRefresh(args,true);
 		return result
 		//return c.get(key);
 	}
@@ -276,12 +278,12 @@ if (!Myna) var Myna={}
 		} else {
 			cacheObj = $this.refresh(args);
 		}
-		$profiler.mark("got here 277")
+		//$profiler.mark("got here 277")
 		if (($server.memAvailable/$server.memMax) < .2){
 			c.remove(key); //don't cache this result
 			delete $this.cacheKeys[key]
 		}
-		$profiler.mark("got here 282")
+		//$profiler.mark("got here 282")
 		//try to free memory in the background
 			/* new Myna.Thread(function(){
 				Myna.lock("MYNA:cacheFree",0,function(){
@@ -300,7 +302,7 @@ if (!Myna) var Myna={}
 		if (!cacheObj) {
 			throw new Error("Unable to create or retrieve cache value for cache '" +this.name+ "'");
 		}
-		$profiler.mark("got here 299")
+		//$profiler.mark("got here 299")
 		if (cacheObj.content) Myna.print(cacheObj.content)
 		return cacheObj.value
 	}

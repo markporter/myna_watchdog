@@ -116,7 +116,7 @@ var ObjectLib = {}
 			if (!("chainArray" in $this[functionName])){
 				var originalFunction =$this[functionName] 
 				$this[functionName]=Function.createChainFunction([$this[functionName]]);
-				originalFunction.applyTo($this[functionName])
+				$O(originalFunction).applyTo($this[functionName])
 			}
 		} else {
 			$this[functionName]=Function.createChainFunction();	
@@ -846,7 +846,7 @@ var ObjectLib = {}
 				}
 			}
 		}
-		return (typeof Myna.DataSet != "undefined")
+		return (typeof Myna != "undefined" && typeof Myna.DataSet != "undefined")
 			? new Myna.DataSet(result)
 			: result
 	}	

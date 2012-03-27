@@ -639,6 +639,23 @@
 	String.prototype.left=function(count){
 		return this.substr(0,count);
 	};
+/* Function: lpad 
+	pads the left side of this string
+	 
+	Parameters: 
+		count 	-	total length after padding
+		padChar	-	character to pad with
+ 
+	Returns: 
+		padded string
+		
+	Note:
+		this is is an alias for <toFixedWidth>(_count_,_padChar_,null,"start")
+	 
+	*/
+	String.prototype.lpad=function(count,padChar){
+		return this.toFixedWidth(count,padChar,null,"start");
+	};
 /* Function: listAppend 
 	returns new list (string) with value appended (does not modify original string). 
 	 
@@ -1580,6 +1597,23 @@ String.prototype.toFixedWidth=function(count,pad,placeHolder,truncateFrom){
 			}	
 		}
 		return result;
+	};
+/* Function: rpad 
+	pads the right side of this string
+	 
+	Parameters: 
+		count 	-	total length after padding
+		padChar	-	character to pad with
+ 
+	Returns: 
+		padded string
+		
+	Note:
+		this is is an alias for <toFixedWidth>(_count_,_padChar_,null,"end")
+	 
+	*/
+	String.prototype.rpad=function(count,padChar){
+		return this.toFixedWidth(count,padChar,null,"end");
 	};
 /* Function: splitCap 
 	returns an array of the "words" in this string as delimited by Capital letters

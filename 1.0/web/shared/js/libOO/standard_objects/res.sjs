@@ -257,8 +257,8 @@ var $res = {
 			"&title=" + options.title +
 			"&callback=" + options.callbackUrl+
 			"&message=" + options.message
-		$res.redirect(url);
-		Myna.print("<a href ='" + url +"'>"+options.title+"</a>");
+		$res.metaRedirect(url);
+		//Myna.print("<a href ='" + url +"'>"+options.title+"</a>");
 		Myna.abort();
 	},
 /* Function: redirectWithToken

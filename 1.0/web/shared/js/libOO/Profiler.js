@@ -153,7 +153,8 @@ Myna.Profiler.prototype.start=0;
 		var key=label.replace(/[\W]*/,""),
 			entry={
 				label:label,
-				begin:time || new Date().getTime()
+				begin:time || new Date().getTime(),
+				depth:this.times.filter(function(e){ return !e.end}).length
 			}
 		this.times.push(entry);
 		if (this.labels[key] && !this.labels[key].end){
@@ -236,6 +237,7 @@ Myna.Profiler.prototype.start=0;
 			return {
 				label:label,
 				averageMs:tasks[label].avg(),
+				totalMs:tasks[label].sum(),
 				numEntries:tasks[label].length
 			}
 		})
@@ -243,11 +245,15 @@ Myna.Profiler.prototype.start=0;
 /* Function: getAveragesHtml
 	returns <getTaskAverages> in an HTML table. 
 	*/
-	 Myna.Profiler.prototype.getAveragesHtml = function(){
+	Myna.Profiler.prototype.getAveragesHtml = function(){
 		var msg=[
 			'<style>',
 				'.profiler_table {',
-					'border:1px solid black;',
+					'border:1px solid black;	',
+				'}',
+				'.profiler_table th, .profiler_table td{',
+					'font-family:sans-serif;',
+					'font-size:9pt;',
 				'}',
 				'.profiler_table th{',
 					'font-weight:bold;',
@@ -256,12 +262,12 @@ Myna.Profiler.prototype.start=0;
 					'border:1px solid black;',
 				'}',
 				'.profiler_table .alt_row td{',
-					'background-color:silver',
+					'background-color:#DEDEDE',
 				'}',
 			'</style>',
 			'<table class=profiler_table>',
 			'<tr>',
-			'<th>Label</th><th>Num Entries</th><th>Average Ms</th>',
+			'<th>Label</th><th>Num Entries</th><th>Average Ms</th><th>Total Ms</th>',
 			'</tr>'
 		];
 		this.getAveragesArray().forEach(function(t,index){
@@ -270,6 +276,7 @@ Myna.Profiler.prototype.start=0;
 			msg.push("<td>" + String(t.label) +"</td>");
 			msg.push("<td>" + String(t.numEntries) +"</td>");
 			msg.push("<td>" + String(t.averageMs) +"</td>");
+			msg.push("<td>" + String(t.totalMs) +"</td>");
 			msg.push("</tr>");
 		});
 		
@@ -281,16 +288,17 @@ Myna.Profiler.prototype.start=0;
 	returns a text table of average times. 
 		
 	*/
-	 Myna.Profiler.prototype.getAveragesText = function(){
+	Myna.Profiler.prototype.getAveragesText = function(){
 		var delim = " | ";
 		var msg=[
-			"Label".toFixedWidth(50) + delim + "Num Entires".toFixedWidth(15)+ delim + "Average Ms".toFixedWidth(15), 
-			"-".repeat(50) + delim + "-".repeat(15)+ delim + "-".repeat(15)
+			"Label".toFixedWidth(50) + delim + "Num Entires".toFixedWidth(15)+ delim + "Average Ms".toFixedWidth(15)+ delim + "Average Ms".toFixedWidth(15), 
+			"-".repeat(50) + delim + "-".repeat(15)+ delim + "-".repeat(15)+ delim + "-".repeat(15)
 		]
 		this.getAveragesArray().forEach(function(t,index){
-			msg.push(String(t.label).toFixedWidth(50," ","...","middle") 
+			msg.push(String(t.label).replace(/\s+/g," ").toFixedWidth(50," ","...","middle") 
 				+ delim + String(t.numEntries).toFixedWidth(15)
 				+ delim + String(t.averageMs).toFixedWidth(15)
+				+ delim + String(t.totalMs).toFixedWidth(15)
 			); 
 		});		
 			
@@ -310,53 +318,70 @@ Myna.Profiler.prototype.start=0;
 	returns an HTML summary of all the entries. 
 		
 	*/
-	 Myna.Profiler.prototype.getSummaryHtml = function(){
-		var msg="";
-			msg += "<style>";
-			msg += ".profiler_table {";
-				msg += "border:1px solid black;	";
-			msg += "}";
-			msg += ".profiler_table th{";
-				msg += "font-weight:bold;	";
-			msg += "}";
-			msg += ".profiler_table td{";
-				msg += "border:1px solid black;";
-			msg += "}";
-			msg += ".profiler_table .alt_row td{";
-				msg += "background-color:silver";
-			msg += "}";
-			msg += "</style>";
-			msg +="<table class='profiler_table'>";
-			msg += "<tr>" ;
-			msg += "<th>Label</th><th>Task Ms</th><th>Elapsed Total Ms</th>";
-			msg += "</tr>" ;
+	Myna.Profiler.prototype.getSummaryHtml = function(){
+		var msg=[
+			'<style>',
+				'.profiler_table {',
+					'border:1px solid black;	',
+				'}',
+				'.profiler_table th, .profiler_table td{',
+					'font-family:sans-serif;',
+					'font-size:9pt;',
+				'}',
+				'.profiler_table th{',
+					'font-weight:bold;',
+				'}',
+				'.profiler_table td{',
+					'border:1px solid black;',
+				'}',
+				'.profiler_table .alt_row td{',
+					'background-color:#DEDEDE',
+				'}',
+			'</style>',
+			'<table class=\'profiler_table\'>',
+				'<tr>',
+					'<th>Label</th>',
+					'<th>Task Ms</th>',
+					'<th>Started Ms</th>',
+					'<th>Ended Ms</th>',
+				'</tr>',
+		'']
 		
 		var total=0,entry,elapsed,label;
 		for (var x=0; x < this.times.length; ++x){
 			entry = this.times[x];
 			if (!entry.end) continue;
 			elapsed=entry.end - entry.begin;
-			total=entry.begin - this.start;
+			started=entry.begin - this.start;
+			ended=entry.end - this.start;
 			label=entry.label
 			
 			if (entry.isMark) {
 				elapsed="&nbsp;";
 				label = "MARK: " + label
+				entry.end = entry.start
 			} else {
 				label = "TASK: " + label
 			}
 			
+			var depth = ""
+			if (entry.depth){
+				depth = "&nbsp;".repeat(entry.depth*4)
+				//depth+=" |-";
+			}
+			
 			
 			var alt_row = (x%2==0) ? "alt_row":"";
-			msg += "<tr class='" +alt_row + "'>" ;
-			msg += "<td>" + String(label) +"</td>";
-			msg += "<td>" + String(elapsed) +"</td>";
-			msg += "<td>" + String(total) +"</td>";
-			msg += "</tr>" ;
+			msg.push("<tr class='" +alt_row + "'>") ;
+			msg.push("<td>" + depth+ String(label) +"</td>");
+			msg.push("<td>" + String(elapsed) +"</td>");
+			msg.push("<td>" + String(started) +"</td>");
+			msg.push("<td>" + String(ended) +"</td>");
+			msg.push("</tr>") ;
 		}
-		msg += "</table>" ;
+		msg.push("</table>") ;
 			
-		return msg;
+		return msg.join("\n");
 	}
 
 
@@ -364,7 +389,7 @@ Myna.Profiler.prototype.start=0;
 	returns a text summary of all the entries. 
 		
 	*/
-	 Myna.Profiler.prototype.getSummaryText = function(){
+	Myna.Profiler.prototype.getSummaryText = function(){
 		var delim = " | ";
 		var msg="";
 			msg += "Label".toFixedWidth(50) + delim + "Elapsed Millis".toFixedWidth(15) + delim + "Elapsed Total".toFixedWidth(15) + "\n"; 
@@ -388,7 +413,7 @@ Myna.Profiler.prototype.start=0;
 				label +=" (Avg/Sum  of " + entry.numEntries +" entries)"
 			}
 			
-			msg += String(label).toFixedWidth(50," ","...","middle") + delim 
+			msg += String(label).replace(/\s+/g," ").toFixedWidth(50," ","...","middle") + delim 
 			msg += String(elapsed).toFixedWidth(15) + delim 
 			msg += String(total).toFixedWidth(15) + "\n";
 			
@@ -396,3 +421,70 @@ Myna.Profiler.prototype.start=0;
 			
 		return msg;
 	}
+/* Function: profile
+	attaches profiling hooks to an object 
+	
+	Parameters:
+		obj		-	object to profile
+		name	-	String. Name of this object to use in profile logs
+		logArgs	-	*Optional, default false*
+					If true, log arguments to function in the profiler
+					
+	Detail:
+		This attaches "begin" and "end" profiling to every function in _obj_, 
+		and getters
+	*/
+	Myna.Profiler.prototype.profile = function(obj,name,logArgs){
+	var $this = this;
+	var p;
+	
+	
+	function applyProfiler(target,prop,propName){
+		if (typeof target[prop] == "function"){
+			if (target[prop].prototype.getProperties().length) return false
+				
+			//Myna.println(prop)
+			ObjectLib.before(target,prop,function(){
+				var chain = arguments.callee.chain;
+				var msg = name +"::" + propName +"("
+				if (logArgs) {
+					try{
+					msg+=JSON.stringify(chain.args,null,"   ")
+					} catch(e){}
+				}
+				msg+=")";
+				chain._profileEnd = $this.begin(msg)
+				return chain.lastReturn;
+			})
+			ObjectLib.after(target,prop,function(){
+				var chain = arguments.callee.chain;
+				chain._profileEnd();
+				return chain.lastReturn;
+			})	
+			return true
+		}
+		return false
+	}
+	
+	for (p in obj){
+			var d = Object.getOwnPropertyDescriptor( obj, p )  
+			if (d && d.configurable){
+				var changed =false
+				if (d.get) {
+					changed =changed||applyProfiler(d,"get",p)
+				}
+				if (d.set) {
+					changed =changed||applyProfiler(d,"set",p)
+				}
+				if (d.value) {
+					changed =changed||applyProfiler(d,"value",p)
+				}
+				
+				if (changed) Object.defineProperty(obj,p,d)
+			} else {
+				applyProfiler(obj,p,p)
+			}
+			
+		}
+
+}

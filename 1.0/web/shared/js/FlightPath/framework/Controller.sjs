@@ -332,7 +332,7 @@
 		
 		// Functions that begin with "_" are not considered actions and 
 		// are excluded from browser requests
-		function _auth(controller,action,params){
+		function _auth(action,params){
 			if (!$cookie.getAuthUser()){
 				$FP.redirectTo({
 					controller:"Auth",
@@ -343,10 +343,10 @@
 			}
 		}
 		
-		function _audit(controller,action,params){
+		function _audit(action,params){
 			Myna.log(
 				"audit",
-				controller.name + "." + action,
+				params.controller + "." + action,
 				Myna.dump({
 					params:params,
 					user:$cookie.getAuthUser()
@@ -354,7 +354,7 @@
 			);
 		}
 		
-		function _pdfView(controller, action, params){
+		function _pdfView(action, params){
 			if (params.format =="pdf"){
 				// calling render or renderContent prevents default view from rendering
 				this.renderContent(
@@ -617,11 +617,13 @@
 			})
 		) return;//if any of the beforeAction filters return false, abort this action
 		
+		/* This is undocumented magic, removing
 		//Merge in id var
 		if (params.id && c.model && c.model.primaryKey) {
 			var idField = c.model.primaryKey
+			
 			params[idField] =params.id;
-		}
+		} */
 		var result;
 		var shouldRender;
 		if (params.action in c) {
