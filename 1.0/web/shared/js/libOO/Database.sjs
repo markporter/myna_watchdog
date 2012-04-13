@@ -11,7 +11,7 @@ if (!Myna) var Myna={}
 		ds	-	 String datsource name
 */
 Myna.Database = function (ds){
-	$profiler.mark("loading db for " + ds)
+	//$profiler.mark("loading db for " + ds)
 	if (!ds) {
 		throw new Error("Unable to load datasource '" + String(ds) +"'")
 	}
@@ -26,7 +26,9 @@ Myna.Database = function (ds){
 		db = this;
 		this.cache={
 		}
+		var end =$profiler.begin("Myna.Database.init() for " + ds)
 		db.init()
+		end()
 		$req["__DS_CACHE__:" + ds] =this
 	}
 	

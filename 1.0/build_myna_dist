@@ -23,4 +23,4 @@ if [ -e  build.dev ]; then
 fi
 echo "Done with Build, restarting dev server"
 ./dev_server restart
-dropbox start
+#dropbox start

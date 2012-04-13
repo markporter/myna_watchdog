@@ -76,7 +76,7 @@ if (!Myna) var Myna={}
 									an array or a comma separated list of strings to 
 									associate with this cache object. Used to find 
 									multiple cache objects from other threads. If 
-									$application.appName is defined, it is 
+									$application.appname is defined, it is 
 									automatically added as a tag.
 									
 		refreshInterval		-		*Optional, default 1 hour*
@@ -119,8 +119,8 @@ if (!Myna) var Myna={}
 			refreshInterval:Date.getInterval("h",1),
 		})
 		if (this.tags instanceof Array) this.tags = this.tags.join();
-		if ("appName" in $application) {
-			this.tags.listAppendUniqueNoCase($application.appName);
+		if ("appname" in $application) {
+			this.tags = this.tags.listAppendUniqueNoCase($application.appname);
 		}
 		this.checkRequired(["code"]);
 		var cacheStore = $server.get("MYNA:cacheStore");
@@ -392,7 +392,7 @@ if (!Myna) var Myna={}
 	Myna.Cache.getByTags=function CacheGetByTags(tags){
 		var cacheStore = $server.get("MYNA:cacheStore");
 		if (!cacheStore) return null
-		return cacheStore.findAll("tags",function(rowTags){
+		return cacheStore.findAllByCol("tags",function(rowTags){
 			return tags.split(/,/).every(function(tag){
 				return rowTags.listContainsNoCase(tag)
 			})
@@ -407,7 +407,7 @@ if (!Myna) var Myna={}
 	
 	Example:
 	(code)
-	Myna.Cache.clearByTag("Query,table:orders")
+	Myna.Cache.clearByTags("Query,table:orders")
 	
 	(end)
 	*/	

@@ -46,7 +46,9 @@ function _formatPdf(action, params){
 			Myna.xmlToPdf(
 				Myna.htmlToXhtml(
 					$res.clear()
-				)
+				),
+				null,
+				$server.serverUrl +$FP.url
 			),
 			"application/pdf",
 			filename

@@ -156,27 +156,40 @@ Topic: Overview
 */
 var model=null
 function api(params){
-	var API ={
-		url:$application.url+$FP.c2f(this.name)+"/router",
-		type:"remoting",
-		actions:{}
-	}
-	
-	if (params.ns) API.ns = params.ns;
-	if (params.namespace) API.namespace = params.namespace;
-	$FP.getControllerNames().forEach(function(name){
-		var controller = $FP.getController(name)
-		/* Myna.println(name)
-		Myna.println(controller.name) */
-		API.actions[name]=[]
-		controller.getActions().forEach(function(def){
-			API.actions[name].push({
-				name:def.action,
-				len:1
-			})
-		})
+	var c=this
+	function buildApi(params,name){
+		var API ={
+			url:$application.url+$FP.c2f(name)+"/router",
+			type:"remoting",
+			//enableBuffer:false,
+			actions:{}
+		}
 		
-	})
+		if (params.ns) API.ns = params.ns;
+		if (params.namespace) API.namespace = params.namespace;
+		$FP.getControllerNames().forEach(function(name){
+			var controller = $FP.getController(name)
+			/* Myna.println(name)
+			Myna.println(controller.name) */
+			API.actions[name]=[]
+			controller.getActions().forEach(function(def){
+				API.actions[name].push({
+					name:def.action,
+					len:1
+				})
+			})
+			
+		})
+		return API
+	}
+	//Myna.abort("",buildApi())
+	var name = $application.appName + "loadModels:DirectApiCache:" + JSON.stringify(params);
+	var API =new Myna.Cache({
+		name:name,
+		//tags:"test,query,output",
+		refreshInterval:Date.getInterval(Date.DAY,1),
+		code:buildApi
+	}).call(params,this.name)
 	if (params.callback){
 		this.renderContent(params.callback +"(" +API.toJson() +")","text/javascript");
 	} else if (params.scriptvar){
@@ -222,7 +235,7 @@ function router(params){
 		} catch(e){
 			var message = "Error in Ext.Direct call " + request.action + "." +request.method +", TID: " + request.tid; 
 			Myna.logSync(
-				"debug",
+				"error",
 				message,
 				Myna.formatError(__exception__) 
 					+Myna.dump($req.data,"parms") 

@@ -83,9 +83,14 @@ function _mynaAuth(action, params){
 	})
 	
 	if (!isWhitelisted){
-		var user = my.options.userFunction(this,my.options);
+		var user_rights = $session.get("_user_rights")
+		
+		
+		function hasRight(appname,right){
+			return user_rights.contains("{0}|{1}".format(appname,right))
+		}
 		//Myna.log("debug","User = " + user.first_name + " " + user.last_name);
-		if (!user){
+		if (!$cookie.getAuthUserId()){
 			if ($FP.config.debug){
 				Myna.log(
 					"debug",
@@ -106,6 +111,17 @@ function _mynaAuth(action, params){
 			//unnecessary, but good practice
 			return false; //cancels action
 		} else {
+			if (!user_rights){
+				var user = my.options.userFunction(this,my.options);
+				if (user){
+					user_rights = user.qryRights().data
+						.map(function(row){
+							return "{appname}|{name}".format(row)
+						})
+					$session.set("_user_rights",user_rights)
+				}
+			}
+			
 			var isAnyUser = my.options.anyUserList.some(function(item){
 				if (!(item instanceof RegExp)){
 					item = new RegExp("^" +String(item).replace(/\./,"\\.") +"$")
@@ -116,34 +132,30 @@ function _mynaAuth(action, params){
 			if (!isAnyUser){
 				var appname= $application.appname;
 					
-				var all_rights=Myna.Permissions.getRightsByAppname(appname)
-						
-				if (!all_rights.containsByCol("name",right)){
-					Myna.Permissions.addRight({
-						name:right,
-						appname:appname
-					})
-				}
-				
-				if (user.hasRight(appname,right)) return;
+				if (hasRight(appname,right)) return;
 				if ($FP.config.debug){
+					var user = my.options.userFunction(this,my.options);
 					Myna.log(
 						"debug",
 						"Auth fail for Action " + right + ", User " + user.first_name +" "+ user.last_name,
 						Myna.dump(my.options.whitelist, "MynaAuth whitelist")
 					);	
 				}
-				if (user.hasRight(appname,"full_admin_access")) return;
-				if (user.hasRight("myna_admin","full_admin_access")) return;
+				if (hasRight(appname,"full_admin_access")) return;
+				if (hasRight("myna_admin","full_admin_access")) return;
 			
 				
+				
+				var user = my.options.userFunction(this,my.options);
 				//if we got here shouldn't have
-				Myna.log(
-					"auth",
-					<ejs>
-						User '<%=user.first_name%> <%=user.last_name%>' does not have access to <%=right%>
-					</ejs>
-				);
+				if (user){
+					Myna.log(
+						"auth",
+						<ejs>
+							User '<%=user.first_name%> <%=user.last_name%>' does not have access to <%=right%>
+						</ejs>
+					);
+				}
 				throw new Error("You do not have access to that feature")
 			}
 		}

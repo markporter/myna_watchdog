@@ -55,7 +55,21 @@
 	},
 	//--------- init method ----------------------------------------------
 	init:function(){	// this is run before any workflow methods to setup the application.
-	
+		var version = $application.version
+		var isNewVersion = ($application.get("version") != version)
+		if ($application.config.debug || isNewVersion) {
+			//remove ORM cache file
+			new Myna.File("/WEB-INF/myna/ds_class_cache/" + $application.appname).forceDelete()
+			
+			// clear cached values
+			Myna.Cache.clearByTags($application.appname);
+			
+			//clear application variables
+			$application.reload();
+			
+			//save curretn version in application cache
+			$application.set("version",version)
+		}
 	},
 	
 	//--------- workflow methods -----------------------------------------
@@ -63,6 +77,8 @@
 		
 	},
 	onRequestStart:function(){ // run directly before requested file
+		
+		
 		/* Example of changing ds based on server purpose */
 		/*
 		

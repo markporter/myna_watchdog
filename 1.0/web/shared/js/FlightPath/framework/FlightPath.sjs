@@ -49,13 +49,15 @@
 	private function for loading a cached script path
 	*/
 	function loadPath(path){
-		var key =path
-		var text =$application.get(key)
+		var key = $application.appname +":$FP::loadPath" + path;
 		
-		if (!text||$FP.config.debug) {
-			$application.set(key,text =new Myna.File(path).readString()) 
-		}
-		
+		var text = new Myna.Cache({
+			name:key,
+			refreshInterval:Date.getInterval(Date.DAY,1),
+			code:function(path){
+				return new Myna.File(path).readString()
+			}
+		}).call(path)
 		var result = {}
 		$server_gateway.executeJsString(result,text,path)
 		return result;
@@ -72,41 +74,48 @@
 			new $FP.Model(),
 			loadPath("app/models/global.sjs"),
 		]
-		var pathKey ="modelPath:"+modelName
-		var modelPath = $application.get(pathKey)
-		if (!modelPath || $FP.config.debug){
-			var m = new Myna.File(
-				$FP.dir,
-				"app/models",
-				c2f(modelName) + "_model.sjs"
-			);
-			
-			if (!m.exists()){	//check for module path
-				m = new Myna.File($FP.dir,"app/modules")
-					.listFiles(function(f){return f.isDirectory() && /^\w+$/.test(f.fileName)})
-					.map(function(f){
-						return new Myna.File(
-							f,
-							"models",
-							c2f(modelName) + "_model.sjs"
-						)
-					})
-					.filter(function(f){return f.exists()})
-					.first(false)
-			}
-			if (!m){	//check in the framework
-				m = new Myna.File(
-					$FP.frameworkFolder,
-					"models",
-					c2f(modelName) + "_model.sjs"
+		var key = $application.appname +":$FP::"+"modelPath:"+modelName;
+		
+		var modelPath = new Myna.Cache({
+			name:key,
+			refreshInterval:Date.getInterval(Date.DAY,1),
+			code:function(modelName){
+				var m = new Myna.File(
+					$FP.dir,
+					"app/models",
+					$FP.c2f(modelName) + "_model.sjs"
 				);
+				
+				if (!m.exists()){	//check for module path
+					m = new Myna.File($FP.dir,"app/modules")
+						.listFiles(function(f){return f.isDirectory() && /^\w+$/.test(f.fileName)})
+						.map(function(f){
+							return new Myna.File(
+								f,
+								"models",
+								$FP.c2f(modelName) + "_model.sjs"
+							)
+						})
+						.filter(function(f){return f.exists()})
+						.first(false)
+				}
+				if (!m){	//check in the framework
+					m = new Myna.File(
+						$FP.frameworkFolder,
+						"models",
+						$FP.c2f(modelName) + "_model.sjs"
+					);
+				}
+				if (m.exists()){
+					return m.toString()	
+				} else {
+					return "none"					
+				}
+			
 			}
-			if (m.exists()){
-				modelPath =  $application.set(pathKey,m.toString())	
-			} else {
-				modelPath =  $application.set(pathKey,"none")					
-			}
-		}
+		}).call(modelName)
+		
+		
 		if (modelPath !="none"){
 			classList.push(loadPath(modelPath))
 		} else {
@@ -168,6 +177,7 @@
 	Internal initialization, should not be called by apps
 	*/
 	function init(forceReload){
+		var end =$profiler.begin("$FP,init")
 		var core;
 		core= this;
 		$application.config.applyTo(this.config,true)
@@ -187,11 +197,27 @@
 			if (typeof this.config.ds == "string") {
 				this.config.ds={"default":this.config.ds}	
 			}
+			
 			this.config.ds.forEach(function(ds,alias){
-				core.modelManagers[alias] = new Myna.DataManager(ds)
+				var end=$profiler.begin("loading db " + alias)
+				Object.defineProperty( core.modelManagers, alias, {
+					get: function(){ 
+						var my = arguments.callee;
+						if (!my.manager){
+							my.manager = new Myna.DataManager(ds)
+							my.manager.getModel = my.manager.getManager
+							my.manager.modelExists = my.manager.managerExists
+							my.manager.getManager = core.getModel
+						}
+						return my.manager
+					},
+					
+				});
+				/* core.modelManagers[alias] = new Myna.DataManager(ds)
 				core.modelManagers[alias].getModel = core.modelManagers[alias].getManager
 				core.modelManagers[alias].modelExists = core.modelManagers[alias].managerExists
-				core.modelManagers[alias].getManager = core.getModel
+				core.modelManagers[alias].getManager = core.getModel */
+				end()
 			})
 			
 			this.defaultDs = this.config.ds["default"] 
@@ -219,7 +245,7 @@
 		Myna.include($FP.frameworkFolder +"/Flash.sjs")
 		
 		
-		
+		end()
 		return core;
 	}
 /* Function: c2f
@@ -354,26 +380,41 @@
 	returns an array containing all the available controller names
 	*/
 	function getControllerNames(){
-		var key = "$FP::controllerNames";
-		if (!$FP.config.debug && $application.get(key)) return $application.get(key)
-			
-		var names= new Myna.File("app/controllers")
-			.listFiles("sjs")
-			.filter(function(file){
-				return $FP.f2c(file.fileName.listBefore("_"),true);
+		var key = $application.appname +":$FP::controllerNames";
+		function getNames(){	
+			var names= new Myna.File("app/controllers")
+				.listFiles("sjs")
+				.filter(function(file){
+					return $FP.f2c(file.fileName.listBefore("_"),true);
+				})
+				.valueArray("fileName")
+				.map(function(fileName){
+					return $FP.f2c(fileName.listBefore("_"),true);
+				})
+			//search modules for controllers
+			var controllerFolders = new Myna.File($FP.dir,"app/modules")
+				.listFiles(function(file){
+					return file.isDirectory() && /^\w+$/.test(file.fileName)
+				})
+			controllerFolders.forEach(function(folder){
+				names =names.concat(
+					new Myna.File(folder,"controllers").listFiles("sjs")
+					.filter(function(file){
+						return /_controller.sjs$/.test(file.fileName);
+					})
+					.valueArray("fileName")
+					.map(function(fileName){
+						return $FP.f2c(fileName.listBefore("_"),true);
+					})
+					.filter(function(name){//prevent duplicate names
+						return ! names.contains(name)
+					})
+				)
+				
 			})
-			.valueArray("fileName")
-			.map(function(fileName){
-				return $FP.f2c(fileName.listBefore("_"),true);
-			})
-		//search modules for controllers
-		var controllerFolders = new Myna.File($FP.dir,"app/modules")
-			.listFiles(function(file){
-				return file.isDirectory() && /^\w+$/.test(file.fileName)
-			})
-		controllerFolders.forEach(function(folder){
+			//search framework for controllers
 			names =names.concat(
-				new Myna.File(folder,"controllers").listFiles("sjs")
+				new Myna.File($FP.frameworkFolder,"controllers").listFiles("sjs")
 				.filter(function(file){
 					return /_controller.sjs$/.test(file.fileName);
 				})
@@ -385,26 +426,16 @@
 					return ! names.contains(name)
 				})
 			)
+				
 			
-		})
-		//search framework for controllers
-		names =names.concat(
-			new Myna.File($FP.frameworkFolder,"controllers").listFiles("sjs")
-			.filter(function(file){
-				return /_controller.sjs$/.test(file.fileName);
-			})
-			.valueArray("fileName")
-			.map(function(fileName){
-				return $FP.f2c(fileName.listBefore("_"),true);
-			})
-			.filter(function(name){//prevent duplicate names
-				return ! names.contains(name)
-			})
-		)
-			
-		
-		$application.set(key,names)
-		return names
+			//$application.set(key,names)
+			return names
+		}
+		return new Myna.Cache({
+			name:key,
+			refreshInterval:Date.getInterval(Date.DAY,1),
+			code:getNames
+		}).call()
 	}
 /* Function: getModel
 	factory function that finds, loads, and initializes a model by name
@@ -425,6 +456,7 @@
 			
 			
 			if (!model.manager){
+				
 				if (!$FP.config.debug){
 					model.manager =$application.get("$FP::manager:" + modelName)
 				}

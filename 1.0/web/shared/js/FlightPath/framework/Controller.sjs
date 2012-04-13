@@ -332,7 +332,7 @@
 		
 		// Functions that begin with "_" are not considered actions and 
 		// are excluded from browser requests
-		function _auth(action,params){
+		function _auth(controller,action,params){
 			if (!$cookie.getAuthUser()){
 				$FP.redirectTo({
 					controller:"Auth",
@@ -343,10 +343,10 @@
 			}
 		}
 		
-		function _audit(action,params){
+		function _audit(controller,action,params){
 			Myna.log(
 				"audit",
-				params.controller + "." + action,
+				controller.name + "." + action,
 				Myna.dump({
 					params:params,
 					user:$cookie.getAuthUser()
@@ -354,7 +354,7 @@
 			);
 		}
 		
-		function _pdfView(action, params){
+		function _pdfView(controller, action, params){
 			if (params.format =="pdf"){
 				// calling render or renderContent prevents default view from rendering
 				this.renderContent(
@@ -617,13 +617,6 @@
 			})
 		) return;//if any of the beforeAction filters return false, abort this action
 		
-		/* This is undocumented magic, removing
-		//Merge in id var
-		if (params.id && c.model && c.model.primaryKey) {
-			var idField = c.model.primaryKey
-			
-			params[idField] =params.id;
-		} */
 		var result;
 		var shouldRender;
 		if (params.action in c) {
@@ -711,7 +704,17 @@
 			}
 		}).applyTo(this)
 		if (!this.model && this.model !== null){
-			this.model =this[this.name] =$FP.getModel(this.name);
+			Object.defineProperty( this, "model", {
+					get: function(){ 
+						var my = arguments.callee;
+						if (!my.model){
+							my.model =$FP.getModel(this.name)
+						}
+						return my.model
+					},
+					
+				});
+			//this.model =this[this.name] =$FP.getModel(this.name);
 		}
 	}
 /* Function: render

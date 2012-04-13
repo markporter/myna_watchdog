@@ -209,7 +209,7 @@
 			|| (
 				!(compare instanceof RegExp ) 
 				&& !(typeof compare  =="string") 
-				&& !(compare instanceof Function)
+				&& !(typeof compare == "function")
 			)
 		) throw new SyntaxError("compare is required, and must be either a RegExp object,a string regular expression, or a function") 
 		if (typeof compare  =="string") compare = new RegExp("^"+compare.escapeRegex()+"$");

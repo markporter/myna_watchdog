@@ -100,10 +100,10 @@ var $server={
 		if ($req.headers.getKeys().join().listContains("X-Forwarded-Host")){
 				
 			var proto = "http";
-			if ("X-Forwarded-Proto" in $req.headers){
-				proto = $req.headers["X-Forwarded-Proto"][0];
+			if ("x-forwarded-proto" in $req.headers){
+				proto = $req.headers["x-forwarded-proto"][0];
 			}
-			return proto+"://"+$req.headers["X-Forwarded-Host"][0]		
+			return proto+"://"+$req.headers["x-forwarded-host"][0]		
 		} else {
 			var URL = String($server_gateway.environment.get("requestURL"));
 			var URI = String($server_gateway.environment.get("requestURI"));
