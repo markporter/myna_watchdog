@@ -119,7 +119,6 @@ File: Controller  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Contr
 File: Controller: Direct  (/data/home_mark/myna/web/shared/js/FlightPath/framework/controllers/direct_controller.sjs)
 File: Controller: Page  (/data/home_mark/myna/web/shared/js/FlightPath/framework/controllers/page_controller.sjs)
 File: FlightPath.txt  (/data/home_mark/myna/web/shared/js/FlightPath/framework/FlightPath.txt)
-File: Model  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Model.sjs)
 
 Group: Behaviors  {
 
@@ -127,6 +126,9 @@ Group: Behaviors  {
    File: Behavior: FormatPdf  (/data/home_mark/myna/web/shared/js/FlightPath/framework/behaviors/controllers/format_pdf.sjs)
    File: Behavior: MynaAuth  (/data/home_mark/myna/web/shared/js/FlightPath/framework/behaviors/controllers/myna_auth.sjs)
    }  # Group: Behaviors
+
+File: Layouts  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Layouts.txt)
+File: Model  (/data/home_mark/myna/web/shared/js/FlightPath/framework/Model.sjs)
 
 Group: Index  {
 

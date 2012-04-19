@@ -2155,7 +2155,7 @@ if (!Myna) var Myna={}
 						if ("hasOne,belongsTo".listContains(relatedModelOptions.type)){
 							//Myna.printConsole("related model",Myna.dumpText(relatedModelOptions))
 						}
-						if (!(relatedAlias in values)) return;	
+						if (!(relatedAlias in values)) return;
 						if (bean[relatedAlias]() instanceof Array){
 							var relatedBeans = values[relatedAlias];
 							if (!relatedBeans) return;
@@ -2165,11 +2165,11 @@ if (!Myna) var Myna={}
 								relatedBeans.forEach(function(relatedBean){
 									relatedBean[relatedModelOptions.foreignKey] = bean.id;
 									relatedBean = relatedModel.get(relatedBean)
-									var existingBean =bean[relatedAlias]().findFirstByCol(pk,relatedBean.id); 
+									var existingBean =bean[relatedAlias]().findFirstByCol(pk,relatedBean.id);
 									if (existingBean){
 										existingBean.setFields(relatedBean)
 									} else {
-										bean[relatedAlias]().push(relatedBean)
+										bean[relatedAlias]().push(relatedModel.get(relatedBean))
 									}
 								})
 							} else {
@@ -2180,7 +2180,6 @@ if (!Myna) var Myna={}
 									} else {
 										relatedBean[pk] = keyVal;
 										relatedBean[relatedModelOptions.foreignKey] = bean.id;
-										
 										bean[relatedAlias]().push(relatedModel.get(relatedBean))
 									}
 								})
@@ -3100,17 +3099,19 @@ if (!Myna) var Myna={}
 						this.exists=true
 						var localBean = this;
 						//Myna.printConsole("got here first")
-						
 						this._loadedAliases.forEach(function(relatedBean,alias){
+								
 							//already handled parents
 							if (alias in $this.manager.associations.belongsTo) return;
 							
 							var relatedModelOptions = relatedBean.relatedModelOptions;
 							if (relatedBean instanceof Array){
 								relatedBean.forEach(function(relatedBean){
-									if (!relatedBean.isDirty) return;
-									var relatedValidation = bean.save()
-									v.merge(relatedValidation,alias +"."+bean.id +".");
+									if (!relatedBean.isDirty) {
+										return;
+									};
+									var relatedValidation = relatedBean.save()
+									v.merge(relatedValidation,alias +"."+relatedBean.id +".");
 									//bridge tables are a pain
 									//Myna.println(relatedBean._hasBridgeTo + " && " +relatedValidation.success)
 									if (relatedBean._hasBridgeTo && relatedValidation.success){

@@ -1001,7 +1001,6 @@ if (!Myna) var Myna={}
 						'<b>Request Path</b>: {requestPath}<br>',
 						'<b>Client IP</b>: {remoteAddr}<br>',
 					'</td></tr>',
-					'<tr><th >$req:</th><td>{req}</td></tr>',
 				'</table>'
 			)
 			

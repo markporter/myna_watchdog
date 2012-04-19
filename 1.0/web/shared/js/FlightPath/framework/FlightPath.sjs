@@ -80,6 +80,19 @@
 			name:key,
 			refreshInterval:Date.getInterval(Date.DAY,1),
 			code:function(modelName){
+				var t2m=function(name){
+					return name.toLowerCase().split(/[-_]/).map(function(part,index,array){
+						if (index == array.length -1){
+							part = Myna.Inflector.singularize(part)
+						}
+						return part.titleCap();
+					}).join("")
+				}
+				//convert table names
+				if (modelName == modelName.toLowerCase()){
+					modelName = t2m(modelName)
+				}
+				
 				var m = new Myna.File(
 					$FP.dir,
 					"app/models",
