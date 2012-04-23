@@ -957,27 +957,27 @@ Date.formatInterval = function(interval,precision){
 	
 	var years = Math.floor(interval/year);
 	interval = interval % year;
-	if (years) result.push(years +" years");
+	if (years) result.push(years +(years==1?" year":" years"));
 	
 	var weeks = Math.floor(interval/week);
 	interval = interval % week;
-	if (weeks) result.push(weeks +" weeks");
+	if (weeks) result.push(weeks +(weeks==1?" week":" weeks"));
 	
 	var days = Math.floor(interval/day);
 	interval = interval % day;
-	if (days) result.push(days +" days");
+	if (days) result.push(days +(days==1?" day":" days"));
 	
 	var hours = Math.floor(interval/hour);
 	interval = interval % hour;
-	if (hours) result.push(hours +" hours");
+	if (hours) result.push(hours +(hours==1?" hour":" hours"));
 	
 	var minutes = Math.floor(interval/minute);
 	interval = interval % minute;
-	if (minutes) result.push(minutes +" minutes");
+	if (minutes) result.push(minutes +(minutes==1?" minute":" minutes"));
 	
 	var seconds = Math.floor(interval/second);
 	interval = interval % second;
-	if (seconds) result.push(seconds +" seconds");
+	if (seconds) result.push(seconds +(seconds==1?" second":" seconds"));
 	
 	var milliseconds = interval;
 	if (milliseconds) result.push(Math.round(milliseconds) +" milliseconds");
