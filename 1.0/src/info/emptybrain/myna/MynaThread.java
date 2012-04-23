@@ -45,7 +45,7 @@ public class MynaThread implements java.lang.Runnable{
 	static public ConcurrentHashMap 	serverVarMap 			= new ConcurrentHashMap();//used by $server.get/set
 	static public ConcurrentHashMap 	applications 			= new ConcurrentHashMap();//contains Application descriptors, keyed by path
 	static private boolean 			isInitialized 				= false;
-	static volatile private			Scriptable sharedScope_	= null;
+	static volatile public			Scriptable sharedScope_	= null;
 	static public int 				threadHistorySize			=0; // number of completed threads to store in recentThreads. Set with property "thread_history_size"
 	static public java.util.Date 	serverStarted 				= new java.util.Date(); //date object representing the time this server was started
 	

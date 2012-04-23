@@ -43,7 +43,7 @@ var gotlock =Myna.lock("MYNA_ADMIN:reload_cron",0,function(){
 			}
 		})
 		//cancel deleted cron
-		if ($this.name && notFound){
+		if ($this.name && !cronFound){
 			var timer = $server_gateway.cron.get($this.name);
 			//clear the old timer
 			if (timer){   

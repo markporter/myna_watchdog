@@ -2148,7 +2148,8 @@ if (!Myna) var Myna={}
 					$this.setLabel(k,v)
 				})
 			},
-			_applyRelatedValues:function(bean,values){
+			_applyRelatedValues:function _applyRelatedValues(bean,values){
+				var $this = this
 				this.associations.forEach(function(aliases,type){
 					aliases.forEach(function(relatedModelOptions,relatedAlias){
 							
@@ -2162,25 +2163,28 @@ if (!Myna) var Myna={}
 							var relatedModel = bean.manager.dm.getManager(relatedModelOptions.name);
 							var pk = relatedModel.primaryKey;
 							if (relatedBeans instanceof Array){
-								relatedBeans.forEach(function(relatedBean){
-									relatedBean[relatedModelOptions.foreignKey] = bean.id;
-									relatedBean = relatedModel.get(relatedBean)
+								relatedBeans.forEach(function(relatedBeanData){
+									relatedBeanData[relatedModelOptions.foreignKey] = bean.id;
+									relatedBean = relatedModel.get(relatedBeanData)
 									var existingBean =bean[relatedAlias]().findFirstByCol(pk,relatedBean.id);
 									if (existingBean){
-										existingBean.setFields(relatedBean)
+										existingBean.setFields(relatedBeanData)
+										$this._applyRelatedValues(existingBean,relatedBeanData)
 									} else {
-										bean[relatedAlias]().push(relatedModel.get(relatedBean))
+										bean[relatedAlias]().push(relatedBean)
 									}
+									//Myna.printConsole("related  bean for " + relatedAlias,Myna.dumpText(relatedModel.get(relatedBean).data))
 								})
 							} else {
-								relatedBeans.forEach(function(relatedBean,keyVal){
+								relatedBeans.forEach(function(relatedBeanData,keyVal){
 									var existingBean =bean[relatedAlias]().findFirstByCol(pk,keyVal); 
 									if (existingBean){
-										existingBean.setFields(relatedBean);
+										existingBean.setFields(relatedBeanData)
+										$this._applyRelatedValues(existingBean,relatedBeanData)
 									} else {
-										relatedBean[pk] = keyVal;
-										relatedBean[relatedModelOptions.foreignKey] = bean.id;
-										bean[relatedAlias]().push(relatedModel.get(relatedBean))
+										relatedBeanData[pk] = keyVal;
+										relatedBeanData[relatedModelOptions.foreignKey] = bean.id;
+										bean[relatedAlias]().push(relatedModel.get(relatedBeanData))
 									}
 								})
 							}
@@ -3083,14 +3087,15 @@ if (!Myna) var Myna={}
 					try{
 						//first save/create parent objects
 						this.manager.associations.belongsTo.forEach(function(relatedModelOptions,alias){
-							if ($this.data[relatedModelOptions.localKey] == null) return;
+							/* TODO: Fix this. It is too dangerous without better "empty" checking*/
+							/* if ($this.data[relatedModelOptions.localKey] == null) return;
 							if (!$this[alias]().isDirty) return;
 							
 							var relatedValidation = $this[alias]().save()
 							$this.data[relatedModelOptions.localKey] =$this[alias]().id 
 							//Myna.printConsole("relatedModelOptions",Myna.dumpText(relatedModelOptions))
 							//Myna.printConsole(alias +".",$this.data[relatedModelOptions.localKey])
-							v.merge(relatedValidation,alias +".");
+							v.merge(relatedValidation,alias +"."); */
 						})
 						var bean =this.manager.create(this.data)
 						
