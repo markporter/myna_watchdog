@@ -16,9 +16,35 @@
 	seperated list
 	<br><br>
 	
-	<b>Send email adminstrator on uncaught exceptions?</b><br>
+	<b>Send email administrator on uncaught exceptions?</b><br>
 	If Yes, and "Administrator Email" is set, uncaught exceptions will be sent
-	to the adminstrator email as well as being logged.    
+	to the administrator email as well as being logged.    
+	<br><br>
+	
+	<b>Log Engine</b><br>
+	    Myna supports the following Logging engines:
+	    
+	    <ul style="padding:5px;">
+	    	<li> <b>Myna Log:</b> <br>
+	    		Logs are sent to the database defined by the "myna_log" 
+	    		datasource. <b style='color:red'>This is the only engine that can be queried from the 
+	    		Myna Administrator.</b> This should be a stand-alone database for 
+	    		production deployments. Multiple Myna instances can use the same 
+	    		"myna_log" database<br>
+	    	</li>
+	    	<li> <b>Unix Syslog:</b> <br>
+	    		Only available on Unix-like OS. Logs are sent to the local 
+	    		syslog subsystem.<br>
+	    	</li>
+	    	<li> <b>Log4j:</b> <br>
+	    		Logs are sent via log4j. See WEB-INF/classes/log4j.properties 
+	    		for configuration.<br>
+	    	</li>
+	    	<li> <b>Standard Output (Myna.printConsole):</b> <br>
+	    		Logs are sent via Myna.printConsole to standard output
+	    		<br>
+	    	</li>
+	    </ul>
 	<br><br>
 	
 	<b>Enable Directory Listings?</b><br>
@@ -41,7 +67,7 @@
 	
 	<b>Thread Management Whitelist</b><br>
 	Each regular expression in this list represents a request path that will not 
-	be limited Max Requests. Good candidates for this are the Myna adminstrator 
+	be limited Max Requests. Good candidates for this are the Myna administrator 
 	and fast running callbacks that are unlikely to put a high load on the 
 	server 
 	<br><br>

@@ -1563,12 +1563,15 @@ if (!Myna) var Myna={}
 		app_name	-	*Optional, default $application.appName* A short text 
 						value representing the application that generated the 
 						log.  This value is forced lower case
+		sync		-	*Optional, default false* 
+						if, true, logging is preformed in the current thread. This is 
+						a good idea for logs made inside nested threads. See <logSync> 
 						
 	Detail:
 		This function logs to the myna_log_general table in the myna_log 
 		datasource. If you run multiple instances of Myna, it may be helpful to 
 		point the myna_log datasource of each instance to the same database. You
-		Can view the logs through the Myna Adminstrator
+		Can view the logs through the Myna Administrator
 		
 		Normally <Myna.log> attempts to perform logging in a low priority 
 		asynchronous thread. If <Myna.log> is called from within a <Myna.Thread>
@@ -1589,7 +1592,7 @@ if (!Myna) var Myna={}
 		
 	 
 	*/
-	Myna.log=function Myna_log(type,label,detail,app_name){
+	Myna.log=function Myna_log(type,label,detail,app_name, sync){
 		var purpose = "UNKNOWN";
 		var now = new Date();
 		var log_elapsed = 0
@@ -1630,54 +1633,17 @@ if (!Myna) var Myna={}
 				if (elapsed < 30000){
 					Myna.sleep(30000 - elapsed);
 				}
+				
+				var logger = Myna.include(
+					new Myna.File(
+						"/shared/js/libOO/loggers",
+						$server.properties.log_engine +".sjs"
+					),
+					{}
+				)
+				
 				try{
-					new Myna.Query({
-						ds:"myna_log",
-						sql:<ejs>
-							insert into myna_log_general(
-								app_name,
-								detail,
-								event_ts,
-								hostname,
-								instance_id,
-								label,
-								log_elapsed,
-								log_id,
-								purpose,
-								request_elapsed,
-								request_id,
-								type
-							) values (
-								{app_name},
-								{detail},
-								{event_ts:timestamp},
-								{hostname},
-								{instance_id},
-								{label},
-								{log_elapsed:bigint},
-								{log_id},
-								{purpose},
-								{request_elapsed:bigint},
-								{request_id},
-								{type}
-							)
-						</ejs>,
-						values:{
-							app_name:app_name,
-							detail:detail,
-							event_ts:now,
-							hostname:$server.hostName,
-							instance_id:$server.instance_id,
-							label:String(label).left(255),
-							log_elapsed:log_elapsed,
-							log_id:Myna.createUuid(),
-							purpose:$server.purpose,
-							request_elapsed:req_elapsed,
-							request_id:reqId,
-							type:type
-						}
-					}) 
-					/* new Myna.DataManager("myna_log").getManager("myna_log_general").create({
+					logger.log({
 						app_name:app_name,
 						detail:detail,
 						event_ts:now,
@@ -1689,8 +1655,8 @@ if (!Myna) var Myna={}
 						purpose:$server.purpose,
 						request_elapsed:req_elapsed,
 						request_id:reqId,
-						type:type 
-					}) */
+						type:type
+					})
 				} catch(e){
 					if (!/isAlive/.test(e.message)){
 						
@@ -1711,7 +1677,11 @@ if (!Myna) var Myna={}
 					}
 				}
 			}
-			new Myna.Thread(logFunction,[reqId,type,label,detail,app_name,log_elapsed,req_elapsed,now],-90);
+			if (sync){
+				logFunction(reqId,type,label,detail,app_name,log_elapsed,req_elapsed,now);
+			} else {
+				new Myna.Thread(logFunction,[reqId,type,label,detail,app_name,log_elapsed,req_elapsed,now],-90);
+			}
 		 
 		} else {
 			$server_gateway.writeLog(
@@ -1731,78 +1701,13 @@ if (!Myna) var Myna={}
 /* Function: logSync
 	A single threaded synchronous version of Myna.log
 	
+	This is equivalent to <log> but always passes true as the _sync_ parameter 
+	
 	See <Myna.log> for parameters and detail
- */	
-	Myna.logSync=function Myna_logSync(type,label,detail,app_name){
-		var purpose = "UNKNOWN";
-		var now = new Date();
-		var log_elapsed = 0
-		if (typeof $server !="undefined"){
-			if (!$req.last_log_time) $req.last_log_time = now;
-			if (!$req.last_log_ordinal) $req.last_log_ordinal = 0;
-			log_elapsed = now.getTime() - $req.last_log_time.getTime();
-			
-			$req.last_log_time = now;
-			if (!app_name) {
-				if ($application && $application.appName){
-					app_name=$application.appName;
-				}
-			}
-		}
-		if (!app_name) app_name="unknown"; 
-		
-		var req_elapsed = now.getTime() - $server_gateway.started.getTime();
-				
-		
-		if (!label) label= "[ no label ]";
-		if (!type) throw new Error("Type Required")
-		if (!detail) detail = " ";
-		if (String(type).toLowerCase() == "error"){
-			java.lang.System.err.println("Error: " + label );
-		}
-		if (typeof $server != "undefined" && !$server.isThread){
-			var reqId = $req.id;
-			//String(java.lang.Thread.currentThread().getName().hashCode());
-			
-			var logFunction = function(reqId,type,label,detail,app_name,log_elapsed,req_elapsed,now){
-				try{
-					new Myna.DataManager("myna_log").getManager("myna_log_general").create({
-						app_name:app_name,
-						detail:detail,
-						event_ts:now,
-						hostname:$server.hostName,
-						instance_id:$server.instance_id,
-						label:String(label).left(255),
-						log_elapsed:log_elapsed,
-						log_id:Myna.createUuid(),
-						purpose:$server.purpose,
-						request_elapsed:req_elapsed,
-						request_id:reqId,
-						type:type 
-					})
-				} catch(e){
-					if (!/isAlive/.test(e.message)){
-						java.lang.System.err.println("Error writing log: " + e.message);
-						java.lang.System.err.println("log Label: " +label);
-					}
-				}
-			}
-			logFunction(reqId,type,label,detail,app_name,log_elapsed,req_elapsed,now)
-		 
-		} else {
-			$server_gateway.writeLog(
-				type,
-				String(label).left(255),
-				detail,
-				app_name,
-				String(java.lang.Thread.currentThread().getName().hashCode()),
-				req_elapsed,
-				log_elapsed,
-				now
-			);
-		}
-			
-				
+	*/	
+	Myna.logSync=function Myna_logSync(type,label,detail,app_name,sync){
+		sync=true;
+		return this.log.apply(this,Array.parse(arguments));
 	}
 /* Function: mapToObject 
 	returns a Java Map as a JavaScript Object

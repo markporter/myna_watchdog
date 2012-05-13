@@ -1227,7 +1227,10 @@ var $application={
 			
 	*/
 	onError:function(){
-		return false;
+		var my = arguments.callee
+		if (my.chain ){
+			return arguments.callee.chain.lastReturn ||false
+		} else return false
 	},
 	
 	_onError404:function(){
@@ -1255,7 +1258,11 @@ var $application={
 			
 	*/
 	onError404:function(){
-		return false;
+		var my = arguments.callee
+		if (my.chain ){
+			return arguments.callee.chain.lastReturn ||false
+		} else return false
+		
 	},
 	_onSessionStart:function(){
 		var originalCurrentDir =$server_gateway.currentDir;

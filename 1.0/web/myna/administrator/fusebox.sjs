@@ -67,6 +67,7 @@ var fusebox={
 			title:props.instance_id + "/" + props.instance_purpose + " on " + $server.hostName,
 			rootUrl:$server.rootUrl,
 			rootDir:$server.rootDir,
+			loggers:this.get_loggers().toJson(),
 			dbProperties:$application.get("db_properties").toJson()
 		});
 	},
@@ -592,6 +593,16 @@ var fusebox={
 		})
 		delete result.admin_password;
 		return [result];
+	},
+	get_loggers:function(data){
+		return new Myna.File("/shared/js/libOO/loggers")
+		.listFiles("sjs").map(function(f){
+			var name=f.fileName.listBefore(".")
+			return {
+				label:name.replace(/_/g," ").titleCap(),
+				value:name
+			}
+		})
 	},
 	settings_save:function(data){
 		$req.returningJson = true;

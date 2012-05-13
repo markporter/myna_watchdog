@@ -69,6 +69,8 @@ public class MynaThread implements java.lang.Runnable{
 	
 	public Context 						threadContext;
 	public ScriptableObject 			threadScope;
+	public ScriptableObject 			requestScope;
+	
 	
 	static public String 				rootDir					= null; // system path to the Myna deployment folder
 	static public String 				rootUrl; // url to the myna root directory from / , not including protocol and server
@@ -448,6 +450,99 @@ public class MynaThread implements java.lang.Runnable{
 		}
 		
 	}
+	public  Scriptable buildRequestScope() throws Exception{
+		//save state
+		
+		String currentDir = this.currentDir;
+		String currentScript = this.currentScript;
+		String scriptName = this.scriptName;
+		String requestScriptName = this.requestScriptName;
+		
+		runtimeStats.put("currentTask","Building Request Shared Scope");
+		
+		//System.err.println("re-creating scope");
+		Context cx = this.threadContext = new CustomContextFactory().enter();
+		((MynaContext) (cx)).mynaThread =this;
+		
+		cx.setErrorReporter(new MynaErrorReporter());
+		
+		try{
+			Scriptable sharedScope = MynaThread.sharedScope_ = this.threadScope =  new ImporterTopLevel(cx);
+			Object server_gateway = Context.javaToJS(this,sharedScope);
+		
+		
+			ScriptableObject.putProperty(sharedScope, "$server_gateway", server_gateway);
+			
+			String standardLibs = MynaThread.generalProperties.getProperty("standard_libs");
+			Object[] existingObjectsArray = ((ScriptableObject)sharedScope).getAllIds();
+			HashSet existingObjects = new HashSet(Arrays.asList(existingObjectsArray));
+			
+			
+			
+			if (standardLibs != null){
+				String[] libPaths=standardLibs.split(",");
+				URI sharedPath = new URI(this.rootDir).resolve("shared/js/"); 
+				URI curUri;
+				for (int x=0; x < libPaths.length;++x){
+					curUri = new URI(libPaths[x]);
+					if (!curUri.isAbsolute()){
+						curUri = sharedPath.resolve(new URI(libPaths[x]));
+					}
+					boolean exists =false;
+					try{exists=new File(curUri).exists();}catch(Exception e_exists){}
+					if (!curUri.isAbsolute() || !exists){
+						throw new IOException("Cannot find '" +libPaths[x] +"'  in system root directory or in '"+sharedPath.toString() +"'. See standard_libs in WEB-INF/classes/general.properties.");	
+					}
+					
+					String scriptPath = curUri.toString();
+					int lastSlash = scriptPath.lastIndexOf("/");
+					this.currentDir = new URI(scriptPath.substring(0,lastSlash+1)).toString();
+					String script = readScript(scriptPath);
+					script = translateString(script,scriptPath); 
+					cx.evaluateString(sharedScope, script, scriptPath, 1, null);
+				}
+			}
+		
+			Object[] sharedIds = ((ScriptableObject)sharedScope).getAllIds();
+			
+			//add some other ids we're concerned about
+			Object[] moreIds = {"Array","Object","Date"};
+			int totalIds = sharedIds.length + moreIds.length; 
+			Object[] ids = new Object[totalIds];
+			System.arraycopy(sharedIds, 0, ids, 0, sharedIds.length);
+			System.arraycopy(moreIds, 0, ids, sharedIds.length, moreIds.length);
+
+			
+			if (Integer.parseInt(this.generalProperties.getProperty("optimization.level")) != -1){
+				for (int x=0;x<ids.length;++x){
+					if (!existingObjects.contains(ids[x])){
+						try{
+							ScriptableObject lib =(ScriptableObject) sharedScope.get(ids[x].toString(),sharedScope);
+							lib.sealObject();
+							try{
+								ScriptableObject proto =(ScriptableObject) lib.get("prototype",lib);
+								proto.sealObject();
+							}catch(Exception e){}// seal what we can
+							
+						}catch(Exception e){}// seal what we can
+					}
+				}
+				MynaThread.sharedScope_ = sharedScope;
+			}
+			
+			return sharedScope;
+		} catch (Exception e){
+			this.handleError(e);
+			return MynaThread.sharedScope_; //should never get here but if we do...
+		} finally {
+			cx.exit();
+			this.currentDir = currentDir;
+			this.currentScript = currentScript;
+			this.scriptName = scriptName;
+			this.requestScriptName = requestScriptName;
+		}
+		
+	}
 	
 	/**
 	* entry point for MynaThread
@@ -492,6 +587,7 @@ public class MynaThread implements java.lang.Runnable{
 				this.mt = mt;
 			}
 			public Object run(Context cx) {
+				URI sharedPath;
 				try {
 					//bind the current MynaThread to this context
 					((MynaContext) (cx)).mynaThread =mt;
@@ -504,7 +600,33 @@ public class MynaThread implements java.lang.Runnable{
 					threadContext =cx;
 					cx.setErrorReporter(new MynaErrorReporter());
 					ScriptableObject scope = threadScope = (ScriptableObject) cx.newObject(sharedScope);
-					scope.setPrototype(sharedScope);
+					requestScope = (ScriptableObject) cx.newObject(sharedScope);
+					
+					requestScope.setPrototype(sharedScope);
+					/* String[] libPaths={"libOO/standard_objects.sjs"};
+					sharedPath = new URI(this.mt.rootDir).resolve("shared/js/"); 
+					URI curUri;
+					for (int x=0; x < libPaths.length;++x){
+						curUri = new URI(libPaths[x]);
+						if (!curUri.isAbsolute()){
+							curUri = sharedPath.resolve(new URI(libPaths[x]));
+						}
+						boolean exists =false;
+						try{exists=new File(curUri).exists();}catch(Exception e_exists){}
+						if (!curUri.isAbsolute() || !exists){
+							throw new IOException("Cannot find '" +libPaths[x] +"'  in system root directory or in '"+sharedPath.toString() +"'. See standard_libs in WEB-INF/classes/general.properties.");	
+						}
+						
+						String scriptPath = curUri.toString();
+						int lastSlash = scriptPath.lastIndexOf("/");
+						this.mt.currentDir = new URI(scriptPath.substring(0,lastSlash+1)).toString();
+						String script = readScript(scriptPath);
+						script = translateString(script,scriptPath); 
+						cx.evaluateString(requestScope, script, scriptPath, 1, null);
+					} */
+					
+					//requestScope.setParentScope(sharedScope);
+					scope.setPrototype(requestScope);
 					scope.setParentScope(null);
 					
 					runtimeStats.put("currentTask","Waiting in thread Queue");
@@ -528,7 +650,7 @@ public class MynaThread implements java.lang.Runnable{
 					try{
 						Object server_gateway = Context.javaToJS(this.mt,scope);
 						ScriptableObject.putProperty(scope, "$server_gateway", server_gateway);
-						URI sharedPath = new URI(rootDir).resolve("shared/js/");
+						sharedPath = new URI(rootDir).resolve("shared/js/");
 					
 						//execute script file
 						try{
@@ -1001,6 +1123,10 @@ public class MynaThread implements java.lang.Runnable{
 		}
 		if (generalProperties.getProperty("cron_tasks_via_mynacmd") == null){
 			generalProperties.setProperty("cron_tasks_via_mynacmd","1");
+			propsChanged=true;
+		}
+		if (generalProperties.getProperty("log_engine") == null){
+			generalProperties.setProperty("log_engine","myna_log");
 			propsChanged=true;
 		}
 		if (propsChanged) saveGeneralProperties();

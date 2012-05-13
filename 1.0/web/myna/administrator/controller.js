@@ -721,6 +721,7 @@ var C ={
 							{name:"smtp_host"},
 							{name:"request_timeout"},
 							{name:"request_handler"},
+							{name:"logger"},
 							{name:"thread_whitelist"}
 						]),
 						url:'?fuseaction=settings_save',
@@ -768,6 +769,26 @@ var C ={
 							selectOnFocus:true,
 							editable:false,
 							width:50,
+							
+							allowBlank:false
+						},{
+							xtype:"combo",
+							fieldLabel: 'Log Engine',
+							hiddenName: 'log_engine',
+							store:new Ext.data.JsonStore({
+								fields: ['label','value'],
+								id:"value",
+								data:loggers
+							}),
+							//setValue:function(val){alert(val)},
+							//store: C.settings.loggerStore,
+							displayField:'label',
+							valueField:'value',
+							mode: 'local',
+							triggerAction: 'all',
+							selectOnFocus:true,
+							editable:false,
+							width:150,
 							allowBlank:false
 						},{
 							xtype:"combo",
@@ -924,11 +945,14 @@ var C ={
 						listeners:{
 						/* beforerender */
 							beforerender:function(){
-								var form =Ext.getCmp("general_settings_form"); 
-								form.load({
+								var form =Ext.getCmp("general_settings_form");
+								Ext.Ajax.request({
 									url:"?fuseaction=get_settings",
-									waitMsg:"Loading..."
-								});  
+									success:function(r){
+										form.form.setValues(Ext.decode(r.responseText)[0])
+									}
+								})
+								
 							},
 						/* actioncomplete */
 							actioncomplete:function(form,action){

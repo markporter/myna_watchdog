@@ -308,7 +308,7 @@ var $server={
 	get osVersion(){return String(java.lang.System.getProperty("os.version"))},
 	
 /* property: properties
-	The general properties set in the gerneal Settings section of the Administrator
+	The general properties set in the general Settings section of the Administrator
 	
 	
 	Example:
@@ -453,14 +453,53 @@ var $server={
 		return value;
 	},
 /* Function: reParent
-	changes parent scope of all the functions in _obj_
+	Changes parent scope of all the functions in _obj_
+	
+	Normally the parent scope of a function is a closure of the scope chain at 
+	the time the function was created. If this function is executed in a 
+	different scope, then any references to parent scope variables like $server 
+	or $application will fail
+	
+	This function changes all references to topLevelScope properties in _obj_, 
+	its prototype, and object properties to proxies that will find those 
+	properties in the global scope of the current thread. This function is called
+	automatically by $server.set, $application.set, and Myna.Cache
 	
 	Parameters:
 		obj		-	Function or Object to reparent
+		
+	Returns: 
+	* obj
 	*/
 	reParent:function reParent(obj,index){
 		if (typeof obj != "object" && typeof obj != "function") return;
-		var scope = $server.globalScope
+		var proxy = function(obj){
+			if (obj == $server.globalScope){
+				Myna.printConsole(obj == $server.globalScope)
+				var scope={}
+			} else{
+				scope=obj	
+			}
+			$server.globalScope.getProperties()
+			.filter(function(p){
+				return /^\$/.test(p)
+			}) 
+			.forEach(function(name){
+				scope.__defineGetter__(
+					name, 
+					function(){
+						return org.mozilla.javascript.Context
+							.getCurrentContext()
+							.mynaThread
+							.threadScope[name]
+					}
+				)
+			})
+			
+			
+			return scope
+		}
+		
 		if (!index) {
 			index=[];
 			index.maxDepth=10
@@ -469,9 +508,9 @@ var $server={
 		if (--index.maxDepth <0) return;
 		if (index.indexOf(obj) != -1) return ;
 		
-		index.push(obj)	
-		if (typeof obj === "function") obj.__parent__ = scope;
+		index.push(obj)
 		
+		if (typeof obj === "function") obj.__parent__ = proxy(obj.__parent__);
 		//reparent prototype first
 		if (obj &&  obj.__proto__){
 			reParent(obj.__proto__,index)
@@ -497,17 +536,18 @@ var $server={
 				value= obj[p]	
 			}
 			if (typeof value == "function"){
-				value.__parent__ = scope;
+				value.__parent__ = proxy(value.__parent__);
 			}
 			
 			switch (typeof value){
 				case "function":
 				case "object":
-					
+					//Myna.printConsole("reparenting " + p)
 					reParent(value,index)
 					break;
 			}
 		}
+		return obj;
 	},
 /* Function: restart
 	If this instance is running has watchdog, the exit the JVM
