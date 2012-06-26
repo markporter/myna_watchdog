@@ -94,6 +94,8 @@ public class MynaThread implements java.lang.Runnable{
 	public Set 								uniqueIncludes_	 	= Collections.synchronizedSet(new HashSet());
 	
 	public Vector 							threadChain 			= new Vector(); //history of thread calls. Used to avoid infinite recursion
+	
+	public boolean							isExiting				=	false; // set in the timeout handler to prevent further attempts to timoute the thread 
 
 	/* Custom Context to store execution time and a reference to the MynaThread
 	running in this context. The MynaThread must be set after aquiring a context 
@@ -136,20 +138,31 @@ public class MynaThread implements java.lang.Runnable{
 				} catch(Throwable e){return;}
 				
 				
-				if (timeout != 0 && currentTime - startTime > timeout*1000){
+				if (!mcx.mynaThread.isExiting && timeout != 0 && currentTime - startTime > timeout*1000){
 					// More then 10 seconds from Context creation time:
 					// it is time to stop the script.
-					// Throw Error instance to ensure that script will never
-					// get control back through catch or finally.
+					
 					String path ="";
 					try {
 						path = ((StringBuffer)(mcx.mynaThread.environment.get("requestURL"))).toString();
 						
 					} catch(Exception pathEx){}
-					mcx.reportError(
-						"URL <b>" +  path +"</b> "
-						+ "request time of "+ ((currentTime - startTime)/1000) +" seconds exceeded timeout of " + timeout +" seconds."  
-					);
+					
+					String errorMessage ="URL <b>" +  path +"</b> "
+						+ "request time of "+ ((currentTime - startTime)/1000) 
+						+" seconds exceeded timeout of " + timeout +" seconds.";
+						
+					//try to give global error handlers a chance to clean up
+					try{
+						mcx.mynaThread.isExiting = true;
+						mcx.mynaThread.executeJsString(mcx.mynaThread.threadScope,"$application._onError(new Error('"+ errorMessage+"'));",path);
+						//mcx.mynaThread.executeJsString(mcx.mynaThread.threadScope,"$application._onRequestEnd();",path);
+					} catch (Throwable cleanUpException){}
+					
+					// Throw Error instance to ensure that script will never
+					// get control back through catch or finally.
+					mcx.reportError(errorMessage);
+					mcx.mynaThread.isExiting = false;
 				}
     	}
 
