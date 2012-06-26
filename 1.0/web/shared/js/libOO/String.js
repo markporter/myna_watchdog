@@ -1802,9 +1802,12 @@ if ("$server_gateway" in this){
 		}
 		var 
 			plainPassword = this,
-			cryptTool = new Packages.org.jasypt.util.password.BasicPasswordEncryptor()
+			weakCryptTool = new Packages.org.jasypt.util.password.BasicPasswordEncryptor()
+			strongCryptTool = new Packages.org.jasypt.util.password.StrongPasswordEncryptor()
 		;
-		return cryptTool.checkPassword(plainPassword,hash);
+		var ret = strongCryptTool.checkPassword(plainPassword,hash);
+		if (!ret) ret = weakCryptTool.checkPassword(plainPassword,hash);
+		return ret;
 	};
 /* Function: toHash 
 	Returns a copy of this string encrypted with a strong one-way hash in base64 
@@ -1861,7 +1864,7 @@ if ("$server_gateway" in this){
 	String.prototype.toHash=function(urlSafe){
 		var 
 			password = this,
-			cryptTool = new Packages.org.jasypt.util.password.BasicPasswordEncryptor()
+			cryptTool = new Packages.org.jasypt.util.password.StrongPasswordEncryptor()
 		;
 		var b64 = cryptTool.encryptPassword(password);
 		
