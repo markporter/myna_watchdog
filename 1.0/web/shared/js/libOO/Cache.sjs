@@ -266,11 +266,13 @@ if (!Myna) var Myna={}
 				if (!$this.refreshInterval 
 					|| time + $this.refreshInterval < new Date().getTime() 
 				){
-					if ($this.allowBackgroundRefresh){
+					cacheObj = $this.refresh(args);
+					//background refresh == memory leak	
+					/* if ($this.allowBackgroundRefresh && false){
 						$this.backgroundRefresh(args);
 					} else {
 						cacheObj = $this.refresh(args);
-					}
+					} */
 				} 
 			} else {
 				//no test defined, cache never expires	

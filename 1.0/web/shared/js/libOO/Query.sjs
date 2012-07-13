@@ -203,6 +203,14 @@ if (!Myna) var Myna={}
 		
 	*/
 	Myna.Query = function (optionsOrResultSet){
+		/* Property: batchMax
+			number of batch queries to accept before calling <executeBatch>
+		*/
+		this.batchMax = 1000;
+		/* Property: curBatchCount
+			number of batch queries currently pending on this query object
+		*/
+		this.curBatchCount=0;
 		/* Property: columns
 			An Array of Objects that represent the columns in the result set. 
 		
@@ -588,35 +596,35 @@ getStatement:function(sql){
 		return st;
 	},
 /* Function: execute 
-		Executes an SQL query and updates and returns this <Query> object.
-		 
-		Parameters: 
-			options 	-	Object of optional parameters. See <Myna.Query>.
+	Executes an SQL query and updates and returns this <Query> object.
 	 
-		Detail:
-			execute executes this query object, optionally updating its properties.
-			   
-			
-		Returns: 
-			this
+	Parameters: 
+		options 	-	Object of optional parameters. See <Myna.Query>.
+ 
+	Detail:
+		execute executes this query object, optionally updating its properties.
+		   
 		
-		Example:
-			(code)
-			var qry = new Query({
-				dataSource:"mythtv",
-				sql:<ejs>
-					select *
-					from channels
-				</ejs>,
-				startRow:1,
-				maxRows:10
-			})
-			
-			qry.execute({startRow:11})
-			
-			(end)
-		 
-		*/
+	Returns: 
+		this
+	
+	Example:
+		(code)
+		var qry = new Query({
+			dataSource:"mythtv",
+			sql:<ejs>
+				select *
+				from channels
+			</ejs>,
+			startRow:1,
+			maxRows:10
+		})
+		
+		qry.execute({startRow:11})
+		
+		(end)
+	 
+	*/
 	execute:function(options){
 		var dsName = this.dataSource;
 		var sql = this.sql;
@@ -750,6 +758,238 @@ getStatement:function(sql){
 					qry.updateCount=st.getUpdateCount();
 				}
 				qry.parseTime=java.lang.System.currentTimeMillis()-start;
+			} catch (e){
+				Myna.log("error","Query Error",Myna.formatError(__exception__)+Myna.dump(qry,"Query"));
+				e.query = qry;
+				qry.last_error = e;
+				throw e;
+			} finally {
+				$profiler.end(profilerKey)
+				$profiler.mark("Done "+profilerKey)
+				if (this.log &&this.ds != "myna_log"){
+					//Myna.printConsole("logging " + this.ql)
+					Myna.log("query","Query: " + sql.left(30),Myna.dump(qry));
+				}
+			}
+			/* 	let's give commiting a try, this will likely fail if the datasource
+				supports autoCommit
+			*/
+			try {  
+				con.commit();
+			} catch(e){}
+			
+			return qry;
+		}
+	},
+/* Function: addBatch 
+	adds DML query to batch
+	 
+	Parameters: 
+		options 	-	Object of optional parameters. See <Myna.Query>.
+ 
+	Detail:
+		registers this query to be run latter in a batch
+		   
+		
+	Returns: 
+		this
+	
+		Allows the batching of update or insert queries to be sent at once to
+		the DB for processing. This should only be done with deferred queries.
+		
+		Call <executeBatch> to submit the batch for processing. If the number of 
+		batches added equals <batchMax> <executeBatch> is automatically called 
+		on this query  
+		
+	Example:
+		(code)
+		var insertQry =new Myna.Query({
+			ds:$FP.defaultDs,
+			sql:<ejs>
+				insert into positions(
+					id, 
+					qtr_year, 
+					position_number, 
+					position_name
+				)
+				values(
+					{id:varchar}, 
+					{qtr_year:varchar}, 
+					{position_number:bigint}, 
+					{position_name:varchar}
+				)
+			</ejs>,
+			batchMax:1000,//this is the default
+			deferExec:true//this is important!
+		})
+		
+		insertQry.addBatch({
+			values:{
+				id:1, 
+				qtr_year:"2012:2", 
+				position_number:10, 
+				position_name:"Thing Do-er I"
+			}
+		})
+		insertQry.addBatch({
+			values:{
+				id:2, 
+				qtr_year:"2012:2", 
+				position_number:11, 
+				position_name:"Thing Do-er II"
+			}
+		})
+		
+		insertQry.executeBatch(); // runs queries here
+		(end)
+	 
+	*/
+	addBatch:function(options){
+		var dsName = this.dataSource;
+		var sql = this.sql;
+		if (!this.sql) throw new Error("An SQL string is required to add a batch");
+		
+		var qry = this;
+		if (options === undefined) options={}
+		options.getKeys().forEach(function(key){
+			qry[key] = options[key];	
+		});
+		
+		if (qry.values) sql = this.parseSql(qry.values);
+			
+		var sqlParameters = this.parameters;
+		
+		try {
+			var db = new Myna.Database(dsName);
+			var ignoreOffset=false;
+			var origSql = sql;
+			var st = this.getStatement(sql);
+			
+			var con = db.con;
+			
+			if (sqlParameters instanceof Myna.QueryParams){
+				sqlParameters.params.forEach(function(element,index){
+					try {
+						
+						if (element.type == "GUESS" ){
+							st.setObject(index+1,element.value);
+						} else if (element.type == java.sql.Types.CLOB && db.functions.setClob){	
+							db.functions.setClob(con,st,index,element.value)
+						} else if (element.type == java.sql.Types.BLOB && db.functions.setBlob){	
+							db.functions.setBlob(con,st,index,element.value)
+						} else {
+							if (String(element.value).length == 0){//empty strings are considered NULL
+								st.setNull(index+1,element.type);
+							} else {
+								st.setObject(index+1,element.value,element.type);
+							}
+						}
+					} catch (e){
+						e.message +="<br>attempting to set value '" +String(element.value) + "' to a parameter of type '" 
+							+ element.type +"' typeName: '" + element.typeName + "'."; 
+						throw e;
+					}
+				});
+			}
+			
+			
+			st.addBatch()
+			qry.curBatchCount++
+			if (qry.curBatchCount >= qry.batchMax) {
+				qry.executeBatch();
+			}
+		} catch (e){
+			Myna.log("error","Query Error",Myna.formatError(__exception__)+Myna.dump(qry,"Query"));
+			e.query = qry;
+			qry.last_error = e;
+			throw e;
+		} 
+		
+		return qry;
+		
+	},
+/* Function:executeBatch 
+	executes batch queries added via <addBatch>
+	 
+	*/
+	executeBatch:function(){
+		if (!this.curBatchCount) return;
+		var dsName = this.dataSource;
+		var sql = this.sql;
+		var profilerKey="Executing SQL Query ({0} rows): '{1}'".format(
+			this.curBatchCount,
+			sql.replace(/\s+/g," ")
+		);
+		$profiler.begin(profilerKey)
+		
+		if (!this.sql) throw new Error("An SQL string is required to execute a query");
+		
+		var qry = this;
+				
+		if (qry.values) sql = this.parseSql(qry.values);
+			
+		var sqlParameters = this.parameters;
+		if (qry.pageSize){
+			qry.maxRows = qry.pageSize;
+		}
+		if (qry.page){
+			qry.startRow = (((qry.page - 1) * qry.pageSize)+1)
+			qry.setDefaultProperties({pageSize:25})
+			qry.maxRows = qry.pageSize;
+		}
+		
+		if (qry.cache){
+			var cacheQry ={}
+			var cache = qry.cache.setDefaultProperties({
+				name:sql,
+				code:function(options){
+					//just to be safe, we'll remove the cache settings
+					if (options.cache) options.cache=false;
+					var qry =new Myna.Query(options)
+					qry.cachedAt = new Date();
+					return qry
+				}
+			});
+			/* this keeps cache settings from being copied to cache version. We 
+			want "if (qry.cache)" to return false inside the cache function */
+			cacheQry.cache=false;
+			cacheQry.setDefaultProperties(qry)
+			
+			var result = new Myna.Cache(cache).call(cacheQry)
+			$profiler.end(profilerKey)
+			$profiler.mark("Done "+profilerKey)
+			if (this.log && this.ds != "myna_log"){
+				Myna.log("query","Query: " + sql.left(30),Myna.dump(result));
+			}
+			return result;
+		} else {
+			try {
+				var db = new Myna.Database(dsName);
+				var ignoreOffset=false;
+				var origSql = sql;
+				if (
+					/^\s*select/i.test(sql) 
+					&&(
+						this.maxRows || this.startRow	>1
+					)
+					&& db.functions.offsetSql
+				){
+					sql=db.functions.offsetSql(sql,this.maxRows,this.startRow-1)
+					ignoreOffset = true;
+				} 
+				var st = this.getStatement(sql);
+				
+				var con = db.con;
+				
+				
+				var start = java.lang.System.currentTimeMillis();
+				qry.success = false;
+				var hasResults = st.executeBatch();
+				qry.success = true;
+				qry.executionTime=java.lang.System.currentTimeMillis()-start;
+				start = java.lang.System.currentTimeMillis();
+				qry.parseTime=java.lang.System.currentTimeMillis()-start;
+				qry.curBatchCount=0;
 			} catch (e){
 				Myna.log("error","Query Error",Myna.formatError(__exception__)+Myna.dump(qry,"Query"));
 				e.query = qry;

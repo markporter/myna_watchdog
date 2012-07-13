@@ -11,7 +11,7 @@
 	}
 	
 	if (table.primaryKeys.length != 1){
-		throw new Error("getThis can only handle tables with exactly one primary key");	
+		throw new Error("DataManager can only handle tables with exactly one primary key");	
 	}
 	
 	var primaryKey = table.primaryKeys[0];

@@ -520,10 +520,11 @@ if (!Myna) var Myna={}
 		getAuthTypes:function(){
 			return new Myna.File("/WEB-INF/myna/auth_types")
 				.listFiles()
-				.valueArray("fileName")
-				.filter(function(name){
-					return /^[^~]+$/.test(name)
+				.filter(function(f){
+					return /^[^~]+$/.test(f.fileName) && !f.isDirectory()
 				})
+				.valueArray("fileName")
+				
 		},
 	
 	/* Function: getRightById

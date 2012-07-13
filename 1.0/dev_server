@@ -17,7 +17,7 @@ ps_signature="java.*myna.name=$server"
 case "$1" in
 start)
 	watchdog_jvm_args="-Dmyna.name=$server -Xmx20m -server -cp $web_inf/lib/*:$web_inf/classes/:/usr/local/bin"
-	server_jvm_args="-Dmyna.name=$server -Xmx${mem}m -server"
+	server_jvm_args="-Djava.security.egd=file:/dev/./urandom -Dmyna.name=$server -Xmx${mem}m -server"
 	
 	myna_args="-m server -c /$server -p $port -w $myna_home -l $logfile -- $server_jvm_args"
 	java  $watchdog_jvm_args  info.emptybrain.myna.MynaServer $myna_args &
@@ -26,7 +26,7 @@ start)
 	exit 0
     ;;
 start-nowatchdog)
-	watchdog_jvm_args="-Dmyna.name=$server -Xmx${mem}m -Dmyna.hasWatchdog=true -server -cp $web_inf/lib/*:$web_inf/classes/:/usr/local/bin"
+	watchdog_jvm_args="-Djava.security.egd=file:/dev/./urandom -Dmyna.name=$server -Xmx${mem}m -Dmyna.hasWatchdog=true -server -cp $web_inf/lib/*:$web_inf/classes/:/usr/local/bin"
 	
 	
 	myna_args="-m server -c /$server -p $port -w $myna_home -l $logfile "

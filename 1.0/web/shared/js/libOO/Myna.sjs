@@ -852,7 +852,7 @@ if (!Myna) var Myna={}
 			process.waitFor();
 			result.exitCode = process.exitValue();
 		}
-		if (result.exitCode ==0 && String(result.errors).length ==0){
+		if (result.exitCode < 1 && String(result.errors).length ==0){
 			scriptFile.forceDelete();
 		} else {
 			Myna.log("Error","Error in Myna.executeWinBatch",<ejs>
@@ -1350,13 +1350,13 @@ if (!Myna) var Myna={}
 		
 		var oldContent = $res.clear();
 		if (cacheOptions){
-      	cacheOptions.code = function(path,scope){
-      		Myna.include(path,scope);
-      	};
-      	new Myna.Cache(cacheOptions).call(path,scope)
-      } else {
+			cacheOptions.code = function(path,scope){
+				Myna.include(path,scope);
+			};
+			new Myna.Cache(cacheOptions).call(path,scope)
+		} else {
 			Myna.include(path,scope);	
-      }
+		}
 		
 		var newContent = $res.clear();
 		this.print(oldContent);

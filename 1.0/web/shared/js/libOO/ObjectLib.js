@@ -161,7 +161,7 @@ var ObjectLib = {}
 			if (!("chainArray" in $this[functionName])){
 				var originalFunction =$this[functionName]
 				$this[functionName]=Function.createChainFunction([$this[functionName]]);
-				originalFunction.applyTo($this[functionName])
+				$O(originalFunction).applyTo($this[functionName])
 			}
 		} else {
 			$this[functionName]=Function.createChainFunction();	
@@ -218,7 +218,7 @@ var ObjectLib = {}
 	}
 
 /* Function: getKeys 
-	returns an alphabetized list of non-function properties in an object
+	returns a list of non-function properties in an object by order of appearance
 	
 	Parameters: 
 		obj 	-	 object to examine
@@ -242,15 +242,7 @@ var ObjectLib = {}
 			}
 		}
 		} catch (e) {return []}
-		return result.sort(function(left,right) {
-			try { //ie also freaks out over the sort for some reason
-				left=left.toLowerCase();
-				right=right.toLowerCase();
-				if (left > right) return 1;
-				if (left < right) return -1;
-				return 0;
-			} catch(e){return 0}
-		});
+		return result
 	}
 /* Function: getProperties
 	returns an alphabetized list of all properties in an object
@@ -672,6 +664,7 @@ var ObjectLib = {}
 	Callback Parameters:
 		element		-	the value of property
 		name		-	the name of the property
+		index		-	ordinal of this element
 		object		-	a reference to an object
 		
 	
@@ -695,8 +688,8 @@ var ObjectLib = {}
 	 
 	*/
 	ObjectLib.forEach=function (obj,func){
-		ObjectLib.getKeys(obj).forEach(function (key){
-			func(obj[key],key,obj);
+		ObjectLib.getKeys(obj).forEach(function (key,i){
+			func(obj[key],key,i,obj);
 		})
 	}
 /* Function: map
@@ -711,6 +704,7 @@ var ObjectLib = {}
 	Callback Parameters:
 		element		-	the value of property
 		name			-	the name of the property
+		index		-	ordinal of this element
 		object		-	a reference to this object
 		
 	
@@ -741,9 +735,9 @@ var ObjectLib = {}
 	 
 	*/
 	ObjectLib.map=function (obj,func){
-		var newObj ={}
-		ObjectLib.getKeys(obj).forEach(function (key){
-			newObj[key] =func(obj[key],key,obj);
+		var newObj =$O({})
+		ObjectLib.getKeys(obj).forEach(function (key,i){
+			newObj[key] =func(obj[key],key,i,obj);
 		})
 		return newObj
 	}
@@ -758,6 +752,7 @@ var ObjectLib = {}
 	Callback Parameters:
 		element		-	the value of property
 		name			-	the name of the property
+		index		-	ordinal of this element
 		object		-	a reference to this object
 		
 	
@@ -784,10 +779,10 @@ var ObjectLib = {}
 	 
 	*/
 	ObjectLib.filter=function (obj,func){
-		var newObj ={}
+		var newObj =$O({})
 		ObjectLib.getKeys(obj)
-		.filter(function(key){
-			return func(obj[key],key,obj)
+		.filter(function(key,i){
+			return func(obj[key],key,i,obj)
 		})
 		.forEach(function (key){
 			newObj[key] =obj[key];
@@ -830,10 +825,13 @@ var ObjectLib = {}
 		for (var p in obj){
 			if (!localOnly || obj.hasOwnProperty(p)){
 				var value,d;
-				if ("getOwnPropertyDescriptor" in Object
-					&& (d =Object.getOwnPropertyDescriptor(obj,p))
-				){
-					value=("get" in d)?d.get:d.value;
+				if ("getOwnPropertyDescriptor" in Object){
+					try{
+						d =Object.getOwnPropertyDescriptor(obj,p)
+						value=("get" in d)?d.get:d.value;
+					} catch(e){
+						value = obj[p]
+					}
 				}else{
 					value = obj[p]
 				}

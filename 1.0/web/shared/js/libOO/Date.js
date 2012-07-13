@@ -934,55 +934,101 @@ Date.parseInterval = function(interval){
 	return result
 } 
 /* Function: formatInterval
-	 returns an interval in milliseconds as human readable string in this format:
-	 'n years, n weeks, n days, n hours, n minutes, n seconds, n milliseconds', 
-	 omitting any 0 values  
+	 returns an interval in milliseconds as human readable string.
 	 
 	Parameters:
 		interval		-	an interval in milliseconds to format
+		options			-	formating options, see *Options* below
+	
+	Options:
 		precision 		-	*Optional, default Date.MILLI*
 							Level of precision to use. This defines the smallest 
 							unit to be returned
+		scale			-	*Optional, default null*
+							Integer. If defined, this is the number of places 
+							from the left to return. This will ignore empty 
+							places if _removeEmpty_ is true
+		removeEmpty		-	*Optional, default true*
+							Boolean. if true, 0 valuse will be stripped from the 
+							result.
+		sep				-	*Optional, default ', '*
+							String. Separator to use between time parts
+		style			-	*Optional, default 'long'*
+							Output style. See *Styles* below
+							
+	Styles:
+		long		-	Example: 1 year, 1 week, 4 days, 10 hours, 8 minutes, 3 seconds, 667 milliseconds
+		short		-	Example: 1y, 1w, 4d, 10h, 8m, 31s, 125ms
+		none		-	Example: 1, 1, 4, 10, 9, 1, 642
+		
+	Example:
+	(code)
+		var interval = new Date().getTime() - new Date().add(Date.DAY,-376).clearTime()
+		
+		Myna.println(Date.formatInterval(interval))
+		//prints: 1 year, 1 week, 4 days, 10 hours, 11 minutes, 17 seconds, 332 milliseconds
+		
+		Myna.println(Date.formatInterval(interval,{
+			precision: Date.SECOND,
+			scale:2,
+			removeEmpty:false,
+			sep:":",
+			style:"none" 
+		}))
+		//prints (year:weeks): 1:1
+		
+	(end)
  */
-Date.formatInterval = function(interval,precision){
-	if (!precision) precision = Date.MILLI
-	interval = Math.floor(interval/Date.getInterval(precision))*Date.getInterval(precision);
-	var second = 1000;
-	var minute = second*60;
-	var hour = minute*60;
-	var day = hour*24;
-	var week = day*7;
-	var year = day*365;
+Date.formatInterval = function(interval,options){
+	if (!options) options={}
+	ObjectLib.setDefaultProperties(options,{
+		precision: Date.MILLI,
+		scale:null,
+		removeEmpty:true,
+		sep:", ",
+		style:"long"
+	})
+	 
+		
+	interval = Math.floor(interval/Date.getInterval(options.precision))
+				* Date.getInterval(options.precision);
+	
 	var result=[]
 	
-	var years = Math.floor(interval/year);
-	interval = interval % year;
-	if (years) result.push(years +(years==1?" year":" years"));
+	var parts={}
 	
-	var weeks = Math.floor(interval/week);
-	interval = interval % week;
-	if (weeks) result.push(weeks +(weeks==1?" week":" weeks"));
+	var parts = Date.parseInterval(interval)
 	
-	var days = Math.floor(interval/day);
-	interval = interval % day;
-	if (days) result.push(days +(days==1?" day":" days"));
+	$O(parts)
+	.filter(function(v,k,i){
+		return v || !options.removeEmpty
+	})
+	.filter(function(v,k,i){
+		return !options.scale || i < options.scale
+	})
+	.forEach(function(v,k,i){
+		switch (options.style){
+		case "none":
+			result.push(v);
+			break;
+		case "short":
+			result.push("{0}{1}".format(
+				v,
+				k=="milliseconds"?"ms":k.left(1)
+			))
+			break;
+		case "long":
+		default:
+			result.push("{0} {1}".format(
+				v,
+				v==0 ||v > 1?k:k.before(1)
+			))
+			break;
+		
+		}
+	})
+	return result.join(options.sep)
 	
-	var hours = Math.floor(interval/hour);
-	interval = interval % hour;
-	if (hours) result.push(hours +(hours==1?" hour":" hours"));
-	
-	var minutes = Math.floor(interval/minute);
-	interval = interval % minute;
-	if (minutes) result.push(minutes +(minutes==1?" minute":" minutes"));
-	
-	var seconds = Math.floor(interval/second);
-	interval = interval % second;
-	if (seconds) result.push(seconds +(seconds==1?" second":" seconds"));
-	
-	var milliseconds = interval;
-	if (milliseconds) result.push(Math.round(milliseconds) +" milliseconds");
-	
-	return result.join(", ")
 	
 };
 /* Function: monthsBetween

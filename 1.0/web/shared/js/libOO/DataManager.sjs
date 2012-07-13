@@ -1805,7 +1805,9 @@ if (!Myna) var Myna={}
 			) {
 				if (!staleClassFile){//now check for DDL changes
 					var t = this.db.getTable(tableName);
-					
+					if (t.primaryKeys.length !=1) {
+						throw new Error("DataManager can only handle tables with exactly one primary key");
+					}
 					
 					if (!(tableName+"_manager" in managerClasses)){
 						//Myna.printConsole(tkey +" loading for DDL check")
@@ -1825,13 +1827,15 @@ if (!Myna) var Myna={}
 				}
 				if(staleClassFile){
 					classFile.getDirectory().createDirectory();
-					classFile.writeString(
-						Myna.includeContent(templateFile,{dm:this,tableName:tableName})	
+					var classContent =Myna.includeContent(templateFile,{dm:this,tableName:tableName})	
 							.replace(/\[(\/?ejs)\]/g,"<$1>")
 							.replace(/<\|/g,"<\%")
 							.replace(/\|>/g,"\%\>")
 							.replace(/#/g,"@")
-					)
+					if (/ERROR:/.test(classContent)){
+						throw new Error(classContent)	
+					}
+					classFile.writeString(classContent)
 					//Myna.printConsole("loading model " + classFile)
 				}
 				if (!(tableName+"_manager" in managerClasses)){

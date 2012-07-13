@@ -837,7 +837,8 @@ public class MynaThread implements java.lang.Runnable{
 	*/
 	public void handleError(Throwable originalException) throws Exception{
 		/* if (this.inError) return;*/
-		this.inError = true; 
+		this.inError = true;
+		System.err.println("Error in :" +this.environment.get("requestURL") +":");
 		System.err.println(originalException);
 		
 		try{
@@ -859,6 +860,8 @@ public class MynaThread implements java.lang.Runnable{
 				errorText.append(traceStringWriter.toString());
 				errorText.append("</pre>");
 				
+				
+				
 				this.log("ERROR",originalException.getClass().getName() + ": "+ originalException.getMessage(),errorText.toString());
 				if (generalProperties.getProperty("instance_purpose").toLowerCase().equals("dev")){
 					this.generatedContent.append(errorText.toString());
@@ -869,7 +872,6 @@ public class MynaThread implements java.lang.Runnable{
 			}
 		} catch (Throwable newException){
 			
-			System.err.println(newException);
 			this.log("ERROR","Error parsing exception: " +newException.getClass().getName() + ": "+ newException.getMessage(),newException.toString());
 				
 			throw new Exception(originalException); //if there is a problem displaying the error, just rethrow the original error.	
@@ -1606,7 +1608,7 @@ public class MynaThread implements java.lang.Runnable{
 	}
    
 			
-	public void serializeToStream(Scriptable obj, java.io.OutputStream os)
+	public void serializeToStream(ScriptableObject obj, java.io.OutputStream os)
 		throws IOException
 	{
 		ScriptableOutputStream out = new ScriptableOutputStream(os, this.threadScope);

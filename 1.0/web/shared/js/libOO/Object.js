@@ -271,7 +271,7 @@
 	}
 
 /* Function: getKeys 
-	returns an alphabetized list of non-function properties in this object
+	returns a list of non-function properties in this object by order of appearance
 	
 	Parameters: 
 		obj 	-	*Optional, default this* object to examine
@@ -533,6 +533,7 @@
 	Callback Parameters:
 		element		-	the value of property
 		name		-	the name of the property
+		index		-	ordinal of this element
 		object		-	a reference to this object
 		
 	
@@ -567,6 +568,7 @@
 	Callback Parameters:
 		element		-	the value of property
 		name			-	the name of the property
+		index		-	ordinal of this element
 		object		-	a reference to this object
 		
 	
@@ -608,6 +610,7 @@
 	Callback Parameters:
 		element		-	the value of property
 		name			-	the name of the property
+		index		-	ordinal of this element
 		object		-	a reference to this object
 		
 	

@@ -117,7 +117,7 @@ if (!Function.prototype.bind)
 		
 	Warning:
 		*Do not use this for prototype functions*, unless you intend to cache the 
-		result across ALL instances of this class. To have chaching per instance, 
+		result across ALL instances of this class. To have caching per instance, 
 		you can set this in the constructor function, or you can create a lazy 
 		loading version like this:
 		

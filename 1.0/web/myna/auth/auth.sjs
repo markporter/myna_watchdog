@@ -153,7 +153,7 @@ var fusebox={
 					$res.metaRedirect(rawData.callback);
 					
 				} else {
-					$res.redirect($req.rawData.login_page
+					$res.metaRedirect($req.rawData.login_page
 						+(/\?/.test($req.rawData.login_page)?"&":"?")
 						+"message=" + escape("Authentication Failed")
 						+"&provider=" + escape(rawData.provider)
@@ -161,7 +161,7 @@ var fusebox={
 						+"&callback=" + escape(rawData.callback)
 					);
 				}
-			} catch(e){
+			} catch(e if e.message != "___MYNA_ABORT___"){
 				$req.data.password = $req.rawData.password="REDACTED FOR SECURITY";
 				$req.data.password$array = $req.rawData.password$array=["REDACTED FOR SECURITY"];
 				Myna.log(
@@ -171,7 +171,7 @@ var fusebox={
 						+ Myna.dump($req.data,"data") 
 						+ Myna.dump($req.rawData,"rawData")
 				);
-				$res.redirect($req.rawData.login_page
+				$res.metaRedirect($req.rawData.login_page
 					+(/\?/.test($req.rawData.login_page)?"&":"?")
 					+"message=" + escape("Authentication Failed - Error " + e.message)
 					+"&provider=" + escape(rawData.provider)
