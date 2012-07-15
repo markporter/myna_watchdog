@@ -1142,6 +1142,19 @@ if (!Myna) var Myna={}
 	}
 
 	
+	Myna.getGlobalScope=function Myna_getGlobalScope(){
+		var curThread = Packages.info.emptybrain.myna.MynaThread
+			.runningThreads.toArray()
+			.reduce(function(found,possible){
+			if (found) return found;
+			if (possible.javaThread.toString() == java.lang.Thread.currentThread().toString()){
+				return possible	
+			} 
+		},false)
+		
+		return curThread.threadScope;
+	}
+	
 /* Function: include 
 	executes a .js, .sjs, or .ejs file in the current thread
 	 

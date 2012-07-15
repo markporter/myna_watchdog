@@ -25,7 +25,16 @@ Myna.Admin ={
 					pattern:/^[A-Za-z]\w*$/,
 					message:"Invalid name format. Must start with a letter, and only contain letters, numbers or the _ character",
 				},
-				
+				custom:function(params){
+					var v = new Myna.ValidationResult();
+					if (params.obj.isNew && Myna.Admin.dsExists(params.valuename)){
+						v.addError(
+							"A DataSource '{0}' already exists. Please choose another name.".format(params.value),
+							"driver"
+						)
+					}
+					return v;
+				}
 			},
 			desc:{
 				type:"string", 
@@ -304,11 +313,23 @@ Myna.Admin ={
 					pattern:/^[A-Za-z]\w*$/,
 					message:"Invalid name format. Must start with a letter, and only contain letters, numbers or the _ character",
 				}, */
+				custom:function(params){
+					var v = new Myna.ValidationResult();
+					if (params.obj.isNew && Myna.Admin.dsExists(params.valuename)){
+						v.addError(
+							"A DataSource '{0}' already exists. Please choose another name.".format(params.value),
+							"driver"
+						)
+					}
+					return v;
+				},
 				custom:function(o){
-					var v = new Myna.ValiationResult();
-					var tasks = Myna.Admin.getTasks();
-					var exists = (o.obj.name in tasks);
-					if (exists) v.addError("A task '" + o.obj.name +"' already exists","name");
+					var v = new Myna.ValidationResult();
+					if (o.obj.isNew){
+						var tasks = Myna.Admin.getTasks();
+						var exists = (o.obj.name in tasks);
+						if (exists) v.addError("A task '" + o.obj.name +"' already exists","name");
+					}
 					return v;
 				}
 				
@@ -401,15 +422,15 @@ Myna.Admin ={
 			name		-	name of task to remove
 			 
 		*/
-		saveTask:function(name){
-			if (v.success){
+		removeTask:function(name){
+			/* if (v.success){
 				var cronProperties = Myna.loadProperties("/WEB-INF/classes/cron.properties");
 				delete cronProperties[name];
 				Myna.saveProperties(config, "/WEB-INF/classes/cron.properties");
 				include("/shared/js/libOO/reload_cron.sjs",{name:name})
 			}
 			
-			return v
+			return v */
 		},
 	
 }

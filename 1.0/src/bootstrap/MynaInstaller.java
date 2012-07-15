@@ -31,9 +31,6 @@ public class MynaInstaller
 	
 	public static void main(String[] args) throws Exception
 	{
-		modeOptions.add("server");
-		modeOptions.add("upgrade");
-		modeOptions.add("install");
 		classUrl = MynaInstaller.class.getResource("MynaInstaller.class").toString();
 		isJar = (classUrl.indexOf("jar") == 0);
 		if (!isJar) {

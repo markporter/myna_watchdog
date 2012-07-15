@@ -12,7 +12,8 @@
 			
 	Example:
 	(code)
-		(5).times(function(i){
+		//extra dot forces 5 to be a number object
+		5..times(function(i){
 			$res.print(i + "<br>")
 		});
 	(end)

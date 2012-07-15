@@ -50,9 +50,9 @@ public class MynaThread implements java.lang.Runnable{
 	static public java.util.Date 	serverStarted 				= new java.util.Date(); //date object representing the time this server was started
 	
 	static public ConsumerManager	openidConsumerManager; //initialized in init
-	
-	
-/* End static resources */	
+/* End static resources */
+
+
 	public final java.lang.Thread 	javaThread 				= java.lang.Thread.currentThread();
 	public boolean 						isInitThread 			= false; //Is this the first thread after server restart?
 	public boolean 						isWaiting				= true;// am I waiting for a thread permit?
@@ -95,30 +95,95 @@ public class MynaThread implements java.lang.Runnable{
 	
 	public Vector 							threadChain 			= new Vector(); //history of thread calls. Used to avoid infinite recursion
 	
-	public boolean							isExiting				=	false; // set in the timeout handler to prevent further attempts to timoute the thread 
+	public Vector<String>				classBlacklist			= new Vector<String>(); //array of String regexes for classes that are NOT allowed by scripts
+	public Vector<String>				classWhitelist			= new Vector<String>(); //array of String regexes for classes that ARE allowed by scripts, overrides classBlacklist
+	
+	public boolean							isExiting				=	false; // set in the timeout handler to prevent further attempts to timoute the thread
+	
+	
 
-	/* Custom Context to store execution time and a reference to the MynaThread
-	running in this context. The MynaThread must be set after aquiring a context 
-	for this to work */
-	static class MynaContext extends Context
-	{
-		 MynaThread mynaThread;
-	}
-	static class CustomContextFactory extends ContextFactory{
-		 // Override makeContext()
-    	protected Context makeContext()
-    	{
-    	    MynaContext cx = new MynaContext();
-    	    // Make Rhino runtime to call observeInstructionCount
-    	    // each 10000 bytecode instructions
-    	    cx.setInstructionObserverThreshold(10000);
-				 cx.getWrapFactory().setJavaPrimitiveWrap(false);
-    	    return cx;
-    	}
-    	
-		 // Override observeInstructionCount(Context, int)
-    	protected void observeInstructionCount(Context cx, int instructionCount)
-    	{
+	/* =============== Custom context and helpers =========================== */
+		/* Custom Context to store execution time and a reference to the MynaThread
+		running in this context. The MynaThread must be set after acquiring a context 
+		for this to work */
+		static class MynaContext extends Context
+		{
+			 MynaThread mynaThread;
+		}
+		
+			
+
+		/* Custom Shutter for sandoxing*/
+		public interface SandboxShutter
+		{
+			public boolean allowClassAccess(Class<?> type);
+			public boolean allowFieldAccess(Class<?> type, Object instance, String fieldName);
+			public boolean allowMethodAccess(Class<?> type, Object instance, String methodName);
+			public boolean allowStaticFieldAccess(Class<?> type, String fieldName);
+			public boolean allowStaticMethodAccess(Class<?> type, String methodName);
+		}
+				
+		/* Custom Context Factory that sets custom Context, WrapFactory, 
+		ClassShutter, and  observeInstructionCount, i.e. timeout detection */
+		static class CustomContextFactory extends ContextFactory{
+			 // Override makeContext()
+			protected Context makeContext()
+			{
+				final MynaContext cx = new MynaContext();
+				// Make Rhino runtime to call observeInstructionCount
+				// each 10000 bytecode instructions
+				cx.setInstructionObserverThreshold(10000);
+				//experimental
+					//cx.setWrapFactory(new SandboxWrapFactory());
+				
+				cx.setClassShutter(new ClassShutter()
+				{
+					@Override
+					public boolean visibleToScripts(String name)
+					{
+						MynaThread mt = cx.mynaThread;
+						if (mt == null){
+							return true;	
+						} else {
+							boolean grant = true;
+							if (mt.classBlacklist.size() == 0 && mt.classWhitelist.size() == 0) return grant;
+							
+							for(String pattern : mt.classBlacklist) {
+								
+								if (name.matches(pattern)){
+									grant= false;
+									
+								}else{
+									System.out.println("black list fail: " + name +" != " + pattern);	
+								}
+							}
+							for(String pattern : mt.classWhitelist) {
+								if (name.matches(pattern)){
+									grant= true;	
+							
+								}else{
+									System.out.println("white list fail: " + name +" != " + pattern);	
+								}
+							}
+							
+							if (grant){
+									System.out.println("GRANTED: " + name);
+							} else {
+								System.out.println("DENIED: " + name);
+							}
+							
+							//System.out.println(name);
+							return grant;
+						}
+					}
+				});
+				cx.getWrapFactory().setJavaPrimitiveWrap(false);
+				return cx;
+			}
+			
+			 // Override observeInstructionCount(Context, int)
+			protected void observeInstructionCount(Context cx, int instructionCount)
+			{
 				int timeout=0;
 				long currentTime = System.currentTimeMillis();
 				long startTime =0;
@@ -164,47 +229,56 @@ public class MynaThread implements java.lang.Runnable{
 					mcx.reportError(errorMessage);
 					mcx.mynaThread.isExiting = false;
 				}
-    	}
-
-		protected boolean hasFeature(Context cx, int featureIndex)
-		{
-    		MynaContext mcx =null;
-    		try{
-    		  mcx = (MynaContext)cx;
-    		  if (mcx.mynaThread == null) mcx =null;
-    		} catch(Throwable e){}
-      
-			if (			featureIndex == Context.FEATURE_DYNAMIC_SCOPE 
-					|| 	featureIndex == Context.FEATURE_LOCATION_INFORMATION_IN_ERROR
-					||		featureIndex == Context.FEATURE_ENHANCED_JAVA_ACCESS
-			) {
-				return true;
 			}
-			if (featureIndex == Context.FEATURE_STRICT_MODE) {
-				//return true;
-				if (MynaThread.generalProperties.getProperty("strict_error_checking").equals("1")){
+	
+			protected boolean hasFeature(Context cx, int featureIndex)
+			{
+				MynaContext mcx =null;
+				try{
+				  mcx = (MynaContext)cx;
+				  if (mcx.mynaThread == null) mcx =null;
+				} catch(Throwable e){}
+			
+				if (			featureIndex == Context.FEATURE_DYNAMIC_SCOPE 
+						|| 	featureIndex == Context.FEATURE_LOCATION_INFORMATION_IN_ERROR
+						||		featureIndex == Context.FEATURE_ENHANCED_JAVA_ACCESS
+				) {
 					return true;
-				} else {
-					return false;	
-				} 
-			}
-			if (featureIndex == Context.FEATURE_WARNING_AS_ERROR) {
-				return false;
-				/* if (MynaThread.generalProperties.getProperty("strict_error_checking").equals("1")){
+				}
+				if (featureIndex == Context.FEATURE_STRICT_MODE) {
+					//return true;
+					if (MynaThread.generalProperties.getProperty("strict_error_checking").equals("1")){
+						return true;
+					} else {
+						return false;	
+					} 
+				}
+				if (featureIndex == Context.FEATURE_WARNING_AS_ERROR) {
+					return false;
+					/* if (MynaThread.generalProperties.getProperty("strict_error_checking").equals("1")){
+						return true;
+					} else {
+						return false;	
+					} */
+				}
+				
+				if (featureIndex == Context.FEATURE_E4X) {
 					return true;
-				} else {
-					return false;	
-				} */
+				}
+				
+				if (featureIndex == Context.FEATURE_PARENT_PROTO_PROPERTIES){
+					if (mcx != null && mcx.mynaThread.classBlacklist.size() > 0) {
+						return false;
+					} else {
+						return true;	
+					}
+					
+				}
+				
+				return super.hasFeature(cx, featureIndex);
 			}
 			
-			if (featureIndex == Context.FEATURE_E4X) {
-				return true;
-			}
-			 
-			
-			return super.hasFeature(cx, featureIndex);
 		}
-	}
 	
 	static class MynaErrorReporter implements ErrorReporter{
 		static final MynaErrorReporter instance = new MynaErrorReporter();
@@ -612,7 +686,7 @@ public class MynaThread implements java.lang.Runnable{
 					if (sharedScope == null) return null;
 					threadContext =cx;
 					cx.setErrorReporter(new MynaErrorReporter());
-					ScriptableObject scope = threadScope = (ScriptableObject) cx.newObject(sharedScope);
+					ScriptableObject scope = threadScope = (ScriptableObject) cx.newObject(new ImporterTopLevel(cx));
 					requestScope = (ScriptableObject) cx.newObject(sharedScope);
 					
 					requestScope.setPrototype(sharedScope);
@@ -784,12 +858,12 @@ public class MynaThread implements java.lang.Runnable{
 			}
 			public Object run(Context cx) {
 				try {
-					Scriptable sharedScope = buildScope();//mt.sharedScope_;
+					Scriptable sharedScope = mt.sharedScope_;
 										 
 					if (sharedScope == null) return null;
 					threadContext =cx;
 					cx.setErrorReporter(new MynaErrorReporter());
-					ScriptableObject scope = threadScope = (ScriptableObject) cx.newObject(sharedScope);
+					ScriptableObject scope = threadScope = (ScriptableObject) cx.newObject(new ImporterTopLevel(cx));
 					scope.setPrototype(sharedScope);
 					scope.setParentScope(null);
 					isWaiting=false;
@@ -883,9 +957,9 @@ public class MynaThread implements java.lang.Runnable{
 	* Executes the supplied JavaScript.
 	*
 	*  
-	* @param  scope Top level Javascript scope
+	* @param  scope Top level JavaScript scope
 	* @param  script String containing the JavaScript code to execute
-	* @param  scriptPath Filesystem path to the file containg script
+	* @param  scriptPath Filesystem path to the file containing script
 	*/
 	public void executeJsString(Scriptable scope, String script, String scriptPath) throws Exception{
 		Context cx = this.threadContext; 
