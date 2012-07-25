@@ -22,19 +22,23 @@ import java.lang.reflect.*;
 
 public class MynaServer extends Thread
 {
-	public static Tomcat 					server;
-	public static boolean 					hasWatchdog	= false;
-	public static String 					webctx 		= "/";
-	public static String						webroot		= "./myna";
-	public static String						logFile		= null;
-	public static int							port			= 8180;
-	public static Process					p				= null;
-	public static java.util.List 			javaOpts 	= new java.util.ArrayList();
-	public static java.util.Properties 	props			= new java.util.Properties();
-	public static boolean					isJar			= false;
-	public static String 					mode 			= "";
-	public static Vector						modeOptions	= new Vector();
-	public static String 					classUrl;
+	public static Tomcat 				server;
+	public static boolean 				hasWatchdog	= false;
+	public static String 				webctx 		= "/";
+	public static String				webroot		= "./myna";
+	public static String				logFile		= null;
+	public static int					port		= 8180;
+	public static int					sslPort		= 0;
+	public static String				keystore	= null;
+	public static String				ksPass		= "changeit";
+	public static String				ksAlias		= "myna";
+	public static Process				p			= null;
+	public static java.util.List 		javaOpts 	= new java.util.ArrayList();
+	public static java.util.Properties 	props		= new java.util.Properties();
+	public static boolean				isJar		= false;
+	public static String 				mode 		= "";
+	public static Vector				modeOptions	= new Vector();
+	public static String 				classUrl;
 	
 	
 	public static void prStart(String [] args){
@@ -95,6 +99,12 @@ public class MynaServer extends Thread
 		options.addOption( "c", "context", true, "Webapp context. Must Start with \"/\" Default: " + webctx);
 		options.addOption( "h", "help", false, "Displays help." );
 		options.addOption( "p", "port", true, "Webserver port. Default: " + port );
+		//ssl stuff
+		options.addOption( "sp", "ssl-port", true, "SSL Webserver port. set 0 to disable ssl, Default: 0");
+		options.addOption( "ks", "keystore", true, "keystore path. Default: <webroot>/WEB-INF/myna/myna_keystore");
+		options.addOption( "ksp", "ks-pass", true, "keystore password. Default: " + ksPass );
+		options.addOption( "ksa", "ks-alias", true, "certificate alias. Default: " + ksAlias );
+		
 		options.addOption( "w", "webroot", true, "Webroot to use. Will be created if webroot/WEB-INF does not exist. Default: " + webroot );
 		//mode= "server";
 		modeOptions.add("server");
@@ -130,6 +140,20 @@ public class MynaServer extends Thread
 			if( line.hasOption( "port" ) ) {
 				port = Integer.parseInt(line.getOptionValue( "port" ));
 			}
+			
+			//ssl stuff
+			if( line.hasOption( "ssl-port" ) ) {
+				sslPort = Integer.parseInt(line.getOptionValue( "ssl-port" ));
+			}
+			
+			if( line.hasOption( "ks-pass" ) ) {
+				ksPass=line.getOptionValue( "ks-pass" );
+			}
+			if( line.hasOption( "ks-alias" ) ) {
+				ksAlias=line.getOptionValue( "ks-alias" );
+			}
+			
+			
 			if( line.hasOption( "context" ) ) {
 				webctx=line.getOptionValue( "context" );
 			}
@@ -143,6 +167,15 @@ public class MynaServer extends Thread
 			}
 			if( line.hasOption( "webroot" ) ) {
 				webroot=line.getOptionValue( "webroot" );
+			}
+			
+			if( line.hasOption( "keystore" ) ) {
+				keystore=line.getOptionValue( "keystore" );
+			} else {
+				String appBase = new File(webroot).getCanonicalPath();
+				if (keystore == null){
+					keystore = appBase+"/WEB-INF/myna/myna_keystore";
+				}	
 			}
 			javaOpts = line.getArgList();
 		} 
@@ -180,8 +213,30 @@ public class MynaServer extends Thread
 		String appBase = new File(webroot).getCanonicalPath();
 		System.out.println("webroot = " +appBase);
 		Tomcat tomcat = new Tomcat();
-		tomcat.setPort(port);
-		
+		if (port != 0){
+			tomcat.setPort(port);
+		}
+		if (sslPort != 0){
+			Connector httpsConnector;
+			if (port == 0 ){
+				httpsConnector = tomcat.getConnector();
+			} else {
+				httpsConnector = new Connector();
+			}
+			httpsConnector.setPort(sslPort);
+			httpsConnector.setSecure(true);
+			httpsConnector.setScheme("https");
+			httpsConnector.setAttribute("keyAlias", ksAlias);
+			httpsConnector.setAttribute("keystorePass", ksPass);
+			httpsConnector.setAttribute("keystoreFile", keystore);
+			httpsConnector.setAttribute("clientAuth", "false");
+			httpsConnector.setAttribute("sslProtocol", "TLS");
+			httpsConnector.setAttribute("SSLEnabled", true);
+			
+			if (port != 0 ){
+				tomcat.getService().addConnector(httpsConnector);
+			}
+		}	
 		tomcat.setBaseDir(System.getProperty("java.io.tmpdir"));
 		tomcat.getHost().setAppBase(appBase);
 		
@@ -240,6 +295,10 @@ public class MynaServer extends Thread
 			" -c "+ webctx+
 			" -p "+ new Integer(port).toString()+
 			" -w "+ webroot+
+			" -sp " +sslPort +
+			" -ks " +keystore +
+			" -ksp " +ksPass +
+			" -ksa " +ksAlias +
 			" -l "+ logFile
 		);
 		;

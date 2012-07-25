@@ -29,7 +29,7 @@ start-nowatchdog)
 	watchdog_jvm_args="-Djava.security.egd=file:/dev/./urandom -Dmyna.name=$server -Xmx${mem}m -Dmyna.hasWatchdog=true -server -cp $web_inf/lib/*:$web_inf/classes/:/usr/local/bin"
 	
 	
-	myna_args="-m server -c /$server -p $port -w $myna_home -l $logfile "
+	myna_args="-m server -c /$server -sp 8443 -p $port -w $myna_home -l $logfile "
 	java  $watchdog_jvm_args  info.emptybrain.myna.MynaServer $myna_args &
 	echo "Myna instance '$server' Starting. tail -f $logfile for details."
 	

@@ -15,13 +15,14 @@ var gotlock =Myna.lock("MYNA_ADMIN:reload_cron",0,function(){
 			cronFound = true;
 			$profiler.mark("Loading Cron: " + name+", waiting for lock")
 			try{
-				var threadPermit = Packages.info.emptybrain.myna.ScriptTimerTask.threadPermit
+				// this isn't necessary any more, ow that threads run faster, with less memory
+				/* var threadPermit = Packages.info.emptybrain.myna.ScriptTimerTask.threadPermit
 				var TimeUnit = java.util.concurrent.TimeUnit
 				var timeout = 30
 				var gotPermit =threadPermit.tryAcquire(timeout,TimeUnit.SECONDS);
 				if (!gotPermit) {
 					throw new Error("Too Many Threads: Unable reload cron after {0} seconds.".format(timeout));
-				}
+				} */
 				//Packages.info.emptybrain.myna.ScriptTimerTask.threadPermit.acquire();
 				var cron = propJson.parseJson();
 				var timer = $server_gateway.cron.get(name);

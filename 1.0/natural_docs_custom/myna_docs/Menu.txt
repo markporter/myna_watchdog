@@ -94,6 +94,7 @@ Group: LibOO  {
    File: Myna.Permissions  (/home/mark/myna/web/shared/js/libOO/Permissions.sjs)
    File: Myna.Profiler  (/home/mark/myna/web/shared/js/libOO/Profiler.js)
    File: Myna.Query  (/home/mark/myna/web/shared/js/libOO/Query.sjs)
+   File: Myna.Sandbox  (/home/mark/myna/web/shared/js/libOO/Sandbox.sjs)
    File: Myna.Swing  (/home/mark/myna/web/shared/js/libOO/Swing.sjs)
    File: Myna.Table  (/home/mark/myna/web/shared/js/libOO/Table.sjs)
    File: Myna.Template  (/home/mark/myna/web/shared/js/libOO/Template.sjs)
