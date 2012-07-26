@@ -20,6 +20,9 @@ import java.io.*;
 import java.util.*;
 import java.lang.reflect.*;
 
+import java.security.*;
+import javax.net.ssl.*;
+
 public class MynaServer extends Thread
 {
 	public static Tomcat 				server;
@@ -405,7 +408,33 @@ public class MynaServer extends Thread
 			try
 			{
 				// create the HttpURLConnection
-				url = new URL("http://localhost:" + port + webctx+"/shared/js/libOO/health_check.sjs");
+				if (port != 0){
+					url = new URL("http://localhost:" + port + webctx+"/shared/js/libOO/health_check.sjs");
+				} else{
+					KeyStore ks = KeyStore.getInstance("JKS");
+					InputStream is = new FileInputStream(keystore);
+					ks.load(is, ksPass.toCharArray());
+					is.close();
+					TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+					tmf.init(ks);
+					KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+					kmf.init(ks, ksPass.toCharArray());
+					SSLContext ctx = SSLContext.getInstance("TLS");
+					ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+					SSLContext.setDefault(ctx);
+					javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier(
+					new javax.net.ssl.HostnameVerifier(){
+			 
+						public boolean verify(String hostname,
+								javax.net.ssl.SSLSession sslSession) {
+							if (hostname.equals("localhost")) {
+								return true;
+							}
+							return false;
+						}
+					});
+					url = new URL("https://localhost:" + sslPort + webctx+"/shared/js/libOO/health_check.sjs");
+				}
 				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 				
 				// just want to do an HTTP GET here
