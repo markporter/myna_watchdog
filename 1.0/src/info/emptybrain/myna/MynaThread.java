@@ -969,7 +969,7 @@ public class MynaThread implements java.lang.Runnable{
 		try {
 			int optimizationLevel = Integer.parseInt(this.generalProperties.getProperty("optimization.level"));
 			
-			cx.setOptimizationLevel(optimizationLevel);
+			cx.setOptimizationLevel(-1);
 			JCS cache = JCS.getInstance("scriptCache");
 			//scriptPath =getNormalizedPath(scriptPath) 
 			int key = script.hashCode();
