@@ -430,20 +430,21 @@ var fusebox={
 		
 		Myna.include('views/dsp_new_password_form.ejs',data);		
 	},
-	new_password_save:function(data){
+	new_password_save:function(data,rawData){
+		
 		$req.returningJson = true;
-		if (!data.password$array 
-			|| data.password$array.length != 2
-			|| data.password$array[0] != data.password$array[1]
+		if (!rawData.password$array 
+			|| rawData.password$array.length != 2
+			|| rawData.password$array[0] != rawData.password$array[1]
 			)
 		{
 			return {success:false,msg:"Passwords do not match, please try again."};
-		} else if (data.password$array[0].length < 6){
+		} else if (rawData.password$array[0].length < 6){
 			//this.new_password_form({message:"Passwords must be at least 6 characters long. Please try again."})
 			return {success:false,msg:"Passwords must be at least 6 characters long. Please try again."};
 		}
 		var props = getGeneralProperties();
-		$server_gateway.generalProperties.setProperty("admin_password",data.password$array[0].toHash());
+		$server_gateway.generalProperties.setProperty("admin_password",rawData.password$array[0].toHash());
 		$server_gateway.saveGeneralProperties();
 		
 		return{success:true,msg:"Password saved.",url:"?fuseaction=main"};

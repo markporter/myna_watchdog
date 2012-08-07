@@ -77,7 +77,45 @@ if (!Myna) var Myna={}
 		
 	}
 	
-
+Myna.Sandbox._initLists = function(options){
+	if (options.blacklist && !(options.blacklist instanceof Array)) options.blacklist = [options.blacklist]
+	if (options.whitelist && !(options.whitelist instanceof Array)) options.whitelist = [options.whitelist]
+	
+	if (options.blacklist){
+		options.blacklist = options.blacklist.map(function(r){
+			if (r instanceof RegExp){
+				return r.toString().replace(/^\//,"").replace(/\/[mig]*$/,"")	
+			} else return r
+		})
+	}
+	if (options.whitelist){
+		options.whitelist = options.whitelist.map(function(r){
+			if (r instanceof RegExp){
+				return r.toString().replace(/^\//,"").replace(/\/[mig]*$/,"")	
+			} else return r
+		})
+	}
+	
+	if (options.propertyBlacklist && !(options.propertyBlacklist instanceof Array)) options.propertyBlacklist = [options.propertyBlacklist]
+	if (options.propertyWhitelist && !(options.propertyWhitelist instanceof Array)) options.propertyWhitelist = [options.propertyWhitelist]
+	
+	if (options.propertyBlacklist){
+		options.propertyBlacklist = options.propertyBlacklist.map(function(r){
+			if (r instanceof RegExp){
+				return r.toString().replace(/^\//,"").replace(/\/[mig]*$/,"")	
+			} else return r
+		})
+	}
+	if (options.propertyWhitelist){
+		options.propertyWhitelist = options.propertyWhitelist.map(function(r){
+			if (r instanceof RegExp){
+				return r.toString().replace(/^\//,"").replace(/\/[mig]*$/,"")	
+			} else return r
+		})
+	}
+	
+	return options;
+}
 /* Function: addScopeObjects
 	Add one or more properties to the sandbox scope
 	
@@ -95,27 +133,11 @@ if (!Myna) var Myna={}
 		var scope = this.scope;
 		var $this = this;
 		
+		Myna.Sandbox._initLists(options)
 		
-		if (options.blacklist && !(options.blacklist instanceof Array)) options.blacklist = [options.blacklist]
-		if (options.whitelist && !(options.whitelist instanceof Array)) options.whitelist = [options.whitelist]
-		
-		if (options.blacklist){
-			options.blacklist = options.blacklist.map(function(r){
-				if (r instanceof RegExp){
-					return r.toString().replace(/^\//,"").replace(/\/[mig]*$/,"")	
-				} else return r
-			})
-		}
-		if (options.whitelist){
-			options.whitelist = options.whitelist.map(function(r){
-				if (r instanceof RegExp){
-					return r.toString().replace(/^\//,"").replace(/\/[mig]*$/,"")	
-				} else return r
-			})
-		}
 		
 		function wrap(f){
-			return $this.wrapFunction(f,options.blacklist,options.whitelist)
+			return Myna.Sandbox.wrapFunction(f,options)
 		}
 		
 		function cloneAndWrap(source,cloneMap){
@@ -127,7 +149,7 @@ if (!Myna) var Myna={}
 				target = wrap(source)
 				shouldRecurse =true;
 				filterProto = Function.prototype
-			}else if (source && typeof source == "object" && source.hasOwnProperty){
+			}else if (source && typeof source == "object" && source.hasOwnProperty && !source.__proxied__){
 				if (source instanceof Array){
 					target =[];
 					filterProto = Array.prototype
@@ -167,34 +189,40 @@ if (!Myna) var Myna={}
 			scope[tp] = clone[tp] 
 		}
 	}
-/* Function: wrapFunction
-	creates a function wrapper with specific permissions.
+/* Function: Myna.Sandbox.wrapFunction
+	(Class Function) creates a function wrapper with specific permissions.
 	
 	Parameters:
 		f			-	function reference to wrap
+		options		-	See *Options* below
+		
+	Options:
 		blacklist	-	Array of RegExp objects or Java regex strings that 
 						describe the disallowed Java classes
 		whitelist	-	Array of RegExp objects or Java regex strings that 
 						describe the allowed Java classes. Overrides _blacklist_
 	
 	*/	
-	Myna.Sandbox.prototype.wrapFunction = function(f,blacklist,whitelist){
+	Myna.Sandbox.wrapFunction = function(f,options){
+		Myna.Sandbox._initLists(options)
+		
+		
+		var $this = this;
 		
 		return function(){
-			
 			var startWhitelist = $server_gateway.classWhitelist.toArray();
 			var startBlacklist = $server_gateway.classBlacklist.toArray();
 			
-			if (blacklist){
+			if (options.blacklist){
 				$server_gateway.classBlacklist.clear();
 						
-				blacklist.forEach(function(r){
+				options.blacklist.forEach(function(r){
 					$server_gateway.classBlacklist.add(r);
 				})
 			}
-			if (whitelist){
+			if (options.whitelist){
 				$server_gateway.classWhitelist.clear();
-				whitelist.forEach(function(r){
+				options.whitelist.forEach(function(r){
 					$server_gateway.classWhitelist.add(r);
 				})
 				
@@ -202,7 +230,11 @@ if (!Myna) var Myna={}
 			
 			try{
 				
-				f.apply(this,Array.parse(arguments))
+				var retval = f.apply(this,Array.parse(arguments))
+				if (options.proxy){
+					retval = $this.createProxy(retval,options.proxy) 	
+				}
+				return retval
 			}finally{
 				$server_gateway.classWhitelist.clear();
 				startWhitelist.forEach(function(r){
@@ -215,6 +247,203 @@ if (!Myna) var Myna={}
 				})
 			}
 		}
+	}
+/* Function: Myna.Sandbox.createProxy
+	(Class Function) wraps an object with a proxy object that can have arbitrary permissions.
+	
+	Parameters:
+		o			-	object to wrap. Can be a Java object.
+		options		-	see below
+		
+	Options:
+		blacklist			-	default Array of RegExp objects or Java regex strings that 
+								describe the disallowed Java classes
+		whitelist			-	default Array of RegExp objects or Java regex strings that 
+								describe the allowed Java classes. Overrides _blacklist_
+		propertyBlacklist 	-	Array of RegExp objects or Java regex strings that 
+								describe the disallowed function/property names
+		propertyWhitelist 	-	Array of RegExp objects or Java regex strings that 
+								describe the allowed function/property names. Overrides
+								_propertyBlacklist_
+								
+		before				-	function to run before calling ANY native 
+								property, even non-function properties. Also runs before 
+								any _before_ definitions defined in the _properties_ section
+								See <Funciton.before>
+								
+		after				-	function to run after calling ANY native 
+								property, even non-function properties. Also runs after 
+								any _after_ definitions defined in the _properties_ section
+		
+		properties			-	JS Object where the keys are names (or String Regular 
+								Expressions) of properties in _o_, and values are 
+								property options as described in *Property Options* below
+	
+	Property Options:
+		blacklist			-	Array of RegExp objects or Java regex strings that 
+								describe the disallowed Java classes for this 
+								property value or this function's execution.
+								Overrides default _blacklist_ 
+								
+		whitelist			-	Array of RegExp objects or Java regex strings that 
+								describe the allowed Java classes for this property 
+								value or this function's execution. 
+								
+								Overrides default _whitelist_ and function _blacklist_
+		before				-	function to run before calling the native version. 
+								See <Function.before>
+								
+		after				-	function to run before calling the native version. 
+								See <Function.after>. be sure 
+								
+		returnProxy			-   Causes the return from this function to be wrapped 
+								via <Myna.Sandbox.createProxy>. If this is a JS object
+								it will be passed as _options_ to <Myna.Sandbox.createProxy>,
+								if this is a string, then the _returnProxy_ of the named 
+								function will be used. If set to boolean true, then the 
+								original _options_ object passed to create Proxy will be used
+								
+								
+	Example:
+	(code)
+		var javaFile= new java.io.File("/tmp/sandbox")
+		var proxyFile = Myna.Sandbox.createProxy(
+			javaFile,
+			{
+				blacklist:".*",
+				whitelist:[
+					"^java.lang.*$",
+					"^java.io.File$",
+				],
+				propertyBlacklist:[
+					"^set.*",
+					"^list.*",
+					"^mk.*",
+					"^delete.*",
+					"^create.*"
+				],
+				after:function(){
+					var chain = arguments.callee.chain;
+					var f = chain.lastReturn; 
+					if (f instanceof java.io.File){
+						
+						if (!/^\/tmp\/sandbox/.test(f.getCannonicalPath())){
+							throw new Error("attempt to access invalid path")
+						}
+					}
+					chain.returnValue = chain.lastReturn;
+				},
+				properties:{
+					toString:{
+						after:function(){
+							var chain = arguments.callee.chain;
+							chain.returnValue = chain.lastReturn.replace(/^\/tmp\/sandbox/,"");
+						}
+					}
+				}	
+			}
+		)
+		
+		
+	(end)
+	*/	
+	Myna.Sandbox.createProxy = function(o,options){
+		if (o.__proxied__) return o;
+		Myna.Sandbox._initLists(options)
+		var result={
+			"__proxied__":true
+		}
+		if (!options.properties)options.properties={}
+		
+		Object.keys(o).forEach(function(p){
+			var pOptions = Myna.Sandbox._initLists(options.properties[p]||{})
+			
+			var isBlacklisted = (options.propertyBlacklist||[]).some(function(rs){
+				return new RegExp(rs).test(p)
+			})
+			var isWhitelisted = (options.propertyWhitelist||[]).some(function(rs){
+				return new RegExp(rs).test(p)
+			})
+			
+			if (isBlacklisted && !isWhitelisted) return;
+			//wraps a function or property call 
+			var wrap = function wrap(){
+				var f;
+				if (typeof o[p] =="function"){
+					f =o[p].createDelegate(o);
+				} else {
+					f = function(){
+						return o[p]
+					}	
+				}
+				
+				if (pOptions.hasOwnProperty("before")){
+					pOptions.before.proxyConfig = options
+					pOptions.before.propertyName = p
+					f = f.before(pOptions.before)	
+				}
+				if (pOptions.hasOwnProperty("after")){
+					pOptions.after.proxyConfig = options
+					pOptions.after.propertyName = p
+					f = f.after(pOptions.after)	
+				}
+				
+				if (options.hasOwnProperty("before")){
+					options.before.proxyConfig = options
+					options.before.propertyName = p
+					f = f.before(options.before)	
+				}
+				if (options.hasOwnProperty("after")){
+					options.after.proxyConfig = options
+					options.after.propertyName = p
+					f = f.after(options.after)	
+				}
+				
+				var seal=function(f,scope){
+					return function(){
+						return f.apply(scope,Array.parse(arguments))
+					}
+				}
+				// hide the execution chain behind a delegate
+				f= f.createDelegate()
+				
+				if (typeof o[p] =="function"){
+					wrap= function(){
+						return f
+					}
+				}else {
+					wrap= function(){
+						return f()
+					};	
+				}
+				return wrap()
+			}
+			var getter = Myna.Sandbox.wrapFunction(
+				wrap,
+				{
+					blacklist:(pOptions.blacklist||[])
+						.concat(options.blacklist||[])
+						.getUnique(),
+					whitelist:(pOptions.whitelist||[])
+						.concat(options.whitelist||[])
+						.getUnique()		
+				}
+			)
+		
+			Object.defineProperty(
+				result,
+				p,
+				{
+					get:getter,
+					
+					enumerable: true,
+					configurable: false
+				}
+			)
+			
+		})
+		return result;
+		
 	}
 	
 /* Function: executePath

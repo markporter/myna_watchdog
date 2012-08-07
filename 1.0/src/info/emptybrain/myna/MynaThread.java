@@ -154,7 +154,7 @@ public class MynaThread implements java.lang.Runnable{
 									grant= false;
 									
 								}else{
-									System.out.println("black list fail: " + name +" != " + pattern);	
+									log("black list fail: " + name +" != " + pattern);	
 								}
 							}
 							for(String pattern : mt.classWhitelist) {
@@ -162,18 +162,27 @@ public class MynaThread implements java.lang.Runnable{
 									grant= true;	
 							
 								}else{
-									System.out.println("white list fail: " + name +" != " + pattern);	
+									log("white list fail: " + name +" != " + pattern);
 								}
 							}
 							
 							if (grant){
-									System.out.println("GRANTED: " + name);
+									log("GRANTED: " + name);
 							} else {
-								System.out.println("DENIED: " + name);
+								log("DENIED: " + name);
 							}
 							
 							//System.out.println(name);
 							return grant;
+						}
+					}
+					
+					public void log(String string){
+						MynaThread mt = cx.mynaThread;
+						if (mt == null || mt.environment.get("SANDBOX_DEBUG") == null){
+							return;	
+						} else {
+							System.out.println(string);
 						}
 					}
 				});
@@ -204,8 +213,13 @@ public class MynaThread implements java.lang.Runnable{
 				
 				
 				if (!mcx.mynaThread.isExiting && timeout != 0 && currentTime - startTime > timeout*1000){
-					// More then 10 seconds from Context creation time:
 					// it is time to stop the script.
+					
+					//release our threadPermit
+					mcx.mynaThread.releaseThreadPermit();
+					
+					
+					
 					
 					String path ="";
 					try {
@@ -729,12 +743,18 @@ public class MynaThread implements java.lang.Runnable{
 					//wait if max threads are already running
 					if (!isWhiteListedThread) {
 						//generalProperties.getProperty("request_handler")
-						boolean gotPermit =threadPermit.tryAcquire((long)10,TimeUnit.SECONDS);
-						if (!gotPermit) throw new Exception("Too Many Threads: Unable to gain thread permit after 10 seconds.");
+						boolean gotPermit =threadPermit.tryAcquire((long)requestTimeout,TimeUnit.SECONDS);
+						if (!gotPermit) {
+							throw new Exception(
+								"Too Many Requests: Unable to leave request queue after "
+								+requestTimeout+" seconds for url '" 
+								+ ((StringBuffer)(environment.get("requestURL"))).toString()
+							);
+						}
 					}
+					try{	
+						isWaiting=false;
 					
-					isWaiting=false;
-					try{
 						Object server_gateway = Context.javaToJS(this.mt,scope);
 						ScriptableObject.putProperty(scope, "$server_gateway", server_gateway);
 						sharedPath = new URI(rootDir).resolve("shared/js/");
@@ -760,9 +780,7 @@ public class MynaThread implements java.lang.Runnable{
 						
 					} finally {
 							//release our threadPermit
-							if (!isWhiteListedThread) threadPermit.release();
-							//remove this thread form the running list
-							runningThreads.remove(this.mt);
+							releaseThreadPermit();
 					}
 					return null;
 				} catch (Exception outer){
@@ -833,7 +851,15 @@ public class MynaThread implements java.lang.Runnable{
 		} */
 	}
 	
-
+	public void releaseThreadPermit() {
+		if (!isWhiteListedThread){
+			threadPermit.release();
+			//whitelist this thread to prevent double-release later
+			isWhiteListedThread = true;
+		}
+		//remove this thread form the running list
+		runningThreads.remove(this);
+	}
 	
 	public void callFunction (String f,Object[] args) throws Exception{
 		runningThreads.add(this);
@@ -892,8 +918,6 @@ public class MynaThread implements java.lang.Runnable{
 						handleError(e);
 						
 					} finally {
-							//release our threadPermit
-							if (!isWhiteListedThread) threadPermit.release();
 							//remove this thread form the running list
 							runningThreads.remove(this.mt);
 					}

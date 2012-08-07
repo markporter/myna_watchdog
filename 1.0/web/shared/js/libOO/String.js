@@ -425,7 +425,14 @@
 		Myna.println("BobDobb".endsWith("dobb",true))//prints false
 	*/
 	String.prototype.endsWith = function(str,caseSensitive) {
-		return new RegExp(str+"$",caseSensitive?"":"i").test(this)
+		var s1 = this;
+		var s2 = str;
+		if (!s2 && s1.length) return false;
+		if (!caseSensitive){
+			var s1 = this.toLowerCase();
+			var s2 = str.toLowerCase();;
+		}
+		return s1.right(s2.length) == s2
 	}
 /* Function: escapeHtml 
 	replaces common symbols with their HTML entity equivalents  
@@ -1196,7 +1203,7 @@
 	(end)
 	 
 	*/
-String.prototype.toFixedWidth=function(count,pad,placeHolder,truncateFrom){
+	String.prototype.toFixedWidth=function(count,pad,placeHolder,truncateFrom){
 		var s = new String(this);
 		if (!pad) pad = " ";
 		if (!placeHolder) placeHolder = "";
@@ -1667,7 +1674,15 @@ String.prototype.toFixedWidth=function(count,pad,placeHolder,truncateFrom){
 		Myna.println("BobDobb".startsWith("bob",true))//prints false
 	*/
 	String.prototype.startsWith = function(str,caseSensitive) {
-		return new RegExp("^"+str,caseSensitive?"":"i").test(this)
+		var s1 = this;
+		var s2 = str;
+		if (!s2 && s1.length) return false
+		if (!caseSensitive){
+			var s1 = this.toLowerCase();
+			var s2 = str.toLowerCase();;
+		}
+		return s1.left(s2.length) == s2
+		
 	}
 /* Function: titleCap 
 	Capitalizes the first letter of every word in string

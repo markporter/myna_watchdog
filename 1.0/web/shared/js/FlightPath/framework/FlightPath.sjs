@@ -446,6 +446,7 @@
 		}
 		return new Myna.Cache({
 			name:key,
+			allowBackgroundRefresh:false,
 			refreshInterval:Date.getInterval(Date.DAY,1),
 			code:getNames
 		}).call()

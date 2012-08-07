@@ -78,7 +78,7 @@
 	<property name="app.path"			value="/${app.name}"/>
 	<property name="build.home"		value="${basedir}/build"/>
 	<property name="dist.home"		 value="${basedir}/dist"/>
-	<property name="java5.home"		 value="${basedir}/jdk1.5.0_22/jre/lib/rt.jar:${basedir}/jdk1.5.0_22/jre/lib/jsse.jar"/> 
+	<!-- <property name="java5.home"		 value="${basedir}/jdk1.5.0_22/jre/lib/rt.jar:${basedir}/jdk1.5.0_22/jre/lib/jsse.jar"/> --> 
 	<!-- <property name="java5.home"		 value="/usr/lib/jvm/java-6-openjdk/jre/lib/rt.jar"/> -->
 	
 	<property name="myna_server.home"		 value="${basedir}/myna_server"/>
@@ -183,8 +183,8 @@
 		<mkdir		dir="${build.home}/WEB-INF/classes"/>
 		
 		<javac srcdir="${src.home}"
-			target="1.5"
-			source="1.5"
+			target="1.6"
+			source="1.6"
 			bootclasspath="${java5.home}"	
 			destdir="${build.home}/WEB-INF/classes"
 			debug="${compile.debug}"
