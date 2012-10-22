@@ -29,6 +29,11 @@ public class MynaInstaller
 	public static Vector					modeOptions	= new Vector();
 	public static String 					classUrl;
 	
+	public static int						sslPort			= 0;
+	public static String					keystore		= null;
+	public static String					ksPass			= "changeit";
+	public static String					ksAlias			= "myna";
+	
 	public static void main(String[] args) throws Exception
 	{
 		classUrl = MynaInstaller.class.getResource("MynaInstaller.class").toString();
@@ -47,10 +52,16 @@ public class MynaInstaller
 		Options options = new Options();
 		options.addOption( "c", "context", true, "Webapp context. Must Start with \"/\" Default: " + webctx);
 		options.addOption( "h", "help", false, "Displays help." );
-		options.addOption( "p", "port", true, "Webserver port. Default: " + port );
 		options.addOption( "w", "webroot", true, "Webroot to use. Will be created if webroot/WEB-INF does not exist. Default: " + webroot );
 		options.addOption( "l", "logfile", true, "Log file to use. Will be created if it does not exist. Default: ./<context>.log" );
 		options.addOption( "s", "servername", true, "Name of this instance. Defaults to either \"myna\" or the value of <context> if defined" );
+		
+		options.addOption( "p", "port", true, "HTTP port. Set to 0 to disable HTTP. Default: " + port );
+		options.addOption( "sp", "ssl-port", true, "SSL (HTTPS) port. Set to 0 to disable SSL, Default: 0");
+		
+		options.addOption( "ks", "keystore", true, "keystore path. Default: <webroot>/WEB-INF/myna/myna_keystore");
+		options.addOption( "ksp", "ks-pass", true, "keystore password. Default: " + ksPass );
+		options.addOption( "ksa", "ks-alias", true, "certificate alias. Default: " + ksAlias );
 		
 		modeOptions.add("upgrade");
 		modeOptions.add("install");
@@ -114,6 +125,27 @@ public class MynaInstaller
 			if( line.hasOption( "webroot" ) ) {
 				webroot=line.getOptionValue( "webroot" );
 			}
+			
+			//ssl stuff
+			if( line.hasOption( "ssl-port" ) ) {
+				sslPort = Integer.parseInt(line.getOptionValue( "ssl-port" ));
+			}
+			
+			if( line.hasOption( "ks-pass" ) ) {
+				ksPass=line.getOptionValue( "ks-pass" );
+			}
+			if( line.hasOption( "ks-alias" ) ) {
+				ksAlias=line.getOptionValue( "ks-alias" );
+			}
+			if( line.hasOption( "keystore" ) ) {
+				keystore=line.getOptionValue( "keystore" );
+			} else {
+				String appBase = new File(webroot).getCanonicalPath();
+				if (keystore == null){
+					keystore = appBase+"/WEB-INF/myna/myna_keystore";
+				}	
+			}
+			
 			javaOpts = line.getArgList();
 		} 
 		catch (ParseException exp ) {
@@ -147,7 +179,12 @@ public class MynaInstaller
 				.replaceAll("\\{webroot\\}",Matcher.quoteReplacement(webroot))
 				.replaceAll("\\{logfile\\}",Matcher.quoteReplacement(logFile))
 				.replaceAll("\\{javahome\\}",Matcher.quoteReplacement(javaHome))
-				.replaceAll("\\{port\\}",new Integer(port).toString());
+				.replaceAll("\\{port\\}",new Integer(port).toString())
+				.replaceAll("\\{sslPort\\}",new Integer(sslPort).toString())
+				.replaceAll("\\{keystore\\}",Matcher.quoteReplacement(keystore))
+				.replaceAll("\\{ksPass\\}",Matcher.quoteReplacement(ksPass))
+				.replaceAll("\\{ksAlias\\}",Matcher.quoteReplacement(ksAlias))
+				;
 				
 				File scriptFile =new File(
 					wrFile.toURI().resolve("WEB-INF/myna/install/start_" + serverName+".bat")
@@ -165,6 +202,10 @@ public class MynaInstaller
 				System.out.println("myna_home=" + webroot);
 				System.out.println("logfile=" + logFile);
 				
+				System.out.println("sslPort=" +sslPort);
+				System.out.println("keyStore=" + keystore);
+				System.out.println("ksPass=" + ksPass);
+				System.out.println("ksAlias=" + ksAlias);
 				
 				System.out.println("\nEdit this file to customize startup behavior");
 				
@@ -189,7 +230,11 @@ public class MynaInstaller
 				.replaceAll("\\{webroot\\}",webroot)
 				.replaceAll("\\{javahome\\}",javaHome)
 				.replaceAll("\\{logfile\\}",logFile)
-				.replaceAll("\\{port\\}",new Integer(port).toString());
+				.replaceAll("\\{port\\}",new Integer(port).toString())
+				.replaceAll("\\{sslPort\\}",new Integer(sslPort).toString())
+				.replaceAll("\\{keystore\\}",keystore)
+				.replaceAll("\\{ksPass\\}",ksPass)
+				.replaceAll("\\{ksAlias\\}",ksAlias);
 				
 				File scriptFile =new File(
 					wrFile.toURI().resolve("WEB-INF/myna/install/" + serverName)
@@ -216,6 +261,11 @@ public class MynaInstaller
 				System.out.println("port=" + port);
 				System.out.println("myna_home=" + webroot);
 				System.out.println("logfile=" + logFile);
+				
+				System.out.println("sslPort=" +sslPort);
+				System.out.println("keyStore=" + keystore);
+				System.out.println("ksPass=" + ksPass);
+				System.out.println("ksAlias=" + ksAlias);
 				
 				
 				System.out.println("\nEdit this file to customize startup behavior");

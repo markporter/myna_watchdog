@@ -836,7 +836,7 @@ Myna.Validation.prototype.validatorFunctions={
 				'Exceeded maximum length for {label} ({max}) by {diff}'.format({
 					label:params.label,
 					max:max,
-					diff: String(bean.data[params.property]).length-max
+					diff: String(params.value).length-max
 				}),
 				params.property
 			)

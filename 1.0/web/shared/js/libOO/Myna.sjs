@@ -1052,7 +1052,7 @@ if (!Myna) var Myna={}
 						})
 				}
 					data.jsStack=(e.rhinoException || e.stack)?Myna.parseJsStack(e):Myna.dump(e);
-					data.javaStack=e.rhinoException?Myna.parseJavaStack(e):"unavailable";	
+					data.javaStack=e.rhinoException?Myna.parseJavaStack(e,"&nbsp;".repeat(5)):["unavailable"];	
 				if (e.query){
 					data.query = Myna.dump(e.query)	
 				}	
@@ -1815,7 +1815,29 @@ if (!Myna) var Myna={}
 		result by line
 	 
 	*/
-	Myna.parseJavaStack=function Myna_parseJavaStack(e){
+	Myna.parseJavaStack=function Myna_parseJavaStack(e,spacer){
+		var array = [];
+        
+        var dumpOne = function(exception, prefix) {
+            var t = exception.getStackTrace().map(function(e){
+                return spacer+"at " + e;
+            });
+            var firstLine = String(exception);
+            if (prefix)
+                firstLine = prefix + firstLine;
+            t.unshift(firstLine);
+            return t;
+        }
+        
+        var javaException = e.rhinoException;
+        var prefix = "";
+        while (javaException != null) {
+            array = array.concat(dumpOne(javaException, prefix))
+            javaException = javaException.getCause();
+            prefix = "Caused by: ";
+        }
+        
+        return array;
 		
 		/* forvar originalTrace = new java.io.StringWriter();
 		var pw = new java.io.PrintWriter(originalTrace);
@@ -1827,10 +1849,10 @@ if (!Myna) var Myna={}
 			return e.length;
 		}) */
 		
-		return e.rhinoException.getStackTrace()
-		.map(function(e){
-			return String(e)
-		})
+		// return e.rhinoException.getStackTrace()
+		// .map(function(e){
+		// 	return String(e)
+		// })
 	}
 /* Function: parseJsStack 
 	returns an array of strings representing each line of the javascript stack 
@@ -2343,7 +2365,7 @@ if (!Myna) var Myna={}
 		t.transform(source, result);
 		var xmlString = result.getWriter().toString();
 		return xmlString
-			.replace(/<(STYLE|SCRIPT)><!\[CDATA\[/ig,"<$1>/*<![CDATA[*/")
+			.replace(/<(STYLE|SCRIPT)><\!\[CDATA\[/ig,"<$1>/*<![CDATA[*/")
 			.replace(/\]\]><.(STYLE|SCRIPT)>/ig,"/*]]>*/</$1>");
 		
 	}

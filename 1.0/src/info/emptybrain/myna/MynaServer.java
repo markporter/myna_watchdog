@@ -82,8 +82,6 @@ public class MynaServer extends Thread
 	{
 		
 		modeOptions.add("server");
-		modeOptions.add("upgrade");
-		modeOptions.add("install");
 		classUrl = MynaServer.class.getResource("MynaServer.class").toString();
 		isJar = (classUrl.indexOf("jar") == 0);
 	
@@ -101,9 +99,8 @@ public class MynaServer extends Thread
 		Options options = new Options();
 		options.addOption( "c", "context", true, "Webapp context. Must Start with \"/\" Default: " + webctx);
 		options.addOption( "h", "help", false, "Displays help." );
-		options.addOption( "p", "port", true, "Webserver port. Default: " + port );
-		//ssl stuff
-		options.addOption( "sp", "ssl-port", true, "SSL Webserver port. set 0 to disable ssl, Default: 0");
+		options.addOption( "p", "port", true, "HTTP port. Set to 0 to disable HTTP. Default: " + port );
+		options.addOption( "sp", "ssl-port", true, "SSL (HTTPS) port. Set to 0 to disable SSL, Default: 0");
 		options.addOption( "ks", "keystore", true, "keystore path. Default: <webroot>/WEB-INF/myna/myna_keystore");
 		options.addOption( "ksp", "ks-pass", true, "keystore password. Default: " + ksPass );
 		options.addOption( "ksa", "ks-alias", true, "certificate alias. Default: " + ksAlias );

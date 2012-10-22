@@ -145,7 +145,6 @@ Group: FlightPath  {
       File: Behavior: MynaAuth  (/home/mark/myna/web/shared/js/FlightPath/framework/behaviors/controllers/myna_auth.sjs)
       }  # Group: Framework Behaviors
 
-   File: Layouts  (/home/mark/myna/web/shared/js/FlightPath/framework/Layouts.txt)
    }  # Group: FlightPath
 
 Group: Index  {

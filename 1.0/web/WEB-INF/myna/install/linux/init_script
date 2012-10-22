@@ -20,10 +20,10 @@ web_inf=$(readlink -m $webroot/WEB-INF)
 
 #SSL
 #set this to something non-zero to enable https
-ssl_port=0
-keystore=$web_inf/myna/myna_keystore
-ks_pass=changeit
-ks_alias=myna
+ssl_port={sslPort}
+keystore="{keystore}"
+ks_pass="{ksPass}"
+ks_alias="{ksAlias}"
 
 
 myna_cp="-cp $web_inf/lib/*:$web_inf/classes/:/usr/local/bin"
@@ -51,7 +51,7 @@ no_watchdog_args="\
 #	myna_args	
 myna_args="\
 	-m server \
-	-c / \
+	-c $context \
 	-p $port \
 	-sp $ssl_port \
 	-ks $keystore \

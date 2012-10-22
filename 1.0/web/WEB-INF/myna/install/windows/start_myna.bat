@@ -11,10 +11,10 @@ set logfile={logfile}
 
 REM SSL settings
 REM set this to something non-zero to enable https
-set ssl_port=0
-set keystore=%webroot%\WEB-INF\myna\myna_keystore
-set ks_pass=changeit
-set ks_alias=myna
+set ssl_port={sslPort}
+set keystore={keystore}
+set ks_pass={ksPass}
+set ks_alias={ksAlias}
 
 cd %webroot%\WEB-INF
 set java={javahome}\bin\java.exe

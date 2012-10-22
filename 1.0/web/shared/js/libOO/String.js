@@ -1377,7 +1377,7 @@
 			if (!opt_reviver){
 				opt_reviver=function(key,value){
 					if (value && typeof value === "string"){
-						var parts =value.match(/^\/Date\((\d+)\)\/$/); 
+						var parts =value.match(/^\/Date\((\-?\d+)\)\/$/); 
 						if (parts){
 							return new Date(parseInt(parts[1])) 
 						} else return value;

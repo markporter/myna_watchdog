@@ -12,6 +12,7 @@
 		name:"test",
 		tags:"test,query,output",
 		refreshInterval:Date.getInterval(Date.MINUTE,3),
+		includeContent:true,
 		code:function(sleepTime){
 			//an artificially long process
 			Myna.sleep(Date.getInterval("s",sleepTime));
@@ -29,6 +30,9 @@
 */
 /* Property: tags
 	*Optional* A comma separated list of strings associated with this cache object.
+*/
+/* Property: includeContent
+	*Optional, default false* set to "true" to include generated output in the cache
 */
 /* Property: refreshInterval
 	*Optional, default 1 hour*
@@ -78,6 +82,10 @@ if (!Myna) var Myna={}
 									multiple cache objects from other threads. If 
 									$application.appname is defined, it is 
 									automatically added as a tag.
+
+		includeContent		-		*Optional, default false*
+									If true, content created by this function will be 
+									captured, cached, and replayed on <call>
 									
 		refreshInterval		-		*Optional, default 1 hour*
 									Cache values older than this interval will be 
@@ -166,27 +174,30 @@ if (!Myna) var Myna={}
 		
 		var time;
 		if (c.get(key)) {
-			time = c.getElementAttributes(key).getCreateTime()
+			time = c.getElementAttributes(key).getCreateTime();
 		}
 		var exec = function(cacheObj,args,key,time){
+			
 			var c = org.apache.jcs.JCS.getInstance("value");
 			var cacheValue = c.get(key); 
-			var gotLock =Myna.lock(key,0, function(){
+			var gotLock =Myna.lock(key,Date.getInterval(Date.DAY,1)/1000, function(){
 				/* 
 				Now that we have a lock, check if another thread has 
 				updated the cache
 				*/ 
-				
+				cacheValue = c.get(key);
+			
+				var startContent = $this.includeContent?$res.clear():"";	
 				//clean the function
-				var f = eval("("+cacheObj.code+")")
+				var f = eval("("+cacheObj.code+")");
 				if (!cacheValue //no value
 					||	c.getElementAttributes(key).getCreateTime() == time //value hasn't changed
 				){
 					cacheValue={
 						value:f.apply(cacheObj,args),
-						content:$res.clear()
-					}
-					
+						content:$this.includeContent?$res.clear():""
+					};
+					$res.print(startContent);
 					var att = c.getDefaultElementAttributes();
 					//set max idle time to  
 					if (cacheObj.maxIdleInterval != -1){
@@ -196,13 +207,13 @@ if (!Myna) var Myna={}
 					
 				} 
 				
-			})
+			});
 			return cacheValue||c.get(key);
-		}
+		};
 		
-		if (localContext) return exec($this,args,key,time)
-		return new Myna.Thread(exec,[$this,args,key,time])
-	}
+		if (localContext) return exec($this,args,key,time);
+		return new Myna.Thread(exec,[$this,args,key,time]);
+	};
 /* Function: refresh 
 	refresh this cache and return cached value object;
 	
@@ -305,7 +316,7 @@ if (!Myna) var Myna={}
 			throw new Error("Unable to create or retrieve cache value for cache '" +this.name+ "'");
 		}
 		//$profiler.mark("got here 299")
-		if (cacheObj.content) Myna.print(cacheObj.content)
+		if ($this.includeContent && cacheObj.content) Myna.print(cacheObj.content)
 		return cacheObj.value
 	}
 /* Function: getCachedValues

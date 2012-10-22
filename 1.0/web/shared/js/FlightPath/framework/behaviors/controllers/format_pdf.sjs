@@ -6,8 +6,8 @@
 	suppressed and instead the content produced is converted to a PDF file and 
 	served to the browser. 
 	
-	If $page.title is defined the filename will be <$page.title>.pdf
-	otherwise, the filename will be <controller name>.<action name>.pdf
+	If params.filename is defined the pdf will be served for download with that 
+	name.
 	
 	 
 	
@@ -17,8 +17,9 @@
 			this.applyBehavior("FormatPdf")
 		}
 		
-		// calling this with ?format=pdf will cause it to return a PDF document
-		// containing the view output with the name "All Items.pdf"
+		// calling this with ?format=pdf will cause it to return an inline PDF document
+		// containing the view output. 
+		// Passing filename=output.pdf will cause the PDF with that name to be downloaded
 		function list(params){
 			this.$page.title = "All Items"
 			this.set("rows",this.model.findBeans())
@@ -32,14 +33,12 @@ function init(){
 		{
 			when:"afterRender"
 		}
-	)
+	);
 }
 
 function _formatPdf(action, params){
-	var filename= 
-		params.filename
-		|| (this.$page.title + ".pdf")
-		|| (params.controller + "." + params.action  + ".pdf")
+
+	var filename=params.filename;
 	if (params.format =="pdf"){
 		this.rendered=false;
 		this.renderContent(
@@ -53,6 +52,13 @@ function _formatPdf(action, params){
 			"application/pdf",
 			filename
 		);
+		/*this.renderContent(
+			Myna.htmlToXhtml(
+				$res.clear()
+			),
+			"text/xml"
+		);*/
+		
 		return false;
 	}
 }
