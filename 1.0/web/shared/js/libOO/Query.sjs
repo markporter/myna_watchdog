@@ -309,10 +309,10 @@ if (!Myna) var Myna={};
 		if (optionsOrResultSet instanceof java.sql.ResultSet){
 			this.parseResultSet(optionsOrResultSet);
 		} else if (ObjectLib.typeOf(optionsOrResultSet) == 'object') {
-			if (optionsOrResultSet.hasOwnProperty("ds")){
+			if (Object.prototype.hasOwnProperty.call(optionsOrResultSet,"ds")){
 				optionsOrResultSet.dataSource = optionsOrResultSet.ds;
 			}
-			if (optionsOrResultSet.hasOwnProperty("rowHandler")){
+			if (Object.prototype.hasOwnProperty.call(optionsOrResultSet,"rowHandler")){
 				qry.rowHandler = optionsOrResultSet.rowHandler;
 			}
 			optionsOrResultSet.applyTo(qry,true);

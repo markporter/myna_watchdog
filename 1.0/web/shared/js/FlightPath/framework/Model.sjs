@@ -1232,9 +1232,11 @@ Model.prototype={
 								refers to. This is almost always the <idField> 
 								of that Model
 								
-			localKey		-	*Optional, default file_case model_name +"_id" * 
+			localKey		-	*Optional, default file_case alias +"_id" * 
 								The field in this Model that contains the 
-								foreign key value.
+								foreign key value. This defaults to the 
+								underbar(_) separated alias of the associated 
+								model + "_id"
 								
 			cascade		-	*Optional, default false*
 								This affects the treatment of the related model when a 

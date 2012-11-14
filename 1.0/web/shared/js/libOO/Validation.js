@@ -183,7 +183,7 @@ if (!Myna) var Myna={}
 	Myna.Validation.prototype.addValidators=function addValidators(validator_config){
 		var $this = this;
 		for (var p in validator_config){
-			if (validator_config.hasOwnProperty(p)){
+			if (Object.prototype.hasOwnProperty.call(validator_config,p)){
 				var property  =p;
 				var vDef = validator_config[p];
 				for (p in vDef){
@@ -687,12 +687,12 @@ if (!Myna) var Myna={}
 		} else {
 			var properties=[]
 			for (property in obj){
-				if (obj.hasOwnProperty(property)){
+				if (Object.prototype.hasOwnProperty.call(obj,property)){
 					properties.appendUnique(property)
 				}
 			}
 			for (property in $this.validators){
-				if ($this.validators.hasOwnProperty(property)){
+				if (Object.prototype.hasOwnProperty.call($this.validators,property)){
 					properties.appendUnique(property)
 				}
 			}

@@ -97,7 +97,7 @@ var $server={
 	*/
 	get serverUrl(){
 		if (!$server.request) return "";
-		if ($req.headers.getKeys().join().listContains("X-Forwarded-Host")){
+		if ($req.headers.getKeys().join().listContains("x-forwarded-host")){
 				
 			var proto = "http";
 			if ("x-forwarded-proto" in $req.headers){

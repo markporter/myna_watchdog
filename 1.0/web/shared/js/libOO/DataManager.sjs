@@ -743,9 +743,11 @@ if (!Myna) var Myna={}
 										refers to. This is almost always the primary key 
 										of that table
 										
-					localKey		-	*Optional, default modelname +"_id" * 
+					localKey		-	*Optional, default alias +"_id" * 
 										The column in this table that contains the 
-										foreign key value.
+										foreign key value. This defaults to the 
+										underbar(_) separated alias of the 
+										associated model +"_id"
 										
 					cascade		-	*Optional, default false*
 										This affects the treatment of the related model when a 

@@ -302,8 +302,10 @@
 		//print("<hr> " + a +" to " + b + " <p>")
 		
 		compare = function(a,b){
-			a = (parseInt(a,10) == a)?parseInt(a,10):a;
-			b = (parseInt(b,10) == b)?parseInt(b,10):b;
+			if (parseInt(a,10) == a && parseInt(b,10) == b){
+				a= parseInt(a,10);
+				b= parseInt(b,10);
+			}
 			//print("comparing " + a + " to " + b +" <br>")
 			if ( a < b) {
 				return -1;
@@ -311,25 +313,25 @@
 			if ( a > b){
 				return 1;	
 			}
+
 			return 0;
 		};
 		
 		for (x=0;x < left.length;++x){
 			rightPart = right[x];
 			if (rightPart === undefined) {
-				 retVal = 0;
+				retVal = 0;
 				continue; 
 			}
 			leftPart = left[x];
 			if (leftPart === undefined) {
-				 retVal = 0;
+				retVal = 0;
 				continue; 
 			}
 			
 			retVal=compare(leftPart,rightPart);
 			if (retVal !== 0) {break;}
 		}
-		if (retVal === 0) {retVal =compare(String(a),String(b));}
 		//print("returning " + retVal)
 		return retVal;
 	};
