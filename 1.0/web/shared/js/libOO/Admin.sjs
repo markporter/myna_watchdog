@@ -357,7 +357,7 @@ Myna.Admin ={
 			var cronProperties = Myna.loadProperties("/WEB-INF/classes/cron.properties");
 			
 			return cronProperties.map(function(v,k){
-					return v.parseJson()
+				return v.parseJson()
 			})
 			/* return new Myna.DataSet({
 				columns:[
@@ -402,15 +402,17 @@ Myna.Admin ={
 		*/
 		saveTask:function(config,isNew){
 			
+			config.isNew = isNew
+			var v =this.taskValidation.validate(config)
+			delete config.isNew
 			
-			config.isNew = isNew;
-			var v = this.validateDataSource(config,isNew);
+			
 			
 			if (v.success){
 				var cronProperties = Myna.loadProperties("/WEB-INF/classes/cron.properties");
 				cronProperties[config.name] = config.toJson();
-				Myna.saveProperties(config, "/WEB-INF/classes/cron.properties");
-				include("/shared/js/libOO/reload_cron.sjs",{name:config.name})
+				Myna.saveProperties(cronProperties, "/WEB-INF/classes/cron.properties");
+				Myna.include("/shared/js/libOO/reload_cron.sjs",{name:config.name})
 			}
 			
 			return v
@@ -423,15 +425,12 @@ Myna.Admin ={
 			 
 		*/
 		removeTask:function(name){
-			/* if (v.success){
-				var cronProperties = Myna.loadProperties("/WEB-INF/classes/cron.properties");
-				delete cronProperties[name];
-				Myna.saveProperties(config, "/WEB-INF/classes/cron.properties");
-				include("/shared/js/libOO/reload_cron.sjs",{name:name})
-			}
-			
-			return v */
+			var cronProperties = Myna.loadProperties("/WEB-INF/classes/cron.properties");
+			delete cronProperties[name];
+			Myna.saveProperties(cronProperties, "/WEB-INF/classes/cron.properties");
+			include("/shared/js/libOO/reload_cron.sjs",{name:name})
 		},
+	
 	
 }
 
