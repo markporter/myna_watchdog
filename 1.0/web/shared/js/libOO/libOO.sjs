@@ -24,6 +24,7 @@
 	"Database.sjs",
 	"Table.sjs",
 	"Thread.sjs",
+	"ThreadPool.sjs",
 	"Mail.sjs",
 	"HttpConnection.sjs",
 	"WebService.sjs",

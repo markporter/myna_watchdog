@@ -6,7 +6,7 @@
 		tasks such as DataSource and Scheduled Task management 
 		
 */
-if (!Myna) var Myna={}
+if (!Myna) var Myna={};
 Myna.Admin ={
 /* Data Sources */
 	
@@ -31,7 +31,7 @@ Myna.Admin ={
 						v.addError(
 							"A DataSource '{0}' already exists. Please choose another name.".format(params.value),
 							"driver"
-						)
+						);
 					}
 					return v;
 				}
@@ -56,7 +56,7 @@ Myna.Admin ={
 						try {
 							java.lang.Class.forName(params.value);
 						} catch(e) {
-							v.addError("Driver '{0}' is not available in the classpath.".format(params.value),"driver")
+							v.addError("Driver '{0}' is not available in the classpath.".format(params.value),"driver");
 						}
 						
 					}
@@ -73,7 +73,7 @@ Myna.Admin ={
 				type:"string",
 				required:{
 					when:function(params){
-						return params.obj.location == "file"
+						return params.obj.location == "file";
 					},
 					message:"File is required when location is 'file'"
 				}
@@ -82,7 +82,7 @@ Myna.Admin ={
 				type:"string",
 				required:{
 					when:function(params){
-						return params.obj.location == "network"
+						return params.obj.location == "network";
 					},
 					message:"Server is required when location is 'network'"
 				}
@@ -98,7 +98,7 @@ Myna.Admin ={
 				type:"numeric", 
 				required:{
 					when:function(params){
-						return params.obj.location == "network"
+						return params.obj.location == "network";
 					},
 					message:"Port is required when location is 'network'"
 				},
@@ -106,7 +106,7 @@ Myna.Admin ={
 					min:1024, 
 					max:65535,
 					when:function(params){
-						return params.obj.location == "network"
+						return params.obj.location == "network";
 					},
 					
 				},
@@ -145,7 +145,7 @@ Myna.Admin ={
 				type:"h2",
 				location:"file",
 				driver:"org.h2.Driver"
-			},true)
+			},true);
 		},
 	/* Function: dsExists 
 		returns true if a datasource with the supplied name exists.
@@ -155,8 +155,8 @@ Myna.Admin ={
 		*/
 		dsExists:function(name){
 			return this.getDataSources().contains(function(ds){
-				return ds.name == name
-			})
+				return ds.name == name;
+			});
 		},
 	/* Function: getDataSources
 		returns an array of DS structures currently configured
@@ -168,9 +168,9 @@ Myna.Admin ={
 			return dataSources.getKeys().map(function(key){
 				return Myna.JavaUtils.mapToObject(dataSources[key])
 					.map(function(v,k,o){
-						return parseInt(v) == v?parseInt(v):v  
+						return parseInt(v,10) == v?parseInt(v,10):v;  
 					});
-			})
+			});
 		},
 		
 	/* Function: saveDataSource 
@@ -245,16 +245,16 @@ Myna.Admin ={
 				
 		*/
 		saveDataSource:function(config,isNew){
-			var dprops = Myna.Database.dbProperties[config.type]
+			var dprops = Myna.Database.dbProperties[config.type];
 			config.setDefaultProperties({
 				driver:(function(){
 					if (dprops){
-						return dprops.dsInfo.driver	
+						return dprops.dsInfo.driver;	
 					}
 				})(),
 				location:"network",
 				case_sensitive:0,
-			})
+			});
 			
 			config.isNew = true;
 			var v = this.validateDataSource(config,isNew);
@@ -264,10 +264,10 @@ Myna.Admin ={
 				$server_gateway.loadDataSource(new Myna.File($server.rootDir + "WEB-INF/myna/ds/" + config.name + ".ds").javaFile,true);
 			}
 			
-			return v
+			return v;
 		},
 	/* Function: validateDataSource 
-		validates a data source config 	
+		validates a data source config	
 	
 		Parameters:
 			config		-	JS Object representing the data for a data source, see <saveDataSource>
@@ -278,25 +278,25 @@ Myna.Admin ={
 				
 		*/
 		validateDataSource:function(config,isNew){
-			var v= new Myna.ValidationResult()
+			var v= new Myna.ValidationResult();
 			if (!config) {
-				v.addError("No Datasource configuration provided.")
-				return v
+				v.addError("No Datasource configuration provided.");
+				return v;
 			}
-			var dprops = Myna.Database.dbProperties[config.type]
+			var dprops = Myna.Database.dbProperties[config.type];
 			
 			if (!("url" in config) || !config.url){
-				config.setDefaultProperties(dprops.dsInfo)
+				config.setDefaultProperties(dprops.dsInfo);
 				if (config.location == "file"){
-					config.url=dprops.dsInfo.file_url.format(config)	
+					config.url=dprops.dsInfo.file_url.format(config);	
 				} else {
-					config.url=dprops.dsInfo.url.format(config)
+					config.url=dprops.dsInfo.url.format(config);
 				}
 			}
-			config.isNew = isNew
-			v.merge(this.dsValidation.validate(config))
-			delete config.isNew
-			return v
+			config.isNew = isNew;
+			v.merge(this.dsValidation.validate(config));
+			delete config.isNew;
+			return v;
 		},
 /* Scheduled Tasks */
 	/* Property: taskValidation
@@ -313,16 +313,6 @@ Myna.Admin ={
 					pattern:/^[A-Za-z]\w*$/,
 					message:"Invalid name format. Must start with a letter, and only contain letters, numbers or the _ character",
 				}, */
-				custom:function(params){
-					var v = new Myna.ValidationResult();
-					if (params.obj.isNew && Myna.Admin.dsExists(params.valuename)){
-						v.addError(
-							"A DataSource '{0}' already exists. Please choose another name.".format(params.value),
-							"driver"
-						)
-					}
-					return v;
-				},
 				custom:function(o){
 					var v = new Myna.ValidationResult();
 					if (o.obj.isNew){
@@ -343,12 +333,9 @@ Myna.Admin ={
 				list:{
 					oneOf:"Simple,Hourly,Daily,Weekly,MonthlyByDate,MonthlyByWeekday,Yearly".split(",")
 				}
-			},
+			}
 			
-		})/* .setDefaults({
-			type:"Simple",
-			start_date:function(){ return new Date()}
-		}) */,
+		}),
 	/* Function: getTasks
 		returns a JS object where the keys are task names and the values are task configs
 			
@@ -357,8 +344,8 @@ Myna.Admin ={
 			var cronProperties = Myna.loadProperties("/WEB-INF/classes/cron.properties");
 			
 			return cronProperties.map(function(v,k){
-				return v.parseJson()
-			})
+				return v.parseJson();
+			});
 			/* return new Myna.DataSet({
 				columns:[
 					"name",
@@ -402,9 +389,9 @@ Myna.Admin ={
 		*/
 		saveTask:function(config,isNew){
 			
-			config.isNew = isNew
-			var v =this.taskValidation.validate(config)
-			delete config.isNew
+			config.isNew = isNew;
+			var v =this.taskValidation.validate(config);
+			delete config.isNew;
 			
 			
 			
@@ -412,10 +399,10 @@ Myna.Admin ={
 				var cronProperties = Myna.loadProperties("/WEB-INF/classes/cron.properties");
 				cronProperties[config.name] = config.toJson();
 				Myna.saveProperties(cronProperties, "/WEB-INF/classes/cron.properties");
-				Myna.include("/shared/js/libOO/reload_cron.sjs",{name:config.name})
+				Myna.include("/shared/js/libOO/reload_cron.sjs",{name:config.name});
 			}
 			
-			return v
+			return v;
 		},
 	/* Function: removeTask 
 		removes a task,
@@ -428,10 +415,10 @@ Myna.Admin ={
 			var cronProperties = Myna.loadProperties("/WEB-INF/classes/cron.properties");
 			delete cronProperties[name];
 			Myna.saveProperties(cronProperties, "/WEB-INF/classes/cron.properties");
-			include("/shared/js/libOO/reload_cron.sjs",{name:name})
+			include("/shared/js/libOO/reload_cron.sjs",{name:name});
 		},
 	
 	
-}
+};
 
 	

@@ -13,10 +13,10 @@ auth_type				-	name of the this config. This should be the same as the config's
 							filename
 adapter				-	"ldap"
 server					-	Server and initial subtree to connect to.
-							 > ldap://server.yourdomain.com:389/o=top,ou=people
-							 > ldaps://server.yourdomain.com:636/o=top,ou=people
-							 Note: AD needs to have the domain translated to initial context
-							 > my.domain.com becomes ldap://my.domain.com:389/dc=my,dc=domain,dc=com
+							> ldap://server.yourdomain.com:389/o=top,ou=people
+							> ldaps://server.yourdomain.com:636/o=top,ou=people
+							Note: AD needs to have the domain translated to initial context
+							> my.domain.com becomes ldap://my.domain.com:389/dc=my,dc=domain,dc=com
 search	_columns		-	a comma separated list of ldap properties to use when 
 							searching this adapter
 map						-	object that maps Myna User properties to ldap properties. 
@@ -65,25 +65,25 @@ administrator
 
 */
 
-var type="ldap"
+var type="ldap";
 
 //check the config file for needed values
 this.config.checkRequired([
 	"server",
 	"search_columns",
 	"map"	
-])
+]);
 this.config.map.checkRequired([
-	 "login",
-	 "first_name",
-	 "last_name"
-])
+	"login",
+	"first_name",
+	"last_name"
+]);
 
 function getLdap(){
 	var ldap;
 	if (this.config.username){
 		if (this.config.ad_domain && !/@/.test(this.config.username)) {
-			  this.config.username +="@" +this.config.ad_domain;
+			this.config.username +="@" +this.config.ad_domain;
 		}								
 		ldap = new Myna.Ldap(this.config.server, this.config.username,this.config.password);
 	} else {
@@ -104,13 +104,13 @@ function getDN(username){
 	var $this = this;
 	var searchString="(cn="+username+")";
 	if (Object.prototype.hasOwnProperty.call($this.config,"filter")){
-		 searchString = "(&" + $this.config.filter +searchString + ")"
+		searchString = "(&" + $this.config.filter +searchString + ")";
 	}
 	var users = getLdap().search(searchString);
 	if (users.length == 1) {
 		var dn= users[0].name;
 		if ($this.config.server.listLen("/")>1){
-			dn+=","+$this.config.server.listLast("/")	
+			dn+=","+$this.config.server.listLast("/");	
 		}
 		return dn;
 	}
@@ -122,14 +122,14 @@ function getDN(username){
 
 function isCorrectPassword(username,password){
 	if (this.config.ad_domain){
-		 dn = username +"@"+this.config.ad_domain;
+		dn = username +"@"+this.config.ad_domain;
 	} else {
-		 var dn = this.getDN(username);
-		 
-		 if (!dn) {
-		 	 Myna.log("AUTH","LDAP: unable to find user " + username +" in LDAP",Myna.dump(this));
-		 	 return false;
-		 }
+		var dn = this.getDN(username);
+
+		if (!dn) {
+			Myna.log("AUTH","LDAP: unable to find user " + username +" in LDAP",Myna.dump(this));
+			return false;
+		}
 	}
 		 
 	//try to auth against the ldap server, and serch for this dn
@@ -199,7 +199,7 @@ function getUserByLogin(login){
 	var $this = this;
 	var qry ="("+ $this.config.map.login+ "="+login+")";
 		
-	if ($this.config.hasOwnProperty("filter")){
+	if (Object.prototype.hasOwnProperty.call($this.config,"filter")){
 		  qry = "(&" + $this.config.filter + qry + ")"
 	}
 		  

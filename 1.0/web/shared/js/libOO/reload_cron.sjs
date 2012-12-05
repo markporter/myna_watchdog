@@ -6,14 +6,14 @@ var gotlock =Myna.lock("MYNA_ADMIN:reload_cron",0,function(){
 		cronProperties
 		.filter(function(propJson,name){
 			if($this.name){
-				return name == $this.name
+				return name == $this.name;
 			} else {
-				return true
+				return true;
 			}
 		})
 		.forEach(function(propJson,name){
 			cronFound = true;
-			$profiler.mark("Loading Cron: " + name+", waiting for lock")
+			$profiler.mark("Loading Cron: " + name+", waiting for lock");
 			try{
 				// this isn't necessary any more, ow that threads run faster, with less memory
 				/* var threadPermit = Packages.info.emptybrain.myna.ScriptTimerTask.threadPermit
@@ -31,18 +31,20 @@ var gotlock =Myna.lock("MYNA_ADMIN:reload_cron",0,function(){
 					timer.cancel();
 					timer.purge();
 				}
-				if (parseInt(cron.is_active)){
+				if (parseInt(cron.is_active,10)){
 					timer = new java.util.Timer();
 					$server_gateway.cron.put(name,timer);
 					var task = new Packages.info.emptybrain.myna.ScriptTimerTask();
 					task.config = propJson;
 					timer.schedule(task,new Date());
+				} else if (timer){//we were previously active
+					Myna.log("task","Disabling task '{0}'".format(name));
 				}
 			} catch(e){
-				java.lang.System.out.println("Loading cron: " + e)
+				java.lang.System.out.println("Loading cron: " + e);
 				Myna.log("error","Cron: " + name +":" +e,Myna.formatError(e));
 			}
-		})
+		});
 		//cancel deleted cron
 		if ($this.name && !cronFound){
 			var timer = $server_gateway.cron.get($this.name);
@@ -53,8 +55,8 @@ var gotlock =Myna.lock("MYNA_ADMIN:reload_cron",0,function(){
 			}
 		}
 	}
-})
+});
 if (!gotlock) {
-	Myna.printConsole("============================= failed lock ===================================")
-	throw new Error("Unable to reload cron due to previous reload in progress")
+	Myna.printConsole("============================= failed lock ===================================");
+	throw new Error("Unable to reload cron due to previous reload in progress");
 }

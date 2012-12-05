@@ -50,6 +50,8 @@ public class MynaThread implements java.lang.Runnable{
 	static public java.util.Date 	serverStarted 				= new java.util.Date(); //date object representing the time this server was started
 	
 	static public ConsumerManager	openidConsumerManager; //initialized in init
+
+	static public ExecutorService 		backgroundThreadPool	=Executors.newFixedThreadPool(2);
 /* End static resources */
 
 
@@ -406,7 +408,7 @@ public class MynaThread implements java.lang.Runnable{
 	
 	
 	/**
-	* init loads stanard objects (settings, etc)
+	* init loads standard objects (settings, etc)
 	*
 	*/
 	public void init() throws Exception{
@@ -423,6 +425,8 @@ public class MynaThread implements java.lang.Runnable{
 			loadGeneralProperties();
 			int max_running_threads = Integer.parseInt(generalProperties.getProperty("max_running_threads"));
 			threadPermit = new Semaphore(max_running_threads);
+			int background_thread_pool = Integer.parseInt(generalProperties.getProperty("background_thread_pool"));
+			Executors.newFixedThreadPool(background_thread_pool);
 			manageLocksPermit = new Semaphore(1,true);
 			
 			this.threadHistorySize = Integer.parseInt(generalProperties.getProperty("thread_history_size"));
@@ -862,7 +866,11 @@ public class MynaThread implements java.lang.Runnable{
 	}
 	
 	public void callFunction (String f,Object[] args) throws Exception{
-		runningThreads.add(this);
+		this.isWaiting =true;
+		// runningThreads.add(this);
+		// threadPermit.acquire();
+		this.isWaiting =false;
+
 		runtimeStats.put("threadId",this.toString());
 		runtimeStats.put("started",this.started);
 		this.requestTimeout= Integer.parseInt(generalProperties.getProperty("request_timeout"));
@@ -919,7 +927,9 @@ public class MynaThread implements java.lang.Runnable{
 						
 					} finally {
 							//remove this thread form the running list
+
 							runningThreads.remove(this.mt);
+							//threadPermit.release();
 					}
 					return null;
 				} catch (Exception outer){
@@ -1174,6 +1184,10 @@ public class MynaThread implements java.lang.Runnable{
 		//set defaults for properties not in previous releases
 		if (generalProperties.getProperty("max_running_threads") == null){
 			generalProperties.setProperty("max_running_threads","5");
+			propsChanged=true;
+		}
+		if (generalProperties.getProperty("background_thread_pool") == null){
+			generalProperties.setProperty("background_thread_pool","5");
 			propsChanged=true;
 		}
 		if (generalProperties.getProperty("request_timeout") == null){
@@ -1660,9 +1674,23 @@ public class MynaThread implements java.lang.Runnable{
 	}
 	
 	public Object spawn(String func, Object[] args) throws Exception{
+		MynaThread mt = buildBackgroundThread(func,args);
+		mt.environment.put("RequestThread", true);
+		
+		Thread thread = new Thread(mt);
+		Hashtable retval = new Hashtable();
+		
+		thread.start();
+		
+		retval.put("javaThread",thread);
+		retval.put("mynaThread",mt);
+		return retval;
+	}
+	public MynaThread buildBackgroundThread(String func, Object[] args) throws Exception{
 		MynaThread mt = new MynaThread();
 		mt.environment.put("threadFunctionSource", func);
 		mt.environment.put("threadFunctionArguments", new Vector(java.util.Arrays.asList(args)));
+		mt.environment.put("RequestThread", false);
 		mt.rootDir = rootDir;
 		mt.rootUrl =rootUrl;
 		mt.currentDir =currentDir;
@@ -1677,14 +1705,7 @@ public class MynaThread implements java.lang.Runnable{
 			throw new Exception("thread chains cannot descend more than 5 levels.");
 		} //else {System.err.println("\n\nthis.threadChain="+this.threadChain);}
 		
-		Thread thread = new Thread(mt);
-		Hashtable retval = new Hashtable();
-		
-		thread.start();
-		
-		retval.put("javaThread",thread);
-		retval.put("mynaThread",mt);
-		return retval;
+		return mt;
 	}
    
 	public void run (){
@@ -1692,16 +1713,22 @@ public class MynaThread implements java.lang.Runnable{
 			String f = (String) environment.get("threadFunctionSource");
 			Object [] args = ((Vector)(environment.get("threadFunctionArguments"))).toArray();
 			//System.out.println("thread size=" + this.threadChain.size() +" function:"  + f.substring(0,25));		
+			if ((Boolean) environment.get("RequestThread") == true) {
+				this.isWaiting =true;	
+				runningThreads.add(this);
+				threadPermit.acquire();
+				this.isWaiting =false;	
+			}
+			
 			callFunction(f,args);
-			
-			
-			
 		} catch (Exception e){
 			try {
 				handleError(e);
 			} catch (Exception e2){
 				java.lang.System.err.println(e2);	
 			}
+		}finally{
+			if ((Boolean) environment.get("RequestThread") == true) releaseThreadPermit();
 		}
 	}
    

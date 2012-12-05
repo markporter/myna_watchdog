@@ -393,10 +393,6 @@ var ObjectLib = {}
 				return '{' +
 					
 					ObjectLib.getKeys(obj)
-					
-					/* .filter(function(k){
-						return (typeof obj.hasOwnProperty =="function" && obj.hasOwnProperty(k))
-					}) */
 					.map(function (k) {
 						//abort("got here",obj[k])
 						return	'"' + k + '"' + ':' + ObjectLib.toJson(obj[k]);
@@ -823,7 +819,7 @@ var ObjectLib = {}
 		result.columns = []
 		
 		for (var p in obj){
-			if (!localOnly || obj.hasOwnProperty(p)){
+			if (!localOnly || Object.prototype.hasOwnProperty.call(obj,p)){
 				var value,d;
 				if ("getOwnPropertyDescriptor" in Object){
 					try{

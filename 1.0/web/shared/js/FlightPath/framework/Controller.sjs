@@ -1,3 +1,4 @@
+/*global Myna:false $FP:false $res:false $server:false $application:true*/
 /* Class: Controller
 	In FlightPath, controllers (the C in MVC) are represented by the Controller 
 	class. See <Overview>
@@ -27,10 +28,10 @@
 */
 
 /* Topic: Conventions
-	* 	Controller Names are singular, ProperCase, ex: EmployeeAction
-	* 	Controller File names are in file_case, ending with "_controller", 
+	*	Controller Names are singular, ProperCase, ex: EmployeeAction
+	*	Controller File names are in file_case, ending with "_controller", 
 		ex: app/controllers/employee_action_controller.sjs
-	* 	Controller definitions are discovered in this order: 
+	*	Controller definitions are discovered in this order: 
 		framework/controllers/<controller_name>_controller.sjs, 
 		app/controllers/<controller_name>.sjs, 
 		app/modules/<module_name>/controllers/<controller_name>_controller.sjs
@@ -40,16 +41,16 @@
 	*	init() and any functions starting with "_" are not considered Actions, 
 		and cannot be called from <Routes> 
 	*	Action names are camelCase, ex: changeStartDate()
-	* 	Actions and are typically verbs that might be 
+	*	Actions and are typically verbs that might be 
 		applied to the controller, e.g.EmployeeAction.edit() rather than
 		EmployeeAction.editAction()
 	*	in URLs, controller and action names are in url-case, e.g. employee_action/edit/15
 		or employee-action/edit/15
 	*	The default route for FlightPath will connect a URL of employee_action/edit/15
 		to EmployeeAction.edit({id:15})
-	* 	Controllers will look for a <Model> with the same name as the controller, 
+	*	Controllers will look for a <Model> with the same name as the controller, 
 		and store a reference to it in this.model and this.<ModelName>
-	* 	After executing an Action, Controllers will automatically load the View 
+	*	After executing an Action, Controllers will automatically load the View 
 		with the same name as the action, ex: EmployeeAction.edit() will render 
 		app/views/employee_action/edit.ejs
 	*	Calling <render> or <renderContent> will cancel default view rendering
@@ -129,7 +130,7 @@
 							files. Object entries should be in the form of 
 							{type:"mime/type",src:"url"}. If a URL does NOT 
 							start with "/" or "http" it is assumed to be 
-							relative to app/static/   			
+							relative to app/static/			
 		title			-	*String.* Page Title. 
 							Defaults to $controller.name + "."+$params.action
 		tags			-	*Object Array.*
@@ -217,8 +218,8 @@
 						app/layouts, or false to disable all layouts
 						
 	Detail:
-		 disables global and controller default layouts. If _layout_ is a layout 
-		 name or path, then that will be the only layout applied 
+		disables global and controller default layouts. If _layout_ is a layout 
+		name or path, then that will be the only layout applied 
 	
 	
 	See:
@@ -600,8 +601,9 @@
 		this.$params =params
 		var c = this;
 		var action = params.action;
+		var content = ""
 		if (inline){
-			var content = $res.getContent()
+			content = $res.getContent()
 		}
 		//beforeAction filters
 		if(
@@ -657,8 +659,8 @@
 			}
 		}
 		if (inline){
-			$res.clear()
-			Myna.print(content)
+			$res.clear();
+			Myna.print(content);
 		} 
 		
 		return result;
@@ -905,7 +907,7 @@
 	Directly render content, bypassing default render 
 	
 	Parameters: 
-		data 			-  String content, or binary data from 
+		data			-  String content, or binary data from 
 							<Myna.File.readBinary> or from binary database query 
 							(byte [])
 						

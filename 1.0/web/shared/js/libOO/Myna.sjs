@@ -1693,6 +1693,7 @@ if (!Myna) var Myna={}
 			if (sync){
 				logFunction(reqId,type,label,detail,app_name,log_elapsed,req_elapsed,now);
 			} else {
+				//new Myna.ThreadPool(logFunction,{background:true}).run(reqId,type,label,detail,app_name,log_elapsed,req_elapsed,now);
 				new Myna.Thread(logFunction,[reqId,type,label,detail,app_name,log_elapsed,req_elapsed,now],-90);
 			}
 		 

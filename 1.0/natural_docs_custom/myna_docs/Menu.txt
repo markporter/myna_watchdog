@@ -99,6 +99,7 @@ Group: LibOO  {
    File: Myna.Table  (/home/mark/myna/web/shared/js/libOO/Table.sjs)
    File: Myna.Template  (/home/mark/myna/web/shared/js/libOO/Template.sjs)
    File: Myna.Thread  (/home/mark/myna/web/shared/js/libOO/Thread.sjs)
+   File: Myna.ThreadPool  (/home/mark/myna/web/shared/js/libOO/ThreadPool.sjs)
    File: Myna.Validation  (/home/mark/myna/web/shared/js/libOO/Validation.js)
    File: Myna.ValidationResult  (/home/mark/myna/web/shared/js/libOO/ValidationResult.js)
    File: Myna.WebService  (/home/mark/myna/web/shared/js/libOO/WebService.sjs)

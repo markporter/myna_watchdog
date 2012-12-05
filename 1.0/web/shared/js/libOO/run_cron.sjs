@@ -1,12 +1,6 @@
+/*global Myna:false $req:true $profiler:false $server_gateway:false java:false Packages:false $res:false*/
 $req.timeout=0;
-function log(type, label,detail){
-	$profiler.mark("Task '"+name+"': " +(label||""));
-	Myna.logSync(type,"Task '"+name+"': " +(label||""),detail||"",appname);
-	
-	/*Myna.printConsole("Task " +name+": " +label,<ejs>
-			<%=$server.memToScale($server.memUsed,"m")%>MB Used <%=(($server.memAvailable/$server.memMax)*100).toFixed(2)%>% free memory
-		</ejs>)*/
-}
+
 $profiler.mark("Checking config");
 var now = new Date();
 var config = $req.data["arguments"][0];
@@ -19,8 +13,9 @@ if (//has the end date passed already?
 	Myna.abort();
 }
 
-var name = config.name;
-var appname = "task_"+name.replace(/\W+/g,"_").toLowerCase();
+
+
+var appname = "task_"+config.name.replace(/\W+/g,"_").toLowerCase();
 var detail;
 new Myna.File("/WEB-INF/myna/cron/").createDirectory();
 var shouldRun = false;
@@ -30,16 +25,28 @@ var state={
 	nextRun:false
 };
 if (stateFile.exists()){
-	var curState=stateFile.readString().parseJson();
-	if (curState.config.toJson() == config.toJson()){
-		state = curState;
-		
-		shouldRun =now.add(Date.DAY,-1) < state.nextRun && state.nextRun < now.add(Date.MINUTE,1);
+	try{
+		var curState=stateFile.readString().parseJson();
+		if (curState.config.toJson() == config.toJson()){
+			state = curState;
+			
+			shouldRun =now.add(Date.DAY,-1) < state.nextRun && state.nextRun < now.add(Date.MINUTE,1);
+		}
+	} catch(e){
+		Myna.log("error","task: " + config.name+": bad state file " +stateFile.toString(),Myna.formatError(e));
 	}
 }
 
-var elapsed = false;
+//var elapsed = false;
 
+function log(type, label,detail){
+	$profiler.mark("Task '"+config.name+"': " +(label||""));
+	Myna.logSync(type,"Task '"+config.name+"': " +(label||""),detail||"",appname);
+	
+	/*Myna.printConsole("Task " +config.name+": " +label,<ejs>
+			<%=$server.memToScale($server.memUsed,"m")%>MB Used <%=(($server.memAvailable/$server.memMax)*100).toFixed(2)%>% free memory
+		</ejs>)*/
+}
 
 function getNextRunDate(){
 	var times ={
@@ -58,18 +65,7 @@ function getNextRunDate(){
 	var nextRun = config.start_date;
 	if (state.nextRun && state.nextRun <= now) nextRun = state.nextRun;
 	var startHour = config.start_date.getHours();
-	var startMinute = config.start_date.getMinutes();
-	//adds leading zero if necessary and returns a string
-	function z(timeUnit){
-		var result = String(timeUnit);
-		if (result.length === 0){
-			return "00";
-		}
-		if (result.length == 1){
-			return "0" + result;
-		}
-		return result;
-	}
+	
 	switch (config.type.toLowerCase()){
 		case "simple":
 			var interval= config.interval*times[config.scale.toLowerCase()];
@@ -201,14 +197,14 @@ try{
 		state.lastRun=new Date();
 	}
 	stateFile.writeString(state.toJson());
-	var timer = $server_gateway.cron.get(name);
+	var timer = $server_gateway.cron.get(config.name);
 	//clear the old timer
 	if (timer){
 		timer.cancel();
 		timer.purge();
 	}
 	timer = new java.util.Timer(true);
-	$server_gateway.cron.put(name,timer);
+	$server_gateway.cron.put(config.name,timer);
 	var task = new Packages.info.emptybrain.myna.ScriptTimerTask();
 	task.config = state.config.toJson();
 	timer.schedule(task,state.nextRun);
@@ -218,7 +214,7 @@ try{
 		$req.timeout=0;
 		log("info","started.");
 		if (/^https?:\//.test(config.script)){
-			var startMem = $server.memUsed;
+			//var startMem = $server.memUsed;
 			try{
 				var h = new Myna.HttpConnection({
 					url:config.script
@@ -234,7 +230,7 @@ try{
 
 				if (h.getStatusCode() == 200){
 					
-					log("info","completed {0}.".format(date.toString()));
+					log("info","completed {0}.".format(done.toString()));
 					$res.setExitCode(0);
 				} else {
 					
@@ -242,9 +238,9 @@ try{
 					$res.setExitCode(1,"Connection Error, Status: " + h.getStatusCode());
 				}
 			} catch(e){
-				log("error","Error in cron "+name,Myna.formatError(e));
+				log("error","Error in cron "+config.name,Myna.formatError(e));
 			}
-			var endMem = $server.memUsed;
+			//var endMem = $server.memUsed;
 			$server_gateway.generatedContent=null;
 			java.lang.System.gc();
 			
@@ -258,7 +254,7 @@ try{
 					Myna.include(config.script);
 					log("info","completed.");
 				} catch(e){
-					log("error","Error in cron "+name,Myna.formatError(e));
+					log("error","Error in cron "+config.name,Myna.formatError(e));
 				}
 			} else {
 				throw new Error("Task Script '"+config.script+"' does not represent a valid URL or script file");
