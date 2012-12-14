@@ -4,23 +4,15 @@ var ds;
 var db;
 var table;
 var dm;
-Myna.include("/myna/administrator/myna_admin.sjs");
+
 
 /* myna_log */
 	ds = "myna_log"
-	if (MynaAdmin.isUniqueDsName(ds)){
-		MynaAdmin.saveDataSource({
-			name:ds,
-			desc:"Datsource for Myna Logging",
-			driver:"org.h2.Driver",
-			url:"jdbc:h2:/WEB-INF/myna/local_databases/myna_log;FILE_LOCK=SERIALIZED",
-			username:"",
-			password:"",
-			type:"h2",
-			location:"file",
-			file:"/WEB-INF/myna/local_databases/myna_log"
-		})
-		$server_gateway.loadDataSources();
+	if (!Myna.Admin.ds.exists(ds)){
+		Myna.Admin.ds.createLocalDatabase(
+			ds,
+			"Datsource for Myna Logging"
+		)
 	}
 	
 	db = new Myna.Database(ds);
@@ -90,19 +82,13 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 	
 /* myna_permissions */
 	ds = "myna_permissions";
-	if (MynaAdmin.isUniqueDsName(ds)){
-		MynaAdmin.saveDataSource({
-			name:ds,
-			desc:"Datsource for Myna Permissions",
-			driver:"org.h2.Driver",
-			url:"jdbc:h2:/WEB-INF/myna/local_databases/myna_permissions;FILE_LOCK=SERIALIZED",
-			username:"",
-			password:"",
-			type:"h2",
-			location:"file",
-			file:"/WEB-INF/myna/local_databases/myna_permissions"
-		})
-		$server_gateway.loadDataSources();
+	if (!Myna.Admin.ds.exists(ds)){
+
+		Myna.Admin.ds.createLocalDatabase(
+			ds,
+			"Datsource for Myna Permissions"
+		)
+		
 	}
 	
 	db = new Myna.Database(ds);
@@ -295,10 +281,6 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 					type:"TIMESTAMP"
 				})	
 			} */
-		
-		
-			
-	
 	/* groups table */
 		table = db.getTable("user_groups");
 		if (!table.exists){
@@ -332,7 +314,6 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 				columns:["name","appname"]
 			})
 		}
-		
 	/* user_group_members table */
 		table = db.getTable("user_group_members");
 		if (!table.exists){
@@ -371,7 +352,6 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 			})
 			
 		}
-	
 	/* rights table */
 		table = db.getTable("rights");
 		if (!table.exists){
@@ -405,7 +385,6 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 				columns:["appname"]
 			})
 		}
-		
 	/* assigned_rights table */
 		table = db.getTable("assigned_rights");
 		if (!table.exists){
@@ -443,7 +422,6 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 				columns:["user_group_id","right_id"]
 			})
 		}
-		
 	/* tokens table */
 		table = db.getTable("tokens");
 		if (!table.exists){
@@ -562,19 +540,11 @@ Myna.include("/myna/administrator/myna_admin.sjs");
 
 /* myna_instance */
 	ds = "myna_instance"
-	if (MynaAdmin.isUniqueDsName(ds)){
-		MynaAdmin.saveDataSource({
-			name:ds,
-			desc:"Instance specific data",
-			driver:"org.h2.Driver",
-			url:"jdbc:h2:/WEB-INF/myna/local_databases/"+ds+";FILE_LOCK=SERIALIZED",
-			username:"",
-			password:"",
-			type:"h2",
-			location:"file",
-			file:"/WEB-INF/myna/local_databases/" + ds
-		})
-		$server_gateway.loadDataSources();
+	if (!Myna.Admin.ds.exists(ds)){
+		Myna.Admin.ds.createLocalDatabase(
+			ds,
+			"Instance specific data"
+		)
 	}
 	
 	db = new Myna.Database(ds);

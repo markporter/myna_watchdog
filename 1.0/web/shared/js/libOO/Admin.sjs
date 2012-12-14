@@ -146,16 +146,22 @@ Myna.Admin ={
 		Returns <Myna.ValidationResult>
 		
 		See:
-		* <saveDataSource>
+		* <save>
 		*/
-		createLocalDatabase:function(name){
-			return this.saveDataSource({
+		createLocalDatabase:function(name,desc){
+			var result= this.save({
 				name:name,
 				file:"/WEB-INF/myna/local_databases/" + name,
+				desc:desc||"",
 				type:"h2",
 				location:"file",
 				driver:"org.h2.Driver"
 			},true);
+			if (result.success){
+				$server_gateway.loadDataSources();	
+			}
+			
+			return result;
 		},
 	/* Function: Myna.Admin.ds.exists 
 		returns true if a datasource with the supplied name exists.
@@ -164,7 +170,7 @@ Myna.Admin ={
 			name		-	name of a data source
 		*/
 		exists:function(name){
-			return this.getDataSources().contains(function(ds){
+			return this.getAll().contains(function(ds){
 				return ds.name == name;
 			});
 		},
@@ -267,7 +273,7 @@ Myna.Admin ={
 			});
 			
 			config.isNew = true;
-			var v = this.validateDataSource(config,isNew);
+			var v = this.validate(config,isNew);
 			
 			if (v.success){
 				Myna.saveProperties(config, $server.rootDir + "WEB-INF/myna/ds/" + config.name.toLowerCase()+ ".ds");
@@ -281,7 +287,7 @@ Myna.Admin ={
 		validates a data source config	
 	
 		Parameters:
-			config		-	JS Object representing the data for a data source, see <saveDataSource>
+			config		-	JS Object representing the data for a data source, see <save>
 			isNew			-	Boolean. If true, Ds name will also be checked for uniqueness
 			
 		Returns:
