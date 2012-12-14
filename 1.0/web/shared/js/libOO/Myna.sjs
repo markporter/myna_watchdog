@@ -1641,6 +1641,7 @@ if (!Myna) var Myna={}
 			//String(java.lang.Thread.currentThread().getName().hashCode());
 			
 			var logFunction = function(reqId,type,label,detail,app_name,log_elapsed,req_elapsed,now){
+				$profiler.mark("LOG: " +label);
 				//wait 30 seconds after server startup so we can maybe create the logging database
 				var elapsed = new Date().getTime() - $server_gateway.serverStarted.getTime();
 				if (elapsed < 30000){

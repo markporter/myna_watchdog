@@ -284,8 +284,8 @@ Topic: Getting Started
 		}
 		...
 		onRequestStart:function(){ // run directly before requested file
-			if (!Myna.Admin.dsExists("fp_app")){
-				Myna.Admin.createLocalDatabase("fp_app")
+			if (!Myna.Admin.ds.exists("fp_app")){
+				Myna.Admin.ds.createLocalDatabase("fp_app")
 				var db = new Myna.Database("fp_app");
 				db.getTable("authors").create({
 					recreate:true,

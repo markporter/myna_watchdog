@@ -13,12 +13,7 @@ import java.net.*;
 import java.util.*;
 
 
-public class ScriptTimerTask extends java.util.TimerTask{
-	static public Semaphore threadPermit = new Semaphore(3);
-	public String config; 
-	/* public  void ScriptTimerTask(String config){
-		this.config = config;
-	} */
+public class CronTimerTask extends java.util.TimerTask{
 	public void run(){
 		try {
 			/* boolean gotPermit =threadPermit.tryAcquire((long)10,TimeUnit.SECONDS);
@@ -29,36 +24,27 @@ public class ScriptTimerTask extends java.util.TimerTask{
 			try{
 				java.net.URI mynaRoot= JsCmd.class.getResource("/general.properties")
 						.toURI().resolve("../../");
-				
 				File jsFile = new File(
 					mynaRoot
-						.resolve("shared/js/libOO/run_cron.sjs")
+						.resolve("shared/js/libOO/run_cron_thread.sjs")
 				);
 				
 				
 				thread.rootDir = mynaRoot.toString();
 				thread.loadGeneralProperties();
 				thread.environment.put("isCommandline",true);
-				String[] args = {
-					"",
-					this.config
-				};
-				thread.environment.put("commandlineArguments",args);
+				thread.isWhiteListedThread=true;
 				
 				thread.handleRequest(jsFile.toURI().toString());
 			} catch (Exception e){
 				thread.handleError(e);
-			}	finally {
-				threadPermit.release();
-			}
+			}	
 			
 		} catch (Exception e){
 			System.err.println("============== Scheduled task error Error ============");
 			System.err.println(e.toString());
 			System.err.println("============== Stacktrace ============");
 			e.printStackTrace(System.err);
-			System.err.println("============== Config ============");
-			System.err.println(this.config);
 		} 
 		
 			  

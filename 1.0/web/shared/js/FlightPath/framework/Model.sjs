@@ -156,13 +156,13 @@
 				{ name:"db", type:"string", label:"Database", defaultValue:"" }
 			])
 			this.deferred = true;
-			this.validation = Myna.Admin.dsValidation.clone()
+			this.validation = Myna.Admin.ds.dsValidation.clone()
 		}
 	
 	
 		function create(newDs){
 			var isNew = !this.exists;
-			var vr =Myna.Admin.saveDataSource(newDs,isNew)
+			var vr =Myna.Admin.ds.save(newDs,isNew)
 			if (vr.success){
 				return this.getById(newDs.name)
 			} else throw vr
@@ -189,7 +189,7 @@
 			var criteria = pattern.filter(function(v,k){
 				return !"select,where,orderBy".listContains(k)
 			})
-			var result= Myna.Admin.getDataSources()
+			var result= Myna.Admin.ds.getAll()
 			.filter(function(ds){
 				if (!criteria.getKeys().length) return true
 				return criteria.getKeys()

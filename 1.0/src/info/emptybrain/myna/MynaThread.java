@@ -36,22 +36,22 @@ public class MynaThread implements java.lang.Runnable{
 	static public String 				version					="";
 	static public Semaphore 			threadPermit;
 	static public Semaphore 			manageLocksPermit;
-	static public ConcurrentHashMap 	cron 						= new ConcurrentHashMap();
 	static public ConcurrentHashMap 	dataSources 			= new ConcurrentHashMap(); //stores ds properties
 	static public ConcurrentHashMap 	javaDataSources 		= new ConcurrentHashMap(); //stores dbcp BasicDataSource instances
 	static public ConcurrentHashMap 	locks 					= new ConcurrentHashMap(); //used by Myna.getLock()
 	static public ConcurrentHashMap 	scriptCache 			= new ConcurrentHashMap();
-	static public Properties			generalProperties 	= new Properties();
+	static public Properties			generalProperties 		= new Properties();
 	static public ConcurrentHashMap 	serverVarMap 			= new ConcurrentHashMap();//used by $server.get/set
 	static public ConcurrentHashMap 	applications 			= new ConcurrentHashMap();//contains Application descriptors, keyed by path
 	static private boolean 			isInitialized 				= false;
-	static volatile public			Scriptable sharedScope_	= null;
+	static volatile public			Scriptable sharedScope_		= null;
 	static public int 				threadHistorySize			=0; // number of completed threads to store in recentThreads. Set with property "thread_history_size"
 	static public java.util.Date 	serverStarted 				= new java.util.Date(); //date object representing the time this server was started
 	
 	static public ConsumerManager	openidConsumerManager; //initialized in init
 
 	static public ExecutorService 		backgroundThreadPool	=Executors.newFixedThreadPool(2);
+	static public PriorityBlockingQueue<CronTask> 		waitingCronTasks	= new PriorityBlockingQueue<CronTask>();
 /* End static resources */
 
 
@@ -110,7 +110,7 @@ public class MynaThread implements java.lang.Runnable{
 		for this to work */
 		static class MynaContext extends Context
 		{
-			 MynaThread mynaThread;
+			MynaThread mynaThread;
 		}
 		
 			
