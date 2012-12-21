@@ -17,7 +17,7 @@
 	
 	//--------- FlightPath config -----------------------------------------
 	config:{
-		debug:false,
+		debug:$server.purpose =="DEV",
 		homeRoute:{
 			controller:"Main",
 			action:"index"
@@ -28,6 +28,12 @@
 			perms:"myna_permissions"
 		},
 		routes:[{
+			name:"index.sjs",
+			pattern:"index.sjs",
+			controller:"main",
+			action:"index",
+			redirect:true
+		},{
 			name:"pages",
 			pattern:"page/$page",
 			controller:"page",

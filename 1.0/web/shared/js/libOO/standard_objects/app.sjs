@@ -1071,7 +1071,7 @@ var $application={
 	onRequestStart:function(){},
 	_onRequestEnd:function(){
 	/* refresh myna_auth_cookie */
-		var user_id = $cookie.getAuthUserId();
+		//var user_id = $cookie.getAuthUserId();
 		/* if (user_id) {
 			$cookie.setAuthUserId(user_id)
 		} */

@@ -394,6 +394,61 @@ if (!Myna) var Myna={}
 			
 			return user_id;
 		},
+	/* Function: readAuthToken
+			returns associated user_id or null if invalid
+			
+			Parameters:
+				token	-	token to read
+				
+			Note:
+				Does not consume the token. The token will continue to be valid 
+				until it expires.
+				
+			See:
+			* <getAuthToken>
+			* <consumeAuthToken>
+
+				
+ 		*/
+		readAuthToken:function(token){
+			var qry =new Myna.Query({
+				ds:"myna_permissions",
+				sql:<ejs>
+					select user_id
+					from tokens
+					where 
+						token = {token}
+						or token = {escaped_token}
+						and expires >= {now:timestamp}
+				</ejs>,
+				values:{
+					token:token,
+					escaped_token:unescape(token),
+					now:new Date(),
+				}
+			})
+			var user_id=null;
+			if (qry.data.length) {
+				user_id= qry.data[0].user_id;
+			} else {
+				Myna.log("AUTH","Failed authToken request",Myna.dump(token,"Token") +Myna.dump(qry,"Token Query"));	
+			}
+			//clear any expired tokens 
+			new Myna.Query({
+				ds:"myna_permissions",
+				sql:<ejs>
+					delete
+					from tokens
+					where expires < {now:timestamp}
+				</ejs>,
+				values:{
+					token:token,
+					now:new Date()
+				}
+			})
+			
+			return user_id;
+		},
 	/* Function: getAuthAdapter
 			creates and configures and authentication adapter based on the 
 			_auth_type_ name provided  
@@ -471,7 +526,7 @@ if (!Myna) var Myna={}
 			
 			Parameters:
 				user_id	-	user_id of the user to be authenticated
-				timeout	-	*Optional, default 10000* 
+				timeout	-	*Optional, default 10* 
 								Time in milliseconds that this token will be accepted. 
 								This should be the smallest amount of time that the two 
 								systems can reliably process. Longer timeouts leave a 
@@ -696,7 +751,8 @@ if (!Myna) var Myna={}
 		*/
 		getUserByAuth:function(login,password,type){
 			var $this=Myna.Permissions;
-			var types=type?[type]:$this.getAuthTypes()
+			if (type && !(type instanceof Array)) type= [type];
+			var types=type||$this.getAuthTypes();
 			var user_ids=[];
 			
 			types.forEach(function(type){

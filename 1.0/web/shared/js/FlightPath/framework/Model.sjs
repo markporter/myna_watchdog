@@ -889,7 +889,7 @@ Model.prototype={
 		}
 		return this
 	},
-/* Function: addField
+/* Function: addFields
 	adds multiple fields to this Model's <beanClass>
 	
 	Parameters:

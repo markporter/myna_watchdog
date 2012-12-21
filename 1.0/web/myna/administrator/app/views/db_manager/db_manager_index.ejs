@@ -1,7 +1,5 @@
 <script>
-<@loop array="globalProperties.getKeys()" element="prop" index="i">
-	var <%=prop%> = <%=globalProperties[prop].toJson()%>
-</@loop>
+	var appVars = <%=globalProperties.toJson()%>
 	Ext.Loader.setConfig({
 		enabled:true,
 		paths:{

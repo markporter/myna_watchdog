@@ -21,23 +21,13 @@
 							permissions. This function will be passed a 
 							reference to the controller, and this options object
 							
-							
+	Note:
+		This behavior only protects the controllers to which it is applied. If 
+		this is not set in the global controller your application may be at risk 
+		for unauthorized access
+
 	Usage:
 	(code)
-		// used in a single controller
-		//main_controller.sjs
-		function init(){
-			this.applyBehavior("MynaAuth",{
-				whitelist:[
-					"logout",
-					"dashbord",
-					/^rpt/
-				],
-				providers:Myna.Permissions.getAuthTypes(),//this is default
-				redirectParams:{}//this is default
-			})
-		}
-		
 		// used in the global controller
 		//app/controllers/global.sjs
 		function init(){
@@ -54,6 +44,20 @@
 				}
 			})
 		}
+
+		// used in a single controller
+		//main_controller.sjs
+		function init(){
+			this.applyBehavior("MynaAuth",{
+				whitelist:[
+					"logout",
+					"dashbord",
+					/^rpt/
+				],
+				providers:Myna.Permissions.getAuthTypes(),//this is default
+				redirectParams:{}//this is default
+			})
+		}
 	(end)
 */
 
@@ -66,7 +70,7 @@ function init(options){
 		redirectParams:{}
 	})
 	this._mynaAuth.options.redirectParams.setDefaultProperties({
-		providers:this._mynaAuth.options.providers,
+		providers:this._mynaAuth.options.providers
 	})
 	
 }
@@ -79,8 +83,9 @@ function _mynaAuth(action, params){
 		if (!(item instanceof RegExp)){
 			item = new RegExp("^" +String(item).replace(/\./,"\\.") +"$")
 		}
-		return item.test(right) 	
+		return item.test(right)	
 	})
+	var user;
 	
 	if (!isWhitelisted){
 		var user_rights = $session.get("_user_rights")
@@ -90,29 +95,53 @@ function _mynaAuth(action, params){
 			return user_rights.contains("{0}|{1}".format(appname,right))
 		}
 		//Myna.log("debug","User = " + user.first_name + " " + user.last_name);
-		if (!$cookie.getAuthUserId()){
-			if ($FP.config.debug){
-				Myna.log(
-					"debug",
-					"Action " + right + " not whitelisted, redirecting to login",
-					Myna.dump(my.options.whitelist, "MynaAuth whitelist")
-				);	
-			}
-			var redirectParams = ({
-				callbackUrl:$FP.helpers.Html.url({
-					controller:this.name,
-					action:action,
-					id:params.id,
-					params:params
-				})
+		var cookie_user_id = $cookie.getAuthUserId()
+		if (!cookie_user_id){
+			if ($cookie.get("myna_auth_cookie")){
+				var passHash = (String($req.authUser)+String($req.authPassword)).toHash();
+
+				if ($req.authUser && $req.authPassword && passHash != $session.get("myna_auth_last_pass")){
+					$session.set("myna_auth_last_pass", passHash);
+					user = Myna.Permissions.getUserByAuth($req.authUser,$req.authPassword,my.options.providers);
+					if (user){
+						$cookie.setAuthUserId( (cookie_user_id = user.id) );
+					} else {
+
+						$res.requestBasicAuth($application.displayName + " (Admin User: myna_admin)");
+						cookie_user_id = null;
+					}
+				}else{
+					$res.requestBasicAuth($application.displayName + " (Admin User: myna_admin)");
+					return false;
+				}
 				
-			}).setDefaultProperties(my.options.redirectParams)
-			$res.redirectLogin(redirectParams)
-			//unnecessary, but good practice
-			return false; //cancels action
-		} else {
+			}
+			if (cookie_user_id === null){
+				if ($FP.config.debug){
+					Myna.log(
+						"debug",
+						"Action " + right + " not whitelisted, redirecting to login",
+						Myna.dump(my.options.whitelist, "MynaAuth whitelist")
+					);	
+				}
+				var redirectParams = ({
+					callbackUrl:$FP.helpers.Html.url({
+						controller:this.name,
+						action:action,
+						id:params.id,
+						params:params
+					})
+					
+				}).setDefaultProperties(my.options.redirectParams)
+				$res.redirectLogin(redirectParams)
+				//unnecessary, but good practice
+				return false; //cancels action
+			}
+
+		}
+		if (cookie_user_id){
 			if (!user_rights){
-				var user = my.options.userFunction(this,my.options);
+				user = my.options.userFunction(this,my.options);
 				if (user){
 					user_rights = user.qryRights().data
 						.map(function(row){
@@ -126,7 +155,7 @@ function _mynaAuth(action, params){
 				if (!(item instanceof RegExp)){
 					item = new RegExp("^" +String(item).replace(/\./,"\\.") +"$")
 				}
-				return item.test(right) 	
+				return item.test(right)	
 			})
 			
 			if (!isAnyUser){
@@ -134,7 +163,7 @@ function _mynaAuth(action, params){
 					
 				if (hasRight(appname,right)) return;
 				if ($FP.config.debug){
-					var user = my.options.userFunction(this,my.options);
+					user = my.options.userFunction(this,my.options);
 					Myna.log(
 						"debug",
 						"Auth fail for Action " + right + ", User " + user.first_name +" "+ user.last_name,
@@ -146,7 +175,7 @@ function _mynaAuth(action, params){
 			
 				
 				
-				var user = my.options.userFunction(this,my.options);
+				user = my.options.userFunction(this,my.options);
 				//if we got here shouldn't have
 				if (user){
 					Myna.log(

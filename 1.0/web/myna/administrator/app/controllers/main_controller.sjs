@@ -23,15 +23,7 @@
 			}
 		);
 		
-		this.applyBehavior("MynaAuth",{
-			whitelist:[
-				/Main.changeAdminPassword/
-			],
-			providers:Myna.Permissions.getAuthTypes(),
-			redirectParams:{
-				title:"Login: " + $application.displayName
-			}
-		});
+		
 		
 		
 	}
@@ -40,6 +32,9 @@
 	ExtJs main page for administrator
 	*/
 	function index(){
+		if (params.redirect){
+			$FP.redirectTo({})
+		}
 		this.$page.css =this.$page.css.concat([
 			"extjs/resources/css/ext-all.css",
 			"default.css"

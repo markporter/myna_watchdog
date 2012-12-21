@@ -34,7 +34,7 @@ body,td{
 #help p{
 	margin-top:15px;
 }
-
+.icon_beautify { background: url(../static/images/text_indent.png) 0 0px no-repeat !important;}
 .icon_search { background: url(../static/images/magnifier.png) 0 0px no-repeat !important;}
 .icon_request { background: url(../static/images/lightning.png) 0 0px no-repeat !important;}
 .icon_upgrade { background: url(../static/images/package_go.png) 0 0px no-repeat !important;}
@@ -149,3 +149,12 @@ body .ux-notification-light {
 	background-color: transparent;
 	border: 0px solid white;
 }
+
+/*.CodeMirror{
+	height:auto;
+}
+
+.CodeMirror-scroll{
+	overflow-x: auto;
+	overflow-y:hidden;
+}*/

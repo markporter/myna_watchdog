@@ -883,7 +883,9 @@ if (!Myna) var Myna={}
 		}) 
 		if (this.deferExec && qry.sql.trim().length) this.sql+=qry.sql.trim()+";\n\n";
 		
-		if (!isRename){
+		if (isRename){
+			table.dropColumn(originalCol.column_name);
+		} else {
 			table.dropColumn(originalCol.column_name);
 			
 			currentCol.name = originalCol.column_name;
@@ -986,6 +988,7 @@ if (!Myna) var Myna={}
 		
 		table.init();
 		table.clearMetadataCache()
+		return options.id
 	}
 
 /* Function: addPrimaryKey
@@ -1036,6 +1039,7 @@ if (!Myna) var Myna={}
 		
 		table.init();
 		table.clearMetadataCache()
+		return options.id
 	}
 
 /* Function: addIndex
@@ -1279,9 +1283,9 @@ if (!Myna) var Myna={}
 	}
 
 /* Function: dropColumn
-	Drop (delete) this table.
+	Drop (delete) this column.
 	
-	Paramaters:
+	Parameters:
 		name		-	name of column ot drop
 	
 	Example:
@@ -1363,7 +1367,7 @@ if (!Myna) var Myna={}
 		table.clearMetadataCache()
 	}
 /* Function: dropIndex
-	Drop (delete) a table constraint such as a foreign or primary key.
+	Drop (delete) an index
 	
 	Paramaters:
 		name		-	name of constraint to remove
@@ -1373,7 +1377,7 @@ if (!Myna) var Myna={}
 		var db = new Database("example")
 		
 		var t = db.getTable("customers");
-		t.dropConstraint("pkey_customers");
+		t.dropIndex("idx_customers_first_name");
 		
 	(end)
 

@@ -1,4 +1,13 @@
-/* 	Class: $cookie
+/*global
+	$req:true
+	$server:false
+	Myna:false
+	Packages
+	$application
+*/
+/*jshint es5:true*/
+
+/* Class: $cookie
 	A global object for interacting with cookies in the current request
 */
 var $cookie={
@@ -25,7 +34,6 @@ var $cookie={
 		if ("_PENDING_COOKIES_" in $req && name in $req._PENDING_COOKIES_) {
 			return   $req._PENDING_COOKIES_[name]
 		}
-		var req = $server.request;
 		var cookieArray = $cookie.data;
 		for (var x=0; x < cookieArray.length; ++x){
 			if (cookieArray[x].getName().toLowerCase() == name.toLowerCase()){
@@ -39,12 +47,12 @@ var $cookie={
 		sets a cookie
 		
 		Parameters:
-			name 	- Name of cookie to set
+			name	- Name of cookie to set
 			value	- String value of cookie
 			options	- *Optional* JavaScript Object of extra optional parameters. See below:
 		
 		Options:
-			domain			- 	*Default null* 
+			domain			-	*Default null* 
 								Domain to share the cookie with. If set, 
 								the browser will send this cookie to any page in this domain 
 								that matches path.
@@ -63,7 +71,7 @@ var $cookie={
 	set:function(name,value,options){
 		if (!$server.response ) return undefined; //don't bother if we can't send cookies
 		
-		if (options == undefined) options ={}
+		if (options === undefined) options ={}
 		options.setDefaultProperties({
 			domain:null,
 			expireSeconds:-1,	//an integer specifying the maximum age of the cookie in seconds; if negative, means the cookie is not stored; if zero, deletes the cookie
@@ -72,8 +80,8 @@ var $cookie={
 		
 		var cookie = new Packages.javax.servlet.http.Cookie(name,value);
 		cookie.setMaxAge(options.expireSeconds);
-		if (options.domain != null) cookie.setDomain(options.domain);
-		if (options.path != null) cookie.setPath(options.path);
+		if (options.domain !== null) cookie.setDomain(options.domain);
+		if (options.path !== null) cookie.setPath(options.path);
 		
 		$server.response.addCookie(cookie);
 		if (!("_PENDING_COOKIES_" in $req)) $req._PENDING_COOKIES_ ={}
@@ -85,7 +93,7 @@ var $cookie={
 		sets a cookie that contains the supplied user_id and a timestamp
 		
 		Parameters:
-			user_id 	- user_id of the user to track
+			user_id	- user_id of the user to track
 								
 		Returns:	
 			void
@@ -105,12 +113,16 @@ var $cookie={
 	*/
 	setAuthUserId:function(user_id){
 		$cookie.__AUTH_USER_ID__ = user_id;
-		var cookie_data={
+		var cookie_data=Myna.Permissions.getAuthToken(
+			user_id,
+			Date.getInterval(Date.DAY,1)/1000
+		)
+		/*{
 			user_id:user_id,
 			ts:new Date().getTime()
 		}.toJson()
-		.encrypt(Myna.Permissions.getAuthKey("myna_auth_cookie"))
-	   
+		.encrypt(Myna.Permissions.getAuthKey("myna_auth_cookie"))*/
+   
 		var options ={
 			path:$application.url
 		}
@@ -124,7 +136,7 @@ var $cookie={
 		Returns:	
 			void
 	*/
-	clearAuthUserId:function(name){
+	clearAuthUserId:function(){
 		$cookie.clear("myna_auth_cookie",$application.url);
 		delete $cookie.__AUTH_USER_ID__
 		$cookie.__authCleared = true;
@@ -143,7 +155,7 @@ var $cookie={
 		
 		var cookie = $cookie.get("myna_auth_cookie");
 		if (cookie){
-			try {
+			/*try {
 				var key = Myna.Permissions.getAuthKey("myna_auth_cookie")
 				var auth_data = cookie
 				.decrypt(key)
@@ -154,6 +166,14 @@ var $cookie={
 				Myna.logSync("info","myna_auth_cookie decryption failed",
 					"cookie = '"+cookie+"'<hr>" + Myna.formatError(e));
 				
+			}*/
+			$cookie.__AUTH_USER_ID__ = Myna.Permissions.readAuthToken(cookie);
+			if (!$cookie.__AUTH_USER_ID__){
+				Myna.logSync(
+					"info",
+					"myna_auth_cookie token is invalid or expired.",
+					"token = '"+cookie+"'"
+				);
 			}
 		} else {
 			$cookie.__AUTH_USER_ID__ = null;

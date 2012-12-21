@@ -438,22 +438,12 @@ public class MynaThread implements java.lang.Runnable{
 	
 	public  Scriptable createSharedScope() throws Exception{
 		long startTime = System.currentTimeMillis();
-		boolean recreateScope = Integer.parseInt(this.generalProperties.getProperty("optimization.level")) == -1;
-		try{
-			if (!recreateScope
-					&& MynaThread.sharedScope_ != null)
-			{
-				//System.err.println(Integer.parseInt(this.generalProperties.getProperty("optimization.level")));
+		
+		try {
+			if (MynaThread.sharedScope_ == null) {
+				return buildScope();
+			} else {
 				return MynaThread.sharedScope_;
-			}else {
-				if (recreateScope ){
-					synchronized (MynaThread.class){
-						return buildScope();
-					} 
-				} else {
-					
-					return buildScope();
-				}
 			}
 		} finally {
 			long elapsed = System.currentTimeMillis() - startTime;
@@ -525,22 +515,20 @@ public class MynaThread implements java.lang.Runnable{
 			System.arraycopy(moreIds, 0, ids, sharedIds.length, moreIds.length);
 
 			
-			if (Integer.parseInt(this.generalProperties.getProperty("optimization.level")) != -1){
-				for (int x=0;x<ids.length;++x){
-					if (!existingObjects.contains(ids[x])){
+			for (int x=0;x<ids.length;++x){
+				if (!existingObjects.contains(ids[x])){
+					try{
+						ScriptableObject lib =(ScriptableObject) sharedScope.get(ids[x].toString(),sharedScope);
+						lib.sealObject();
 						try{
-							ScriptableObject lib =(ScriptableObject) sharedScope.get(ids[x].toString(),sharedScope);
-							lib.sealObject();
-							try{
-								ScriptableObject proto =(ScriptableObject) lib.get("prototype",lib);
-								proto.sealObject();
-							}catch(Exception e){}// seal what we can
-							
+							ScriptableObject proto =(ScriptableObject) lib.get("prototype",lib);
+							proto.sealObject();
 						}catch(Exception e){}// seal what we can
-					}
+						
+					}catch(Exception e){}// seal what we can
 				}
-				MynaThread.sharedScope_ = sharedScope;
 			}
+			MynaThread.sharedScope_ = sharedScope;
 			
 			return sharedScope;
 		} catch (Exception e){
@@ -618,22 +606,20 @@ public class MynaThread implements java.lang.Runnable{
 			System.arraycopy(moreIds, 0, ids, sharedIds.length, moreIds.length);
 
 			
-			if (Integer.parseInt(this.generalProperties.getProperty("optimization.level")) != -1){
-				for (int x=0;x<ids.length;++x){
-					if (!existingObjects.contains(ids[x])){
+			for (int x=0;x<ids.length;++x){
+				if (!existingObjects.contains(ids[x])){
+					try{
+						ScriptableObject lib =(ScriptableObject) sharedScope.get(ids[x].toString(),sharedScope);
+						lib.sealObject();
 						try{
-							ScriptableObject lib =(ScriptableObject) sharedScope.get(ids[x].toString(),sharedScope);
-							lib.sealObject();
-							try{
-								ScriptableObject proto =(ScriptableObject) lib.get("prototype",lib);
-								proto.sealObject();
-							}catch(Exception e){}// seal what we can
-							
+							ScriptableObject proto =(ScriptableObject) lib.get("prototype",lib);
+							proto.sealObject();
 						}catch(Exception e){}// seal what we can
-					}
+						
+					}catch(Exception e){}// seal what we can
 				}
-				MynaThread.sharedScope_ = sharedScope;
 			}
+			MynaThread.sharedScope_ = sharedScope;
 			
 			return sharedScope;
 		} catch (Exception e){
@@ -1001,8 +987,6 @@ public class MynaThread implements java.lang.Runnable{
 		long end=0;
 		start = new java.util.Date().getTime();
 		try {
-			int optimizationLevel = Integer.parseInt(this.generalProperties.getProperty("optimization.level"));
-			
 			cx.setOptimizationLevel(-1);
 			JCS cache = JCS.getInstance("scriptCache");
 			//scriptPath =getNormalizedPath(scriptPath) 
@@ -1022,12 +1006,8 @@ public class MynaThread implements java.lang.Runnable{
 				
 				  
 				compiled = cx.compileString(script, scriptPath, 1, null);
-				/*if (optimizationLevel > -1){*/
-					cache.put(key,compiled);
-				/*}*/
+				cache.put(key,compiled);
 			} 
-			//Object server_gateway = Context.javaToJS(this,scope);
-			//ScriptableObject.putProperty(scope, "$server_gateway", server_gateway);
 			compiled.exec(cx,scope);
 		} catch (Exception e){
 			this.handleError(e);

@@ -49,6 +49,7 @@ var $server={
 	Settings of Myna Administrator
 	*/
 	get purpose(){return String($server_gateway.generalProperties.getProperty("instance_purpose"))},	
+
 /* property: response
 		A reference to servlet response object
 	*/	

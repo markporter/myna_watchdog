@@ -317,7 +317,6 @@ Ext.override(Ext.view.AbstractView, {
 		controllers.push("Ds");
 		Ext.define('App.controller.Ds', {
 			extend: 'Ext.app.Controller',
-			models:"Ds",
 			init: function() {
 				this.control({
 					'#main_menu_data_sources': {
@@ -936,7 +935,6 @@ Ext.override(Ext.view.AbstractView, {
 		controllers.push("Log");
 		Ext.define('App.controller.Log', {
 			extend: 'Ext.app.Controller',
-			models:"Log",
 			init: function() {
 				this.control({
 					'#main_menu_log': {
@@ -1175,7 +1173,6 @@ Ext.override(Ext.view.AbstractView, {
 		controllers.push("Request");
 		Ext.define('App.controller.Request', {
 			extend: 'Ext.app.Controller',
-			models:"Request",
 			init: function() {
 				this.control({
 					'#main_menu_requests': {
@@ -1406,7 +1403,6 @@ Ext.override(Ext.view.AbstractView, {
 		controllers.push("Upgrade");
 		Ext.define('App.controller.Upgrade', {
 			extend: 'Ext.app.Controller',
-			models:"Request",
 			init: function() {
 				this.control({
 					'#main_menu_upgrade_web': {
@@ -1512,7 +1508,6 @@ Ext.override(Ext.view.AbstractView, {
 		controllers.push("Cron");
 		Ext.define('App.controller.Cron', {
 			extend: 'Ext.app.Controller',
-			models:"Cron",
 			init: function() {
 				this.control({
 					'viewport': {
@@ -1614,6 +1609,12 @@ Ext.override(Ext.view.AbstractView, {
 					iconCls:"icon_add",
 					handler:function(){
 						this.up("crongrid").showEditForm();
+					}
+				},{
+					text:"Refresh Task List",
+					iconCls:"icon_refresh",
+					handler:function (btn) {
+						btn.up("crongrid").getStore().load();
 					}
 				}],
 				editFormConfig:{
@@ -2137,11 +2138,8 @@ Ext.override(Ext.view.AbstractView, {
 								} 
 							},
 							setValue:function(val){
-								
-								if (this.ownerCt && val){
-									console.log(val)
+								if (this.ownerCt && (val||val=="0")){
 									var cbg = this.ownerCt.down("*[itemId=weekly_days]");
-								
 									cbg.setValue({
 										days:String(val).split(/,/).map(function (v) {return String(v)})
 									});
