@@ -31,7 +31,7 @@
 /* Function: index
 	ExtJs main page for administrator
 	*/
-	function index(){
+	function index(params){
 		if (params.redirect){
 			$FP.redirectTo({})
 		}

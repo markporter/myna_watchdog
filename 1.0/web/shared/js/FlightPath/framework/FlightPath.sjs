@@ -804,7 +804,7 @@
 			result.push( escape(p) +"="+escape(v))	
 		}
 		object.forEach(function(v,p){
-			if (p+"$array" in params && params[p+"$array"].length > 1){	
+			if (p+"$array" in object && object[p+"$array"].length > 1){	
 				for (var i=0; i < v.length-1; ++i){
 					addProp(p,params[p+"$array"][i])	
 				}
