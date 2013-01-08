@@ -313,6 +313,12 @@ public class MynaInstaller
 			backupDir.mkdirs();
 			isUpgrade=true;
 			System.out.println("Backups stored in " + backupDir);
+			//backup entire /myna folder because we're wiping it out
+			FileUtils.copyDirectory(
+				new File(wrFile.toURI().resolve("myna")), 
+				new File(backupDir.toURI().resolve("myna"))
+			);
+			FileUtils.deleteDirectory(new File(wrFile.toURI().resolve("myna")));
 		}
 		
 		if (isJar){

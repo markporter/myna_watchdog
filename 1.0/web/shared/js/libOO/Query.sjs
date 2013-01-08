@@ -637,8 +637,8 @@ getStatement:function(sql){
 						}
 					}
 					qry.parseTime=java.lang.System.currentTimeMillis()-start;
-					/* st.close();
-					qry.resultSet.close() */
+					st.close();
+					
 					return qry;
 				} else {
 					/*	Apparently if the driver does not support this feature it throws
