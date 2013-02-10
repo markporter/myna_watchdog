@@ -1,14 +1,15 @@
-/*global Ext $FP appVars App  console*/
-Ext.override(Ext.view.AbstractView, { 
-    onRender: function() 
-    { 
-        var me = this; 
-        this.callOverridden(); 
-        if (me.loadMask && Ext.isObject(me.store)) { 
-            me.setMaskBind(me.store); 
-        } 
-    } 
-});
+/*jshint unused:false*/
+/*global Ext $FP appVars App  console CodeMirror*/
+/*Ext.override(Ext.view.AbstractView, { 
+	onRender: function() 
+	{ 
+		var me = this; 
+		this.callOverridden(); 
+		if (me.loadMask && Ext.isObject(me.store)) { 
+			me.setMaskBind(me.store); 
+		} 
+	} 
+});*/
 
 var controllers=[]
 /* ----------- ViewPort ----------------------------------------------------- */
@@ -115,6 +116,105 @@ var controllers=[]
 				return func.apply(this,Array.parse(arguments))
 			}
 		},
+		beautifySql:function (sql) {
+			var indent =0;
+			var selectIndent =0;
+			/*var parenIndent =0;
+			var result=[];
+			var line=[];*/
+			var lastCommand="";
+			var parens =[];
+			var selects =[];
+			return sql
+				.replace(/[\n\s]+/g," ")
+				.replace(/(\W)on\s*\(/ig,"$1 on ( ")
+				
+				.replace(/(\s*)(['\.\w]+|,|\(|\))(\s*)/g,function(match,begin,word,end){
+					switch(true){
+					
+					
+						case word =="(":
+							parens.push(indent);
+							
+							indent++;
+							lastCommand="subquery";
+							return word +"\n" + "\t".repeat(indent);
+						case word ==")":
+							if (lastCommand != "function") {
+								if (parens.length == selects.parenDepth) {
+									selects.pop();
+									selects.parenDepth--;
+								}
+								indent = parens.pop();
+							}
+							
+							lastCommand="end_subquery";
+							//return word + end
+							return  "\n" + "\t".repeat(indent) +word + "\n" + "\t".repeat(indent);
+						case /^inner|outer|full|join$/i.test(word) && !/_/.test(word):
+							if (/^inner|outer|full$/i.test(lastCommand)){
+								return match;
+							}else{
+								//indent++;
+							}
+							
+							lastCommand = word;
+							return  "\n" + "\t".repeat(indent) +match;
+							
+						case /^on$/i.test(word):
+							if (!/^inner|outer|full|join$/i.test(lastCommand)){
+								//indent++
+							}
+							
+							lastCommand = word;
+							return  word  + "\t".repeat(indent);
+						case /^and|or$/i.test(word):
+							if (lastCommand != word ){
+								//indent++
+							}
+							lastCommand = word;
+							return "\n"+"\t".repeat(indent) + word +" ";
+								
+						case /^union/i.test(word):
+							selectIndent=0;
+							indent=0;
+								
+							lastCommand = word;
+							return "\n" + word +"\n";
+						case /^select/i.test(word):
+							selects.push(indent);
+							selects.parenDepth = parens.length;
+							indent++;
+								
+							lastCommand = word;
+							return "\n" + "\t".repeat(indent-1)   + word +"\n" + "\t".repeat(indent);
+							
+						case /^from|where|having$/i.test(word):
+							if (lastCommand=="text") return match;
+							indent = selects.last(0)+1;
+							return "\n" +"\t".repeat(indent-1) + word +"\n" + "\t".repeat(indent);
+						
+						case /^group|order$/i.test(word):
+							if (lastCommand=="text") return match;
+							indent = selects.last(0)+1;
+							lastCommand=word;
+							return "\t".repeat(indent-1) +"\n" + word +end;
+						case /^by$/i.test(word):
+							if (/group|order/.test(lastCommand)) {
+								return  /* "\t".repeat(indent-1) +"\n" + */word +"\n" + "\t".repeat(indent);
+							} else return match;
+
+						case /,$/.test(word)/* word =="," */:
+							//console.log("word==",word)
+							if (lastCommand == "function") return word;
+							return word +"\n" + "\t".repeat(indent);
+						default:
+							lastCommand=match;
+							return match;
+					}
+				}).replace(/\n\s*\n/g,"\n").trim();
+			
+		},
 		infoMsg: function(/*template,replacement 1,replacement 2,... */){
 
 			var s = Ext.String.format.apply(String, Array.prototype.slice.call(arguments, 0));
@@ -143,9 +243,57 @@ var controllers=[]
 			extend: 'Ext.app.Controller',
 			init: function() {
 				this.control({
+					db_object_tree:{
+						query:function (event) {
+							this.queryTable(event.table)
+						},
+						edit:function (event) {
+							this.getController("Table").editTable(event.table)
+						},
+						rename:function (event) {
+							this.renameTable(event.table,event.newName,function (result) {
+								if (result.success){
+									event.reloadNode();
 
+								} else console.log(result)
+							})
+						},
+						drop:function (event) {
+							this.dropTable(event.table,function (result) {
+								if (result.success){
+									event.reloadNode();
+								} else window.alert(result.message)
+							})
+						}
+					}
 				})
+			},
+			dropTable:function (table, cb) {
+				$FP.DbManager.dropTable({
+					table_name:table,
+					ds_name:appVars.ds_name
+				},cb)
+			},
+			queryTable:function (table_name) {
+				var $this = this;
+				$FP.DbManager.getQuerySql({
+					table_name:table_name,
+					ds:appVars.ds_name
+				},function (sql) {
+					//console.log(sql)
+					//var sql = "select * from " + table_name;
+					$this.getController("Sql").openSql(U.beautifySql(sql),false,true)
+				})
+				
+			},
+			renameTable:function (oldName,newName, cb) {
+				$FP.DbManager.renameTable({
+					old_name:oldName,
+					new_name:newName,
+					ds_name:appVars.ds_name
+				},cb)
 			}
+
 		})
 	/* =========== Views ==================================================== */
 		/* ----------- db_object_tree --------------------------------------- */
@@ -175,16 +323,128 @@ var controllers=[]
 						},
 						useArrows: true,
 						rootVisible:false,
+						clearOnLoad:true,
 						listeners:{
-							itemcontextmenu:function(panel,record,item,index,e){
+							itemcontextmenu:function(treeview,node,item,index,e){
 								e.stopEvent();
-								var m=Ext.widget({
-									xtype:"menu",
-									items:[{
-										text:"Query " + record.get("text")
-									}]
-								})
-								m.showBy(item,null,[50,0])
+								var m;
+								//console.log(node.raw)
+								if (node.raw.object_type == "table") {
+									//console.log("node",node.raw)
+									m=Ext.widget({
+										xtype:"menu",
+										items:[{
+											text:"Query " + node.raw.table_name,
+											iconCls:"icon_insert_sql",
+											handler:function(c){
+												var view=treeview.ownerCt;
+												view.fireEvent("query",{
+													src:view,
+													table:node.raw.schema +"."+node.raw.table_name
+												});
+											}
+										}].concat(node.raw.table_type=="TABLE"?[{
+											text:"Insert column names ",
+											iconCls:"icon_insert_sql",
+											handler:function(c){
+												var view=treeview.ownerCt;
+												view.fireEvent("edit",{
+													src:view,
+													table:node.raw.table_name
+												});
+											}
+										},{
+											text:"Edit " + node.raw.table_name,
+											iconCls:"icon_form_search",
+											handler:function(c){
+												var view=treeview.ownerCt;
+												view.fireEvent("edit",{
+													src:view,
+													table:node.raw.table_name
+												});
+											}
+										},{
+											text:"Rename " + node.raw.table_name,
+											iconCls:"icon_rename",
+											handler:function(c){
+												var newName = window.prompt("New name for " + node.raw.table_name);
+												if (newName){
+													var view=treeview.ownerCt;
+													view.fireEvent("rename",{
+														src:view,
+														table:node.raw.table_name,
+														newName:newName,
+														reloadNode:function () {
+															treeview.ownerCt.getStore().load({
+																node:node.parentNode,
+																callback:function () {treeview.refresh()}
+															})
+														}
+													});
+												}
+											}
+										},{
+											text:"Drop " + node.raw.table_name,
+											iconCls:"icon_delete",
+											handler:function(c){
+												var shouldDrop = window.confirm(
+													"Permanently remove table {0} from the database?".format(
+														node.raw.table_name
+													)
+												);
+												if (shouldDrop){
+													var view=treeview.ownerCt;
+													view.fireEvent("drop",{
+														src:view,
+														table:node.raw.table_name,
+														reloadNode:function () {
+															treeview.ownerCt.getStore().load({
+																node:node.parentNode,
+																callback:function () {treeview.refresh()}
+															})
+														}
+													});
+												}
+													
+											}
+										}]:undefined)
+									})
+									m.showBy(item,null,[50,0])
+								} else if (node.raw.object_type == "column") {
+									return; //ignore columns
+									/*m=Ext.widget({
+										xtype:"menu",
+										items:[{
+											text:"Insert " + node.raw.text,
+											handler:function(c){
+												var view=treeview.ownerCt;
+												view.fireEvent("insert",{
+													src:view,
+													text:node.raw.text
+												});
+											}
+										}]
+									})
+									m.showBy(item,null,[50,0])*/
+								} else {
+
+									m=Ext.widget({
+										xtype:"menu",
+										items:[{
+											text:"Refresh",
+											handler:function(c){
+												treeview.ownerCt.getStore().load({
+													node:node,
+													callback:function () {treeview.refresh()}
+												})
+											}
+										}]
+									})
+									m.showBy(item,null,[50,0])
+									
+									
+								}
+								
 							}
 						}
 					})
@@ -275,104 +535,10 @@ var controllers=[]
 				},
 				//queryMode:"local",
 				beautify:function () {
-					var indent =0;
-					var selectIndent =0;
-					/*var parenIndent =0;
-					var result=[];
-					var line=[];*/
-					var lastCommand="";
-					var parens =[];
-					var selects =[];
+					
 					var sqlControl=this.down("*[itemId=sql_control]");
 					var sql = sqlControl.getValue()||"";
-					var newSql = sql
-						.replace(/[\n\s]+/g," ")
-						.replace(/(\W)on\s*\(/ig,"$1 on ( ")
-						
-						.replace(/(\s*)(['\.\w]+|,|\(|\))(\s*)/g,function(match,begin,word,end){
-							switch(true){
-							
-							
-								case word =="(":
-									parens.push(indent);
-									
-									indent++;
-									lastCommand="subquery";
-									return word +"\n" + "\t".repeat(indent);
-								case word ==")":
-									if (lastCommand != "function") {
-										if (parens.length == selects.parenDepth) {
-											selects.pop();
-											selects.parenDepth--;
-										}
-										indent = parens.pop();
-									}
-									
-									lastCommand="end_subquery";
-									//return word + end
-									return  "\n" + "\t".repeat(indent) +word + "\n" + "\t".repeat(indent);
-								case /^inner|outer|full|join$/i.test(word) && !/_/.test(word):
-									if (/^inner|outer|full$/i.test(lastCommand)){
-										return match;
-									}else{
-										//indent++;
-									}
-									
-									lastCommand = word;
-									return  "\n" + "\t".repeat(indent) +match;
-									
-								case /^on$/i.test(word):
-									if (!/^inner|outer|full|join$/i.test(lastCommand)){
-										//indent++
-									}
-									
-									lastCommand = word;
-									return  word  + "\t".repeat(indent);
-								case /^and|or$/i.test(word):
-									if (lastCommand != word ){
-										//indent++
-									}
-									lastCommand = word;
-									return "\n"+"\t".repeat(indent) + word +" ";
-										
-								case /^union/i.test(word):
-									selectIndent=0;
-									indent=0;
-										
-									lastCommand = word;
-									return "\n" + word +"\n";
-								case /^select/i.test(word):
-									selects.push(indent);
-									selects.parenDepth = parens.length;
-									indent++;
-										
-									lastCommand = word;
-									return "\n" + "\t".repeat(indent-1)   + word +"\n" + "\t".repeat(indent);
-									
-								case /^from|where|having$/i.test(word):
-									if (lastCommand=="text") return match;
-									indent = selects.last(0)+1;
-									return "\n" +"\t".repeat(indent-1) + word +"\n" + "\t".repeat(indent);
-								
-								case /^group|order$/i.test(word):
-									if (lastCommand=="text") return match;
-									indent = selects.last(0)+1;
-									lastCommand=word;
-									return "\t".repeat(indent-1) +"\n" + word +end;
-								case /^by$/i.test(word):
-									if (/group|order/.test(lastCommand)) {
-										return  /* "\t".repeat(indent-1) +"\n" + */word +"\n" + "\t".repeat(indent);
-									} else return match;
-
-								case /,$/.test(word)/* word =="," */:
-									//console.log("word==",word)
-									if (lastCommand == "function") return word;
-									return word +"\n" + "\t".repeat(indent);
-								default:
-									lastCommand=match;
-									return match;
-							}
-						}).replace(/\n\s*\n/g,"\n").trim();
+					var newSql = U.beautifySql(sql) 
 					sqlControl.setValue(newSql);
 				},
 				setSql:function (sql) {
@@ -380,103 +546,103 @@ var controllers=[]
 				},
 				sql_autocomplete:function(editor) {
 
-			        // We want a single cursor position.
-			        if (editor.somethingSelected()) return;
+					// We want a single cursor position.
+					if (editor.somethingSelected()) return;
 
-			        var cur = editor.getCursor();
-			        var alias = editor.getTokenAt(editor.getCursor());
-			        var table_name = alias.string;
-			        
-			        
-			        
-			        function insert(str) {
-			            //editor.replaceSelection(str, result.from, result.to);
-			            editor.replaceSelection(str);
-			            window.setTimeout(function(){
-			                editor.setSelection(
-			                    editor.getCursor(false),
-			                    editor.getCursor(false)
-			                );
-			                editor.focus();
-			            });
-			        }
-			        insert(".");
-			        var matches = editor.getValue().match(r =new RegExp("(\\w+)\\s+" + alias.string+"\\s","im"));
-			        if (matches){
-			            table_name = matches[1];
-			        }
-			        console.log(r,table_name)
-			   
-			        
-			        var m = Ext.create('Ext.menu.Menu', {
-			            plain:true,
-			            items:[{
-			                xtype:"combo",
-			                //values:completions,
-			                enableKeyEvents:true,
-			                typeAhead:true,
-			                queryMode:"remote",
-			                displayField:'text',
-			                valueField:'text',
-			                store:{
-			                    autoLoad:true,
-			                    proxy:{
-			                        type: 'direct',
+					var cur = editor.getCursor();
+					var alias = editor.getTokenAt(editor.getCursor());
+					var table_name = alias.string;
+					
+					
+					
+					function insert(str) {
+						//editor.replaceSelection(str, result.from, result.to);
+						editor.replaceSelection(str);
+						window.setTimeout(function(){
+							editor.setSelection(
+								editor.getCursor(false),
+								editor.getCursor(false)
+							);
+							editor.focus();
+						});
+					}
+					insert(".");
+					var regex = new RegExp("([\\.\\w\\\"]+)\\s+" + alias.string+"(:?\\s|$)","im");
+					var matches = editor.getValue().match(regex);
+					if (matches){
+						table_name = matches[1];
+					} else {
+						//console.log(editor.getValue(),regex)
+					}
+					var m = Ext.create('Ext.menu.Menu', {
+						plain:true,
+						items:[{
+							xtype:"combo",
+							//values:completions,
+							enableKeyEvents:true,
+							typeAhead:true,
+							queryMode:"remote",
+							displayField:'text',
+							valueField:'text',
+							store:{
+								autoLoad:true,
+								proxy:{
+									type: 'direct',
 
-			                        directFn:$FP.DbManager.getTreeNode,
-			                        paramsAsHash:true,
-			                        extraParams:{
-			                            ds:appVars.ds_name,
-			                            node:"table:"+table_name
-			                        },
-			                        reader: {
-			                            type: 'json'
-			                        }
-			                    },
-			                    fields:[
-			                        {name:'text'}
-			                    ]
-			                    
-			                },
-			                listeners:{
-			                    afterrender:function (c) {
-			                        window.setTimeout(function () {c.doQuery("",true);c.focus();},100);
-			                    },
-			                    select:function (c,r) {
-			                        insert(r.first().get("text"));
-			                        c.ownerCt.hide();
-			                    },
-			                    specialKey:function (c,e) {
-			                        if (e.getKey() == e.ESC) c.ownerCt.hide();
-			                    }
-			                }
-			            }],
-			            listeners:{
+									directFn:$FP.DbManager.getTreeNode,
+									paramsAsHash:true,
+									extraParams:{
+										ds:appVars.ds_name,
+										node:"table:"+table_name
+									},
+									reader: {
+										type: 'json'
+									}
+								},
+								fields:[
+									{name:'text'}
+								]
+								
+							},
+							listeners:{
+								afterrender:function (c) {
+									window.setTimeout(function () {c.doQuery("",true);c.focus();},100);
+								},
+								select:function (c,r) {
+									insert(r.first().get("text"));
+									c.ownerCt.hide();
+								},
+								specialKey:function (c,e) {
+									if (e.getKey() == e.ESC) c.ownerCt.hide();
+								}
+							}
+						}],
+						listeners:{
 
-			                hide:function (panel) {
-			                    window.setTimeout(function(){
-			                        editor.setSelection(
-			                            editor.getCursor(false),
-			                            editor.getCursor(false)
-			                        );
-			                        editor.focus();
-			                    });
-			                }
-			            }
-			        });
-			        
-			        var coords=editor.cursorCoords(true, "page");
-			        m.showAt([coords.left,coords.bottom+3]);
-			        /*window.setTimeout(function(){
-			            editor.setSelection(
-			                editor.getCursor(false),
-			                editor.getCursor(false)
-			            );
-			            editor.focus();
-			        },50);*/
+							hide:function (panel) {
+								window.setTimeout(function(){
+									editor.setSelection(
+										editor.getCursor(false),
+										editor.getCursor(false)
+									);
+									editor.focus();
+								});
+							}
+						}
+					});
+					
+					var coords=editor.cursorCoords(true, "page");
+					m.showAt([coords.left,coords.bottom+3]);
+					/*window.setTimeout(function(){
+						editor.setSelection(
+							editor.getCursor(false),
+							editor.getCursor(false)
+						);
+						editor.focus();
+					},50);*/
 
-			        return true;
-			    },
+					return true;
+				},
 				initComponent:function(){
 					if (!CodeMirror.commands.sql_autocomplete) {
 						CodeMirror.commands.sql_autocomplete = this.sql_autocomplete
@@ -543,6 +709,7 @@ var controllers=[]
 						
 					}],
 					this.callParent(arguments);
+					//if(this.autoBeautify) this.beautify();	
 					if(this.autoRunSql) this.fireEvent("executeSql",{src:this,sql:this.sql})	
 				}
 			})
@@ -550,10 +717,6 @@ var controllers=[]
 			Ext.define('App.view.sql.ResultGrid', {
 				extend: 'univnm.ext.SupaGrid',
 				alias:'widget.resultgrid',
-				
-				events:{
-				
-				},
 				paged:true,
 				editFormConfig:{
 					xtype:"resultgridform",
@@ -621,11 +784,19 @@ var controllers=[]
 							}	
 						})
 					})
+					this.title = "Execution Time: {0}{2}Display Time: {1}".format(
+						Date.formatInterval(this.result.executionTime,{scale:2}),
+						Date.formatInterval(this.result.parseTime,{scale:2}),
+						"&nbsp;".repeat(10)
+					)
+
 					this.callParent(arguments);
 					
 					var s =this.getStore()
 					s.totalCount = this.result.totalRows
 					s.loadData(this.result.data)
+
+					
 					
 					
 				}
@@ -1576,7 +1747,11 @@ var controllers=[]
 					
 				}
 			})
-			this.getController("Sql").openSql("select * from play2 p join test t  on	( t.)");
+			/*this.getController("Sql").openSql(
+				U.beautifySql(
+					'Select aa.answer_attachment_id, aa.request_id, aa.document, aa.filename, aa.title, aa.question_id, aa from "ORS"."ANSWER_ATTACHMENT" aa'
+				)
+			);*/
 
 			
 			

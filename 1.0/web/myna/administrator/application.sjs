@@ -48,6 +48,13 @@
 			cls:"$cls",
 			src:"$src"
 		},{
+			name:"db_manager",
+			pattern:"db_manager/$id",
+			controller:"db_manager",
+			action:"index",
+			id:"$id"
+			
+		},{
 			name:"default",
 			pattern:"[$method]$controller/$action/$id/$rest*",
 			controller:"$controller",
@@ -84,6 +91,9 @@
 			}
 		});
 		$application.set("db_properties",db_props);
+
+		this.appStart =true
+		
 		
 	},
 	onRequestStart:function(){ // run directly before requested file
@@ -115,9 +125,30 @@
 		var path =$server.requestUrl
 				.after($server.currentUrl)
 					
-		//if (path.listFirst("/") != "static"){
-			Myna.include($application.config.frameworkFolder+"/FlightPath.sjs",{}).init().handleRequest();
-		//}
+		Myna.include($application.config.frameworkFolder+"/FlightPath.sjs",{}).init()
+
+		//assign all rights to Myna Admins
+		if (this.appStart){
+			var admins =Myna.Permissions.getUserGroupByName("myna_admin","Myna Administrators")
+			var rightNames = []
+			$FP.getControllerNames().forEach(function(name){
+				var controller = $FP.getController(name)
+			
+				controller.getActions().forEach(function(def){
+					rightNames.push("{0}.{1}".format(name,def.action))
+				})
+				
+			})
+			var rights = rightNames.map(function (name) {
+				return Myna.Permissions.addRight({
+					name:name,
+					appname:$application.appname
+				}).id
+			})
+			admins.addRights(rights)
+		}
+
+		$FP.handleRequest();
 		
 	},
 	onRequestEnd:function(){ // run directly after requested file

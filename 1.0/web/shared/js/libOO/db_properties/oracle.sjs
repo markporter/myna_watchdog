@@ -14,7 +14,7 @@ var templates = {
 		'<tpl for="references">',
 			'ALTER TABLE {parent.tableName} ADD CONSTRAINT {parent.id} FOREIGN KEY ({parent.name}) REFERENCES {table}({column})',
 			'<tpl if="onDelete.length"> ON DELETE {onDelete} </tpl>',
-		'</tpl>',
+		'</tpl>'
 	],
 	dropConstraint:[
 		'ALTER TABLE {tableName} DROP CONSTRAINT {id}'
@@ -61,8 +61,8 @@ var templates = {
 		'<tpl for="references">',
 			'REFERENCES {table}({column})',
 			'<tpl if="onDelete.length"> ON DELETE {onDelete} </tpl>',
-		'</tpl>',
-	],
+		'</tpl>'
+	]
 	/* foreignKeyConstraint:[
 		'<tpl for="references">',
 			'ALTER TABLE {parent.tableName} ADD CONSTRAINT {parent.id} FOREIGN KEY ({parent.name}) REFERENCES {table}({column})',
@@ -100,7 +100,51 @@ var functions={
 		}).valueArray("owner")
 	},
 	getTables:function(db,schema){
-		var rsTables = db.md.getTables(
+		var user = String(db.md.getUserName());
+		if (schema.toLowerCase() == user.toLowerCase()){
+			var rsTables = db.md.getTables(
+				db.catalog,
+				schema,
+				'%',
+				null
+			); 
+			var data =new Myna.Query(rsTables).data;
+			rsTables.close();
+			return data.filter(function(row){
+				return !/(\$|PLAN_TABLE)/.test(row.table_name)
+			})
+		} else {
+			return new Myna.Query({
+				ds:db.ds,
+				sql:[
+					"select",
+						"null table_cat,",
+						"null table_schem,",
+						"tp.table_name,",
+						"case when",
+							"exists (select 'x' from all_views where view_name= table_name and owner={schema})",
+						"then 'VIEW'",
+						"else 'TABLE'",
+						"end table_type,",
+						"null remarks,",
+						"null type_cat,",
+						"{schema} type_schem,",
+						"null type_name,",
+						"null self_referencing_col_name,",
+						"null ref_generation",
+					"from",
+						"table_privileges tp",
+					"where",
+						"grantee={user} ",
+						"and owner={schema}"
+				].join("\n"),
+				values:{
+					user:user,
+					schema:schema
+				}
+			}).data
+		}
+		/*var rsTables = db.md.getTables(
 			db.catalog,
 			schema,
 			'%',
@@ -110,7 +154,7 @@ var functions={
 		rsTables.close();
 		return data.filter(function(row){
 			return !/(\$|PLAN_TABLE)/.test(row.table_name)
-		})
+		})*/
 	},
 
 	setClob:function(con,st,index,value){
@@ -126,9 +170,7 @@ var functions={
 		st.setBlob(index+1, blob);
 	},
 	totalRowsSql:function(sql){
-		return <ejs>
-			select count(*) count from (<%=sql%>)  myna_count
-		</ejs>
+		return "select count(*) count from ({0})  myna_count".format(sql)
 	},
 	offsetSql:function(sql,limit,offset){
 		offset = offset||0

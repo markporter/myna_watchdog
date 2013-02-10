@@ -34,7 +34,18 @@ body,td{
 #help p{
 	margin-top:15px;
 }
+
+@font-face {  
+  font-family:awesome ;  
+  src: url( DejaVuSansMono.ttf ) format("truetype");  
+}  
+
+.CodeMirror { font:14px/1.4em  DejaVu Sans Mono, Consolas,Dialog, Courier, monospace; }	/* - customized editor font - */
+.icon_logout { background: url(../static/images/door_in.png) 0 0px no-repeat !important;}
+
 .icon_beautify { background: url(../static/images/text_indent.png) 0 0px no-repeat !important;}
+.icon_insert_sql { background: url(../static/images/table_go.png) 0 0px no-repeat !important;}
+.icon_rename { background: url(../static/images/tag_blue_edit.png) 0 0px no-repeat !important;}
 .icon_search { background: url(../static/images/magnifier.png) 0 0px no-repeat !important;}
 .icon_request { background: url(../static/images/lightning.png) 0 0px no-repeat !important;}
 .icon_upgrade { background: url(../static/images/package_go.png) 0 0px no-repeat !important;}

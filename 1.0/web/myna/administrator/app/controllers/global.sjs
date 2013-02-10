@@ -19,7 +19,9 @@ function init(){
 	this.applyBehavior("MynaAuth",{
 		whitelist:[
 			/Main.changeAdminPassword/,
-			/Main.logout/
+			/Main.logout/,
+			/Direct.api/,
+			/Direct.router/
 		],
 		providers:Myna.Permissions.getAuthTypes(),
 		redirectParams:{

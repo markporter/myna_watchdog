@@ -59,6 +59,7 @@ Ext.override(Ext.view.AbstractView, {
 							text:'Version: ' +version
 						},{
 							text:"Logout",
+							iconCls:"icon_logout",
 							handler:function(){
 								location.href=appUrl+"main/logout";
 							}
@@ -380,7 +381,7 @@ Ext.override(Ext.view.AbstractView, {
 				}
 			},
 			manageTables:function(name){
-				window.open(appUrl+"main/manageDb/" + name);
+				window.open(appUrl+"db_manager/" + name);
 			},
 			saveDsForm:function(model,cb){
 				$FP.Ds.save(

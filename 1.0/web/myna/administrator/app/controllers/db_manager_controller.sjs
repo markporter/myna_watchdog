@@ -84,6 +84,22 @@ function getIndexInfo(params) {
 		.getTable(params.table_name.unEscapeHtml())
 	return table.indexInfo
 }
+function getQuerySql(params) {
+	var table = new Myna.Database(params.ds).getTable(params.table_name);
+	var tableAlias = table.tableName.split(/[\W_]/).map(function(part){
+		return part.left(1).toLowerCase()
+	}).join("")
+	var colNames = table.columnNames;
+	if (!colNames.length) colNames =["*"];
+
+	return <ejs>
+		Select 
+			<@loop array="colNames" element="colName" index="i">
+			<%=tableAlias%>.<%=colName%><@if i !=colNames.length-1>,</@if>
+			</@loop>
+		from <%=table.sqlTableName%> <%=tableAlias%>
+	</ejs>
+}
 function getTreeNode(params){
 	params.checkRequired(["ds","node"])
 		var db = new Myna.Database(params.ds);
@@ -180,13 +196,14 @@ function getTreeNode(params){
 			})
 			return array;
 		} else if (params.node.split(":")[0]=="table"){
-			var t = db.getTable(params.node.split(":")[1]);
+			var t = db.getTable(params.node.split(":")[1].replace(/"/g,""));
 			return t.columnNames.map(function(colName){
 				return {
 					text: colName,
-					id:"column:" + colName,
+					id:t.tableName+":column:" + colName,
 					leaf:true,
 					cls:"db_column",
+					column_name:colName,
 					object_type:"column"
 				}
 			})
@@ -302,6 +319,35 @@ function jsonFormat(obj,indentLevel) {
 		.concat(["}"])
 		.join("\n" + " ".repeat(indentLevel*4));
 
+}
+function renameTable(params) {
+	try{
+		new Myna.Query({
+			ds:params.ds_name,
+			sql:"alter table {old_name} rename to {new_name}".format(params)
+		})
+		return {
+			success:true	
+		}
+	} catch(e){
+		return {
+			success:false,
+			message:String(e)
+		}
+	}
+}
+function dropTable(params) {
+	try{
+		new Myna.Database(params.ds_name).getTable(params.table_name).drop();
+		return {
+			success:true	
+		}
+	} catch(e){
+		return {
+			success:false,
+			message:String(e)
+		}
+	}
 }
 function saveTable(params) {
 	try{

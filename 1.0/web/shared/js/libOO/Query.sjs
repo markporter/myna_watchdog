@@ -399,6 +399,10 @@ Myna.Query.prototype={
 				name:String(md.getColumnLabel(index+1)),
 				typeId:md.getColumnType(index+1),
 				typeName:String(md.getColumnTypeName(index+1)),
+				sourceTable:md.getTableName(index+1),
+				sourceSchema:md.getSchemaName(index+1),
+				autoIncrement:md.isAutoIncrement(index+1),
+				isNullable:md.isNullable(index+1),
 				size:size
 			});
 		}

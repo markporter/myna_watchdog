@@ -170,7 +170,7 @@ public class MynaInstaller
 					logFile = new File(wrFile.toURI().resolve("WEB-INF/" + logFile)).toString();
 				}
 				File templateFile = new File(
-					wrFile.toURI().resolve("WEB-INF/myna/install/windows/start_myna.bat")
+					wrFile.toURI().resolve("WEB-INF/myna/install/windows/update_myna_service.cmd")
 				);   
 				
 				String initScript=FileUtils.readFileToString(templateFile)
@@ -187,12 +187,14 @@ public class MynaInstaller
 				;
 				
 				File scriptFile =new File(
-					wrFile.toURI().resolve("WEB-INF/myna/install/start_" + serverName+".bat")
+					wrFile.toURI().resolve("WEB-INF/myna/install/update_myna_service.cmd")
 				);          
 				
 				FileUtils.writeStringToFile(scriptFile,initScript);
-				
-								
+
+				//Runtime.getRuntime().exec("cmd /c start " + scriptFile.toString()).waitFor();
+
+				System.out.println("\nInstalled Service 'Myna App Server "+serverName+"' the following settings:\n");
 				System.out.println("\nInit script '" + scriptFile +"' created with the following settings:\n");
 				System.out.println("memory=256MB");
 				System.out.println("serverName="+ serverName);
@@ -207,7 +209,7 @@ public class MynaInstaller
 				System.out.println("ksPass=" + ksPass);
 				System.out.println("ksAlias=" + ksAlias);
 				
-				System.out.println("\nEdit this file to customize startup behavior");
+				System.out.println("\nEdit and and run the command file in "+scriptFile+" to update this service");
 				
 				
 			} else {

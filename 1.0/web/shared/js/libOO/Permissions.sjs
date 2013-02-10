@@ -657,7 +657,7 @@ if (!Myna) var Myna={}
 				groupname		-	group name to return
 		*/
 		getUserGroupByName:function(appname,groupname){
-			return Myna.Permissions.getUserGroupsByAppname($application.appname)
+			return Myna.Permissions.getUserGroupsByAppname(appname)
 				.toStruct(["name"])
 				.map(function(v,k){
 					return v.first()
