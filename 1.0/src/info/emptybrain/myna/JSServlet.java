@@ -1,26 +1,24 @@
 package info.emptybrain.myna;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
-import javax.servlet.*;
-import javax.servlet.http.*;
-import org.mozilla.javascript.*;
-import java.util.*;
-import java.util.regex.*;
-import java.sql.*;
-import org.apache.jcs.*;
-import org.apache.jcs.engine.behavior.*;
-import org.apache.commons.pool.impl.*;
-import org.apache.commons.dbcp.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory; 
+import java.util.Enumeration;
+import java.util.Hashtable;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
 * This servlet handles handles MynaThreads
 *
 */
 public class JSServlet extends HttpServlet {
-	 public String type="GET";
+
 	 public void init(ServletConfig config) throws ServletException {
 		// Store the ServletConfig object and log the initialization
 		super.init(config);
@@ -77,7 +75,7 @@ public class JSServlet extends HttpServlet {
 	* @param  req Servlet request object
 	* @param  res Servlet response object
 	*/
-	public void handleRequest(HttpServletRequest req, HttpServletResponse res, String type) throws ServletException, IOException{
+	public void handleRequest(HttpServletRequest req, HttpServletResponse res, final String type) throws ServletException, IOException{
 		//System.out.println("type = " + this.type);
 		try{
 			MynaThread thread = new MynaThread();
@@ -176,7 +174,7 @@ public class JSServlet extends HttpServlet {
 							this,
 							req,
 							res
-						).serve(!this.type.equals("HEAD"));
+						).serve(!"HEAD".equals(type));
 					}
 					
 				} else {
@@ -231,7 +229,6 @@ public class JSServlet extends HttpServlet {
 	* @param  res Servlet response object
 	*/
 	public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
-		this.type="GET";
 		//System.out.println("called get");
 		handleRequest(req,res,"GET");
 	}
@@ -244,7 +241,6 @@ public class JSServlet extends HttpServlet {
 	* @param  res Servlet response object
 	*/
 	public void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
-		this.type="POST";
 		//System.out.println("called post");
 		handleRequest(req,res,"POST");	
 	}
@@ -252,7 +248,6 @@ public class JSServlet extends HttpServlet {
 	public void doHead(HttpServletRequest req, HttpServletResponse res)
 		throws ServletException, IOException
 	{
-		this.type="HEAD";
 		handleRequest(req,res,"HEAD");
 	}
 	
@@ -264,7 +259,6 @@ public class JSServlet extends HttpServlet {
 	* @param  res Servlet response object
 	*/
 	public void doPut(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
-		this.type="PUT";
 		handleRequest(req,res,"PUT");	
 	}
 	
@@ -276,7 +270,6 @@ public class JSServlet extends HttpServlet {
 	* @param  res Servlet response object
 	*/
 	public void doDelete(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
-		this.type="DELETE";
 		handleRequest(req,res,"DELETE");	
 	}
 	

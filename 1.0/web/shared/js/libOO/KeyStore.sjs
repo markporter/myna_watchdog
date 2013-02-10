@@ -83,6 +83,16 @@ Myna.KeyStore = function(name){
 	this.exists = !!this.manager.find(this.name +":meta").length;
 	if (this.exists) this.init();
 }
+/* Property: name
+	name of this KeyStore
+*/
+/* Property: exists
+	true if this keystore has been created.
+
+	see:
+	* <create>
+	* <importPublicKeys>
+*/
 /* Function: init
 	Initialized the keystore from the database.
 	
@@ -152,9 +162,9 @@ Myna.KeyStore.prototype.init = function(){
 Myna.KeyStore.prototype.create = function(purpose,asymmetric){
 	var KeyPurpose = org.keyczar.enums.KeyPurpose;
 	var KeyMetadata = org.keyczar.KeyMetadata;
-	var KeyType = org.keyczar.enums.KeyType;
+	var KeyType = org.keyczar.DefaultKeyType;
 	
-	if (this.exists) throw new Error("a keystore named '"+this.name+"' already exists.")
+	//if (this.exists) throw new Error("a keystore named '"+this.name+"' already exists.")
 	
 	if (!purpose) throw new Error("purpose is required");
 	if (!asymmetric) asymmetric="";
@@ -163,7 +173,7 @@ Myna.KeyStore.prototype.create = function(purpose,asymmetric){
 	switch (purpose.toLowerCase()) {
 		case "sign":
 			if (asymmetric) {
-				kmd = new KeyMetadata(this.name, KeyPurpose.SIGN_AND_VERIFY, KeyType.EC_PRIV);
+				kmd = new KeyMetadata(this.name, KeyPurpose.SIGN_AND_VERIFY, KeyType.RSA_PRIV);
 				/* if (asymmetric.toLowerCase() == "rsa") {
 					kmd = new KeyMetadata(this.name, KeyPurpose.SIGN_AND_VERIFY,
 						KeyType.RSA_PRIV);
@@ -299,7 +309,7 @@ Myna.KeyStore.prototype.revoke = function(keyNum){
 Myna.KeyStore.prototype.importPublicKeys = function(pkjson){
 	var KeyPurpose = org.keyczar.enums.KeyPurpose;
 	var KeyMetadata = org.keyczar.KeyMetadata;
-	var KeyType = org.keyczar.enums.KeyType;
+	var KeyType = org.keyczar.DefaultKeyType;
 	var KeyczarKey = org.keyczar.KeyczarKey;
 	var KeyVersion = org.keyczar.KeyVersion;
 	var GenericKeyczar = org.keyczar.GenericKeyczar;
@@ -308,9 +318,10 @@ Myna.KeyStore.prototype.importPublicKeys = function(pkjson){
 	var ks = pkjson.parseJson();
 	if (!this.name) this.name = ks.name;
 	
-	if (this.manager.find(this.name+":meta").length){
-		throw new Error("A keystore named '"+name+"' already exists")	
-	}
+	//lets just re-create
+	/*if (this.manager.find(this.name+":meta").length){
+		throw new Error("A keystore named '"+this.name+"' already exists")	
+	}*/
 	
 	
 	var md = ks.meta.key.parseJson();
@@ -345,7 +356,7 @@ Myna.KeyStore.prototype.importPublicKeys = function(pkjson){
 Myna.KeyStore.prototype.exportPublicKeys = function(){
 	var KeyPurpose = org.keyczar.enums.KeyPurpose;
 	var KeyMetadata = org.keyczar.KeyMetadata;
-	var KeyType = org.keyczar.enums.KeyType;
+	var KeyType = org.keyczar.DefaultKeyType;
 	var GenericKeyczar = org.keyczar.GenericKeyczar;
 	var genericKeyczar = new GenericKeyczar(this.reader)
 	
@@ -486,5 +497,5 @@ Myna.KeyStore.prototype.sign=function(data){
 	
 */
 Myna.KeyStore.prototype.verify=function(data,sig){
-	return new org.keyczar.Signer(this.reader).verify(data,sig);
+	return new org.keyczar.Verifier(this.reader).verify(data,sig);
 }

@@ -214,7 +214,7 @@ if (!("JavaUtils" in Myna)) Myna.JavaUtils={}
 		return new java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE,size);	
 	}
 /* Function: createClassArray 
-	returns a java Byte array of the supplied size 
+	returns a java array of the supplied class and size 
 		
 	Paramters:
         className     - full classname to instantiate, e.g. java.lang.String   

@@ -1850,6 +1850,30 @@ if (!Myna) var Myna={}
 		return lines.filter(function(e){
 			return e.length;
 		}) */
+
+
+		var array = [];
+        
+        var dumpOne = function(exception, prefix) {
+            var t = exception.getStackTrace().map(function(e){
+                return "\tat " + e;
+            });
+            var firstLine = String(exception);
+            if (prefix)
+                firstLine = prefix + firstLine;
+            t.unshift(firstLine);
+            return t;
+        }
+        
+        var javaException = e.rhinoException;
+        var prefix = "";
+        while (javaException != null) {
+            array = array.concat(dumpOne(javaException, prefix))
+            javaException = javaException.getCause();
+            prefix = "Caused by: ";
+        }
+        
+        return array;
 		
 		// return e.rhinoException.getStackTrace()
 		// .map(function(e){

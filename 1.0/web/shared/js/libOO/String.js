@@ -1774,15 +1774,54 @@
 	};
 /* ======================= Myna-only functions ============================== */
 if ("$server_gateway" in this){
+/* Function: checksum
+	returns a simple String checksum(digest) for this string.
+
+	Parameters:
+		algorithm	-	*Optional, default "MD5"*
+						Digest algorithm to use. 
+
+		urlSafe		-	*Optional, default false*
+						If true, then the characters + and / and = will be replaced with 
+						- and _ and . respectively. <JavaUtils.base64ToByteArray> will 
+						automatically detect this format, but it is non-standard so 
+						other libraries may not properly parse it.
+
+	Returns:
+		Base64 encoded digest of this string
+
+	Detail:
+		This uses any of the available Java hashing algorithms (MD5 be default)
+		for quickly creating a unique string hash value. This is useful for 
+		creating hash keys for lookup or equality comparisons or any other 
+		non-cryptographic uses.
+
+		For cryptographic uses see <toHash>
+	
+	*/
+	String.prototype.checksum=function(algorithm,urlSafe){
+		return Myna.JavaUtils.byteArrayToBase64(
+			new org.jasypt.util.digest.Digester(algorithm||"MD5").digest(
+				this.toJava().getBytes()
+			),
+			urlSafe
+		);
+	}
 /* Function: hashCode
 		returns java.lang.String.hasCode() for this string
 		
 		Detail:
 			The Java String object provides a method for quickly creating 
 			a unique numeric hash value. This is useful for creating hash keys for 
-			lookup or equality comparisons or any other non-cryptographic uses.
-			
-		for cryptographic uses see <toHash>
+			lookup or equality comparisons or any other non-cryptographic uses. 
+			Because this algorithm only returns a 32-bit integer, it has a 
+			relatively high chance of returning the same code for different 
+			strings. <checksum> provides a less collision prone hash but returns 
+			a string 
+
+		For 
+		For cryptographic uses see <toHash>
+		
 	*/
 	String.prototype.hashCode=function(){
 		return new java.lang.String(this).hashCode();	

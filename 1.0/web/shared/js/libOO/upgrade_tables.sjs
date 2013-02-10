@@ -480,10 +480,10 @@ var dm;
 				})	
 			}
 		/* modify existing columns */
-			if (table.columns.key.column_size < 2000){
+			if (table.columns.key.column_size < 4000){
 				table.modifyColumn("key",{
 					type:"VARCHAR",
-					maxLength:2000
+					maxLength:4000
 					
 				})
 			}
