@@ -250,6 +250,9 @@ var controllers=[]
 						edit:function (event) {
 							this.getController("Table").editTable(event.table)
 						},
+						insert_column_names:function (event) {
+							this.insertColumnNames(event.table)
+						},
 						rename:function (event) {
 							this.renameTable(event.table,event.newName,function (result) {
 								if (result.success){
@@ -267,6 +270,23 @@ var controllers=[]
 						}
 					}
 				})
+			},
+			insertColumnNames:function (table) {
+				var tabPanel = Ext.getCmp("center_tabs");
+				var sqlWin = tabPanel.getActiveTab();
+				if (sqlWin && sqlWin.is("sql")){
+					
+					$FP.DbManager.getTreeNode({
+						ds:appVars.ds_name,
+						node:"table:"+table
+					},function (columns) {
+						var cm = sqlWin.insertAtCursor(
+							columns.map(function (c) {return c.column_name}).join(",\n")
+						)
+
+						//console.log(columns)
+					})					
+				}
 			},
 			dropTable:function (table, cb) {
 				$FP.DbManager.dropTable({
@@ -348,7 +368,7 @@ var controllers=[]
 											iconCls:"icon_insert_sql",
 											handler:function(c){
 												var view=treeview.ownerCt;
-												view.fireEvent("edit",{
+												view.fireEvent("insert_column_names",{
 													src:view,
 													table:node.raw.table_name
 												});
@@ -544,8 +564,19 @@ var controllers=[]
 				setSql:function (sql) {
 					this.down("*[itemId=sql_control]").setValue(sql);
 				},
+				insertAtCursor:function (str) {
+					var editor=this.down("codemirror").codeMirror;
+					//editor.replaceSelection(str, result.from, result.to);
+					editor.replaceSelection(str);
+					window.setTimeout(function(){
+						editor.setSelection(
+							editor.getCursor(false),
+							editor.getCursor(false)
+						);
+						editor.focus();
+					});
+				},
 				sql_autocomplete:function(editor) {
-
 					// We want a single cursor position.
 					if (editor.somethingSelected()) return;
 
@@ -555,17 +586,7 @@ var controllers=[]
 					
 					
 					
-					function insert(str) {
-						//editor.replaceSelection(str, result.from, result.to);
-						editor.replaceSelection(str);
-						window.setTimeout(function(){
-							editor.setSelection(
-								editor.getCursor(false),
-								editor.getCursor(false)
-							);
-							editor.focus();
-						});
-					}
+					var insert = this.insertAtCursor.bind(this);
 					insert(".");
 					var regex = new RegExp("([\\.\\w\\\"]+)\\s+" + alias.string+"(:?\\s|$)","im");
 					var matches = editor.getValue().match(regex);
@@ -581,14 +602,14 @@ var controllers=[]
 							//values:completions,
 							enableKeyEvents:true,
 							typeAhead:true,
-							queryMode:"remote",
+							queryMode:"local",
 							displayField:'text',
 							valueField:'text',
+							forceSelection:true,
 							store:{
 								autoLoad:true,
 								proxy:{
 									type: 'direct',
-
 									directFn:$FP.DbManager.getTreeNode,
 									paramsAsHash:true,
 									extraParams:{
@@ -645,7 +666,7 @@ var controllers=[]
 				},
 				initComponent:function(){
 					if (!CodeMirror.commands.sql_autocomplete) {
-						CodeMirror.commands.sql_autocomplete = this.sql_autocomplete
+						CodeMirror.commands.sql_autocomplete = this.sql_autocomplete.bind(this)
 					}
 					var view = this;
 					this.items=[{
