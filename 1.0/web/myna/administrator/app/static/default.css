@@ -70,6 +70,8 @@ body,td{
 .icon_manage_apps{ background: url(../static/images/application_cascade.png) 0 0px no-repeat !important;}
 .icon_documentation{ background: url(../static/images/help.png) 0 0px no-repeat !important;}
 
+.icon_manage_user_groups{ background: url(../static/images/group.png) 0 0px no-repeat !important;}
+
 .icon_refresh{ background: url(../static/extjs/resources/themes/images/default/grid/refresh.gif) 0 0px no-repeat !important;}
 
 

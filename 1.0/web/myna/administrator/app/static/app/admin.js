@@ -407,7 +407,7 @@ Ext.override(Ext.view.AbstractView, {
 			},
 			
 			updateUrl:function(f){
-				if ("location,server,port,file".listContains(f.name) ){
+				if ("location,server,port,file,db".listContains(f.name) ){
 					var fp =f.up("form");
 					var form = fp.form;
 					var data =form.getValues();

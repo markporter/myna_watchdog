@@ -42,7 +42,7 @@ var controllers=[]
 									
 						},{
 							text:"Manage Users",
-							//iconCls:"icon_form_search",
+							iconCls:"icon_manage_users",
 							handler:function(c){
 								var view=c.up("viewport");
 								view.fireEvent("manage_users",{
@@ -51,7 +51,7 @@ var controllers=[]
 							}
 						},{
 							text:"Manage User Groups",
-							//iconCls:"icon_form_search",
+							iconCls:"icon_manage_user_groups",
 							handler:function(c){
 								var view=c.up("viewport");
 								view.fireEvent("manage_user_groups",{
@@ -147,6 +147,35 @@ var controllers=[]
 		}
 	}
 /* =========== General View Components ====================================== */
+/* =========== User ======================================================== */
+	/* ----------- Controller ----------------------------------------------- */
+		controllers.push("User");
+		Ext.define('App.controller.User', {
+			extend: 'Ext.app.Controller',
+			init: function() {
+				this.control({
+					'viewport':{
+						new_sql_window:function () {
+							this.openSql();
+						}
+					}
+					
+				});
+			}
+		})
+	/* =========== Views ==================================================== */
+		/* ----------- user_grid ----------------------------------------- */
+			Ext.define('App.view.UserGrid', {
+				extend: 'univnm.ext.SupaGrid',
+				alias:'widget.user_grid',
+				
+				initComponent:function () {
+					Ext.apply(this,{
+						
+					})
+					this.callParent(arguments);
+				}
+			})
 
 /*  */
 

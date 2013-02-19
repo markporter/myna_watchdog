@@ -35,7 +35,7 @@ Myna.Database = function (ds){
 	return db
 }
 /* Property: dbProperties
-	*Static* Global database vender properties
+	*Static* Global database vendor properties
 	
 	This object stores vendor specific information used by Myna's data access 
 	functions. This should not normally need to be accessed directly.
@@ -301,7 +301,24 @@ Myna.Database = function (ds){
 		});
 	}
 
+/* Function: testConnection
+	Executes this database's connection test SQL and returns a <Myna.ValidationResult>		
 	
+		
+	*/	
+	Myna.Database.prototype.testConnection =function () {
+		var v = new Myna.ValidationResult();
+		try{
+			new Myna.Query({
+				ds:this.ds,
+				sql:Myna.Database.dbProperties[this.dbType].connectionTestSql
+			});
+		} catch(e){
+			v.addError(e)
+		}
+		return v
+	}
+
 Myna.Database.prototype.getCacheValue =function(key,defaultValue) {
 	if (!("cache" in this)){
 		this.clearMetadataCache();		

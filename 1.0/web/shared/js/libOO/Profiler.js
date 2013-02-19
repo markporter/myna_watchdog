@@ -435,56 +435,56 @@ Myna.Profiler.prototype.start=0;
 		and getters
 	*/
 	Myna.Profiler.prototype.profile = function(obj,name,logArgs){
-	var $this = this;
-	var p;
-	
-	
-	function applyProfiler(target,prop,propName){
-		if (typeof target[prop] == "function"){
-			if (target[prop].prototype.getProperties().length) return false;
-				
-			//Myna.println(prop)
-			ObjectLib.before(target,prop,function(){
-				var chain = arguments.callee.chain;
-				var msg = name +"::" + propName +"(";
-				if (logArgs) {
-					try{
-					msg+=JSON.stringify(chain.args,null,"   ");
-					} catch(e){}
-				}
-				msg+=")";
-				chain._profileEnd = $this.begin(msg);
-				return chain.lastReturn;
-			});
-			ObjectLib.after(target,prop,function(){
-				var chain = arguments.callee.chain;
-				chain._profileEnd();
-				return chain.lastReturn;
-			});	
-			return true;
-		}
-		return false;
-	}
-	
-	for (p in obj){
-			var d = Object.getOwnPropertyDescriptor( obj, p );  
-			if (d && d.configurable){
-				var changed =false;
-				if (d.get) {
-					changed =changed||applyProfiler(d,"get",p);
-				}
-				if (d.set) {
-					changed =changed||applyProfiler(d,"set",p);
-				}
-				if (d.value) {
-					changed =changed||applyProfiler(d,"value",p);
-				}
-				
-				if (changed) Object.defineProperty(obj,p,d);
-			} else {
-				applyProfiler(obj,p,p);
+		var $this = this;
+		var p;
+		
+		
+		function applyProfiler(target,prop,propName){
+			if (typeof target[prop] == "function"){
+				if (target[prop].prototype.getProperties().length) return false;
+					
+				//Myna.println(prop)
+				ObjectLib.before(target,prop,function(){
+					var chain = arguments.callee.chain;
+					var msg = name +"::" + propName +"(";
+					if (logArgs) {
+						try{
+						msg+=JSON.stringify(chain.args,null,"   ");
+						} catch(e){}
+					}
+					msg+=")";
+					chain._profileEnd = $this.begin(msg);
+					return chain.lastReturn;
+				});
+				ObjectLib.after(target,prop,function(){
+					var chain = arguments.callee.chain;
+					chain._profileEnd();
+					return chain.lastReturn;
+				});	
+				return true;
 			}
-			
+			return false;
 		}
+		
+		for (p in obj){
+				var d = Object.getOwnPropertyDescriptor( obj, p );  
+				if (d && d.configurable){
+					var changed =false;
+					if (d.get) {
+						changed =changed||applyProfiler(d,"get",p);
+					}
+					if (d.set) {
+						changed =changed||applyProfiler(d,"set",p);
+					}
+					if (d.value) {
+						changed =changed||applyProfiler(d,"value",p);
+					}
+					
+					if (changed) Object.defineProperty(obj,p,d);
+				} else {
+					applyProfiler(obj,p,p);
+				}
+				
+			}
 
-};
+	};

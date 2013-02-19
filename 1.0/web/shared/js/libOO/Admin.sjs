@@ -188,6 +188,51 @@ Myna.Admin ={
 					});
 			});
 		},
+	/* Function: Myna.Admin.ds.getMap
+		returns a map of all DS structures currently configured
+			
+			
+		*/
+		getMap:function getDataSources(){
+			var dataSources =Myna.JavaUtils.mapToObject($server_gateway.dataSources);
+			return dataSources.map(function(value,key){
+				return Myna.JavaUtils.mapToObject(value)
+					.map(function(v){
+						return parseInt(v,10) == v?parseInt(v,10):v;  
+					});
+			});
+		},
+	/* Function: test
+		tests connecting to the named DS and returns a <Myna.ValidationResult>
+	
+		Parameters:
+			name	-	name of DS to test
+		*/
+		test:function (name) {
+			var ret = new Myna.ValidationResult();
+			var db;
+			var config = Myna.Admin.ds.getMap()[name]
+			try {
+				$server_gateway.loadDataSource(new Myna.File($server.rootDir + "WEB-INF/myna/ds/" + name + ".ds").javaFile,true);
+				db =new Myna.Database(name);
+
+			} catch (e if (e.javaException instanceof java.lang.ClassNotFoundException)){
+				ret.addError(
+					"Connection failed for datasource '" + name +"' : The database driver '" + config.driver + "' cannot be found in the classpath.",
+					"driver"
+				)
+			} catch (e){
+				ret.addError(
+					String(e),
+					"name"
+				)
+			}
+			if (ret.success){
+				ret.merge(db.testConnection(name))
+			}
+			return ret
+
+		},
 		
 	/* Function: Myna.Admin.ds.save 
 		updates a data source,
