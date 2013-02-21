@@ -764,22 +764,24 @@ if (!Myna) var Myna={}
 			if (result.exitCode ==0 && String(result.errors).length ==0){
 				scriptFile.forceDelete();
 			} else {
-				Myna.log("Error","Error in Myna.executeShell",<ejs>
-					<b>Shell Command:</b><br>
-					<pre><%=shellCommand%></pre><p>
-					
-					<b>Script:</b><br>
-					<pre><%=script%></pre><p>
-					
-					<b>Errors:</b><br>
-					<pre><%=result.errors%></pre><p>
-					
-					<b>Output:</b><br>
-					<pre><%=result.output%></pre><p>
-					
-					<b>ScriptPath:</b><br>
-					<pre><%=result.file%></pre><p>
-				</ejs>);	
+				if (result.errors.length){
+					Myna.log("Error","Error in Myna.executeShell",<ejs>
+						<b>Shell Command:</b><br>
+						<pre><%=shellCommand%></pre><p>
+						
+						<b>Script:</b><br>
+						<pre><%=script%></pre><p>
+						
+						<b>Errors:</b><br>
+						<pre><%=result.errors%></pre><p>
+						
+						<b>Output:</b><br>
+						<pre><%=result.output%></pre><p>
+						
+						<b>ScriptPath:</b><br>
+						<pre><%=result.file%></pre><p>
+					</ejs>);	
+				}
 			}
 		} 
 		
