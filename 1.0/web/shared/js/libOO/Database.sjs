@@ -80,7 +80,7 @@ Myna.Database = function (ds){
 		} else { 
 			try{
 				if (/^:mem:/.test(this.ds)){
-					con = java.sql.DriverManager.getConnection("jdbc:h2:mem");
+					con = java.sql.DriverManager.getConnection("jdbc:h2"+this.ds);
 				} else {
 					//con = java.sql.DriverManager.getConnection("jdbc:apache:commons:dbcp:" + this.ds);
 					if (typeof this.ds === "string"){

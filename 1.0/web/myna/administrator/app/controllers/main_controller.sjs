@@ -147,7 +147,7 @@ function extLoad(params){
 	*/
 	function changeAdminPassword(params){
 		var props=Myna.getGeneralProperties();
-		if (props.admin_password && !$cookie.getAuthUserId){
+		if (props.admin_password && !$cookie.getAuthUserId()){
 			var redirectParams = ({
 				callbackUrl:$FP.helpers.Html.url({
 					controller:this.name,
@@ -171,6 +171,10 @@ function extLoad(params){
 				$FP.redirectTo({action:"index"})
 			}
 		}
+		/*new Myna.File("/WEB-INF/myna/admin_auth_code").writeString(JSON.stringify({
+			ts:new Date().getTime(),
+			code:
+		}))*/
 		this.$page.title="Change Myna Admin Password"
 	}	
 /* Function: updateFpApp

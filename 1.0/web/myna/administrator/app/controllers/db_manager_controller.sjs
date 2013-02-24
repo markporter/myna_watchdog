@@ -314,7 +314,7 @@ function jsonFormat(obj,indentLevel) {
 	var keys = obj.getKeys().filter(function (k) {return obj[k]||obj[k]===0});
 	return ["{"]
 		.concat(keys.map(function (k) {
-			return "    {0}:{1}".format(k,JSON.stringify(obj[k]));
+			return "    {0}:{1},".format(k,JSON.stringify(obj[k]));
 		}))
 		.concat(["}"])
 		.join("\n" + " ".repeat(indentLevel*4));

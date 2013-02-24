@@ -1,3 +1,5 @@
+
+
 /* 
 	Class: Myna.Cache
 	Creates and manages cached objects
@@ -156,6 +158,55 @@ if (!Myna) var Myna={}
 			}
 		})) throw new Error("Unable to lock cache store")
 	}
+Myna.Cache.ds = ":mem:MYNA_CACHE;DB_CLOSE_DELAY=-1";
+//prep memory db
+	(function () {
+		var dm = new Myna.Database(Myna.Cache.ds)
+		var table = dm.getTable("keys");
+
+		table.create({
+			recreate:false,
+			columns:[{
+				name:"TAGS",
+				type:"VARCHAR",
+				maxLength:2147483647,
+				allowNull:true
+			},{
+				name:"MAX_LIFE_SECONDS",
+				type:"BIGINT",
+				allowNull:true
+			},{
+				name:"MAX_IDLE_SECONDS",
+				type:"BIGINT",
+				allowNull:true
+			},{
+				name:"IS_ETERNAL",
+				type:"INTEGER",
+				allowNull:true
+			},{
+				name:"CREATED",
+				type:"TIMESTAMP",
+				allowNull:true,
+				defaultValue:"CURRENT_TIMESTAMP()"
+			},{
+				name:"KEY",
+				type:"VARCHAR",
+				maxLength:4000
+			}]
+		})
+
+		table.addPrimaryKey({
+			id:"KEYS_KEY_PKEY_5257",
+			column:"key"
+		})
+
+		table.addIndex({
+			id:"PRIMARY_KEY_2",
+			columns:["key"]
+		});
+	})()
+
+	Myna.Cache.keyManager = new Myna.DataManager(Myna.Cache.ds).getManager("keys");
 /* Function: backgroundRefresh
 	refresh this cache in a background thread.
 	
@@ -234,6 +285,82 @@ if (!Myna) var Myna={}
 		return result
 		//return c.get(key);
 	}
+/* Function: get
+	retrieves a cached value or generates a new one
+	
+	Parameters:
+		cacheKey	-	Key of cache object to retrieve
+		generator	-	*Optional, default null*
+						if defined, a function that returns a value for this 
+						cache object
+		options		-	*Optional, see <set> for defaults*
+						Options for cached value saved from _generator_. 
+						See <set> for details
+
+	Returns:
+		cached value or result of _generator_ or undefined. If there is no 
+		valid cache value, and _generator_ is defined, the it is executed and the 
+		result is saved as the cache value, and returned. Else, if no _generator_ 
+		is defined a NULL is returned
+	*/	
+	Myna.Cache.get = function CacheGet(key,generator,options){
+		var $this = this;
+		var c = org.apache.jcs.JCS.getInstance("value");
+		var value = c.get(key);
+		if (value !== null){
+			return value
+		} else if (generator){
+			Myna.lock(key,Date.getInterval(Date.DAY,1)/1000, function(){
+				/* 
+				Now that we have a lock, check if another thread has 
+				updated the cache
+				*/ 
+				value = c.get(key);
+				if (!options) options ={}
+				if (value === null){
+					
+					var att = c.getDefaultElementAttributes();
+					//set max idle time to  
+					if (cacheObj.maxIdleInterval != -1){
+						att.maxIdleTimeSeconds =(Math.floor(cacheObj.maxIdleInterval/1000));
+					}
+					c.put(key,cacheValue,att);
+						
+				}
+				
+			});
+			return value
+		} else {
+			return undefined;
+		}
+	}	
+	Myna.Cache.set = function CacheGet(key,value,options){
+		var $this = this;
+		var c = org.apache.jcs.JCS.getInstance("value");
+		Myna.lock(key,Date.getInterval(Date.DAY,1)/1000, function(){
+			
+			if (!options) options ={}
+			if (value === null){
+				
+				var att = c.getDefaultElementAttributes();
+				//set max idle time to  
+				if (cacheObj.maxIdleInterval != -1){
+					att.maxIdleTimeSeconds =(Math.floor(cacheObj.maxIdleInterval/1000));
+				}
+				c.put(key,cacheValue,att);
+					
+			}
+			
+		});
+		return value
+	}	
+Myna.Cache.defaults={
+	maxIdleInterval:Date.getInterval(Date.MINUTE,20),
+	maxLifeInterval:Date.getInterval(Date.DAY,1),
+	neverExpires:false,
+	tags:[]
+
+}
 /* Function: call
 	Calls the cache function.
 	
@@ -367,7 +494,7 @@ if (!Myna) var Myna={}
 			c.remove(key);
 			delete $this.cacheKeys[key];
 		})
-		 	
+			
 	}
 /* Function: getByName 
 	Static function that returns the cache object associated with the supplied 
