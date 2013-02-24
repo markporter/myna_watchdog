@@ -160,7 +160,7 @@ if (!Myna) var Myna={}
 	}
 Myna.Cache.ds = ":mem:MYNA_CACHE;DB_CLOSE_DELAY=-1";
 //prep memory db
-	(function () {
+	/*(function () {
 		var dm = new Myna.Database(Myna.Cache.ds)
 		var table = dm.getTable("keys");
 
@@ -204,9 +204,9 @@ Myna.Cache.ds = ":mem:MYNA_CACHE;DB_CLOSE_DELAY=-1";
 			id:"PRIMARY_KEY_2",
 			columns:["key"]
 		});
-	})()
+	})()*/
 
-	Myna.Cache.keyManager = new Myna.DataManager(Myna.Cache.ds).getManager("keys");
+	//Myna.Cache.keyManager = new Myna.DataManager(Myna.Cache.ds).getManager("keys");
 /* Function: backgroundRefresh
 	refresh this cache in a background thread.
 	

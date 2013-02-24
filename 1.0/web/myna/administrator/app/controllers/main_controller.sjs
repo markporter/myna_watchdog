@@ -19,7 +19,7 @@
 				}
 			},
 			{
-				except:["changeAdminPassword"]
+				except:["changeAdminPassword","saveAdminPassword"]
 			}
 		);
 		
@@ -144,39 +144,123 @@ function extLoad(params){
 	}
 /* Function: changeAdminPassword
 	Changes the admin password
+
+	This action is used for both displaying the dialog page, and for handling 
+	the save of a new password
 	*/
 	function changeAdminPassword(params){
 		var props=Myna.getGeneralProperties();
-		if (props.admin_password && !$cookie.getAuthUserId()){
-			var redirectParams = ({
-				callbackUrl:$FP.helpers.Html.url({
-					controller:this.name,
-					action:"changeAdminPassword"
-				})
-			})
-			$res.redirectLogin(redirectParams)
-			return {}
-		}
 		
-		if (params.password$array && params.password$array.length  == 2){
-			if (params.password$array[0] != params.password$array[1])
-			{
-				$flash.set("error","Passwords do not match, please try again.");
-			} else if (params.password$array[0].length < 6){
-				$flash.set("error","Passwords must be at least 6 characters long. Please try again.");
-			} else {
-				props = Myna.getGeneralProperties();
-				$server_gateway.generalProperties.setProperty("admin_password",params.password$array[0].toHash());
-				$server_gateway.saveGeneralProperties();
-				$FP.redirectTo({action:"index"})
+		this.set("authCodeRequired",true)
+		/*
+		Password does not exist, generate auth code, and require auth code to 
+		reset
+		*/
+		if (!props.admin_password){
+			
+			var authFile =new Myna.File("/WEB-INF/myna/admin_auth_code")
+			if (
+				!authFile.exists() 
+				|| authFile.lastModified.add(Date.MINUTE,4) < new Date()
+			) {
+				authFile.writeString(
+					Myna.createUuid().hashCode().toString().replace(/\-/,"1")
+				);
 			}
+			
 		}
-		/*new Myna.File("/WEB-INF/myna/admin_auth_code").writeString(JSON.stringify({
-			ts:new Date().getTime(),
-			code:
-		}))*/
+
+		this.set("authCodeRequired",!props.admin_password)
 		this.$page.title="Change Myna Admin Password"
 	}	
+/* Function: saveAdminPassword
+	saves a new admin password
+
+	Parameters:
+		password$array	-	array of password inputs. Must match
+		authCode		-	Only needed when no existing password  
+		existingPwd		-	Only needed when a password exists
+	*/
+	function saveAdminPassword(params) {
+		var props=Myna.getGeneralProperties();
+		var resetStatus =$server.get("_MYNA_ADMIN_PWD_RESET_") ||{
+			count:-1,
+			ts:new Date()
+		}
+		var authFile =new Myna.File("/WEB-INF/myna/admin_auth_code")
+
+		
+		//try to wreck automated attacks
+			resetStatus.ts=new Date();
+			resetStatus.count++;			
+
+			// check old auth code
+			if (
+				!props.admin_password 
+				&& (
+					!authFile.exists() 
+					|| authFile.lastModified.add(Date.MINUTE,4) < new Date()
+				) 
+			){
+				$flash.set("error","Auth code is too old. Please try again.");
+				$FP.redirectTo({action:"changeAdminPassword"})
+			}
+
+			//reset lockout after 1 minute of inactivity
+			if (resetStatus.ts.add(Date.MINUTE,1) < new Date()){//reset lockout
+				resetStatus.count=0;
+			}
+
+			//Myna.printConsole(Myna.dumpText(resetStatus));	
+			//progressive timeout
+			Myna.sleep(Date.getInterval(Date.SECOND,5) * resetStatus.count);
+		
+		try{
+			if (props.admin_password && ! params.existingPwd.hashEquals(props.admin_password)){
+				Myna.log("error","Myna Admin password reset: failed existing pwd",Myna.dump($req.headers,"Request headers"));			
+				$flash.set("error","Wrong Admin Password. Please try again.");
+				$FP.redirectTo({action:"changeAdminPassword"})
+			}
+
+			if (!props.admin_password && params.authCode != authFile.readString()){
+				Myna.log("error","Myna Admin password reset: failed authCode",Myna.dump($req.headers,"Request headers"));			
+				$flash.set("error","Wrong Auth Code. Please try again.");
+				$FP.redirectTo({action:"changeAdminPassword"})
+			}
+
+			//reset count on success
+			resetStatus.count=0;
+
+			//check lockout
+			if (resetStatus.count >= 3){
+				$flash.set("error","Too many reset attempts. Please try again in a few minutes");
+				$FP.redirectTo({action:"changeAdminPassword"})
+			}			
+
+			if (params.password$array && params.password$array.length  == 2){
+				if (params.password$array[0] != params.password$array[1])
+				{
+					$flash.set("error","Passwords do not match, please try again.");
+					$FP.redirectTo({action:"changeAdminPassword"})
+				} else if (params.password$array[0].length < 12){
+					$flash.set("error","Passwords must be at least 12 characters long. Please try again.");
+					$FP.redirectTo({action:"changeAdminPassword"})
+				} else{
+					props = Myna.getGeneralProperties();
+					$server_gateway.generalProperties.setProperty("admin_password",params.password$array[0].toHash());
+					$server_gateway.saveGeneralProperties();
+					$FP.redirectTo({action:"index"})
+				}
+			}
+		} catch(e if !/_ABORT_/.test(e.message)){
+			Myna.log("error","Myna_admin password reset error",Myna.formatError(e));
+			$flash.set("error","Unknown Error. Please try again.");
+			$FP.redirectTo({action:"changeAdminPassword"})
+		} finally{
+
+			$server.set("_MYNA_ADMIN_PWD_RESET_",resetStatus)
+		}
+	}
 /* Function: updateFpApp
 	Adds or updates a Myna.FlightPath directory
 

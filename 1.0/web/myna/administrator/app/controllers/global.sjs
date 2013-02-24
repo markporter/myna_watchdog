@@ -12,13 +12,14 @@ function init(){
 			}
 		},
 		{
-			except:["changeAdminPassword"]
+			except:["changeAdminPassword","saveAdminPassword"]
 		}
 	);
 
 	this.applyBehavior("MynaAuth",{
 		whitelist:[
 			/Main.changeAdminPassword/,
+			/Main.saveAdminPassword/,
 			/Main.logout/,
 			/Direct.api/,
 			/Direct.router/
