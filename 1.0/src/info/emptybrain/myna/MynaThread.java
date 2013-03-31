@@ -1007,7 +1007,7 @@ public class MynaThread implements java.lang.Runnable{
 				  
 				compiled = cx.compileString(script, scriptPath, 1, null);
 				cache.put(key,compiled);
-			} 
+			}
 			compiled.exec(cx,scope);
 		} catch (Exception e){
 			this.handleError(e);
@@ -1038,7 +1038,47 @@ public class MynaThread implements java.lang.Runnable{
 		String script = (String) cache.get(scriptPath); 
 		if (script == null){
 			script = readScript(scriptPath);
+
+			//save to memory cache
 			cache.put(scriptPath,script);
+
+			//try to preload the compiled script from disk cache
+			File cacheFile = new File(
+				new URI(
+					getNormalizedPath(
+						"/WEB-INF/myna/script_cache/code_" + Integer.toString(script.hashCode()).replace("-","_")
+					)
+				)
+			);
+			int key = script.hashCode();
+			Script compiled;
+			if (cacheFile.exists() && scriptFile.lastModified() < cacheFile.lastModified()){
+				FileInputStream fis =new FileInputStream(cacheFile);
+				ObjectInputStream ois =new ObjectInputStream(fis);
+
+				compiled = (Script) ois.readObject();
+				ois.close();
+				fis.close();
+				//Script compiled = threadContext.compileString(translateString(script,scriptPath), scriptPath, 1, null);
+				
+				
+			} else {
+				threadContext.setOptimizationLevel(-1);
+				compiled = threadContext.compileString(
+					translateString(script,scriptPath), 
+					scriptPath, 
+					1, 
+					null
+				);
+				FileOutputStream fos =new FileOutputStream(cacheFile);
+				ObjectOutputStream oos =new ObjectOutputStream(fos);
+
+				oos.writeObject(compiled);
+				oos.close();
+				fos.close();
+			}
+			cache.put(key,compiled);
+			
 		}
 		executeJsString(scope, script, scriptPath);
 	}
