@@ -94,11 +94,18 @@ var functions={
 		return String(db.md.getUserName());
 	},
 	getSchemas:function(db){
+		var rsSchemas = db.md.getSchemas();
+		var schemas = new Myna.Query(rsSchemas).valueArray("table_schem");
+		schemas.push("");
+		rsSchemas.close();
+		return schemas;
+	},
+	/*getSchemas:function(db){
 		return new Myna.Query({
 			ds:db.ds,
 			sql:"select distinct owner from all_tables"
 		}).valueArray("owner")
-	},
+	},*/
 	getTables:function(db,schema){
 		var user = String(db.md.getUserName());
 		if (schema.toLowerCase() == user.toLowerCase()){

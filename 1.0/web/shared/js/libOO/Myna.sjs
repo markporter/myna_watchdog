@@ -764,8 +764,8 @@ if (!Myna) var Myna={}
 			if (result.exitCode ==0 && String(result.errors).length ==0){
 				scriptFile.forceDelete();
 			} else {
-				if (result.errors.length){
-					Myna.log("Error","Error in Myna.executeShell",<ejs>
+				if (result.errors.trim().length){
+					Myna.log("Error","Error in Myna.executeShell\n{0}".format(result.errors),<ejs>
 						<b>Shell Command:</b><br>
 						<pre><%=shellCommand%></pre><p>
 						
@@ -1854,28 +1854,6 @@ if (!Myna) var Myna={}
 		}) */
 
 
-		var array = [];
-        
-        var dumpOne = function(exception, prefix) {
-            var t = exception.getStackTrace().map(function(e){
-                return "\tat " + e;
-            });
-            var firstLine = String(exception);
-            if (prefix)
-                firstLine = prefix + firstLine;
-            t.unshift(firstLine);
-            return t;
-        }
-        
-        var javaException = e.rhinoException;
-        var prefix = "";
-        while (javaException != null) {
-            array = array.concat(dumpOne(javaException, prefix))
-            javaException = javaException.getCause();
-            prefix = "Caused by: ";
-        }
-        
-        return array;
 		
 		// return e.rhinoException.getStackTrace()
 		// .map(function(e){
