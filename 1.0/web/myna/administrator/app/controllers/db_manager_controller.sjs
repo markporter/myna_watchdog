@@ -97,7 +97,7 @@ function getQuerySql(params) {
 			<@loop array="colNames" element="colName" index="i">
 			<%=tableAlias%>.<%=colName%><@if i !=colNames.length-1>,</@if>
 			</@loop>
-		from <%=table.sqlTableName%> <%=tableAlias%>
+		from <%=table.sqlTableName.replace(/^\./,"")%> <%=tableAlias%>
 	</ejs>
 }
 function getTreeNode(params){

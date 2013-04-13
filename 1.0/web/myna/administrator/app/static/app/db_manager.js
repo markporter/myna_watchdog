@@ -577,6 +577,9 @@ var controllers=[]
 					});
 				},
 				sql_autocomplete:function(editor) {
+					if (this != this.ownerCt.activeTab) {
+						return this.ownerCt.activeTab.sql_autocomplete(editor)
+					}
 					// We want a single cursor position.
 					if (editor.somethingSelected()) return;
 
