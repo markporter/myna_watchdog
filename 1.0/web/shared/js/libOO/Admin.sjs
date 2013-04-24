@@ -554,7 +554,6 @@ Myna.Admin ={
 			var taskID =this.nameToID(name);
 			if (!config) throw new Error("cannot load Task config for '{0}'".format(name));
 			var now = new Date();
-			
 			var times ={
 				milli:1,
 				seconds:1000,
@@ -596,6 +595,7 @@ Myna.Admin ={
 						nextRun.setMinutes(targetMinute);	
 						return  nextRun.clone().getTime() >= now.getTime()
 					}
+					var i = 0
 					while(true) {
 						var matched=minuteRange.some(test);
 						if (matched){
@@ -607,7 +607,6 @@ Myna.Admin ={
 							);	
 						}
 					}
-					
 					break;
 					
 				case "daily":
@@ -702,7 +701,7 @@ Myna.Admin ={
 					Myna.logSync("error","Schedule type " + config.type +" is undefined",taskID);
 				
 			}
-			
+			//Myna.printConsole(name,nextRun);
 			return nextRun;
 			
 		},

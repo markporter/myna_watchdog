@@ -27,7 +27,7 @@ function run() {
 		},[cron.name]);
 		//Myna.printConsole("Fired Task " + cron.name);
 		
-		run();
+		//run();
 		
 	} catch(e){
 		Myna.logSync(
