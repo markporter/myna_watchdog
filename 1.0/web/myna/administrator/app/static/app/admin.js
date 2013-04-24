@@ -1520,6 +1520,7 @@ Ext.override(Ext.view.AbstractView, {
 							this.saveCron(event.model,function(result){
 								if (result.success) {
 									form.close();
+									event.src.up("crongrid").getStore().load();
 								} else {
 									form.markInvalid(result.errors);
 									if (result.errorMessage.length || result.errorDetail.length){

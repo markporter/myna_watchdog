@@ -494,11 +494,11 @@ Myna.Admin ={
 				try{
 					state =stateFile.readString().parseJson();
 				} catch(e){
-					Myna.logSync(
+					/*Myna.logSync(
 						"error",
 						"task: " + name+": bad state file " +stateFile.toString(),Myna.formatError(e),
 						taskID
-					);
+					);*/
 				}
 			}
 			return state ||{
@@ -621,7 +621,6 @@ Myna.Admin ={
 					break;
 					
 				case "weekly":
-					
 					var weekly_days = config.weekly_days;
 					if (!(weekly_days instanceof Array)) weekly_days=[weekly_days];
 					weekly_days.sort(String.compareNumeric);
@@ -633,24 +632,24 @@ Myna.Admin ={
 					
 					var targetWeek = firstDayInFirstWeek;
 					while (targetWeek < firstDayThisWeek) {
+						Myna.printConsole("next",targetWeek);
 						targetWeek =targetWeek.add(Date.DAY,parseInt(config.weekly_repeat,10) * 7);
 						
 					}
 					targetWeek.setHours(config.weekly_time.listFirst(":"));
 					targetWeek.setMinutes(config.weekly_time.listLast(":"));
 					
-					
 					var thisWeek = weekly_days.some(function(day){
-						
-						if (targetWeek.add(Date.DAY,day) > now){
-							nextRun = targetWeek.add(Date.DAY,day);
+						if (targetWeek.add(Date.DAY,parseInt(day,10)) > now){
+							nextRun = targetWeek.add(Date.DAY,parseInt(day,10));
 							return true;
 						}
 						return false;
 					});
 					if (!thisWeek){
 						targetWeek =targetWeek.add(Date.DAY,parseInt(config.weekly_repeat,10) * 7);
-						nextRun =targetWeek.add(Date.DAY,weekly_days[0]);
+						nextRun =targetWeek.add(Date.DAY,parseInt(weekly_days[0],10));
+
 					}
 					break;
 				case "monthlybydate":
