@@ -33,7 +33,9 @@
 	//"Cluster.sjs",
 	"Swing.sjs",
 	"Inflector.js",
-	"Admin.sjs"
+	"Admin.sjs",
+	"Shell.sjs"
+	
 	
 ].forEach(function(element){
 	try {
