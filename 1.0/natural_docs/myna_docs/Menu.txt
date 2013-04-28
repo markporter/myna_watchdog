@@ -84,7 +84,6 @@ Group: Myna Global Objects  {
 Group: Myna Object  {
 
    File: Async  (/home/mark/myna/web/shared/js/libOO/Async.js)
-   File: DataSet.sjs  (/home/mark/myna/web/shared/js/libOO/DataSet.sjs)
 
    Group: Loggers  {
 
@@ -101,6 +100,7 @@ Group: Myna Object  {
    File: Myna.CommonJS  (/home/mark/myna/web/shared/js/libOO/CommonJS.sjs)
    File: Myna.Database  (/home/mark/myna/web/shared/js/libOO/Database.sjs)
    File: Myna.DataManager  (/home/mark/myna/web/shared/js/libOO/DataManager.sjs)
+   File: Myna.DataSet  (/home/mark/myna/web/shared/js/libOO/DataSet.sjs)
    File: Myna.DataSet  (no auto-title, /home/mark/myna/web/shared/js/libOO/DataSet.js)
    File: Myna.Event  (/home/mark/myna/web/shared/js/libOO/Event.sjs)
    File: Myna.File  (/home/mark/myna/web/shared/js/libOO/File.sjs)

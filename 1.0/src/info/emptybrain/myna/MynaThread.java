@@ -68,6 +68,9 @@ public class MynaThread implements java.lang.Runnable{
 	public ConcurrentHashMap 			runtimeStats 			= new ConcurrentHashMap();
 
 	public ConcurrentHashMap 			translatedSources 	= new ConcurrentHashMap();
+
+	public Vector<ScriptableObject>		sandboxRuleViolations 	= new Vector<ScriptableObject>();
+	public ScriptableObject				currentSandbox			= null;
 	
 	public Context 						threadContext;
 	public ScriptableObject 			threadScope;
@@ -134,7 +137,11 @@ public class MynaThread implements java.lang.Runnable{
 				final MynaContext cx = new MynaContext();
 				// Make Rhino runtime to call observeInstructionCount
 				// each 10000 bytecode instructions
-				cx.setInstructionObserverThreshold(10000);
+				int icThreshold = Integer.parseInt(
+					MynaThread.generalProperties.getProperty("timeout_ic_threshold")
+				);
+				
+				cx.setInstructionObserverThreshold(icThreshold);
 				//experimental
 					//cx.setWrapFactory(new SandboxWrapFactory());
 				
@@ -156,7 +163,7 @@ public class MynaThread implements java.lang.Runnable{
 									grant= false;
 									
 								}else{
-									log("black list fail: " + name +" != " + pattern);	
+									//log("black list fail: " + name +" != " + pattern);	
 								}
 							}
 							for(String pattern : mt.classWhitelist) {
@@ -164,14 +171,31 @@ public class MynaThread implements java.lang.Runnable{
 									grant= true;	
 							
 								}else{
-									log("white list fail: " + name +" != " + pattern);
+									//log("white list fail: " + name +" != " + pattern);
 								}
 							}
 							
 							if (grant){
 									log("GRANTED: " + name);
-							} else {
-								log("DENIED: " + name);
+							} else {  
+								if (mt.environment.get("SANDBOX_CLASS_DEBUG") != null){
+									
+									log("class:"+name+" Sandbox Debug: Class " + name + " would have been denied");
+									return true;
+								} else{
+									log("DENIED: " + name);
+									//try to exit current sandbox, if any
+									if (mt.currentSandbox != null){
+										try{
+											String rule = "class:" +name.replaceAll("\\.","\\.");
+											mt.executeJsString(
+												mt.threadScope,
+												"Myna.Sandbox.throw('Blacklisted Class "+ name+" accessed','"+name+"');",
+												"Sandbox Exception"
+											);
+										} catch (Throwable cleanUpException){}
+									} else return true;
+								}
 							}
 							
 							//System.out.println(name);
@@ -181,7 +205,7 @@ public class MynaThread implements java.lang.Runnable{
 					
 					public void log(String string){
 						MynaThread mt = cx.mynaThread;
-						if (mt == null || mt.environment.get("SANDBOX_DEBUG") == null){
+						if (mt == null || mt.environment.get("SANDBOX_CLASS_DEBUG") == null){
 							return;	
 						} else {
 							System.out.println(string);
@@ -438,12 +462,22 @@ public class MynaThread implements java.lang.Runnable{
 	
 	public  Scriptable createSharedScope() throws Exception{
 		long startTime = System.currentTimeMillis();
-		
-		try {
-			if (MynaThread.sharedScope_ == null) {
-				return buildScope();
-			} else {
+		boolean recreateScope = Integer.parseInt(this.generalProperties.getProperty("optimization.level")) == -1;
+		try{
+			if (!recreateScope
+					&& MynaThread.sharedScope_ != null)
+			{
+				//System.err.println(Integer.parseInt(this.generalProperties.getProperty("optimization.level")));
 				return MynaThread.sharedScope_;
+			}else {
+				if (recreateScope ){
+					synchronized (MynaThread.class){
+						return buildScope();
+					} 
+				} else {
+					
+					return buildScope();
+				}
 			}
 		} finally {
 			long elapsed = System.currentTimeMillis() - startTime;
@@ -1276,6 +1310,14 @@ public class MynaThread implements java.lang.Runnable{
 			generalProperties.setProperty("log_engine","myna_log");
 			propsChanged=true;
 		}
+
+		if (generalProperties.getProperty("timeout_ic_threshold") == null){
+			generalProperties.setProperty("timeout_ic_threshold","10000");
+			propsChanged=true;
+		}
+
+		
+
 		if (propsChanged) saveGeneralProperties();
 	}
 	
@@ -1776,5 +1818,32 @@ public class MynaThread implements java.lang.Runnable{
 	{
 		obj.setParentScope(this.threadScope);
 		return this.threadContext.toObject(obj, this.threadScope);
+	}
+
+	static class NativeJavaProxy extends NativeJavaObject{
+		protected Function getter;
+		public NativeJavaProxy(Scriptable scope, Object javaObject,
+                            Class<?> staticType, Function f)
+	    {
+	    	
+	        super(scope,javaObject,staticType,false);
+	        this.getter = f;
+	    }
+	    
+
+	    public final boolean __proxied__ = true;
+
+	    public Object get(String name, Scriptable start) {
+	    	Object[] args = {this.javaObject,name,super.get(name,start)};
+	    	return this.getter.call(Context.getCurrentContext(),
+                    this.getter.getParentScope(),
+                    this.getter.getParentScope(),
+                    args);
+	    }
+
+	
+	}
+	public NativeJavaProxy proxyWrapJavaObject(Object javaObject, Class<?> staticType, org.mozilla.javascript.Function f){
+		return new NativeJavaProxy(this.threadScope, javaObject, staticType,f);
 	}
 }

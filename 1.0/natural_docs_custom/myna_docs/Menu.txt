@@ -53,7 +53,6 @@ Group: LibOO  {
 
    File: Array  (/home/mark/myna/web/shared/js/libOO/Array.js)
    File: Async  (/home/mark/myna/web/shared/js/libOO/Async.js)
-   File: DataSet.sjs  (/home/mark/myna/web/shared/js/libOO/DataSet.sjs)
    File: Date  (/home/mark/myna/web/shared/js/libOO/Date.js)
    File: debug_window.js  (/home/mark/myna/web/shared/js/libOO/debug_window.js)
    File: Function  (/home/mark/myna/web/shared/js/libOO/Function.js)
@@ -74,6 +73,7 @@ Group: LibOO  {
    File: Myna.CommonJS  (/home/mark/myna/web/shared/js/libOO/CommonJS.sjs)
    File: Myna.Database  (/home/mark/myna/web/shared/js/libOO/Database.sjs)
    File: Myna.DataManager  (/home/mark/myna/web/shared/js/libOO/DataManager.sjs)
+   File: Myna.DataSet  (/home/mark/myna/web/shared/js/libOO/DataSet.sjs)
    File: Myna.DataSet  (/home/mark/myna/web/shared/js/libOO/DataSet.js)
    File: Myna.Event  (/home/mark/myna/web/shared/js/libOO/Event.sjs)
    File: Myna.File  (/home/mark/myna/web/shared/js/libOO/File.sjs)
