@@ -1,3 +1,7 @@
+/* Class: Myna.DataSet (Server-side Only)
+	Myna.DataSet features only available server side
+	*/
+
 /* Function: getDs
 	returns a java DataSource object that can be used as the "ds" option in queries
 	

@@ -690,6 +690,14 @@ if (!Myna) var Myna={}
 			returned. Otherwise, the result of <genLabel> is returned
 			
 			*/	
+		/* Function: getMassAssignable
+			returns an array of the fields that can be assigned via <get>, <getNew>, <create> and <BeanObject.setFields>
+		
+			
+			See: 
+				* <setMassAssignable>
+
+			*/
 		/* Function: getNew
 			Returns a <BeanObject> representing a new row not yet inserted
 			
@@ -1242,6 +1250,25 @@ if (!Myna) var Myna={}
 			
 			See:
 				* <addValidator>
+			*/
+		/* Function: setMassAssignable
+			Sets an array of the fields that can be assigned via <get>, <getNew>, <create> and <BeanObject.setFields>
+		
+			Parameters:
+				fieldNames	-	Array of filed names allowed to be mass assigned
+
+			Detail:
+				Be default, all fields ins a BeanObject can be assigned via 
+				<get>, <getNew>, <create> and <BeanObject.setFields>. This can 
+				be a problem for fields like "admin". You don't want such fields 
+				to be set by manipulating the url. To prevent this, use this 
+				function to set what fields can be set in the mass assignment 
+				functions. All other fields must be set via <BeanObject.saveField> 
+				or any of the set_fieldname functions
+
+			See: 
+				* <setMassAssignable>
+				
 			*/
 		/* Property: dm
 			The <Myna.DataManager> object that created this manager
@@ -2103,7 +2130,12 @@ if (!Myna) var Myna={}
 					return result[0][result.columns[0]]	
 				} else return undefined
 			},
-			
+			getMassAssignable:function () {
+				return this._assignableFields || this.columnNames
+			},
+			setMassAssignable:function (fieldNames) {
+				this._assignableFields = this.columnNames;
+			},
 			getDefault:function getDefault(colname){
 				if (!this._defaults) this._defaults={}
 				if (colname in this._defaults){
@@ -2249,7 +2281,7 @@ if (!Myna) var Myna={}
 				}
 				initialValues.setDefaultProperties(this.getDefaults())
 				var data ={}
-				this.columnNames.forEach(function(name){
+				this.getMassAssignable().forEach(function(name){
 					if (name in initialValues) {
 						data[name]=initialValues[name]
 					} else {

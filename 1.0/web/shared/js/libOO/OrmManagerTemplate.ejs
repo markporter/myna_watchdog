@@ -275,9 +275,10 @@ function <%=tableName%>_manager(){
 		if (this.modifiedCol && !requiredFields[this.modifiedCol]) {
 			requiredFields[this.modifiedCol] = now;
 		}
+
 		var columnArray = requiredFields.getKeys().filter(function(colName){
-			//ignore columns that don't exist
-			return manager.columns[colName];
+			//ignore columns that don't exist or are not massAssignable
+			return manager.getMassAssignable().contains(colName);
 		}); 
 		//Myna.printDump(columnArray)
 		var fieldArray = columnArray.map(function(colName){
@@ -734,7 +735,7 @@ function <%=tableName%>_manager(){
 		}
 		fields.getKeys().forEach(function(k){
 			//filter non column properties
-			if (!(k in bean.columns) || (k == "<%=primaryKey%>" && !bean.deferred)){
+			if (!manager.getMassAssignable().contains(k) || (k == "<%=primaryKey%>" && !bean.deferred)){
 				delete fields[k]	
 			}
 		})
@@ -766,9 +767,9 @@ function <%=tableName%>_manager(){
 						<#loop array="fieldArray" element="fieldName" index="i">
 							<| 
 								var value = fields[fieldName];
-								var type = bean.columns[fieldName.toLowerCase()].data_type;
+								var type = manager.columns[fieldName.toLowerCase()].data_type;
 								var isNull = (value === null);
-								var columnName=bean.columns[fieldName.toLowerCase()].column_name;
+								var columnName=manager.columns[fieldName.toLowerCase()].column_name;
 							|>
 							<|=manager.getSqlColumnName(columnName)|> = <|=p.addValue(value,type,isNull)|>
 							<#if i != fieldArray.length-1 >,</#if>

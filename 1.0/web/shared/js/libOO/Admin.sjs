@@ -299,6 +299,16 @@ Myna.Admin ={
 				username:"myna",
 				password:"nunyabidness"
 			})
+
+			//simple local H2 DB
+			if (!Myna.Admin.ds.exists("mmft.mynajs.org")){
+				Myna.Admin.ds.save({
+					name:"mmft.mynajs.org",
+					type:"h2",
+					location:"file",
+					file:"/WEB-INF/myna/local_databases/mmft.mynajs.org"
+				}))
+			}
 		(end)
 			
 		Returns:
@@ -861,7 +871,83 @@ Myna.Admin ={
 			
 		}
 	
-	}	
+	},
+/*Users*/
+	user:{
+		/* Function: Myna.Admin.user.getModel
+			returns a validating model (see <Myna.DataManager.getManager> )
+		
+			Parameters:
+				baseModel	-	*Optional*
+								If an existing model is passed in, it will be 
+								modified with the proper validation, fieldnames, 
+								etc and returned
+			*/
+		getModel:function (baseModel) {
+			var model = baseModel || new Myna.DataManager("myna_permissions").getManager("users");
+			model.setLabels({
+				inactive_ts:"Deactivation Date"
+			})
+			model.softDeleteCol="inactive_ts"
+
+			var name = {
+				pattern:/^[\w \d-']+$/,
+				message:"Can only contain numbers, letters, spaces and these symbols  -_'"
+			}
+			model.setDefault("created",function () {return new Date()});
+			
+			model.addValidators({
+				last_name:{
+					required:{},
+					regex:name
+				},
+				middle_name:{
+					regex:name
+				},
+				first_name:{
+					regex:name
+				},
+				title:{
+					regex:name
+				},
+				dob:{
+					value:{
+						max:new Date()
+					}
+				},
+				country:{
+					regex:name
+				},
+				gender:{
+					list:{
+						oneOf:["M","F"],
+						caseSensitive:true
+					}
+				},
+				language:{
+					regex:name
+				},
+				nickname:{
+					regex:name
+				},
+				email:{
+					unique:{
+						includeSoftDeleted:true
+					}
+				},
+				postcode:{
+					regex:{
+						pattern:/^[\w\d-]*$/
+					}
+				}
+
+
+
+			})
+
+			return model;
+		}
+	}
 };
 
 	

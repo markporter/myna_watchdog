@@ -453,7 +453,20 @@ var $application={
 		Detail:
 			Any rights defined here will be created/updated before 
 			<$application.onApplicationStart>. The "appname" property is 
-			automatically added  
+			set to this app's name:
+
+		Example:
+		(code)  
+			...
+			rights:[{
+				name:"edit_posts",
+				description:"Allows editing of existing posts"
+			},{
+				name:"create_posts",
+				description:"Allows creating new posts"
+			}]
+			...
+		(end)
 
 	*/
 	rights:[],

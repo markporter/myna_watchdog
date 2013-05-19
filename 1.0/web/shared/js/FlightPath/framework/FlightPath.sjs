@@ -223,7 +223,7 @@
 							my.manager.getManager = core.getModel
 						}
 						return my.manager
-					},
+					}
 					
 				});
 				/* core.modelManagers[alias] = new Myna.DataManager(ds)
@@ -238,7 +238,7 @@
 		this.frameworkFolder = this.config.frameworkFolder; 
 		Myna.include(this.frameworkFolder + "/Controller.sjs",this)
 		Myna.include(this.frameworkFolder +"/Model.sjs",this)
-		this.helpers={}
+		this.helpers={};
 		new Myna.File(this.frameworkFolder +"/helpers").listFiles("sjs").forEach(function(f){
 			var name =f2c(f.fileName.listBefore("."),true);
 			core.helpers[name]=Myna.include(f,{});
@@ -477,12 +477,14 @@
 				if (!model.manager) model.manager="default"
 			}
 			
-		
+			var manager;
 			if (model.manager in $FP.modelManagers){
 				var mm = $FP.modelManagers[model.manager]
 				var realName = model.tableName||model.realName||modelName;
-				var manager
 				try{
+					/* for DB based models, mm will be a DataManager instance and
+						getModel will be a reference to the DM's getManager function
+					*/
 					manager = mm.getModel(realName)
 					//manager.logQueries = $FP.config.debug
 				} catch(e){
@@ -516,7 +518,8 @@
 			
 			manager.setDefaultProperties(model)
 			manager.after("init",model.init)
-			modelName,_modelClasses[modelName]=model = manager;
+			//modelName,
+			_modelClasses[modelName]=model = manager;
 			
 			model.init()
 			

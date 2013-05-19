@@ -29,6 +29,10 @@ function index(params){
 				callback:"Ext.Direct.addProvider",
 				namespace:"$FP"
 			}
+		}),
+		$FP.helpers.Html.url({
+			controller:"Main",
+			action:"loadModels"
 		})
 	])
 	
