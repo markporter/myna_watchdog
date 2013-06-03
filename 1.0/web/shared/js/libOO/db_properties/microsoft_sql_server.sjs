@@ -92,6 +92,7 @@ var dsInfo={
 	port:"1433"
 }
 var connectionTestSql="select 1";
+var concatOperator=" + ";
 var functions={
 	getDefaultSchema:function(db){
 		return "dbo";

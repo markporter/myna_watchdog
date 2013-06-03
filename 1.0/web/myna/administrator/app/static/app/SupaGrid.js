@@ -111,6 +111,9 @@
 			close		-	Function.
 							A function that will close the form, whether it is 
 							docked or a modal Window
+
+		FormPanel Properties and Functions added by SupaGrid:
+			supagrid	-	reference to the SupaGrid that displayed this form
 							
 		Form Panel Events  added by SupaGrid:
 			beforegridload	-	Fires before loading a record into the form. 
@@ -452,15 +455,8 @@ Ext.define('univnm.ext.SupaGrid', {
 					this.fireEvent("filter",this,form);
 					store.proxy.extraParams = params;
 					if (config.paged || config.infiniteScroll){
-						window.setTimeout(function(){
-							store.pageSize =  parseInt((grid.view.getHeight())/lineHeight,10);
-							if (config.paged){
-								store.loadPage(1);
-							} else {
-								store.guaranteeRange(0, store.pageSize);	
-							}
-							
-						},100);
+						this.loadFirstPage()
+						
 					}else{
 						store.load();
 					}
@@ -468,6 +464,18 @@ Ext.define('univnm.ext.SupaGrid', {
 				
 			},300,this);
 			
+			this.loadFirstPage = function () {
+				var store =this.getStore();
+				window.setTimeout(function(){
+					store.pageSize =  parseInt((grid.view.getHeight())/lineHeight,10);
+					if (config.paged){
+						store.loadPage(1);
+					} else {
+						store.guaranteeRange(0, store.pageSize);	
+					}
+					
+				},100);
+			}
 		/* resetFilter function */
 			this.resetFilter=function(){
 				var fp = this.down("form[formId="+grid.formId+"]");
@@ -697,8 +705,9 @@ Ext.define('univnm.ext.SupaGrid', {
 							win.close();
 						}; 
 						
-						var title =grid.editFormConfig.title||"Editing Record " + record.internalId;
+						var title =grid.editFormConfig._title ||grid.editFormConfig.title||"Edit:";
 						delete grid.editFormConfig.title;
+						grid.editFormConfig._title = title;
 						var win =new Ext.Window({
 							title:title,
 							iconCls:grid.editFormConfig.iconCls,

@@ -96,6 +96,7 @@ var dsInfo={
 	port:"5432"
 }
 var columnQuoteChar='"';
+var concatOperator=" || ";
 var connectionTestSql="select 1";
 var functions={
 	getDefaultSchema:function(db){

@@ -29,6 +29,7 @@ var templates = {
 	dropPrimaryKey:[
 		'ALTER TABLE {tableName} DROP CONSTRAINT {id}'
 	],
+
 	createTable:[
 		'CREATE TABLE {tableName} ( \n',
 		'<tpl for="columns">',
@@ -94,6 +95,7 @@ var types={
 	VARCHAR:"VARCHAR({maxLength})"
 }
 var columnQuoteChar="`";
+var concatOperator=" ";
 var dsInfo={
 	driver:"com.mysql.jdbc.Driver",
 	url:"jdbc:mysql://{server}:{port}/{db}",

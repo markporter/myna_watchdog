@@ -276,11 +276,17 @@ function <%=tableName%>_manager(){
 			requiredFields[this.modifiedCol] = now;
 		}
 
-		var columnArray = requiredFields.getKeys().filter(function(colName){
-			//ignore columns that don't exist or are not massAssignable
-			return manager.getMassAssignable().contains(colName);
+		var columnArray = requiredFields.getKeys()
+		.filter(function(colName){
+			//ignore columns that don't exist
+			return colName in manager.table.columns
+		})
+		.filter(function(colName){
+			//ignore columns that are not massAssignable and not required
+			return manager.getMassAssignable().contains(colName)
+				|| requiredFields.getKeys().contains(colName);
 		}); 
-		//Myna.printDump(columnArray)
+		//Myna.printConsole(Myna.dumpText(columnArray));
 		var fieldArray = columnArray.map(function(colName){
 			return  manager.qt + manager.columns[colName].column_name + manager.qt;
 		});

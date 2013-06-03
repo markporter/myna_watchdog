@@ -88,6 +88,7 @@ var dsInfo={
 	port:"1521"
 }
 var columnQuoteChar='"';
+var concatOperator=" || ";
 var connectionTestSql="select 1 from dual";
 var functions={
 	getDefaultSchema:function(db){

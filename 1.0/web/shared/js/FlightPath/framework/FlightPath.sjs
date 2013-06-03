@@ -371,6 +371,11 @@
 				var existingFunctions = $FP.Controller.prototype.getProperties().filter(function(prop){
 					return (typeof $FP.Controller.prototype[prop] === "function")
 				})
+				
+				//init merged class
+				controllerClass.prototype.init(controllerName);
+				_controllerClasses[controllerName] = controllerClass.prototype
+
 				//label all the action functions
 				controllerClass.prototype.getProperties().forEach(function(prop){
 					if (
@@ -381,9 +386,6 @@
 						controllerClass.prototype[prop].action=prop
 					}	
 				})
-				//init merged class
-				controllerClass.prototype.init(controllerName);
-				_controllerClasses[controllerName] = controllerClass.prototype
 			}
 		}
 		
@@ -686,10 +688,10 @@
 			})
 			if (foundOne){
 				if ($FP.config.debug){
-					Myna.log("debug","Route metadata for " + restParams.join("/"),Myna.dump(meta,"Routing Metadata",7));
+					Myna.logSync("debug","Route metadata for " + restParams.join("/"),Myna.dump(meta,"Routing Metadata",7));
 				}
 			}else{
-				Myna.log("warning","failed route for " + restParams.join("/"),Myna.dump(meta,"Routing Metadata",7));
+				Myna.logSync("warning","failed route for " + restParams.join("/"),Myna.dump(meta,"Routing Metadata",7));
 			}
 		} else {
 			

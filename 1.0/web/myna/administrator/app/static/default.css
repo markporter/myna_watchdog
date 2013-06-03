@@ -173,3 +173,7 @@ body .ux-notification-light {
 	overflow-x: auto;
 	overflow-y:hidden;
 }*/
+
+.row_inactive td{
+	color:silver;
+}

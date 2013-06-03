@@ -96,6 +96,7 @@ var types={
 	VARCHAR:"VARCHAR({maxLength})"
 }
 var columnQuoteChar='"';
+var concatOperator=" || ";
 var dsInfo={
 	driver:"org.h2.Driver",
 	url:"jdbc:h2:tcp://{server}:{port}/{db}",

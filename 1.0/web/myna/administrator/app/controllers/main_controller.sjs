@@ -120,7 +120,8 @@ function extLoad(params){
 			"Cron",
 			"Log",
 			"Request",
-			"User"
+			"User",
+			"UserLogin"
 		].map(function(modelName){
 			return c.getElement("model_template",{
 				modelName:modelName,

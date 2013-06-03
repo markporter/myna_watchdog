@@ -895,7 +895,24 @@ Myna.Admin ={
 				message:"Can only contain numbers, letters, spaces and these symbols  -_'"
 			}
 			model.setDefault("created",function () {return new Date()});
-			
+			model.setMassAssignable([
+				"first_name",
+				"middle_name",
+				"last_name",
+				//"created",
+				//"inactive_ts",
+				"title",
+				"country",
+				"dob",
+				"email",
+				"gender",
+				"language",
+				"nickname",
+				"postcode",
+				"timezone"
+			])
+
+
 			model.addValidators({
 				last_name:{
 					required:{},
@@ -940,9 +957,41 @@ Myna.Admin ={
 						pattern:/^[\w\d-]*$/
 					}
 				}
+			})
 
+			Myna.Permissions.User.prototype.applyTo(model.beanClass.prototype)
+			
 
+			return model;
+		},
+		/* Function: Myna.Admin.user.getLoginModel
+			returns a validating Login model (see <Myna.DataManager.getManager> )
+		
+			Parameters:
+				baseModel	-	*Optional*
+								If an existing model is passed in, it will be 
+								modified with the proper validation, fieldnames, 
+								etc and returned
+			*/
+		getLoginModel:function (baseModel) {
+			var model = baseModel || new Myna.DataManager("myna_permissions").getManager("user_logins");
 
+			model.setDefault("created",function () {return new Date()});
+
+			model.addValidators({
+				login:{
+					required:{},
+					regex:{
+						pattern:/^\w+$/,
+						message:"Can only contain numbers, letters, the underbar (_)"
+					}
+				},
+				type:{
+					required:{},
+					list:{
+						oneOf:Myna.Permissions.getAuthTypes()
+					}
+				}
 			})
 
 			return model;

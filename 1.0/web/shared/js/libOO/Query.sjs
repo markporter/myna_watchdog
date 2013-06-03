@@ -324,21 +324,130 @@ if (!Myna) var Myna={};
 		return this;
 	};
 Myna.Query.prototype={
+/* Function: beautifySql
+		returns this _sql_ string formated for readability
+
+		See Also:
+		* <formatSql>
+		*/
+	beautifySql:function (sql) {
+		var indent =0;
+		var selectIndent =0;
+		/*var parenIndent =0;
+		var result=[];
+		var line=[];*/
+		var lastCommand="";
+		var parens =[];
+		var selects =[];
+		return sql
+			.replace(/[\n\s]+/g," ")
+			.replace(/(\W)on\s*\(/ig,"$1 on ( ")
+			
+			.replace(/(\s*)(['\.\w]+|,|\(|\))(\s*)/g,function(match,begin,word,end){
+				switch(true){
+				
+				
+					case word =="(":
+						parens.push(indent);
+						
+						indent++;
+						lastCommand="subquery";
+						return word +"\n" + "\t".repeat(indent);
+					case word ==")":
+						if (lastCommand != "function") {
+							if (parens.length == selects.parenDepth) {
+								selects.pop();
+								selects.parenDepth--;
+							}
+							indent = parens.pop();
+						}
+						
+						lastCommand="end_subquery";
+						//return word + end
+						return  "\n" + "\t".repeat(indent) +word + "\n" + "\t".repeat(indent);
+					case /^inner|outer|full|join$/i.test(word) && !/_/.test(word):
+						if (/^inner|outer|full$/i.test(lastCommand)){
+							return match;
+						}else{
+							//indent++;
+						}
+						
+						lastCommand = word;
+						return  "\n" + "\t".repeat(indent) +match;
+						
+					case /^on$/i.test(word):
+						if (!/^inner|outer|full|join$/i.test(lastCommand)){
+							//indent++
+						}
+						
+						lastCommand = word;
+						return  word  + "\t".repeat(indent);
+					case /^and|or$/i.test(word):
+						if (lastCommand != word ){
+							//indent++
+						}
+						lastCommand = word;
+						return "\n"+"\t".repeat(indent) + word +" ";
+							
+					case /^union/i.test(word):
+						selectIndent=0;
+						indent=0;
+							
+						lastCommand = word;
+						return "\n" + word +"\n";
+					case /^select/i.test(word):
+						selects.push(indent);
+						selects.parenDepth = parens.length;
+						indent++;
+							
+						lastCommand = word;
+						return "\n" + "\t".repeat(indent-1)   + word +"\n" + "\t".repeat(indent);
+						
+					case /^from|where|having$/i.test(word):
+						if (lastCommand=="text") return match;
+						indent = selects.last(0)+1;
+						return "\n" +"\t".repeat(indent-1) + word +"\n" + "\t".repeat(indent);
+					
+					case /^group|order$/i.test(word):
+						if (lastCommand=="text") return match;
+						indent = selects.last(0)+1;
+						lastCommand=word;
+						return "\t".repeat(indent-1) +"\n" + word +end;
+					case /^by$/i.test(word):
+						if (/group|order/.test(lastCommand)) {
+							return  /* "\t".repeat(indent-1) +"\n" + */word +"\n" + "\t".repeat(indent);
+						} else return match;
+
+					case /,$/.test(word)/* word =="," */:
+						//console.log("word==",word)
+						if (lastCommand == "function") return word;
+						return word +"\n" + "\t".repeat(indent);
+					default:
+						lastCommand=match;
+						return match;
+				}
+			}).replace(/\n\s*\n/g,"\n").trim();
+		
+	},
 /* Function: formatSql
-		returns returns a multiline text formated string of this.sql with any
+		returns a multiline text formated string of this.sql, beautified with any
 		values merged in
+
+		See Also:
+		* <beautifySql>
 		*/
 	formatSql:function (){
 		var qry = this;
 		var sql = qry.sql instanceof Array ?qry.sql.join(" "):qry.sql;
-		sql = sql.replace(/\s*select\s*/gi,'Select\n\t');
-		sql = sql.replace(/\s+from\s*/gi,'\nFrom\n\t');
-		sql = sql.replace(/\s+where\s*/gi,'\nWhere\n\t');
-		sql = sql.replace(/\s+group by\s*/gi,'\nGroup By\n\t');
-		sql = sql.replace(/\s+order by\s*/gi,'\nOrder By\n\t');
-		sql = sql.replace(/\s+having\s*/gi,'\nHaving\n\t');
-		sql = sql.replace(/\s+and/gi,'\n\tand');
-		sql = sql.replace(/,/gi,',\n\t');
+		sql = this.beautifySql(sql)
+		// sql = sql.replace(/\s*select\s*/gi,'Select\n\t');
+		// sql = sql.replace(/\s+from\s*/gi,'\nFrom\n\t');
+		// sql = sql.replace(/\s+where\s*/gi,'\nWhere\n\t');
+		// sql = sql.replace(/\s+group by\s*/gi,'\nGroup By\n\t');
+		// sql = sql.replace(/\s+order by\s*/gi,'\nOrder By\n\t');
+		// sql = sql.replace(/\s+having\s*/gi,'\nHaving\n\t');
+		// sql = sql.replace(/\s+and/gi,'\n\tand');
+		// sql = sql.replace(/,/gi,',\n\t');
 		if (qry.values){
 			sql = sql.replace(/\{([^:]*?)\}/g,'_MYNA_LEFT_BRACE_varchar:{$1}_MYNA_RIGHT_BRACE_');
 			sql = sql.replace(/\{(.*?):(.*?)\}/g,'_MYNA_LEFT_BRACE_$2:{$1}_MYNA_RIGHT_BRACE_');

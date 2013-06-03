@@ -2134,7 +2134,7 @@ if (!Myna) var Myna={}
 				return this._assignableFields || this.columnNames
 			},
 			setMassAssignable:function (fieldNames) {
-				this._assignableFields = this.columnNames;
+				this._assignableFields = fieldNames
 			},
 			getDefault:function getDefault(colname){
 				if (!this._defaults) this._defaults={}
@@ -2288,12 +2288,12 @@ if (!Myna) var Myna={}
 						data[name]=null
 					}
 				})
+
 				
 				var bean = new this.beanClass(data,this)
 				bean.deferred = true;
 				bean.exists=false;
 				bean.isDirty=true;
-				
 				return this._applyRelatedValues(bean,initialValues); 
 			},
 			belongsTo:function belongsTo(name){
