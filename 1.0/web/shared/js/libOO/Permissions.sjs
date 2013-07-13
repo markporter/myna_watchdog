@@ -791,7 +791,177 @@ if (!Myna) var Myna={}
 				throw new Error(msg)
 			}
 		},
+	/* Function: getUserModel
+		returns a validating model (see <Myna.DataManager.getManager> )
 	
+		Parameters:
+			baseModel	-	*Optional*
+							If an existing model is passed in, it will be 
+							modified with the proper validation, fieldnames, 
+							etc and returned
+		*/
+		getUserModel:function (baseModel) {
+			var model = baseModel || new Myna.DataManager("myna_permissions").getManager("users");
+			model.setLabels({
+				inactive_ts:"Deactivation Date"
+			})
+			model.softDeleteCol="inactive_ts"
+
+			var name = {
+				pattern:/^[\w \d-']+$/,
+				message:"Can only contain numbers, letters, spaces and these symbols  -_'"
+			}
+			model.setDefault("created",function () {return new Date()});
+			model.setMassAssignable([
+				"first_name",
+				"middle_name",
+				"last_name",
+				//"created",
+				//"inactive_ts",
+				"title",
+				"country",
+				"dob",
+				"email",
+				"gender",
+				"language",
+				"nickname",
+				"postcode",
+				"timezone"
+			])
+
+
+			model.addValidators({
+				last_name:{
+					required:{},
+					regex:name
+				},
+				middle_name:{
+					regex:name
+				},
+				first_name:{
+					regex:name
+				},
+				title:{
+					regex:name
+				},
+				dob:{
+					value:{
+						max:new Date()
+					}
+				},
+				country:{
+					regex:name
+				},
+				gender:{
+					list:{
+						oneOf:["M","F"],
+						caseSensitive:true
+					}
+				},
+				language:{
+					regex:name
+				},
+				nickname:{
+					regex:name
+				},
+				email:{
+					unique:{
+						includeSoftDeleted:true
+					}
+				},
+				postcode:{
+					regex:{
+						pattern:/^[\w\d-]*$/
+					}
+				}
+			})
+
+			Myna.Permissions.User.prototype.applyTo(model.beanClass.prototype)
+			
+
+			return model;
+		},
+	/* Function: getLoginModel
+		returns a validating Login model (see <Myna.DataManager.getManager> )
+	
+		Parameters:
+			baseModel	-	*Optional*
+							If an existing model is passed in, it will be 
+							modified with the proper validation, fieldnames, 
+							etc and returned
+		*/
+		getLoginModel:function (baseModel) {
+			var model = baseModel || new Myna.DataManager("myna_permissions").getManager("user_logins");
+
+			model.setDefault("created",function () {return new Date()});
+
+			model.addValidators({
+				login:{
+					required:{},
+					regex:{
+						pattern:/^\w+$/,
+						message:"Can only contain numbers, letters, the underbar (_)"
+					}
+				},
+				type:{
+					required:{},
+					list:{
+						oneOf:Myna.Permissions.getAuthTypes()
+					}
+				}
+			})
+
+			return model;
+		},
+	/* Function: getUserGroupModel
+		returns a validating UserGroup model (see <Myna.DataManager.getManager> )
+	
+		Parameters:
+			baseModel	-	*Optional*
+							If an existing model is passed in, it will be 
+							modified with the proper validation, fieldnames, 
+							etc and returned
+		*/
+		getUserGroupModel:function (baseModel) {
+			var model = baseModel || new Myna.DataManager("myna_permissions").getManager("user_user_groups");
+
+			/*
+				user_group_id,
+				name,
+				appname,
+				description
+			*/
+
+			model.setLabels({
+				appname:"App Name"
+			})			
+
+			model.addValidators({
+				name:{
+					required:{},
+					regex:{
+						pattern:/^\w+$/,
+						message:"Can only contain numbers, letters, the underbar (_)"
+					},
+					unique:{
+						includeSoftDeleted:true
+					}
+
+				},
+				appname:{
+					required:{},
+					regex:{
+						pattern:/^\w+$/,
+						message:"Can only contain numbers, letters, the underbar (_)"
+					}
+				},
+				
+			})
+
+			Myna.Permissions.UserGroup.prototype.applyTo(model.beanClass.prototype)
+
+			return model;
+		}
 	}
 /* ============= Permissions User  ========================================== */
 	/* Class: Myna.Permissions.User

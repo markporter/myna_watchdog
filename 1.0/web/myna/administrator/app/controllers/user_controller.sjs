@@ -31,11 +31,17 @@
 		var adapter = Myna.Permissions.getAuthAdapter(authType)
 		var account  = adapter.getUserByLogin(params.login)
 
+		var user;
 		//search for existing user by email
-		var user =this.model.findBeans({
-			email:account.email
-		}).first(false)
+		if (account.email){
+			user =this.model.findBeans({
+				email:account.email
+			}).first(false)
+		}
 
+		if (!user && params.user_id){
+			user = this.model.getById(params.user_id);
+		}
 		if (!user){
 			user = this.model.create(account)
 		}

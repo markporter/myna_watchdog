@@ -1,7 +1,7 @@
 var manager="perms"
 
 function init(){
-	Myna.Admin.user.getModel(this)
+	Myna.Permissions.getUserModel(this)
 	//Myna.printConsole("init",Myna.dumpText(this.getMassAssignable()));
 }
 

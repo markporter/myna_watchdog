@@ -22,7 +22,31 @@ Ext.define('App.model.<%=modelName%>', {
 	validation:$v =<%=model.validation.toCode()%>,
 	statics:{
 		fields:$f.toDataSet().toMap("name"),
-		validation:$v
+		validation:$v,
+		getValidator:$gv=function(fieldName){
+			var m = this;
+			return function(){
+				if (!this.up("form")) return true;
+				try{
+					var allValues = this.up("form").form.getFieldValues();		
+					var v = m.validation.validate(
+						allValues,
+						fieldName
+					);
+					if (v.success || !(fieldName in v.errors)){
+						return true;
+					} else {
+						return v.errors[fieldName];	
+					}
+				} catch(e){
+					if (typeof console != "undefined"){
+						console.log("error",e,e.stack);	
+					}
+					return true
+				}
+			};
+		}
+
 	},
 	idProperty:'<%=model.idField%>',
 	getLabel:function (col){
@@ -69,7 +93,8 @@ Ext.define('App.model.<%=modelName%>', {
 		})
 		return errors;
 	},
-	validation:$v
+	validation:$v,
+	getValidator:$gv
 	
 });
 

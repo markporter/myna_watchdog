@@ -17,7 +17,7 @@
 	
 	//--------- FlightPath config -----------------------------------------
 	config:{
-		debug:true,//$server.purpose =="DEV",
+		debug:false,//$server.purpose =="DEV",
 		homeRoute:{
 			controller:"Main",
 			action:"index"

@@ -31,7 +31,7 @@ function index(params){
 			}
 		}),
 		$FP.helpers.Html.url({
-			controller:"Main",
+			controller:"Perms",
 			action:"loadModels"
 		})
 	])
@@ -48,3 +48,24 @@ function index(params){
 	})
 	
 }
+
+/* Function: loadModels
+	Returns the ExtJS models as application/javascript. Called from the browser.
+	loaded in action "index"
+	*/
+	function loadModels(params){
+		var c = this;
+		var content =[
+			"User",
+			"UserLogin",
+			"UserGroup"
+		].map(function(modelName){
+			return c.getElement("model_template",{
+				modelName:modelName,
+				model:$FP.getModel(modelName),
+				controller:$FP.getController(modelName)
+			}) 
+				
+		})
+		this.renderContent(content.join('\n'),"application/javascript")
+	}

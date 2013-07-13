@@ -1,6 +1,6 @@
 /*jshint unused:false*/
 /*global Ext $FP appVars App  console CodeMirror*/
-/*Ext.override(Ext.view.AbstractView, { 
+Ext.override(Ext.view.AbstractView, { 
 	onRender: function() 
 	{ 
 		var me = this; 
@@ -9,7 +9,7 @@
 			me.setMaskBind(me.store); 
 		} 
 	} 
-});*/
+});
 
 /* ---------------- stupid xtype fix ---------------------------------------- */
 	Ext.ClassManager.instantiateByAlias=function() {
@@ -240,7 +240,7 @@ var controllers=[]
 								event.src.form.close();
 								event.src.supagrid.getStore().load()
 							})
-						},
+						}
 
 					},
 					user_grid:{
@@ -310,13 +310,16 @@ var controllers=[]
 				var userGrid = vp.down("supagrid[itemId=users]")
 				$FP.User.addUserFromAdapter({
 					type:event.type,
-					login:event.login
+					login:event.login,
+					user_id:event.user_id
 				},function (result) {
 					if (result.success){
-						userGrid.fireEvent("search",{
+						var mArray = userGrid.getStore().add(result.user)
+						userGrid.showEditForm(mArray[0])
+						/*userGrid.fireEvent("search",{
 							src:userGrid,
 							value:result.user.user_id
-						})
+						})*/
 						U.infoMsg("User/Login added")
 						event.src.close()
 					} else alert(result.detail)
@@ -334,7 +337,7 @@ var controllers=[]
 					}
 
 				} else {
-					Ext.widget("user_login_add",{auth_type:event.type})
+					Ext.widget("user_login_add",{auth_type:event.type,user_id:event.user_id})
 				}
 
 			},
@@ -384,7 +387,7 @@ var controllers=[]
 					}
 					cb(result)
 				})
-			},
+			}
 		})
 	/* =========== Views ==================================================== */
 		/* ----------- user_grid ----------------------------------------- */
@@ -537,7 +540,6 @@ var controllers=[]
 								xtype:"displayfield", 
 								setValue:function (date){
 									if (!date) return
-									console.log(date)
 									this.setRawValue(
 										date.format("m/d/Y H:i:s")
 									)
@@ -547,7 +549,6 @@ var controllers=[]
 								xtype:"displayfield",
 								setValue:function (date){
 									if (!date) return
-									console.log(date)
 									this.setRawValue(
 										date.format("m/d/Y H:i:s")
 									)
@@ -568,7 +569,7 @@ var controllers=[]
 							xtype:"user_login_grid",
 							title:"Logins:",
 							user_id:"--------------------",
-							height:250,
+							height:150,
 							width:260
 						}]),
 						buttons:[{
@@ -844,6 +845,7 @@ var controllers=[]
 							value:trigger.getValue()
 						})
 					}
+					var $this= this;
 					Ext.apply(this,{
 						//frame:true,
 						items:[{
@@ -896,7 +898,8 @@ var controllers=[]
 									view.fireEvent("add_user",{
 										src:view,
 										type:view.auth_type,
-										login:record.get("login")
+										login:record.get("login"),
+										user_id:$this.user_id
 									})
 								}
 							}
@@ -906,7 +909,279 @@ var controllers=[]
 					
 				}
 			})
-		
+/* =========== Group ========================================================= */
+	/* ----------- Controller ----------------------------------------------- */
+		controllers.push("Group");
+		Ext.define('App.controller.Group', {
+			extend: 'Ext.app.Controller',
+			init: function() {
+				this.control({
+					viewport:{
+						manage_user_groups:function () {
+							this.showGroups();
+						}
+					},
+					group_form:{
+						save_group:function (event) {
+							this.savegroup(event.model,function (result) {
+								if (!result.success){
+									event.src.form.markInvalid(result.errors);
+								} else {
+									U.infoMsg("group saved.")
+									event.src.form.loadRecord(event.model);
+									event.src.down("group_login_grid")
+										.setgroupId(event.model.get("group_id"))
+								}
+							})
+						}
+						
+
+					},
+					group_grid:{
+						add_group:function (event) {
+							this.showAddLogin(event)
+						},
+						search:function (event) {
+							var store= event.src.getStore();
+							if (!store.getProxy.extraParams) store.getProxy.extraParams = {}
+							store.getProxy().extraParams.search =event.value
+							event.src.loadFirstPage();
+						}
+					}
+					
+
+					
+				});
+			},	
+			addUser:function (event) {
+				var vp = Ext.ComponentQuery.query("viewport").first();
+				var userGrid = vp.down("supagrid[itemId=users]")
+				$FP.User.addUserFromAdapter({
+					type:event.type,
+					login:event.login,
+					user_id:event.user_id
+				},function (result) {
+					if (result.success){
+						var mArray = userGrid.getStore().add(result.user)
+						userGrid.showEditForm(mArray[0])
+						/*userGrid.fireEvent("search",{
+							src:userGrid,
+							value:result.user.user_id
+						})*/
+						U.infoMsg("User/Login added")
+						event.src.close()
+					} else alert(result.detail)
+				})
+			},
+			
+			showGroups:function () {
+				U.addCenterTab({
+					id:"vGroupsGrid",
+					xtype:"group_grid",
+					title:"Manage Groups"
+				})
+			},
+			savegroup:function (model,cb) {
+				$FP.group.save(model.data,function (result) {
+					if (result.success){
+						model.set(result.data);
+						model.commit();
+
+					} else{
+						model.reject();
+					}
+					cb(result)
+				})
+			}
+		})
+	/* =========== Views ==================================================== */
+		/* ----------- group_grid ----------------------------------------- */
+			Ext.define('App.view.GroupGrid', {
+				extend: 'univnm.ext.SupaGrid',
+				alias:'widget.group_grid',
+				/*
+					user_group_id,
+					name,
+					appname,
+					description
+				*/
+				initComponent:function () {
+					var fireSearchEvent = function (trigger) {
+						var view = trigger.up("group_grid")
+						view.fireEvent("search",{
+							src:view,
+							value:trigger.getValue()
+						})
+					}
+					Ext.apply(this,{
+						itemId:"groups",
+						iconCls:"icon_manage_groups",
+						store:{
+							type:"usergroup"
+						},
+						viewConfig: {
+							//Return CSS class to apply to rows depending upon data values
+							getRowClass: function(record, index) {
+								if (record.get("inactive_ts")){
+									return "row_inactive"
+								} else {
+									return ""
+								}
+							}
+						},
+						columns:[
+							{dataIndex:"user_group_id", renderer:U.linkRenderer},
+							{dataIndex:"name"},
+							{dataIndex:"appname"},
+							{dataIndex:"description"}
+						].map(function (row) {
+							return Ext.applyIf(row,{
+								text:App.model.UserGroup.fields[row.dataIndex].label
+								
+							})
+						}),
+						//filterAutoLoad:true,
+						//filterSuppressTitle:true,
+						paged:true,
+						tbar:[{
+							xtype:"trigger",
+							fieldLabel:"Search groups",
+							onTriggerClick:function () {
+								fireSearchEvent(this);
+							},
+							triggerBaseCls:"x-form-search-trigger x-form-trigger",
+							enableKeyEvents:true,
+							listeners:{
+								keydown:function (trigger,e) {
+									if (e.keyCode == 13){
+										fireSearchEvent(trigger);			
+									}
+								}
+							}
+						},{
+							text:"Add group",
+							iconCls:"icon_add",
+							handler:function (btn) {
+								var view = btn.up("group_grid")
+								view.showEditForm()
+							}
+						}],
+						editFormConfig:{
+							xtype:"group_form",
+							position:"right"
+						}
+					})
+					this.callParent(arguments);
+					this.loadFirstPage()
+				}
+			})
+		/* ----------- group_form ----------------------------------------- */
+			Ext.define('App.view.groupForm', {
+				extend: 'Ext.tab.Panel',
+				alias:'widget.group_form',
+
+				initComponent:function () {
+					Ext.apply(this,{
+						title:"General",
+						autoScroll:true,
+						iconCls:"icon_manage_groups",
+						frame:true,
+						items:[
+							{ name:"user_group_id", xtype:"displayfield" },
+							{ name:"name" },
+							{ name:"appname" },
+							{ name:"description", xtype:"textarea" }
+						].map(function (row) {
+							var f = App.model.UserGroup.fields[row.name];
+							return Ext.applyIf(row,{
+								fieldLabel:f.label,
+								xtype:(f.jsType == "date")
+									?"datefield"
+									:(f.jsType == "numeric")
+										?"numberfield"
+										:"textfield"
+								
+							})
+						}).concat([{
+							xtype:"group_login_grid",
+							title:"Logins:",
+							group_id:"--------------------",
+							height:150,
+							width:260
+						}]),
+						buttons:[{
+							text:"Save",
+							iconCls:"icon_save",
+							handler:function (btn) {
+								var view = btn.up("group_form")
+								var form = view.form;
+								if (!form.isValid()) return;
+								var model = view.form.currentRecord;
+								form.updateRecord(model);
+
+								view.fireEvent("save_group",{
+									src:view,
+									model:model
+								})
+							}
+						},{
+							text:"Deactivate",
+							itemId:"deactivate_button",
+							iconCls:"icon_delete",
+							handler:function (btn) {
+								var view = btn.up("group_form");
+								var form = view.form;
+								
+								var model = view.form.currentRecord;
+								if (confirm("Deactivate this group?")){
+									view.fireEvent("deactivate_group",{
+										src:view,
+										model:model
+									})	
+								}
+								
+							}
+						},{
+							text:"Reactivate",
+							itemId:"reactivate_button",
+							iconCls:"icon_add",
+							handler:function (btn) {
+								var view = btn.up("group_form")
+								var form = view.form;
+								
+								var model = view.form.currentRecord;
+								view.fireEvent("reactivate_group",{
+									src:view,
+									model:model
+								})
+							}
+						},{
+							text:"Cancel",
+							iconCls:"icon_cancel",
+							handler:function (btn) {
+								var form = btn.up("group_form").form
+								//if inside supagrid
+								if (form.close) form.close();
+							}
+						}]
+					})
+					this.callParent(arguments);
+					var $this=this;
+					
+					this.addListener("beforegridload",function (fp,record) {
+
+						this.down("group_login_grid").setgroupId(record.get("group_id"));
+
+						if (record.get("inactive_ts")){
+							fp.down("*[itemId=reactivate_button]").show();
+							fp.down("*[itemId=deactivate_button]").hide();
+						} else {
+							fp.down("*[itemId=reactivate_button]").hide();
+							fp.down("*[itemId=deactivate_button]").show();
+						}
+					})
+				}
+			})			
 /*  */
 
 /* ----------- Application definition: App ---------------------------- */
