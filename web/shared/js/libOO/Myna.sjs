@@ -1693,12 +1693,12 @@ if (!Myna) var Myna={}
 					}
 				}
 			}
-			if (sync){
+			//if (sync){
 				logFunction(reqId,type,label,detail,app_name,log_elapsed,req_elapsed,now);
-			} else {
+			//} else {
 				//new Myna.ThreadPool(logFunction,{background:true}).run(reqId,type,label,detail,app_name,log_elapsed,req_elapsed,now);
-				new Myna.Thread(logFunction,[reqId,type,label,detail,app_name,log_elapsed,req_elapsed,now],-90);
-			}
+				//new Myna.Thread(logFunction,[reqId,type,label,detail,app_name,log_elapsed,req_elapsed,now],-90).releaseSubThread();
+			//}
 		 
 		} else {
 			$server_gateway.writeLog(

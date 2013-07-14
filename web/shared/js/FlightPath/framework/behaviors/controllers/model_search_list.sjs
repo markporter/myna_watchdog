@@ -194,6 +194,7 @@ function init(options){
 					return "CAST({0} as VARCHAR(4000))".format(col)
 				}).join(model.table.db.concatOperator)
 				)
+			var sql;
 			var retVal =  new Myna.Query({
 				ds:ds,
 				log:true,

@@ -1,9 +1,11 @@
 #!/bin/bash
-if [ ! -d ext_latest ]; then
-	echo "Please download the latest 2.x version of the EXT JavaScript library (http://extjs.com/products/extjs/download.php) and install it in a folder called ext_latest"
-	exit 1
+git branch | grep "\* master"
+
+if [ $? != 0 ]; then
+	echo "********** WARNING! Not in MASTER branch! **********"
+	echo "             Press Ctrl-C now to abort"
+	sleep 5
 fi
-dropbox stop
 echo "shutting down dev myna"
 ./dev_server stop
 echo "building JS docs..."
@@ -23,4 +25,7 @@ if [ -e  build.dev ]; then
 fi
 echo "Done with Build, restarting dev server"
 ./dev_server restart
-#dropbox start
+echo "Updating tags"
+git commit -m "version number update" src/version.properties
+git tag `cat src/version.properties | cut -d= -f2`
+git push origin --tags

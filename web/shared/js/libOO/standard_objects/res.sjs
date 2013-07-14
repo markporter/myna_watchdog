@@ -189,6 +189,10 @@ var $res = {
 			This method does NOT preserve any headers, such as cookies, sent to the 
 			browser during this request. Page processing is aborted when calling 
 			this function
+
+		Security Note:
+			This will only send text before the first hard return to prevent 
+			header injection/split responses
 		
 		Parameters: 
 			url - absolute url (including server) to redirect to. See 
@@ -203,6 +207,8 @@ var $res = {
 	*/
 	redirect:function(url){
 		$res.clear()
+		//protect against split responses
+		url = url.split(/[\r\n]/).first()
 		if ($server.response) try{$server.response.sendRedirect(url);} catch(e){}
 		Myna.abort();		
 	},
@@ -259,7 +265,7 @@ var $res = {
 			"&message=" + options.message
 		$res.metaRedirect(url);
 		//Myna.print("<a href ='" + url +"'>"+options.title+"</a>");
-		Myna.abort();
+		//Myna.abort();
 	},
 /* Function: redirectWithToken
 	redirect to a URL, including an auth_token for the current user.
@@ -502,19 +508,25 @@ var $res = {
 		
 		Parameters: 
 			name 	-  	Header name
-			value	-	Header value
+			value	-	(String or Date) 
+						Header value. If a date, it will be formated to the 
+						appropriate format for HTTP headers
 		
 			
 		Example:
 			$res.setHeader("Content-disposition", 'attachment; filename="result.xls"');
-		
-		
+
+		Security Note:
+			This will only set text before the first hard return to prevent 
+			header injection/split responses
 	*/
 	setHeader:function(name,value){
 		if ($server.response) {
 			if (value instanceof Date){
 				$server.response.setDateHeader(name,value.getTime());
 			} else {
+				//protect against header injection
+				value = value.split(/[\r\n]/).first()
 				$server.response.setHeader(name,value);
 			}
 		}
