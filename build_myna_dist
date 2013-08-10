@@ -23,9 +23,16 @@ if [ -e  build.dev ]; then
 	echo "restoring dev build directory..."
 	rm -rf build.dist && mv build build.dist && mv build.dev build
 fi
+
+
+git status
+read -p "Commit changes and update tags? [y/N]" shouldCommit
+
+if [ "$shouldCommit" == "y" ]; then
+	git commit -a -m "version number update"
+	git tag `cat src/version.properties | cut -d= -f2`
+	git push origin --tags
+fi
+
 echo "Done with Build, restarting dev server"
 ./dev_server restart
-echo "Updating tags"
-git commit -m "version number update" src/version.properties
-git tag `cat src/version.properties | cut -d= -f2`
-git push origin --tags
