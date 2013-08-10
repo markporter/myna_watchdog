@@ -1,7 +1,122 @@
+Release Name: 1.9.19
+Notes:
+
+This version removed the beta designation and starts a new version numbering 
+scheme:
+
+Major.Minor.Buildnum
+
+Major version numbers will only change when significant architectural changes 
+are made with little concern for backwards compatibility
+
+Minor version numbers change with the addition of new features. No intentional 
+breaks with existing functionality
+
+Buildnum version numbers change with bug fixes and security updates
+
+
+Improvements
+--------------
+* Upgraded Rhino to 1.7R4
+* New Administrator application
+* Profiler: added totals to averages display
+* Profiler: added end time to summary display
+* Profiler: Added experimental profile() function to attach profiling functions 
+  to objects
+* FlightPath: added Model path caching when not in debug mode
+* FlightPath, Controller: this.model is now a lazy load property.
+* FlightPath, MynaAuth behavior: rights are now cached in the session scope
+* FlightPath, Direct controller: API is cached for 1 day, when not $FP.debug
+* FlightPath: Controller and model paths are cached for 1 day, when not 
+  $FP.debug
+* FlightPath: Controller names are cached for 1 day, when not 
+  $FP.debug
+* FlightPath: model managers are now lazy-loading. Managers are only init'd
+  if accessed
+* FlightPath, application.sjs: init() clears caches when in debug mode, or 
+  $application.version changes
+* Added SSL support to embedded Tomcat server
+* Added Permissions.getUserGroupByName
+* Added String.lpad and String.rpad functions
+* Added selectable logging engines to general settings.
+* Added Myna.Sandbox (experimental) Java sandboxing for untrusted code
+* Added Myna.Shell for interactive shell/ssh scripting
+* Added optional mass assignment protection to DataManager
+* Added Myna.Admin.user.getModel
+* Added Myna.getGlobalScope(): a function to grab the global scope of the current 
+  context
+* Added scheduled task management to Myna.Admin
+* Request Timeouts now call $application._onError, and close objects opened with 
+  $application.addOpenObject()
+* String.toHash/hashEquals now use stronger hashing algorithm: sha-256, 16 bit 
+  salt, 100K iterations. String.hashEquals is backward compatible with old 
+  hashes
+* Changing Admin password requires either current password, or temporary auth 
+  code
+* Updated Myna.ThreadPool, add documentation
+* Saving schedules now reloads the task grid
+* $res.redirect and $res.setHeader now protect against header injection and 
+  split responses 
+
+
+Changes
+--------------
+* Removed req var dumps from Myna.formatError
+* Made MynaThread.sharedScope_ a public property
+* Date.formatInterval will now user singular terms for singular 
+  intervals, e.g. 1 second vs 1 seconds
+* removed thread limit on cron reloads
+* Added New cron system. This handles large number of tasks more efficiently
+* Moved Task and DataSource functions in Myna.Admin to Myna.Admin.ds and 
+  Myna.Admin.task respectively
+* Update FlightPath to use new Myna.Admin function names
+* Changed upgrade_tables to use Myna.Admin
+* Installer now removes /myna folder before upgrading to clean up old admin apps
+* Myna.Query no longer caches select statements. 
+
+Bug Fixes
+--------------
+* Fixed bug in central login page regarding "login_page" parameter
+* Fixed bug in Permissions.UserGroup.removeRights that would cause an SQL error
+* Fixed bug in Permissions.UserGroup.removeRights caused it to not exist
+* added GC to health_check.sjs to prevent unnecessary restarts when garbage 
+  collection is slow
+* Myna.Cache now only uses a separate thread when background refreshing
+* fixed bug in ObjectLib.toArray to make it IE compatible
+* FlightPath.Controller: fixed docs for addFilter
+* FlightPath.Controller: removed undocumented auto-creation of model key in params
+* FlightPath: getModel: tables names are now converted to model names 
+  when searching for a model definition
+* Fixed case in header check for $server.serverUrl
+* Myna.Cache: appname now properly assigned as default tag
+* Myna.Cache: getByTags now works
+* FlightPath, FormatPdf Behavior: Now including "$server.serverUrl+$FP.url" 
+  as the base url for xmlToPdf
+* Fixed setting and saving related data  in DataManager.get() and 
+  save() 
+* fixed bug in reload_cron when looking for deleted cron jobs
+* DataManager: Fixed bug related to applying related data via 
+  manager.get(data)
+* DataManager: removed parent object creation/saving for belongsTo 
+  associations
+* $application.onError now honors canceling of default error handler
+* fixed usage bug in installer  
+* Myna.Admin validation tweaks
+* Myna.Cache: fixed memory leak
+* reverted oracle schema lookup to JDBC meta data lookup to prevent infinite recursion during query errors
+* Fixed blank schema aliases in db_manager
+* Fixed mis-targeted column completion dialogs in dm_manager
+* Fixed calculation for weekly scheduled tasks
+* fixed infinite loop for hourly tasks the day after Daylight Savings switch
+* All log are now synchronous. This slows performance slightly but avoids memory 
+  leaks during high logging periods  
+
+
+----------------------------------------------------------
 Release Name: 1.0_beta_9
 Notes:
 
-bug fixes and minor enhancments
+bug fixes and minor enhancements
 
 Improvements
 --------------
