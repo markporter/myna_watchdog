@@ -936,6 +936,28 @@
 		$res.printBinary(data,contentType,filename)
 		this.rendered =true;
 	}
+/* Function: renderFile
+	Directly render a file to the browser, bypassing default render
+	
+	Parameters: 
+		file			-  <MynaPath> or <Myna.File>
+							file to render
+		
+	This performs a direct render of the file. Mime types are auto calculated 
+	and the download is optimized for large files.
+
+	See:
+		<$res.serveFile>
+	
+	*/
+	Controller.prototype.renderFile = function renderBinary(file){
+		if (this.rendered) return
+		
+		$res.serveFile(file)
+		this.rendered =true;
+	}
+
+
 /* Function: getElement 
 	renders an HTML template returns the content as a string
 	
