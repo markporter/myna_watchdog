@@ -25,14 +25,11 @@ if [ -e  build.dev ]; then
 fi
 
 
-git status
-read -p "Commit changes and update tags? [y/N]" shouldCommit
+#include post_build
+./post_build
 
-if [ "$shouldCommit" == "y" ]; then
-	git commit -a -m "version number update"
-	git tag `cat src/version.properties | cut -d= -f2`
-	git push origin --tags
-fi
+
+
 
 echo "Done with Build, restarting dev server"
 ./dev_server restart
