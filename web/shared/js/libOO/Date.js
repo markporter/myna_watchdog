@@ -770,11 +770,16 @@ Date.prototype.add = function(interval, value){
       break;
     case Date.MONTH:
       var day = this.getDate();
+      d.setMonth(this.getMonth() + value,1);
+
       if(day > 28){
-          day = Math.min(day, this.getFirstDateOfMonth().add('mo', value).getLastDateOfMonth().getDate());
+          var thisDay = this.clone()
+          thisDay.setMonth(this.getMonth() + value,1)
+        
+          day = Math.min(day, d.getDaysInMonth());
       }
       d.setDate(day);
-      d.setMonth(this.getMonth() + value);
+      
       break;
     case Date.YEAR:
       d.setFullYear(this.getFullYear() + value);
