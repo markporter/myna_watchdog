@@ -1,3 +1,27 @@
+Release Name: 1.9.20
+Notes:
+Security bugfix release
+
+
+Improvements
+--------------
+
+*FlightPath*
+ * Added Controller.renderFile function to directly render a file to the browser, bypassing default render
+
+
+Changes
+--------------
+
+
+Bug Fixes
+--------------
+* Bug in Date.add() when adding MONTHs to a date after the 28th of the month
+* SECURITY: Fixed bug in FlightPath that dsiabled action filters, an therefor
+  session checks
+
+----------------------------------------------------------
+
 Release Name: 1.9.19
 Notes:
 
