@@ -372,9 +372,7 @@
 					return (typeof $FP.Controller.prototype[prop] === "function")
 				})
 				
-				//init merged class
-				controllerClass.prototype.init(controllerName);
-				_controllerClasses[controllerName] = controllerClass.prototype
+				
 
 				//label all the action functions
 				controllerClass.prototype.getProperties().forEach(function(prop){
@@ -386,6 +384,10 @@
 						controllerClass.prototype[prop].action=prop
 					}	
 				})
+
+				//init merged class
+				controllerClass.prototype.init(controllerName);
+				_controllerClasses[controllerName] = controllerClass.prototype
 			}
 		}
 		

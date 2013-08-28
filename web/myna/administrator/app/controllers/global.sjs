@@ -18,9 +18,9 @@ function init(){
 
 	this.applyBehavior("MynaAuth",{
 		whitelist:[
-			/Main.changeAdminPassword/,
-			/Main.saveAdminPassword/,
-			/Main.logout/,
+			/changeAdminPassword/,
+			/saveAdminPassword/,
+			/logout/,
 			/Direct.api/,
 			/Direct.router/
 		],
