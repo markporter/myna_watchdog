@@ -72,7 +72,7 @@
 		var classList = [
 			model,
 			new $FP.Model(),
-			loadPath("app/models/global.sjs"),
+			loadPath($FP.dir +"app/models/global.sjs"),
 		]
 		var key = $application.appname +":$FP::"+"modelPath:"+modelName;
 		
