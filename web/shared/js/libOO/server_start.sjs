@@ -2,6 +2,7 @@
 $server_gateway.environment.put("threadName","Server Start Thread");
 if (!$server_gateway.environment.containsKey("isCommandline")){
 	/* clean ds cache */
+		Myna.printConsole("Flushing Datasource Class Cache...");
 		new Myna.File("/WEB-INF/myna/ds_class_cache").forceDelete()
 	/* if (Packages.bootstrap.MynaServer.server){
 		new Myna.Thread(function(){
@@ -67,10 +68,12 @@ if (!$server_gateway.environment.containsKey("isCommandline")){
 		},[],.99)
 	} */
 	$req.timeout=0;
+	Myna.printConsole("Check/upgrade Myna datasources and tables...");
 	Myna.include("/shared/js/libOO/upgrade_tables.sjs",{});
 	
 	
 	/* add connection testing to datasources */
+	Myna.printConsole("Load datasources and add health checks...");
 	var keys = Myna.JavaUtils.enumToArray($server_gateway.javaDataSources.keys());
 	var dbTypes = {}
 	new Myna.File("/shared/js/libOO/db_properties/").listFiles("sjs").forEach(function(file){
@@ -90,6 +93,7 @@ if (!$server_gateway.environment.containsKey("isCommandline")){
 	})
 
 	//set up the commandline Script
+		Myna.printConsole("Building commandline script...");
 		var props = Myna.JavaUtils.mapToObject(java.lang.System.properties);
 		var mynaCmd
 		if (/windows/i.test($server.osName)){
@@ -105,7 +109,7 @@ if (!$server_gateway.environment.containsKey("isCommandline")){
 				
 				"%JAVA%" -Xmx%MEM%m -cp "%WEB_INF%\lib\*;%WEB_INF%\classes" info.emptybrain.myna.JsCmd "%~1" "%~2"  "%~3"  "%~4"  "%~5"  "%~6"  "%~7" "%~8" "%~9" 	
 			</ejs>)
-			Myna.log("info","Created Myna Commandline script in " + mynaCmd.javaFile.toString(),Myna.dump(result));
+			//Myna.log("info","Created Myna Commandline script in " + mynaCmd.javaFile.toString(),Myna.dump(result));
 		} else {
 			mynaCmd =new Myna.File("/WEB-INF/myna/commandline/myna");
 			
@@ -139,15 +143,17 @@ if (!$server_gateway.environment.containsKey("isCommandline")){
 			var result =Myna.executeShell("/bin/bash",<ejs>
 				/bin/chmod 777 <%=mynaCmd.javaFile.toString()%>
 			</ejs>)
-			Myna.log("info","Created Myna Commandline script in " + mynaCmd.javaFile.toString(),Myna.dump(result));
+			Myna.printConsole("Created Myna Commandline script in " + mynaCmd.javaFile.toString());
+			//Myna.log("info","Created Myna Commandline script in " + mynaCmd.javaFile.toString(),Myna.dump(result));
 		}
 	
 	//reload cron
+		Myna.printConsole("Loading scheduled tasks...");
 		Myna.Admin.task.scheduleNextRun();
 		var cronThread = new java.util.Timer();
 		cronThread.schedule(
 			new Packages.info.emptybrain.myna.CronTimerTask(),
-			0,
+			10,
 			Date.getInterval(Date.SECOND,10)
 		)
 	//set up HazelCast
