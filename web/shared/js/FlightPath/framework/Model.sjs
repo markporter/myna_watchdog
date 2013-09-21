@@ -1150,7 +1150,7 @@ Model.prototype={
 	get:function get(values){
 		//Myna.printConsole("get","values " + values.toJson())
 		var searchParams ={}
-		searchParams[this.idFiedl] = values[this.idField];
+		searchParams[this.idField] = values[this.idField];
 		//make a local copy
 		//values=values.applyTo(this.getDefaults(),true)
 		
