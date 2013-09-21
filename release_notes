@@ -1,4 +1,32 @@
+Release Name: 1.9.21
+============================
+Notes:
+
+Improvements:
+--------------------
+* Added basic HTML-to-text translation for "Standard Output logger"
+* Added xtype debugging to admin.js HTML-to-text translation for "Standard Output logger"
+
+Changes:
+--------------------
+* Logging changes: force logs to either be selected logger, or standard out as fallback
+* Added more logging feedback to startup
+* upgrade_tables only inspects myna_log if log_engine == "myna_log"
+* removed experimental disk-script-cache. This was causing "Myna not defined" errors during startup
+* added a bunch of .empty files to get GIT to store the directories
+
+Bug Fixes:
+--------------------
+* fixed typo in FlighPath Model.sjs
+* Administrator > DBManager: fixed myna code generation to refer to "db" rather than "dm"
+* Added startup delay to cronThread to prevent memory errors during startup
+* Flightpath: fixed bug in pathing for model global.sjs file
+
+
+
+
 Release Name: 1.9.20
+============================
 Notes:
 Security bugfix release
 
@@ -23,6 +51,7 @@ Bug Fixes
 ----------------------------------------------------------
 
 Release Name: 1.9.19
+============================
 Notes:
 
 This version removed the beta designation and starts a new version numbering 
@@ -138,6 +167,7 @@ Bug Fixes
 
 ----------------------------------------------------------
 Release Name: 1.0_beta_9
+============================
 Notes:
 
 bug fixes and minor enhancements
@@ -217,6 +247,7 @@ Bug Fixes
 --------------------------------------------------------------------------------
 
 Release Name: 1.0_beta_8
+============================
 Notes:
 
 This release contains a major change to $application, introduces 
@@ -379,6 +410,7 @@ Bug Fixes:
      
 --------------------------------------------------------------------------------
 Release Name: 1.0_beta_7
+============================
 Notes:
 
 Includes bug fixes and the experimental commandline feature
@@ -485,6 +517,7 @@ Other Changes:
 ---------------------------------------------------------------------------------
 
 Release Name: 1.0_beta_6-1
+============================
 Notes:
 
 Includes bug fixes and the experimental commandline feature
@@ -514,6 +547,7 @@ Other Changes:
 --------------------------------------------------------------------------------
 
 Release Name: 1.0_beta_6
+============================
 Notes:
 
 This release contains a major change to $application, introduces 
@@ -736,6 +770,7 @@ in the group instead of all threads
 --------------------------------------------------------------------------------
 
 Release Name: 1.0_beta_5
+============================
 Notes:
 
 This release contains some new features, performance
@@ -797,6 +832,7 @@ Bug Fixes
 ------------------------------------------------------------------------
 
 Release Name: 1.0_beta_4
+============================
 Notes:
 
 This release contains some new features, performance
@@ -884,6 +920,7 @@ Other Changes
 ------------------------------------------
 
 Release Name: 1.0_beta_3
+============================
 Notes:
 This release contains a major security fix, minor feature 
 enhancements, minor bug fixes and documentation updates
@@ -930,6 +967,7 @@ Other changes in this release
 ------------------------------------------
 
 Release Name: 1.0_beta_2
+============================
 Notes:
 This release contains bug fixes and minor enhancments
 
@@ -956,6 +994,7 @@ Changes in his release
 ---------------------------------------
 
 Release Name: 1.0_beta_1
+============================
 Notes:
 
 This marks the first release of the 1.0 beta cycle. This should be the last 
@@ -1019,6 +1058,7 @@ Changes in this release:
 ----------------------------------------------------------
 
 Release Name: 1.0_alpha_17-3
+============================
 Notes:
 
 Bug-fix release
@@ -1039,6 +1079,7 @@ changes:
 ----------------------------------------------------------
 
 Release Name: 1.0_alpha_17
+============================
 Notes:
 
 New features include OpenID Login support and a centralized login page
@@ -1212,6 +1253,7 @@ Other changes:
 ----------------------------------------------------------
 
 Release Name: 1.0_alpha_16
+============================
 Notes:
 
 This release sees improvements in the threading API and the completion of fragment and query caching
@@ -1300,6 +1342,7 @@ Other Changes:
 ------------------------------------
 
 Release Name: 1.0_alpha_15-1
+============================
 Notes:
 
 This is a BugFix release that also introduces some experimental features
@@ -1336,6 +1379,7 @@ New in this release
 --------------------------------------
 
 Release Name: 1.0_alpha_15
+============================
 Notes:
 
 New Features:
@@ -1442,6 +1486,7 @@ Other Changes:
 -----------------------------------
 
 Release Name: 1.0_alpha_14
+============================
 Notes:
 
 New Features:
@@ -1509,6 +1554,7 @@ Other Changes:
 -----------------------------------
 
 Release Name: 1.0_alpha_13
+============================
 Notes:
 
 New Features:
@@ -1608,6 +1654,7 @@ Other Changes:
 	
 -------------------------------------------------------------------------------
 Release Name: 1.0_alpha_12
+============================
 Notes:
 
 New Features:
@@ -1708,6 +1755,7 @@ Other Changes:
 -------------------------------------------------------------------------------
 	
 Release Name: 1.0_alpha_11
+============================
 Notes:
 
 Changes in this release:
@@ -1756,6 +1804,7 @@ format date and time values
 -------------------------------------------------------------------------------
 	
 Release Name: 1.0_alpha_10
+============================
 Notes:
 
 New Features in this release: (see below for details)
@@ -1916,6 +1965,7 @@ returns a Java byte[] containing the entire contents off the supplied Java Reade
 -------------------------------------------------------------------------------
 
 Release Name: 1.0_alpha_9
+============================
 Notes:
 
 **** New Feature: Database Management	 ****
@@ -1991,6 +2041,7 @@ Other Features:
 -------------------------------------------------------------------------------
 
 Release Name: 1.0_alpha_8 
+============================
 Notes:
 
 **** New Feature: Asynchronous Threads ****
@@ -2120,6 +2171,7 @@ insertQry.execute({
 -------------------------------------------------------------------------------
 
 Release Name: 1.0_alpha_7
+============================
 Notes:
 
 **** New Feature: Request Management ****
@@ -2192,6 +2244,7 @@ has been updated to the stablw release version 2.0
 -------------------------------------------------------------------------------
 
 Release Name: 1.0_alpha_6-1
+============================
 Notes:
 * Added tutorial section to documentation 
 * Added documentation link to Administrator
@@ -2199,6 +2252,7 @@ Notes:
 -------------------------------------------------------------------------------
 	
 Release Name: 1.0_alpha_6
+============================
 Notes:
 *** Major API change ****
 The standard library now comes in two flavors: Procedural and 
@@ -2362,6 +2416,7 @@ to see what you can do with a diskFileItem
 -------------------------------------------------------------------------------
 	
 Release Name: 1.0_alpha_5
+============================
 Notes:
 * New EJS macro <@loop array="array_expression" element="variable_name" [index="variable_name"]>.
 	This macro has 3 attributes: array, element, and index, and basically 
@@ -2393,6 +2448,7 @@ Have a look at examples/sql_example.ejs to see these in action
 -------------------------------------------------------------------------------
 	
 Release Name: 1.0_alpha_4
+============================
 Notes:
 Major changes include:
 * Removed all dependencies on the servlet environment from MynaThread. This is in 
@@ -2408,6 +2464,7 @@ Major changes include:
 -------------------------------------------------------------------------------
 	
 Release Name: 1.0_alpha_3
+============================
 Notes:
 This release marks the completion of the Standard Library documentation, and the 
 beginning of the general "getting started" docs. The profiler has been improved 

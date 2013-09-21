@@ -104,16 +104,15 @@
 				.replace(/\$controller/g,controller)
 				.replace(/\$action/g,action)
 				.replace(/\/\$id\*?/g,id?"/"+id:"")
-					
-			template.replace(/\$(\w+)\*?/g,function(str,p){
-				if ("params" in options && p in options.params){
-					var val =options.params[p];
-					delete options.params[p]
-					return String(val||"")
-				} else {
-					return ""	
-				}
-			})
+				.replace(/\$(\w+)\*?/g,function(str,p){
+					if ("params" in options && p in options.params){
+						var val =options.params[p];
+						delete options.params[p]
+						return String(val||"")
+					} else {
+						return ""	
+					}
+				})
 			
 		}
 		
