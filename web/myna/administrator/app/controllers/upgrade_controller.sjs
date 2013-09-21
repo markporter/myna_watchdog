@@ -49,7 +49,7 @@ function _upgrade(version){
 		new Myna.File("/WEB-INF",version + ".war").forceDelete();
 		if (java.lang.System.getProperty("myna.hasWatchdog")){
 			new Myna.Thread(function(){
-				Myna.sleep(1000);
+				Myna.sleep(5000);
 				
 					java.lang.System.exit(0);	
 				
@@ -76,13 +76,13 @@ function _upgrade(version){
 function web(params){
 	$req.timeout=0
 	var con =new Myna.HttpConnection({
-		url:"http://myna.googlecode.com/files/" + params.version +".war",
+		url:"https://downloads.sourceforge.net/project/myna/" + params.version +".war",
 		method:"GET"
-	});			
+	});		
+	Myna.printConsole("https://downloads.sourceforge.net/project/myna/" + params.version +".war");	
 	con.connect()
 	var f = new Myna.File("/WEB-INF/" + params.version +".war")
 	Myna.JavaUtils.streamCopy(con.getResponseStream(),f.getOutputStream(),true)
-	
 	
 	
 	return this._upgrade(params.version)
