@@ -1,6 +1,6 @@
 Release Name: 1.9.21
 ============================
-Notes:
+Notes: Bugfixes and minor improvements
 
 Improvements:
 --------------------
@@ -17,13 +17,13 @@ Changes:
 
 Bug Fixes:
 --------------------
-* fixed typo in FlighPath Model.sjs
+* fixed typo in FlightPath Model.sjs
 * Administrator > DBManager: fixed myna code generation to refer to "db" rather than "dm"
 * Added startup delay to cronThread to prevent memory errors during startup
 * Flightpath: fixed bug in pathing for model global.sjs file
 
 
-
+----------------------------------------------------------
 
 Release Name: 1.9.20
 ============================

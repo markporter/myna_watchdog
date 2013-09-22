@@ -83,8 +83,14 @@
 				con.connect();
 				var xml=con.getResponseXml();
 				default xml namespace = xml.namespace();
-				var node = Array.parse(xml..item).first();
-				return node.title.toString().listLast("/").listBefore(".");
+				var result;
+				for each (item in xml..item){
+					if (/.war$/.test(item.title.toString())){
+						return item.title.toString().listLast("/").listBefore(".");
+					}
+				}
+				//var node = Array.parse(xml..item).first();
+				//return node.title.toString().listLast("/").listBefore(".");
 			}
 		}).call();
 
@@ -309,7 +315,15 @@ function test(){
 	con.connect();
 	var xml=con.getResponseXml();
 	default xml namespace = xml.namespace();
-	var node = Array.parse(xml..item).first();
-	var result = node.title.toString().listLast("/").listBefore(".");
+	var result;
+	for each (item in xml..item){
+		if (/.war$/.test(item.title.toString())){
+			result = item.title.toString().listLast("/").listBefore(".");
+			break;
+		}
+	}
+	/*var nodes = Array.parse(xml..item);
+	var node = nodes.first()
+	var result = node.title.toString().listLast("/").listBefore(".");*/
 	Myna.abort(result)
 }
