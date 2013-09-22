@@ -673,7 +673,7 @@ var $application={
 	},
 	
 	
-	_initScopes:function(){
+	_initScopes:function(firstPass){
 		$profiler.mark("Runtime scripts included");
 		$profiler.begin("Process Scopes");
 		$server_gateway.runtimeStats.put("currentTask","built-in onRequestStart");
@@ -884,7 +884,7 @@ var $application={
 					}
 				});
 			//import auth_token
-				if ("auth_token" in $req.data){
+				if ("auth_token" in $req.data && !firstPass){
 					var user_id =Myna.Permissions.consumeAuthToken($req.rawData.auth_token)
 					if (user_id) $cookie.setAuthUserId(user_id)
 					var queryVars = $req.paramNames.filter(function(key){

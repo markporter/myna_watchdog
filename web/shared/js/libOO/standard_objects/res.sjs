@@ -237,7 +237,7 @@ var $res = {
 		
 		Detail:
 			Myna provides a centralized authentication application that can 
-			authenticate a users against any defined auth type, including OpenId. 
+			authenticate a users against any defined auth type. 
 			Calling this function will send an HTTP redirect to the browser to send 
 			the user to Myna's authentication page. Once the user is authenticated
 			he/she will be redirected back to _callbackUrl_ and an authentication 

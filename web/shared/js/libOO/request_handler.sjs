@@ -86,7 +86,7 @@ try{
 				($server.scriptName == "" || $server.scriptName == "_index")   
 				&& parseInt($server.properties.enable_directory_listings)
 			){
-				$application._initScopes();
+				$application._initScopes(true);
 				$req._DIR_LISTING_ELIGIBLE_=true;
 				//Myna.include("/myna/dir_listing.sjs")
 			} else {
