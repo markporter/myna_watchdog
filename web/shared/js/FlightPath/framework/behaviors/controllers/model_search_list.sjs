@@ -27,7 +27,7 @@
 							overridden via params.pageSize
 
 		pageSizeParam	-	*Optional, default "pageSize"*					
-							Name of the parameter from the clint that contains 
+							Name of the parameter from the client that contains 
 							the pageSize
 
 		page			-	*Optional, default null*

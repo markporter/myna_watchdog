@@ -722,7 +722,10 @@
 				.after($server.currentUrl)
 					
 			if (path.listFirst("/") == "static"){
-				
+				//don't serve code
+				if(/[e|s]js$/i.test(path.listFirst("?"))){
+					$application._onError404();
+				}
 				var f = new Myna.File(
 					$FP.dir,
 					"app",
