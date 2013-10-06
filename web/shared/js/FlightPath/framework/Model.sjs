@@ -264,8 +264,12 @@
 					return v
 				},
 			}).applyTo(this.validation.validatorFunctions)
-			this.validation.getLabel = this.getLabel
-			this.validation.genLabel = this.genLabel
+			this.validation.getLabel = function(colname){
+				return model.getLabel(colname);
+			}
+			this.validation.genLabel = function(colname){
+				return model.genLabel(colname);
+			}
 			this.addValidator = function(property,validator,options){
 				return this.validation.addValidator(property,validator,options)
 			}

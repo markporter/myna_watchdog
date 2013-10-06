@@ -635,6 +635,22 @@
 						 
 					}
 				}
+				//test token length
+				if (route.pattern.split("/").length != restParams.length){
+					if (
+							!/\*$/.test(
+								route.pattern.split("/").last()
+							)
+					){
+						mr.selected = false
+						mr.reason = <ejs>
+							route length did not match, and last route token did not contain *
+						</ejs>	
+						return false;
+					}
+				}
+
+				//test matched all
 				var matchedAll = route.pattern.split("/").every(function(p,index){
 					if (index == 0 && p.left(1) == "["){
 						var method  = p.match(/^\[(.*?)\]/)[1];
