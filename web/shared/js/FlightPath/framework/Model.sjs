@@ -264,8 +264,12 @@
 					return v
 				},
 			}).applyTo(this.validation.validatorFunctions)
-			this.validation.getLabel = this.getLabel
-			this.validation.genLabel = this.genLabel
+			this.validation.getLabel = function(colname){
+				return model.getLabel(colname);
+			}
+			this.validation.genLabel = function(colname){
+				return model.genLabel(colname);
+			}
 			this.addValidator = function(property,validator,options){
 				return this.validation.addValidator(property,validator,options)
 			}
@@ -1150,7 +1154,7 @@ Model.prototype={
 	get:function get(values){
 		//Myna.printConsole("get","values " + values.toJson())
 		var searchParams ={}
-		searchParams[this.idFiedl] = values[this.idField];
+		searchParams[this.idField] = values[this.idField];
 		//make a local copy
 		//values=values.applyTo(this.getDefaults(),true)
 		

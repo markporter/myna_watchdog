@@ -313,8 +313,12 @@ function convertToCol(col) {
 function jsonFormat(obj,indentLevel) {
 	var keys = obj.getKeys().filter(function (k) {return obj[k]||obj[k]===0});
 	return ["{"]
-		.concat(keys.map(function (k) {
-			return "    {0}:{1},".format(k,JSON.stringify(obj[k]));
+		.concat(keys.map(function (k,i) {
+			return "    {0}:{1}{2}".format(
+				k,
+				JSON.stringify(obj[k]),
+				i==keys.length-1?"":","
+			);
 		}))
 		.concat(["}"])
 		.join("\n" + " ".repeat(indentLevel*4));
@@ -360,8 +364,8 @@ function saveTable(params) {
 				.every(function (data) {return data.action=="none"})
 		var args;
 		var code =<ejs>
-			var dm = new Myna.Database("<%=params.ds%>")
-			var table = dm.getTable("<%=params.table_name%>");	
+			var db= new Myna.Database("<%=params.ds%>")
+			var table = db.getTable("<%=params.table_name%>");	
 		</ejs>
 	/*Main table / columns*/
 		if (isNew || unchanged){

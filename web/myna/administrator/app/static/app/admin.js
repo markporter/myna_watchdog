@@ -30,6 +30,27 @@ Ext.override(Ext.view.AbstractView, {
         } 
     } 
 });
+/* ---------------- stupid xtype fix ---------------------------------------- */
+	Ext.ClassManager.instantiateByAlias=function() {
+		var alias = arguments[0],
+		args = Array.parse(arguments),
+		className = this.getNameByAlias(alias);
+
+		if (!className) {
+			className = this.maps.aliasToName[alias];
+			if (!className) {
+				console.log(args[1],"Config Object")
+				throw new Error("Unknown xtype: " + alias)
+			}
+
+
+			Ext.syncRequire(className);
+		}
+
+		args[0] = className;
+
+		return this.instantiate.apply(this, args);
+	}
 
 
 

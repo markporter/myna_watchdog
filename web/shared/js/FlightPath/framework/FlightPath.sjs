@@ -72,7 +72,7 @@
 		var classList = [
 			model,
 			new $FP.Model(),
-			loadPath("app/models/global.sjs"),
+			loadPath($FP.dir +"app/models/global.sjs"),
 		]
 		var key = $application.appname +":$FP::"+"modelPath:"+modelName;
 		
@@ -635,6 +635,22 @@
 						 
 					}
 				}
+				//test token length
+				if (route.pattern.split("/").length != restParams.length){
+					if (
+							!/\*$/.test(
+								route.pattern.split("/").last()
+							)
+					){
+						mr.selected = false
+						mr.reason = <ejs>
+							route length did not match, and last route token did not contain *
+						</ejs>	
+						return false;
+					}
+				}
+
+				//test matched all
 				var matchedAll = route.pattern.split("/").every(function(p,index){
 					if (index == 0 && p.left(1) == "["){
 						var method  = p.match(/^\[(.*?)\]/)[1];
@@ -722,7 +738,10 @@
 				.after($server.currentUrl)
 					
 			if (path.listFirst("/") == "static"){
-				
+				//don't serve code
+				if(/[e|s]js$/i.test(path.listFirst("?"))){
+					$application._onError404();
+				}
 				var f = new Myna.File(
 					$FP.dir,
 					"app",

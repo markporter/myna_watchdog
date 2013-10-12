@@ -1258,7 +1258,7 @@ if (!Myna) var Myna={}
 				fieldNames	-	Array of filed names allowed to be mass assigned
 
 			Detail:
-				Be default, all fields ins a BeanObject can be assigned via 
+				By default, all fields ins a BeanObject can be assigned via 
 				<get>, <getNew>, <create> and <BeanObject.setFields>. This can 
 				be a problem for fields like "admin". You don't want such fields 
 				to be set by manipulating the url. To prevent this, use this 
@@ -1270,6 +1270,263 @@ if (!Myna) var Myna={}
 				* <setMassAssignable>
 				
 			*/
+		/* Function: afterCreate
+			fired after a bean is created in the database but before it is returned
+		
+			Parameters:
+				bean	-	the newly created bean
+
+			Returns:
+				undefined
+
+			
+			(code)
+				//override
+				man.afterCreate = function (bean) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} created object".format(user));
+				}
+				
+				//merge
+				man.after("afterCreate",function (bean) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} created object".format(user));
+				})
+			(end)
+			
+			*/
+		/* Function: beforeCreate
+			fired before a bean is created in the database 
+		
+			Parameters:
+				data	-	the  data to create
+
+			Returns:
+				undefined
+
+			
+			(code)
+				//override
+				man.beforeCreate = function (data) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} created object".format(user));
+				}
+				
+				//merge
+				man.before("beforeCreate",function (data) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} created object".format(user));
+				})
+			(end)
+			
+			*/
+		/* Function: afterLoad
+			fired after a bean is loaded but before it is returned
+		
+			Parameters:
+				bean	-	the newly loaded bean
+
+			Returns:
+				undefined
+
+			
+			(code)
+				//override
+				man.afterLoad = function (bean) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} loaded object".format(user));
+				}
+				
+				//merge
+				man.after("afterLoad",function (bean) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} loaded object".format(user));
+				})
+			(end)
+			
+			*/
+		/* Function: beforeLoad
+			fired before a bean is loaded 
+		
+			Parameters:
+				data	-	the newly loaded bean
+
+			Returns:
+				undefined
+
+			
+			(code)
+				//override
+				man.beforeLoad = function (data) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} loaded object".format(user));
+				}
+				
+				//merge
+				man.before("beforeLoad",function (data) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} loaded object".format(user));
+				})
+			(end)
+			
+			*/
+		/* Function: afterRemove
+			fired after a bean is removed from the database 
+		
+			Parameters:
+				id	-	id of removed bean
+
+			Returns:
+				undefined
+
+			(code)
+				//override
+				man.afterRemove = function (bean) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} removed object".format(user));
+				}
+				
+				//merge
+				man.after("afterRemove",function (bean) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} removed object".format(user));
+				})
+			(end)
+			
+			*/	
+		/* Function: beforeRemove
+			fired before a bean is removed from the database 
+		
+			Parameters:
+				id	-	id of removed bean
+
+			Returns:
+				undefined
+
+			(code)
+				//override
+				man.beforeRemove = function (id) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} removed object".format(user));
+				}
+				
+				//merge
+				man.before("beforeRemove",function (id) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} removed object".format(user));
+				})
+			(end)
+			
+			*/
+		/* Function: afterSaveField
+			fired after a bean field is saved to the database
+		
+			Parameters:
+				bean		-	bean being modified
+				fieldName	-	name of field being modified
+				newValue	-	new value
+				oldValue	-	original value
+
+			Returns:
+				undefined
+
+			(code)
+				//override
+				man.afterSaveField = function (bean,fieldName,newValue,oldValue) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} modified object".format(user));
+				}
+				
+				//merge
+				man.after("afterSaveField",function (bean,fieldName,newValue,oldValue) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} modified object".format(user));
+				})
+			(end)
+			
+			*/
+		/* Function: afterSetField
+			fired after a bean field is changed, even if not saved to the database
+		
+			Parameters:
+				bean		-	bean being modified
+				fieldName	-	name of field being modified
+				newValue	-	new value
+				oldValue	-	original value
+
+			Returns:
+				undefined
+
+			(code)
+				//override
+				man.afterSetField = function (bean,fieldName,newValue,oldValue) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} modified object".format(user));
+				}
+				
+				//merge
+				man.after("afterSetField",function (bean,fieldName,newValue,oldValue) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} modified object".format(user));
+				})
+			(end)
+			
+			*/
+		/* Function: beforeSaveField
+			fired before a bean field is saved to the database
+		
+			Parameters:
+				bean		-	bean being modified
+				fieldName	-	name of field being modified
+				newValue	-	new value
+				oldValue	-	original value
+
+			Returns:
+				undefined
+
+			(code)
+				//override
+				man.beforeSaveField = function (bean,fieldName,newValue,oldValue) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} modified object".format(user));
+				}
+				
+				//merge
+				man.before("beforeSaveField",function (bean,fieldName,newValue,oldValue) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} modified object".format(user));
+				})
+			(end)
+			
+			*/
+		/* Function: beforeSetField
+			fired before a bean field is changed, even if not saved to the database
+		
+			Parameters:
+				bean		-	bean being modified
+				fieldName	-	name of field being modified
+				newValue	-	new value
+				oldValue	-	original value
+
+			Returns:
+				undefined
+
+			(code)
+				//override
+				man.beforeSetField = function (bean,fieldName,newValue,oldValue) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} modified object".format(user));
+				}
+				
+				//merge
+				man.before("beforeSetField",function (bean,fieldName,newValue,oldValue) {
+					var user = $cookie.getAuthUser();
+					myna.log("audit","User {first_name} {last_name} modified object".format(user));
+				})
+			(end)
+			
+			*/
+			
 		/* Property: dm
 			The <Myna.DataManager> object that created this manager
 		
@@ -2945,7 +3202,7 @@ if (!Myna) var Myna={}
 						})	
 					
 					/* remove */
-						man.before("remove",function(id){
+						man.before("beforeRemove",function (id) {
 							var thisNode = this.getById(id);
 							var $this = this;
 							var chain = arguments.callee.chain;
@@ -2955,7 +3212,7 @@ if (!Myna) var Myna={}
 								function(){
 									//recursively delete child nodes
 										thisNode.childIds.forEach(function(childId){
-											man.dm.managerTemplate.remove.call(man,childId);
+											$this.remove(childId);
 										})
 									//backfill
 										var rightCol = man.table.getSqlColumnName(man.rightCol);
@@ -3003,6 +3260,7 @@ if (!Myna) var Myna={}
 								}
 							)
 						})
+						
 					/* rebuildTree */
 						man.rebuildTree = function(){
 							var rootNode = man.getRootNode();

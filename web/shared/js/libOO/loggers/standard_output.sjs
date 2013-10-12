@@ -20,8 +20,18 @@
 			request_elapsed:"",
 			request_id:""
 		})
+		data.detail = data.detail
+			.replace(/\n/g,"_RET_")
+			.replace(/<script>.*?<\/script>/,"")
+			.replace(/<style>.*?<\/style>/,"")
+			.replace(/<\/?[^>]+>/g," ")
+			.replace(/<\/?br\/?>/g,"\n")
+			.replace(/<\/?br\/?>/g,"\n\n")
+			.replace(/_RET_/g,"\n")
+
 		var title = "[{app_name}] [{type}] {label}".format(data)
 		var body = <ejs>
+			
 			log_id:             {log_id}
 			request_id:         {request_id}
 			event_ts:           {event_ts}
@@ -32,7 +42,7 @@
 			request_elapsed:    {request_elapsed}
 			detail:             
 			{detail}
-			
+			--------------------------------------------------------------------------------
 		</ejs>.format(data)
 		Myna.printConsole(title,body);
 		

@@ -56,7 +56,7 @@
 				action:"loadModels"
 			})
 		]);
-		var latestVersion = new Myna.Cache({
+		/*var latestVersion = new Myna.Cache({
 			name:"myna_downloads_atom_feed",
 			refreshInterval:Date.getInterval(Date.HOUR,1),
 			code:function getLatestVersion(){
@@ -70,7 +70,30 @@
 				var node = Array.parse(xml.entry).first();
 				return node.id.toString().listLast("/").listBefore(".");
 			}
+		}).call();*/
+
+		var latestVersion = new Myna.Cache({
+			name:"myna_downloads_sf_rss_feed",
+			refreshInterval:Date.getInterval(Date.HOUR,1),
+			code:function getLatestVersion(){
+				var con = new Myna.HttpConnection({
+					url:"https://sourceforge.net/api/file/index/project-id/202389/mtime/desc/limit/20/rss",
+					method:"GET"
+				});
+				con.connect();
+				var xml=con.getResponseXml();
+				default xml namespace = xml.namespace();
+				var result;
+				for each (item in xml..item){
+					if (/.war$/.test(item.title.toString())){
+						return item.title.toString().listLast("/").listBefore(".");
+					}
+				}
+				//var node = Array.parse(xml..item).first();
+				//return node.title.toString().listLast("/").listBefore(".");
+			}
 		}).call();
+
 		
 		var props=Myna.getGeneralProperties();
 		this.set("globalProperties",{
@@ -285,19 +308,22 @@ function extLoad(params){
 		}
 	}
 function test(){
-	//$server.set("$FP","")
-	if (!$server.get("$FP")) $server.set("$FP",$server.reParent($FP))
-	//org.mozilla.javascript.ScriptableObject.putProperty($server_gateway.threadScope,"fp",$server.get("$FP")) ;
-	//var fp = $server_gateway.threadContext.newObject($server.get("$FP")) ;
-	//Myna.printDump(fp)
-	//fp.__parent__ = $server_gateway.threadScope
-	var fp = $server.get("$FP")
-		 
-	Myna.printDump(fp.__parent__.getProperties())
-	Myna.printDump($FP.__parent__.getProperties())
-	var l=fp.getModel("Log")
-	Myna.printDump(l.findBeans({select:"log_id,label"},{
-		maxRows:10
-	}))
-	Myna.abort("")
+	var con = new Myna.HttpConnection({
+		url:"https://sourceforge.net/api/file/index/project-id/202389/mtime/desc/limit/20/rss",
+		method:"GET"
+	});
+	con.connect();
+	var xml=con.getResponseXml();
+	default xml namespace = xml.namespace();
+	var result;
+	for each (item in xml..item){
+		if (/.war$/.test(item.title.toString())){
+			result = item.title.toString().listLast("/").listBefore(".");
+			break;
+		}
+	}
+	/*var nodes = Array.parse(xml..item);
+	var node = nodes.first()
+	var result = node.title.toString().listLast("/").listBefore(".");*/
+	Myna.abort(result)
 }
