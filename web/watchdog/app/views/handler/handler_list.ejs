@@ -1,0 +1,46 @@
+<div class="header">
+<@if service.id != "global" >
+	 Service '<%=Html.link({
+		controller:"Service",
+		action:"edit",
+		id:service.id,
+		text:service.name
+	})
+	%>' handlers:
+<@else>
+	Global Service Handlers:
+</@if>
+</div>
+<div align="right">
+<%=Html.link({
+	controller:$controller.name,
+	action:"edit",
+	id:"new",
+	params:$params,
+	text:"Add Handler"
+})%>
+</div>
+<table class="status_table" width="100%" height="" cellspacing="0" celpadding="0" border="0">
+	<tr class="header">
+		<td><%=$controller.model.getLabel("name")%></td>
+		<td>Parameters</td>
+		
+	</tr>
+	<@loop array="beans" element="bean" index="i">
+		<tr class="service <%=bean.data.status%> <%=i%2==0?"alt_row":""%>">
+			<td><%=Html.link({
+				controller:$controller.name,
+				action:"edit",
+				id:bean.id,
+				text:(bean.data.name||"[unset]").escapeHtml()
+			})%></td>
+			<td>
+				<@loop array="bean.HandlerParameters()" element="p" index="i">
+					<%=p.name%> = <%=p.value%><br>	
+				</@loop>
+			<td>
+		</tr>	
+	</@loop>
+</table>
+
+<%-- <%=Myna.dump(beans)%> --%>

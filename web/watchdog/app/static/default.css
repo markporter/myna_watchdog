@@ -1,0 +1,210 @@
+
+/* bluegrey:  8f9eb9*/
+/* dark bluegrey: #324f85 */
+
+.x-toolbar .app_title{
+	font-size:14pt;
+	font-weight:bold;
+	font-style:italic;
+	padding-left:5px;
+}
+
+
+body,td{
+	font-size:10pt;
+	font-family:sans-serif;
+}
+
+#help h2, #help h3{
+	margin-top:15px;
+	margin-bottom:5px;
+}
+
+#help h1{
+	font-size:18pt	
+}
+
+#help h2{
+	font-size:15pt	
+}
+
+#help h3{
+	font-size:10pt	
+}
+#help p{
+	margin-top:15px;
+}
+
+@font-face {  
+  font-family:awesome ;  
+  src: url( DejaVuSansMono.ttf ) format("truetype");  
+}  
+
+.CodeMirror { font:14px/1.4em  DejaVu Sans Mono, Consolas,Dialog, Courier, monospace; }	/* - customized editor font - */
+
+
+
+.icon_add { background: url(../static/images/add.png) 0 0px no-repeat !important;}
+.icon_beautify { background: url(../static/images/text_indent.png) 0 0px no-repeat !important;}
+.icon_cancel { background: url(../static/images/cancel.png) 0 0px no-repeat !important;}
+.icon_cog_go{ background: url(../static/images/cog_go.png) 0 0px no-repeat !important;}
+.icon_cog{ background: url(../static/images/cog.png) 0 0px no-repeat !important;}
+.icon_cron{ background: url(../static/images/date.png) 0 0px no-repeat !important;}
+.icon_db_table{ background: url(../static/images/database_table.png) 0 0px no-repeat !important;}
+.icon_db{ background: url(../static/images/database.png) 0 0px no-repeat !important;}
+.icon_delete { background: url(../static/images/delete.png) 0 0px no-repeat !important;}
+.icon_documentation{ background: url(../static/images/help.png) 0 0px no-repeat !important;}
+.icon_edit_form { background: url(../static/images/application_form_edit.png) 0 0px no-repeat !important;}
+.icon_form { background: url(../static/images/application_form.png) 0 0px no-repeat !important;}
+.icon_form_search { background: url(../static/images/application_form_magnify.png) 0 0px no-repeat !important;}
+.icon_help { background: url(../static/images/help.png) 0 0px no-repeat !important;}
+.icon_insert_sql { background: url(../static/images/table_go.png) 0 0px no-repeat !important;}
+.icon_log { background: url(../static/images/table.png) 0 0px no-repeat !important;}
+.icon_log_detail { background: url(../static/images/page.png) 0 0px no-repeat !important;}
+.icon_logout { background: url(../static/images/door_in.png) 0 0px no-repeat !important;}
+.icon_manage_apps{ background: url(../static/images/application_cascade.png) 0 0px no-repeat !important;}
+.icon_manage_rights{ background: url(../static/images/application_key.png) 0 0px no-repeat !important;}
+.icon_manage_user_groups{ background: url(../static/images/group.png) 0 0px no-repeat !important;}
+.icon_manage_users{ background: url(../static/images/user.png) 0 0px no-repeat !important;}
+.icon_perms{ background: url(../static/images/group.png) 0 0px no-repeat !important;}
+.icon_refresh{ background: url(../static/extjs/resources/themes/images/default/grid/refresh.gif) 0 0px no-repeat !important;}
+.icon_rename { background: url(../static/images/tag_blue_edit.png) 0 0px no-repeat !important;}
+.icon_request { background: url(../static/images/lightning.png) 0 0px no-repeat !important;}
+.icon_save { background: url(../static/images/disk.png) 0 0px no-repeat !important;}
+.icon_search { background: url(../static/images/magnifier.png) 0 0px no-repeat !important;}
+.icon_update_fp{ background: url(../static/images/map_go.png) 0 0px no-repeat !important;}
+.icon_upgrade { background: url(../static/images/package_go.png) 0 0px no-repeat !important;}
+.icon_upgrade_local { background: url(../static/images/package_green.png) 0 0px no-repeat !important;}
+.icon_upgrade_web { background: url(../static/images/package_link.png) 0 0px no-repeat !important;}
+
+
+
+.key_field, .readonly_field, textarea.readonly_field{
+	border:0px;
+	background:#EEF4F8
+}
+
+.log_warning{
+	background-color:#fff896 !important;
+}
+.log_info{
+	background-color:#99f1ff !important;
+}
+.log_error{
+	background-color:#ff9696 !important;
+}
+
+.link{
+	color:blue;
+	text-decoration:underline;
+	cursor:pointer;	
+}
+
+.msg .x-box-mc {
+    font-size:14px;
+}
+
+#msg-div {
+    position:absolute;
+    left:35%;
+    top:10px;
+    width:250px;
+    z-index:20000;
+}
+.search-header td{
+	font-weight:bold;
+	border-bottom:2px solid black;
+}
+.search-header td, .search-item td{
+	padding-left:5px;
+	padding-right:5px;
+}
+
+.x-grid3-row-alt{
+	 background-color:#f1f2f4; 
+}
+
+/* dbmanager code window */
+.cm-s-default span.cm-keyword {color: #708; font-weight:bold;}
+.cm-s-default span.cm-atom {color: #219; font-weight:bold;}
+.cm-s-default span.cm-number {color: #164; font-weight:bold;}
+.cm-s-default span.cm-def {color: #00f; font-weight:bold;}
+.cm-s-default span.cm-variable {color: black; font-weight:bold;}
+.cm-s-default span.cm-variable-2 {color: #05a; font-weight:bold;}
+.cm-s-default span.cm-variable-3 {color: #085; font-weight:bold;}
+.cm-s-default span.cm-property {color: black; font-weight:bold;}
+.cm-s-default span.cm-operator {color: black; font-weight:bold;}
+.cm-s-default span.cm-comment {color: #a50; font-weight:bold;}
+.cm-s-default span.cm-string {color: #13BF2A; font-weight:bold;}
+.cm-s-default span.cm-string-2 {color: #f50; font-weight:bold;}
+.cm-s-default span.cm-meta {color: #555; font-weight:bold;}
+.cm-s-default span.cm-error {color: #f00; font-weight:bold;}
+.cm-s-default span.cm-qualifier {color: #555; font-weight:bold;}
+.cm-s-default span.cm-builtin {color: #30a; font-weight:bold;}
+.cm-s-default span.cm-bracket {color: #cc7; font-weight:bold;}
+.cm-s-default span.cm-tag {color: #170; font-weight:bold;}
+.cm-s-default span.cm-attribute {color: #00c; font-weight:bold;}
+.cm-s-default span.cm-header {color: #a0a; font-weight:bold;}
+.cm-s-default span.cm-quote {color: #090; font-weight:bold;}
+.cm-s-default span.cm-hr {color: #999; font-weight:bold;}
+.cm-s-default span.cm-link {color: #00c; font-weight:bold;}
+
+/* Notificatino.js Custom styling */
+.ux-notification-light .x-window-header {
+	background-color: transparent;
+}
+
+body .ux-notification-light {
+	background-image: url('images/fader.png');
+}
+
+.ux-notification-light .x-window-body {
+	text-align: center;
+	padding: 15px 5px 18px 5px;
+	width: 200px;
+	background-color: transparent;
+	border: 0px solid white;
+}
+
+/*.CodeMirror{
+	height:auto;
+}
+
+.CodeMirror-scroll{
+	overflow-x: auto;
+	overflow-y:hidden;
+}*/
+
+/*#C0FCC8
+#FCC8C0
+#C8C0FC
+#E5C0FC
+#C0FCE5
+#FCE5C0
+*/
+.row_inactive td{
+	color:silver;
+}
+
+.service-pass .x-grid-cell {
+	background-color: #C0FCC8;
+}
+
+.service-fail .x-grid-cell {
+	background-color: #F8C0C0;
+}
+
+.service-restarting .x-grid-cell {
+	background-color: #FCE5C0;
+}
+
+.service-disabled  {
+	color: gray;
+}
+.x-grid-cell th{
+	font-weight: bold ;
+	/*text-decoration: underline !important;*/
+	border-bottom: 2px solid black;
+	padding-right:10px;
+
+}

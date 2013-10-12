@@ -1,0 +1,47 @@
+<div class="header">
+	Service '<%=Html.link({
+		controller:"service",
+		action:"edit",
+		id:service.id, 
+		text:service.name
+	})%>' Tests:</div>
+<div align="right">
+<%=Html.link({
+	controller:$controller.name,
+	action:"edit",
+	id:"new",
+	params:$params,
+	text:"Add Test"
+})%>
+</div>
+<table class="status_table" width="100%" height="" cellspacing="0" celpadding="0" border="0">
+	<tr class="header">
+		<td><%=$controller.model.getLabel("script_name")%></td>
+		<td><%=$controller.model.getLabel("enabled")%></td>
+		<td><%=$controller.model.getLabel("fail_count")%></td>
+		<td><%=$controller.model.getLabel("last_check")%></td>
+		<td><%=$controller.model.getLabel("status")%></td>
+		<td>Parameters</td>
+	</tr>
+	<@loop array="beans" element="bean" index="i">
+		<tr class="service <%=bean.data.status%> <%=i%2==0?"alt_row":""%>">
+			<td><%=Html.link({
+				controller:$controller.name,
+				action:"edit",
+				id:bean.id,
+				text:(bean.data.script_name||"[unset]").escapeHtml()
+			})%></td>
+			<td><%=(bean.data.enabled?"Yes":"No")%></td>
+			<td><%=(bean.data.fail_count)%></td>
+			<td><%=(bean.data.last_check?bean.data.last_check.format("m/d H:i:s"):"")%></td>
+			<td><%=(bean.data.status||"unknown").toUpperCase()%></td>
+			<td>
+				<@loop array="bean.TestParameters()" element="p" index="i">
+					<%=p.name%> = <%=p.value%><br>
+				</@loop>
+			<td>
+		</tr>	
+	</@loop>
+</table>
+
+<%-- <%=Myna.dump(beans)%> --%>

@@ -1,0 +1,6 @@
+<script>
+<@loop array="globalProperties.getKeys()" element="prop" index="i">
+	var <%=prop%> = <%=globalProperties[prop].toJson()%>
+</@loop>
+</script>
+<script src="<%=Html.url({staticUrl:"app.js"})%>"></script>

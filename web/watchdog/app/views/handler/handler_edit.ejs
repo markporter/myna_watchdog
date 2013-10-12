@@ -1,0 +1,126 @@
+<% function f(){}%>
+<script>
+ 	$(document).ready(function() {
+ 		showFieldset("<%=formData.name%>")
+ 	
+ 	})
+ 	function showFieldset(handler){
+ 		$("#handler_param_display").html(
+ 			$("#param_div_"+handler).html()
+ 		)
+ 	}
+</script>
+<div class="header"> 
+<@if service.id != "global" >
+	Editing Handler for service'<%=Html.link({
+		controller:"Handler",
+		action:"list",
+		params:{
+			service_id:service.id
+		},
+		text:service.name
+	})
+	%>'
+<@else>
+	Global Service Handler
+</@if>
+</div>
+<form id="form" class="input_form" action="<%=Html.url({action:"save",id:$params.id})%>" method="post">
+	<input type="hidden" name="service_id" value="<%=service.id%>">
+	<table cellspacing="0" celpadding="0" border="0">
+		<tr>
+			<td class="label"><%=bean.manager.getLabel("name")%>:</td>
+			<td>
+				<select name="name" onchange="showFieldset($(this).val())">
+					<option value="">Please Select</option>
+					<@loop array="handlerList" element="e" index="i">
+						<% 
+							var selected = "";
+							if (e.name == formData.name){
+								selected = ' selected="true" ';	
+							}
+						%>  
+						<option value="<%=e.name%>"<%=selected%>><%=e.name%></option>	
+					</@loop>
+				</select>
+			</td>
+		</tr>
+	</table>
+	<div class="handlerParameters" id="handler_param_display" >
+			
+	</div>
+</form>
+<table width="" height="" cellspacing="0" celpadding="0" border="0">
+	<tr>
+		<td align="left">
+			<button onclick="document.getElementById('form').action='<%=Html.url({action:"remove",id:$params.id})%>';document.getElementById('form').submit()">Remove</buttion>			
+		</td>
+		<td>&nbsp;</td>
+		<td align="right">
+			<button onclick="document.getElementById('form').submit()">Save</buttion>	
+		</td>
+	</tr>
+</table>
+<div id="param sets" style="display:none;">
+<@loop array="handlerList" element="e" index="i">
+	<@if e.params.length >
+	<div id="param_div_<%=e.name%>">
+	<fieldset >
+		<legend>Handler Parameters</legend>
+		<table width="100%" height="" cellspacing="0" celpadding="0" border="0">
+		<@loop array="e.params" element="p" index="i">
+			<tr>
+				<td class="label"><%=p.label%></td>
+				<td>
+				<@if p.name>
+				<%
+					var pkey;
+					var existing=formData.HandlerParameters.findFirstByCol("name",p.name);
+					var value=p.defaultValue||"";
+					if (existing) {
+						value=existing.value||"";
+						pkey = existing.id
+					}else{
+						pkey = $FP.getModel("HandlerParameter").genKey()
+					}
+					value = value.escapeHtml();
+					%><input type="hidden" name="HandlerParameters.<%=pkey%>.name" value="<%=p.name%>"><%
+					switch(p.type){
+						case "long":
+							%><input name="HandlerParameters.<%=pkey%>.value" size="100" value="<%=value%>"><%  
+							break;
+						case "short":
+							%><input name="HandlerParameters.<%=pkey%>.value" value="<%=value%>"><%  
+							break;
+						case "numeric":
+							%><input name="HandlerParameters.<%=pkey%>.value" size="7" value="<%=value%>"><%  
+							break;
+						case "multiple":
+							%><textarea name="HandlerParameters.<%=pkey%>.value" cols="90" rows="25"><%=value%></textarea><%
+							break;
+						case "yesno":
+							%>
+							<select name="HandlerParameters.<%=pkey%>.value">
+								<option value="1" <%=value==1?"selected":""%>>Yes</option>
+								<option value="0" <%=value==0?"selected":""%>>No</option>
+							</select>
+							<%
+							break;
+						default:
+							%><input name="HandlerParameters.<%=pkey%>.value" value="<%=value%>"><%  
+							break;
+					}
+				%>
+				<@else>
+					<div><%=p.text%></div>
+				</@if>
+				</td>
+			</tr>
+		</@loop>
+		</table>
+	</fieldSet>
+	</div>
+	</@if>
+</@loop>
+</div>
+<%-- <%=Myna.dump(formData)%> --%>
