@@ -1,0 +1,19 @@
+<div class="header">Import Service Configuration:</div>
+<form id="form" class="input_form" action="<%=Html.url({action:"import_json"})%>" method="post" enctype="multipart/form-data">
+	<table cellspacing="0" celpadding="0" border="0">
+		<tr>
+			<td class="label">Select a file:</td>
+			<td><input name="import_file"  type="file" ></td>
+		</tr>
+		
+	</table>
+</form>
+<table width="" height="" cellspacing="0" celpadding="0" border="0">
+	<tr>
+		<td align="right">
+			<button onclick="document.getElementById('form').submit()">Upload</buttion>	
+		</td>
+	</tr>
+</table>
+
+<%-- <%=Myna.dump(this.bean.data)%> --%>

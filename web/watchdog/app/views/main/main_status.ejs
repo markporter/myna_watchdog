@@ -1,0 +1,46 @@
+<META HTTP-EQUIV="refresh" content="30; url=">
+
+<table class="status_table" width="100%" height="" cellspacing="0" celpadding="0" border="0">
+	<@if config >
+	
+	
+		<tr class="header">
+			<td>Service</td><td>Status</td><td>Detail</td>
+		</tr>
+		<@loop array="config.services.getKeys()" element="name" >
+			<% var service = config.services[name]; %>
+			
+			<tr class="service <%=service.status%>">
+				<td><%=name%></td>
+				<td ><b><%=service.status.toUpperCase()%></b><br></td>
+				<td>
+					
+					<table  width="100%" height="" cellspacing="0" celpadding="0" border="0">
+						<tr class="header">
+							<td>Test</td><td>Status</td><td>Fail Count</td><td>Last Check</d>
+						</tr>
+						<@loop array="service.tests" element="test" >
+							<tr>
+								<td><%=test.test%></td>
+								<td><%=test.status%></td>
+								<td><%=test.failCount%></td>
+								<td><%=test.lastCheck.format("m/d H:i:s")%></td>
+							</tr>
+							<@if test.status=="fail" >
+							<tr>
+								<td colspan="4"><%=Myna.dump(test.failMessages)%></td>
+							</tr>	
+							</@if>				
+						</@loop>
+					</table>
+				</td>
+			</tr>
+			
+			
+		</@loop>
+	<@else>
+		<tr><td> Initializing status checks..... </td></tr>
+	</@if>
+</table>
+ 
+ <%=Myna.dump(config,"",7)%> 

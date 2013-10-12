@@ -3,61 +3,106 @@
 # Myna Main instance Control Script
 #
 
-#user=
-server=dev
-mem=512
-port=8180
-myna_home=./build
-web_inf=$(readlink -m $myna_home/WEB-INF)
-logfile="$(readlink -m $myna_home/..)/$server.log"
+#Make sure that the webroot owner matches this
+user="root"
+server="watchdog"
+context="/"
+#set this to 0 to disable http
+port=0
+
+webroot="/home/mark/watchdog/build"
+logfile="/home/mark/watchdog/dev.log"
+mem=256
 ps_signature="java.*myna.name=$server"
-#export JAVA_HOME=/usr/java/default/
+#export JAVA_HOME="{javahome}"
 #export JRE_HOME=/usr/java/default/jre/
+web_inf=$(readlink -m $webroot/WEB-INF)
+
+#SSL
+#set this to something non-zero to enable https
+ssl_port=2814
+
+
+
+myna_cp="-cp $web_inf/lib/*:$web_inf/classes/:/usr/local/bin"
+
+#	watchdog_jvm_args
+watchdog_jvm_args="\
+	-Dmyna.name=$server \
+	-Xmx20m \
+	-server \
+	$myna_cp "
+
+#	server_jvm_args	
+server_jvm_args="\
+	-Djava.security.egd=file:/dev/./urandom \
+	-Dmyna.name=$server \
+	-Xmx${mem}m \
+	-server "
+
+
+#	no_watchdog_args	
+no_watchdog_args="\
+	$myna_cp\
+	-Dmyna.hasWatchdog=true"
+
+#	myna_args	
+myna_args="\
+	-m server \
+	-c $context \
+	-p $port \
+	-sp $ssl_port \
+	-w $webroot \
+	-l $logfile "
+
 
 case "$1" in
 start)
-	watchdog_jvm_args="-Dmyna.name=$server -Xmx20m -server -cp $web_inf/lib/*:$web_inf/classes/:/usr/local/bin"
-	server_jvm_args="-Djava.security.egd=file:/dev/./urandom -Dmyna.name=$server -Xmx${mem}m -server"
-	
-	myna_args="-m server -c /$server -p $port -w $myna_home -l $logfile -- $server_jvm_args"
-	java  $watchdog_jvm_args  info.emptybrain.myna.MynaServer $myna_args &
-	echo "Myna instance '$server' Starting. tail -f $logfile for details."
+	sudo java $watchdog_jvm_args  info.emptybrain.myna.MynaServer $myna_args -- $server_jvm_args&
+	echo "$server' Starting. tail -f $logfile for details."
 	
 	exit 0
     ;;
 start-nowatchdog)
-	watchdog_jvm_args="-Djava.security.egd=file:/dev/./urandom -Dmyna.name=$server -Xmx${mem}m -Dmyna.hasWatchdog=true -server -cp $web_inf/lib/*:$web_inf/classes/:/usr/local/bin"
-	
-	
-	myna_args="-m server -c /$server -sp 8443 -p $port -w $myna_home -l $logfile "
-	java  $watchdog_jvm_args  info.emptybrain.myna.MynaServer $myna_args &
-	echo "Myna instance '$server' Starting. tail -f $logfile for details."
+	sudo java  $no_watchdog_args $server_jvm_args info.emptybrain.myna.MynaServer $myna_args&
+	echo "'$server' Starting. tail -f $logfile for details."
 	
 	exit 0
     ;;
 stop)
+	$0 status > /dev/null
+	if [ $? -eq 0 ];then
+		ps -ef | grep "$ps_signature" | grep -v grep  | awk '{print $2}' | xargs kill  &> /dev/null
+		sleep 2
+		$0 status > /dev/null
+		if [ $? -eq 0 ];then
+			sudo ps -ef | grep "$ps_signature" | grep -v grep  | awk '{print $2}' | xargs kill -9  &> /dev/null
+		fi
+		echo "'$server' stopped."
+	else
+		echo "'$server' is not running."
+	fi
 	
-	kill -9 $(pgrep -f "$ps_signature")
-	#rm $pidfile
-	echo "Myna instance '$server' stopped."
     ;;
 compile)
 	$0 stop
-   ant compile && $0 start-nowatchdog && tail -f $logfile
-    ;;
+	echo "" > $logfile
+	ant compile && sudo -H $0 start && tail -f $logfile
+	;;
 restart)
    $0 stop
 	sleep 1
 	$0 start
     ;;
 status)
-	cd $myna_home
-	echo -n Myna instance \"$server\":
-	pgrep -f "$ps_signature" > /dev/null 
+	echo -n \"$server\":
+	ps -ef | grep "$ps_signature" | grep -v grep > /dev/null 
 	if [ $? -eq 0 ];then
 		echo " Running."
+		exit 0
 	else
 		echo " Stopped."
+		exit 1
 	fi
    
     ;;

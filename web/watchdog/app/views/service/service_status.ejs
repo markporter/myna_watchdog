@@ -1,0 +1,79 @@
+<META HTTP-EQUIV="refresh" content="30; url=">
+
+<% 
+	var memFree = $server.memAvailable/$server.memMax;
+	var runningThreads = $server_gateway.runningThreads.toArray().length;
+	var uptime=Date.formatInterval(
+		new Date().getTime()-$server_gateway.serverStarted.getTime(),
+		{
+			scale:2
+		}
+	)
+	Myna.print("Uptime: " +uptime+", Mem Used: " +($server.memUsed/(1024*1024)).toFixed(2) +"MB, "+ (memFree*100).toFixed(2) + "% Free. Running threads: " + runningThreads)
+%>
+<table class="status_table" width="100%" height="" cellspacing="0" cellpadding="5" border="0">
+	<tr class="header">
+		<td>Service</td><td></td><td>Status</td><td>Detail</td>
+	</tr>
+	<@loop array="services" element="service" >
+		<tr class="service <%=service.status%>">
+			<td valign="top">
+				<%=Html.link({
+					controller:$controller.name,
+					action:"edit",
+					id:service.id,
+					text:service.name
+				})%>
+			</td>
+			<td valign="top">
+				<%=Html.link({
+					controller:$controller.name,
+					action:"restart",
+					id:service.id,
+					text:"Restart"
+				})%>
+			</td>
+			<td >
+				<b><%=service.status.toUpperCase()%></b><br>
+				<@if service.status == "restarting" >
+				Restarted at <%=service.restarted.format("m/d H:i:s")%>
+				</@if>
+			</td>
+			<td>
+				
+				<table  width="100%" height="" cellspacing="0" celpadding="0" border="0">
+					<tr class="header">
+						<td>Test</td><td>Status</td><td>Fail Count</td><td>Retries</td><td>Last Check</d>
+					</tr>
+					<@loop array="service.Tests()" element="test" >
+						<tr>
+							<td>
+								<%=Html.link({
+									action:"edit",
+									controller:"Test",
+									id:test.id,
+									text:test.script_name
+								})%>
+								<%=%>
+							</td>
+							<td><%=test.status%></td>
+							<td><%=test.fail_count%></td>
+							<td><%=test.fail_after%></td>
+							<td><%=(test.last_check?test.last_check.format("m/d H:i:s"):"")%></td>
+						</tr>
+						<@if test.status=="fail" >
+						<tr>
+							<td colspan="4"><%=Myna.dump(test.fail_messages)%></td>
+						</tr>	
+						</@if>				
+					</@loop>
+				</table>
+			</td>
+		</tr>
+		
+		
+	</@loop>
+	
+</table>
+ 
+ <%-- <%=Myna.dump(services.map(function(s){return s.getData()}),"",7)%> --%> 

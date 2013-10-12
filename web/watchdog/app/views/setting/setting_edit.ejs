@@ -1,0 +1,24 @@
+<div class="header">General Settings</div>
+
+<form id="form" class="input_form" action="<%=Html.url({action:"save",id:"global"})%>" method="post">
+	<table cellspacing="0" celpadding="0" border="0">
+		<tr>
+			<td class="label"><%=bean.manager.getLabel("notification_email")%>:</td>
+			<td><input name="notification_email" value="<%=(formData.notification_email||"").escapeHtml()%>" size="125"></td>
+		</tr>
+		
+
+	</table>
+	
+</form>
+<table width="" height="" cellspacing="0" celpadding="0" border="0">
+	<tr>
+		
+		<td>&nbsp;</td>
+		<td align="right">
+			<button onclick="document.getElementById('form').submit()">Save</buttion>	
+		</td>
+	</tr>
+</table>
+
+<%-- <%=Myna.dump(this.bean.data)%> --%>

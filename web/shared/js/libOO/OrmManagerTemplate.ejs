@@ -227,6 +227,7 @@ function <%=tableName%>_manager(){
 	ds:"<%=dm.ds%>",
 	
 	forceDelete:function forceDelete(id){
+		this.beforeRemove(id)
 		var manager = this;
 		var p = new Myna.QueryParams();
 		
@@ -241,6 +242,7 @@ function <%=tableName%>_manager(){
 				id:id
 			}
 		});
+		this.afterRemove(id);
 	},
 	create:function create(requiredFields){
 		var manager = this;
@@ -268,6 +270,7 @@ function <%=tableName%>_manager(){
 				}
 				return exists[0];
 			}
+		this.beforeCreate(requiredFields)
 		var now = new Date()
 		if (this.createdCol && !requiredFields[this.createdCol]) {
 			requiredFields[this.createdCol] = now;
@@ -319,8 +322,9 @@ function <%=tableName%>_manager(){
 			requiredFields.<%=primaryKey%> = qry.generatedKey
 		}
 		</@if>
-		
-		return this.getById(requiredFields.<%=primaryKey%>);
+		var bean = this.getById(requiredFields.<%=primaryKey%>);
+		this.afterCreate(bean);
+		return bean;
 	},
 	query:function query(pattern,options){
 		if (!pattern) pattern={}
@@ -494,7 +498,9 @@ function <%=tableName%>_manager(){
 		var result = new Myna.DataSet({
 			columns:$this.columnNames,
 			data:qry.map(function(row){
+					$this.beforeLoad(row)
 					var bean = new $this.beanClass(row,$this)
+					$this.afterLoad(bean)
 					bean.deferred = $this.deferred;
 					bean.exists=true;
 					return bean
@@ -555,9 +561,9 @@ function <%=tableName%>_manager(){
 			throw new Error("Unable to find '" + this.sqlTableName + "' by id '" + id +"'.");
 		}
 			
-		 
+		this.beforeLoad(qry.data[0])
 		bean = new this.beanClass(qry.data[0],this)
-		
+		this.afterLoad(bean)
 		                                                                       
 		bean.deferred = this.deferred;
 		bean.exists=true;
@@ -732,6 +738,9 @@ function <%=tableName%>_manager(){
 	init:function init(){},
 	//isDirty:false,
 	setFields:function setFields(fields){
+		var $this = this;
+		var startData={}
+
 		var bean = this;
 		var manager = this.manager;
 		//ignore non-field values
@@ -746,11 +755,30 @@ function <%=tableName%>_manager(){
 			}
 		})
 		
+		fields.map(function(v,k){
+			var newval = $this.manager.beforeSetField(
+				this,
+				k,
+				v,
+				startData[k]=$this.data[k]
+			)
+			if (newval !== undefined) v= newval
+			return v
+		})
 		fields.applyTo(this.data,true);
 		var result = this.validate();
 		
+
 		if (this.deferred) {
 			this.isDirty = true;
+			fields.map(function(v,k){
+				$this.manager.afterSetField(
+					this,
+					k,
+					v,
+					startData[k]
+				)
+			})
 			//return even if successful when deferred
 			return result;
 		} else if (!result.success){//if validation failed
@@ -758,11 +786,24 @@ function <%=tableName%>_manager(){
 			return result
 		}
 		
+		fields.map(function(v,k){
+			var newval = $this.manager.beforeSaveField(
+				this,
+				k,
+				v,
+				startData[k]=$this.data[k]
+			)
+			if (newval !== undefined) v= newval;
+			return v;
+		})
+
 		//only get here if not deferred and validation was successful
 		
 		try {
 			var p =new Myna.QueryParams();
-			var fieldArray = fields.getKeys();
+			var fieldArray = fields.getKeys().filter(function(f){
+				return f in manager.columns
+			});
 			var qry = new Myna.Query({
 				dataSource:this.manager.ds,
 				log:this.manager.logQueries,
@@ -778,6 +819,7 @@ function <%=tableName%>_manager(){
 								var columnName=manager.columns[fieldName.toLowerCase()].column_name;
 							|>
 							<|=manager.getSqlColumnName(columnName)|> = <|=p.addValue(value,type,isNull)|>
+							
 							<#if i != fieldArray.length-1 >,</#if>
 						</#loop>
 						
@@ -792,46 +834,23 @@ function <%=tableName%>_manager(){
 			Myna.log("error",e.message,Myna.formatError(e));
 			result.addError("Error saving record, see Administrator log for details");
 		}
+
+		fields.map(function(v,k){
+			$this.manager.afterSaveField(
+				this,
+				k,
+				v,
+				startData[k]
+			)
+		})
 		return result;
 	},
 	saveField:function saveField(fieldName,newval){
-		var result = new Myna.ValidationResult();
-		if (this.deferred) {
-			this.isDirty = true;
-			this.data[fieldName]=newval;
-			return result;
-		}
-		if (newval != this.data[fieldName]){
-			var bean = this;
-			var manager = this.manager;
-			try {
-				var columnName = this.columns[fieldName].column_name;
-				var p =new Myna.QueryParams();
-				var value = newval;
-				var type = this.columns[fieldName].data_type;
-				var isNull = (value === null);
-				var qry = new Myna.Query({
-					dataSource:this.manager.ds,
-					log:this.manager.logQueries,
-					parameters:p,
-					sql:[ejs]
-						UPDATE <%=sqlTableName%>
-						SET
-							<|=manager.getSqlColumnName(columnName)|> = <|=p.addValue(value,type,isNull)|>
-							<#if manager.modifiedCol>
-								,<|=manager.getSqlColumnName(manager.modifiedCol)|> = <|=p.addValue(new Date(),"TIMESTAMP")|>
-							</#if>
-						WHERE
-							<%=sqlpkey%> = <|=p.addValue(bean.id,<%=pkey_datatype%>)|>
-					[/ejs]
-				});
-				this.data[fieldName] = newval;
-			} catch (e){
-				Myna.log("error",e.message,Myna.formatError(e));
-				result.addError(e.message,fieldName);
-			}
-		}
-		return result;
+		var fields={}
+		fields[fieldName] = newval;
+		return this.setFields(fields)
+
+	
 	},
 	/* Getters and setters */
 	<@loop array="columnNames" element="colname" index="i">

@@ -1,0 +1,84 @@
+<div class="header">Service List:</div>
+<div align="right">
+<%=Html.link({
+	controller:$controller.name,
+	action:"edit",
+	id:"new",
+	text:"Add Service"
+})%>
+</div>
+<table class="status_table" width="100%" height="" cellspacing="0" celpadding="0" border="0">
+	<tr class="header">
+		<td><%=$controller.model.getLabel("name")%></td>
+		<td></td>
+		<td><%=$controller.model.getLabel("enabled")%></td>
+		<td><%=$controller.model.getLabel("status")%></td>
+		<td>Tests</td>
+		<td>Handlers</td>
+	</tr>
+	<@loop array="beans" element="bean" index="i">
+		<tr class="<%=bean.data.status%> <%=i%2==0?"alt_row":""%>">
+			<td>
+			<%=Html.link({
+				controller:$controller.name,
+				action:"edit",
+				id:bean.id,
+				text:(bean.data.name||"[unset]").escapeHtml()
+			})%>
+			</td>
+			<td>
+			<%=Html.link({
+				controller:$controller.name,
+				action:"copyService",
+				id:bean.id,
+				text:" [copy]"
+			})%>
+			</td>
+			<td>
+				<@if bean.data.enabled >
+					Yes
+					<%=Html.link({
+						controller:$controller.name,
+						action:"save",
+						id:bean.id,
+						params:{
+							enabled:0
+						},
+						text:"[ disable ]"
+					})%>
+				<@else>
+					No
+					<%=Html.link({
+						controller:$controller.name,
+						action:"save",
+						id:bean.id,
+						params:{
+							enabled:1
+						},
+						text:"[ enable ]"
+					})%>
+				</@if>
+			</td>
+			<td><%=(bean.data.status||"unknown").toUpperCase()%></td>
+			<td><%=Html.link({
+				controller:"Test",
+				action:"list",
+				params:{
+					service_id:bean.id
+				},
+				text:"Edit"
+			})%></td>
+			<td><%=Html.link({
+				controller:"Handler",
+				action:"list",
+				params:{
+					service_id:bean.id
+				},
+				text:"Edit"
+			})%></td>
+		</tr>	
+	</@loop>
+</table>
+
+
+<%-- <%=Myna.dump(beans)%> --%>
