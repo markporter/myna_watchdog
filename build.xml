@@ -74,7 +74,7 @@
 	-->
 
 	<!-- <property name="app.version"	 value="1.0_beta_6"/> -->
-	<property name="app.name"			value="myna"/>
+	<property name="app.name"			value="myna_watchdog"/>
 	<property name="app.path"			value="/${app.name}"/>
 	<property name="build.home"		value="${basedir}/build"/>
 	<property name="dist.home"		 value="${basedir}/dist"/>
@@ -267,7 +267,7 @@
 		<mkdir dir="${dist.home}"/>
 		<delete file="MANIFEST.MF"/>
 		
-		<jar destfile="${dist.home}/${app.name}-${build.version}.war">
+		<jar destfile="${dist.home}/${app.name}-${build.version}.jar">
 			<fileset dir="${build.home}/WEB-INF/classes" includes="bootstrap/*.class"/>
 			<restrict>
 				<name regex="^(?!.*(SF|RSA|DSA)).*$" />

@@ -1,15 +1,34 @@
 /* ========== Internal Functions ============================================ */
 	/* ---------- init ------------------------------------------------------ */
 		function init(){
+			this.addFilter(
+				function(){
+					var props=Myna.getGeneralProperties();
+					if (!props.admin_password){
+						$FP.redirectTo({
+							controller:"Main",
+							action:"changeAdminPassword"
+						});
+						//unnecessary, because redirectTo halts processing, but good practice
+						return false; //cancels action
+					}
+				},
+				{
+					except:["changeAdminPassword","saveAdminPassword"]
+				}
+			);
 			this.addFilter(this._auth);
 			this._auth.options={
 				whitelist:[
-					"runTests",
-					"login",
-					"logout"
+					/runTests/,
+					/login/,
+					/logout/,
+					/changeAdminPassword/,
+					/saveAdminPassword/,
+
 				],
 				redirectParams:{
-					providers:"watchdog"	
+					providers:["server_admin","watchdog"]
 				}
 				
 			}
@@ -63,6 +82,7 @@
 	/* ---------- _hasAccess ----------------------------------------------------- */
 		function _hasAccess() {
 			var settings = $FP.getModel("Setting").getById("global");
+			if ($cookie.getAuthUserId() == "myna_admin") return true
 			var login =  $cookie.getAuthUser().UserLogins()
 				.filter(function(login){
 					return login.type == "watchdog"

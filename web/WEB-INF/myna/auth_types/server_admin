@@ -1,6 +1,6 @@
 {
 	"auth_type":"server_admin",
-	"prettyName":"Myna Server Adminstrator",
-	"desc":"Login using this server's administration account",
+	"prettyName":"Watchdog Administrator",
+	"desc":"Login using the Watchdog master account",
 	"adapter":"server_admin"
 }

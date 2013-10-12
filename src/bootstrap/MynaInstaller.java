@@ -17,19 +17,19 @@ import java.lang.reflect.*;
 public class MynaInstaller
 {
 	public static String 					webctx 			= "/";
-	public static String 					serverName		= "myna";
-	public static String					webroot			= "./myna";
-	public static String					logFile			= null;
-	public static int						port			= 8180;
+	public static String 					serverName		= "watchdog";
+	public static String					webroot			= "/opt/myna_watchdog/";
+	public static String					logFile			= "/var/log/myna_watchdog.log";
+	public static int						port			= 0;
 	public static java.util.List 			javaOpts	 	= new java.util.ArrayList();
 	public static java.util.Properties 		props			= new java.util.Properties();
 	public static boolean					isJar			= false;
 	public static String 					mode 			= "";
-	public static String 					user 			= "nobody";
+	public static String 					user 			= "root";
 	public static Vector					modeOptions	= new Vector();
 	public static String 					classUrl;
 	
-	public static int						sslPort			= 0;
+	public static int						sslPort			= 2814;
 	public static String					keystore		= null;
 	public static String					ksPass			= "changeit";
 	public static String					ksAlias			= "myna";
@@ -39,9 +39,17 @@ public class MynaInstaller
 		classUrl = MynaInstaller.class.getResource("MynaInstaller.class").toString();
 		isJar = (classUrl.indexOf("jar") == 0);
 		if (!isJar) {
-			System.err.println("Installer can only be run from inside a Myna distribution war file");
+			System.err.println("Installer can only be run from inside a Watchdog distribution war file");
 			System.exit(1);
 		}
+		if (
+			java.lang.System.getProperty("os.name").toLowerCase().indexOf("win") == -1
+			&& !java.lang.System.getProperty("user.name").equals("root")
+		){
+			System.out.println("Installer must be run as root.");
+			System.exit(1);
+		}
+				
 	
 		Thread.sleep(1000);
 		
@@ -50,14 +58,15 @@ public class MynaInstaller
 	
 		// create the Options
 		Options options = new Options();
-		options.addOption( "c", "context", true, "Webapp context. Must Start with \"/\" Default: " + webctx);
+		//options.addOption( "c", "context", true, "Webapp context. Must Start with \"/\" Default: " + webctx);
 		options.addOption( "h", "help", false, "Displays help." );
-		options.addOption( "w", "webroot", true, "Webroot to use. Will be created if webroot/WEB-INF does not exist. Default: " + webroot );
-		options.addOption( "l", "logfile", true, "Log file to use. Will be created if it does not exist. Default: ./<context>.log" );
-		options.addOption( "s", "servername", true, "Name of this instance. Defaults to either \"myna\" or the value of <context> if defined" );
+		//options.addOption( "w", "webroot", true, "Webroot to use. Will be created if webroot/WEB-INF does not exist. Default: " + webroot );
+		options.addOption( "w", "webroot", true, "install directory to use. Will be created if webroot/WEB-INF does not exist. Default: " + webroot );
+		options.addOption( "l", "logfile", true, "Log file to use. Will be created if it does not exist. Default: " + logFile );
+		//options.addOption( "s", "servername", true, "Name of this instance. Defaults to either \"myna\" or the value of <context> if defined" );
 		
-		options.addOption( "p", "port", true, "HTTP port. Set to 0 to disable HTTP. Default: " + port );
-		options.addOption( "sp", "ssl-port", true, "SSL (HTTPS) port. Set to 0 to disable SSL, Default: 0");
+		//options.addOption( "p", "port", true, "HTTP port. Set to 0 to disable HTTP. Default: " + port );
+		options.addOption( "sp", "ssl-port", true, "SSL (HTTPS) port. Set to 0 to disable SSL, Default: " + sslPort);
 		
 		options.addOption( "ks", "keystore", true, "keystore path. Default: <webroot>/WEB-INF/myna/myna_keystore");
 		options.addOption( "ksp", "ks-pass", true, "keystore password. Default: " + ksPass );
@@ -66,15 +75,15 @@ public class MynaInstaller
 		modeOptions.add("upgrade");
 		modeOptions.add("install");
 		options.addOption( "m", "mode", true, "Mode: one of "+modeOptions.toString()+". \n"+
-			"\"upgrade\": Upgrades myna installation in webroot and exits. "+
+			"\"upgrade\": Upgrades watchdog installation in webroot and exits. "+
 			"\"install\": Unpacks to webroot, and installs startup files"
 		);
-		options.addOption( "u", "user", true, "User to own and run the Myna installation. Only applies to unix installs. Default: nobody" );
+		//options.addOption( "u", "user", true, "User to own and run the Watchdog installation. Only applies to unix installs. Default: " + user );
 			
 				
 		HelpFormatter formatter = new HelpFormatter();
 		
-		String cmdSyntax = "java -jar myna-X.war -m <mode> [options]";
+		String cmdSyntax = "java -jar myna_watchdog-X.jar -m <mode> [options]";
 		try {
 			if (args.length == 0){
 				formatter.printHelp(cmdSyntax, options );
@@ -119,9 +128,8 @@ public class MynaInstaller
 				logFile= line.getOptionValue( "logfile" );
 			} else if (!webctx.equals("/")){
 				logFile=webctx.substring(1)+".log";	
-			} else{
-				logFile="myna.log";
 			}
+
 			if( line.hasOption( "webroot" ) ) {
 				webroot=line.getOptionValue( "webroot" );
 			}
@@ -164,7 +172,7 @@ public class MynaInstaller
 		if (mode.equals("install")){
 			String javaHome = System.getProperty("java.home");
 			webroot=new File(webroot).getCanonicalPath();
-			if (serverName.length() == 0) serverName = "myna";
+			if (serverName.length() == 0) serverName = "watchdog";
 			if (java.lang.System.getProperty("os.name").toLowerCase().indexOf("win") >= 0){
 				if (!new File(logFile).isAbsolute()){
 					logFile = new File(wrFile.toURI().resolve("WEB-INF/" + logFile)).toString();
@@ -194,7 +202,7 @@ public class MynaInstaller
 
 				//Runtime.getRuntime().exec("cmd /c start " + scriptFile.toString()).waitFor();
 
-				System.out.println("\nInstalled Service 'Myna App Server "+serverName+"' the following settings:\n");
+				System.out.println("\nInstalled Service 'Myna Watchdog with the following settings:\n");
 				System.out.println("\nInit script '" + scriptFile +"' created with the following settings:\n");
 				System.out.println("memory=256MB");
 				System.out.println("serverName="+ serverName);
@@ -214,6 +222,7 @@ public class MynaInstaller
 				
 			} else {
 				String curUser=java.lang.System.getProperty("user.name") ;
+				System.out.println(java.lang.System.getProperty("user.name"));
 				if (!curUser.equals("root")){
 					System.out.println("Install mode must be run as root.");
 					System.exit(1);
@@ -302,7 +311,7 @@ public class MynaInstaller
 	}
 	public static void upgrade(File wrFile) throws Exception
 	{
-		System.out.println("Installing/upgrading Myna in '"+wrFile.toString()+"'...");
+		System.out.println("Installing/upgrading Watchdog in '"+wrFile.toString()+"'...");
 		wrFile.mkdirs();
 		File web_inf =  new File(wrFile.toURI().resolve("WEB-INF"));
 		boolean isUpgrade = false;
@@ -315,7 +324,7 @@ public class MynaInstaller
 			backupDir.mkdirs();
 			isUpgrade=true;
 			System.out.println("Backups stored in " + backupDir);
-			//backup entire /myna folder because we're wiping it out
+			//backup entire /watchdog folder because we're wiping it out
 			FileUtils.copyDirectory(
 				new File(wrFile.toURI().resolve("myna")), 
 				new File(backupDir.toURI().resolve("myna"))

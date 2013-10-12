@@ -20,7 +20,7 @@ web_inf=$(readlink -m $webroot/WEB-INF)
 
 #SSL
 #set this to something non-zero to enable https
-ssl_port=2814
+ssl_port=2815
 
 
 

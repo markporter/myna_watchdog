@@ -47,7 +47,7 @@ function getSettings() {
 		settingsFile.writeString(JSON.stringify({
 			"adapter/adapter": "ldap",
 			"adapter/auth_type": "watchdog",
-			"adapter/prettyName": "Watchdog Login",
+			"adapter/prettyName": "LDAP Login",
 			"adapter/desc": "Login using your Active Directory domain credentials",
 			"adapter/ad_domain": "",
 			"adapter/server": "ldaps://domain.example.com/dc=domain,dc=example,dc=com",
@@ -85,9 +85,11 @@ function getSettings() {
 	adapter.map = adapter.Map
 	delete adapter.Map
 
-	new Myna.File("/WEB-INF/myna/auth_types/watchdog").writeString(
-		JSON.stringify(adapter,null,"    ")
-	)
+	if (!/example/.test(adapter.server)){
+		new Myna.File("/WEB-INF/myna/auth_types/watchdog").writeString(
+			JSON.stringify(adapter,null,"    ")
+		)
+	}
 
 
 	//Myna.printConsole("settings",Myna.dumpText(settings));

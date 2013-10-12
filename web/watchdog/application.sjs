@@ -17,7 +17,7 @@
 	
 	//--------- FlightPath config -----------------------------------------
 	config:{
-		debug:true,
+		debug:false,
 		ds:"myna_instance",
 		homeRoute:{
 			controller:"Main",
@@ -97,6 +97,7 @@
 		    "start_date": new Date(),
 		    "type": "Simple",
 		},true)
+		//$FP.getModel("Setting").getSettings()
 	},
 	onRequestStart:function(){ // run directly before requested file
 		
