@@ -5,7 +5,7 @@ var db;
 var table;
 var dm;
 
-
+if ($server.properties.log_engine == "myna_log"){
 /* myna_log */
 	ds = "myna_log"
 	if (!Myna.Admin.ds.exists(ds)){
@@ -79,7 +79,7 @@ var dm;
 			})	
 		}
 		
-	
+}	
 /* myna_permissions */
 	ds = "myna_permissions";
 	if (!Myna.Admin.ds.exists(ds)){

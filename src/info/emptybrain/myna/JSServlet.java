@@ -23,7 +23,7 @@ public class JSServlet extends HttpServlet {
 		// Store the ServletConfig object and log the initialization
 		super.init(config);
 		ServletContext sc = config.getServletContext();
-		
+		System.err.println("======================= Starting Myna Init ===========================");
 		try{
 			MynaThread thread = new MynaThread();
 			thread.environment.put("servlet",this);
@@ -37,6 +37,7 @@ public class JSServlet extends HttpServlet {
 				String [] serverStartScripts = thread.generalProperties.getProperty("server_start_scripts").split(",");
 				
 				URI sharedPath = new URI(thread.rootDir).resolve("shared/js/");
+				
 				for (int x=0;x < serverStartScripts.length;++x){
 					String path = serverStartScripts[x];
 					URI curUri = new java.net.URI(path);
@@ -48,19 +49,18 @@ public class JSServlet extends HttpServlet {
 						+sharedPath.toString() 
 						+"'. See server_start_scripts in WEB-INF/classes/general.properties.");	
 					}
+					System.err.println("Processing startup script " + curUri.toString() +"...");
 					thread.handleRequest(curUri.toString());
 				}
 				//thread.rootUrl = req.getContextPath() + "/";
 			} catch(Exception threadException){
 				thread.handleError(threadException);
 			}
-			sc.log("======================= myna "+thread.generalProperties.getProperty("version")+" init complete ===========================");
+			System.err.println("======================= Myna "+thread.generalProperties.getProperty("version")+" init complete ===========================");
 		} catch (Exception e){
-			sc.log(e.toString());
-			System.out.println("============== Error ============");
-			System.out.println("============== Stacktrace ============");
+			System.err.println("============== Error ============");
+			System.err.println("============== Stacktrace ============");
 			
-			e.printStackTrace(System.out);
 			e.printStackTrace(System.err);
 			
 		}

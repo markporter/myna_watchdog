@@ -690,9 +690,9 @@ public class MynaThread implements java.lang.Runnable{
 			if (!isInitialized) {
 				this.init();
 				this.isInitThread=true;
-				if (this.environment.get("isCommandline") == null){
+				/*if (this.environment.get("isCommandline") == null){
 					log("INFO","Starting Myna Application Server","");
-				}
+				}*/
 				
 			}
 		}
@@ -967,7 +967,8 @@ public class MynaThread implements java.lang.Runnable{
 		/* if (this.inError) return;*/
 		this.inError = true;
 		System.err.println("Error in :" +this.environment.get("requestURL") +":");
-		System.err.println(originalException);
+		//System.err.println(originalException);
+		originalException.printStackTrace(System.err);
 		
 		try{
 			if (!this.inError &&(originalException instanceof RhinoException || originalException instanceof EcmaError)){
@@ -1316,10 +1317,30 @@ public class MynaThread implements java.lang.Runnable{
 		
 		int logElapsed = 0;
 		long requestElapsed = System.currentTimeMillis() - this.started.getTime();
-		/* java.util.Calendar cal = Calendar.getInstance();
-		cal.setTime( new java.util.Date() ); */
+		
 		java.sql.Timestamp eventTs = new java.sql.Timestamp(new java.util.Date().getTime());
-		this.writeLog(type,label,detail,appName,requestId,requestElapsed,logElapsed,eventTs);
+
+		if (!this.inError && this.threadScope != null){
+			try{
+			ScriptableObject myna = (ScriptableObject)this.threadScope.get("Myna", this.threadScope);
+			Function fct = (Function)this.threadScope.get("log", myna);
+			fct.call(
+        		this.threadContext, 
+        		this.threadScope,
+        		this.threadScope,
+        		new Object[] {
+        			type,
+        			label,
+        			detail
+        		});
+			} catch (Exception e){
+				this.writeLog(type,label,detail,appName,requestId,requestElapsed,logElapsed,eventTs);
+				
+			}
+		} else {
+			this.writeLog(type,label,detail,appName,requestId,requestElapsed,logElapsed,eventTs);
+			
+		}
 	}
 	
 	/**
@@ -1346,68 +1367,8 @@ public class MynaThread implements java.lang.Runnable{
 		String logId = org.safehaus.uuid.UUIDGenerator.getInstance().generateRandomBasedUUID().toString();
 		String instanceId = this.generalProperties.getProperty("instance_id");
 		String hostname = java.net.InetAddress.getLocalHost().getHostName();
-		
-		//java.sql.Timestamp eventTs = new java.sql.Timestamp(cal.getTime().getTime());
-		//long requestElapsed = System.currentTimeMillis() - this.started.getTime();
-		java.sql.Connection con=null;
-		java.sql.PreparedStatement st=null;
-		try {
-			con = java.sql.DriverManager.getConnection("jdbc:apache:commons:dbcp:myna_log");
-			String sql ="insert into myna_log_general"
-				+ "(log_id,request_id,instance_id,hostname,app_name,type,purpose,"
-				+ "label,detail,event_ts,request_elapsed,log_elapsed)"
-				+ "values(?,?,?,?,?,?,?,?,?,?,?,?)";
-			st = con.prepareStatement(sql,java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE,java.sql.ResultSet.CONCUR_READ_ONLY);
-		
-			int index =0;
-			st.setString(++index,logId);
-			st.setString(++index,requestId);
-			st.setString(++index,instanceId);
-			st.setString(++index,hostname);
-			st.setString(++index,appName.toLowerCase());
-			st.setString(++index,type.toUpperCase());
-			st.setString(++index,purpose.toUpperCase());
-			st.setString(++index,label);
-			
-			try{ 
-				StringReader r = new StringReader( detail );
-				st.setCharacterStream( index+1, r, detail.length() );
-				++index;
-			} catch(Exception saveError){ 
-				st.setString(++index,detail.substring(0,3999));	
-			} 
-			st.setTimestamp(++index,new java.sql.Timestamp(eventTs.getTime()));
-			st.setLong(++index,requestElapsed);
-			st.setLong(++index,logElapsed);		
-			
-			//try to write oracle clob 
-			st.execute();	
-			if (con.getMetaData().getDatabaseProductName().equals("oracle")){
-				try{
-					this.executeJsString(
-						this.threadScope,
-						"new Myna.Query({ds:'myna_log',sql:'update myna_log_general set "
-						+"detail={detail:clob} where log_id={logid:bigint}',values:{detail:'"
-						+ JSEscape(detail) +"',log_id:" + logId + "}})",
-						"Oracle clob update"
-					);	
-				} catch(Exception oracleErrror){
-					
-				}
-			}
-			
-		}catch (Exception e){
-			System.err.println("Error writing log:" + e.toString() );
-			
-			System.err.println(eventTs 
-				+ ": " + instanceId 
-				+ ": " + appName 
-				+ ": " + label 
-				+ ": " + detail);
-		} finally{
-			if (st != null) st.close();
-			if (con != null) con.close();	
-		}
+		System.err.println(hostname +"/"+ instanceId + ": [" + type +"] " + label );
+		System.err.println(detail);	
 	}
 	
 	/**

@@ -1638,7 +1638,7 @@ if (!Myna) var Myna={}
 				detail.listBefore("-->").listAfter("<!--")
 			)
 		}
-		if (typeof $server != "undefined" && !$server.isThread){
+		if (typeof $server != "undefined"){//} && !$server.isThread){
 			var reqId = $req.id;
 			//String(java.lang.Thread.currentThread().getName().hashCode());
 			
@@ -1677,9 +1677,9 @@ if (!Myna) var Myna={}
 					if (!/isAlive/.test(e.message)){
 						
 						java.lang.System.err.println("Error writing log: " + e.message);
-						java.lang.System.err.println("Error detail: " + Myna.formatError(e));
+						/*java.lang.System.err.println("Error detail: " + Myna.formatError(e));
 						java.lang.System.err.println("log Label: " +label);
-						java.lang.System.err.println("log Detail: " +detail);
+						java.lang.System.err.println("log Detail: " +detail);*/
 						$server_gateway.writeLog(
 							type,
 							String(label).left(255),

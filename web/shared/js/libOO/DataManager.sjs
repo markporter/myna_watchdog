@@ -2289,8 +2289,9 @@ if (!Myna) var Myna={}
 					}
 				})
 
-				
+				this.beforeLoad(data);
 				var bean = new this.beanClass(data,this)
+				this.afterLoad(bean);
 				bean.deferred = true;
 				bean.exists=false;
 				bean.isDirty=true;
@@ -3111,6 +3112,17 @@ if (!Myna) var Myna={}
 						}
 				return man;
 			},
+		/* ------------------- Life Cycle Functions --------------------------*/	
+			beforeLoad:function (data) {},
+			afterLoad:function (bean) {},
+			beforeCreate:function (data) {},
+			afterCreate:function (bean) {},
+			beforeSetField:function (bean,fieldName,newValue,oldValue) {},
+			afterSetField:function (bean,fieldName,newValue,oldValue) {},
+			beforeSaveField:function (bean,fieldName,newValue,oldValue) {},
+			afterSaveField:function (bean,fieldName,newValue,oldValue) {},
+			beforeRemove:function (id) {},
+			afterRemove:function (id) {}
 		}
 	/* ---------- beanBaseClass ---------------------------------------------- */
 		Myna.DataManager.beanBaseClass = function(data){}
