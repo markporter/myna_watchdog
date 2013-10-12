@@ -1,3 +1,19 @@
+Release Name: 1.9.22
+============================
+Notes: bugfixes
+
+*[ADD]* Added brief documentation for DataManager lifecycle functions
+*[CHANGE]* switched download location for web upgrade to SourceForge
+*[FIX]* Administrator upgrade won't attempt to install non ".war" files
+*[FIX]* Bug in DataManager TreeManager.remove
+*[FIX]* Fixed bug in auth cookie path for FlightPath apps
+*[FIX]* *FlightPath* bug in non-db models when validating
+[*SECURITY*] ejs and sjs files will no longer be served to the browser from flightpath static folder. This only affect applications that upgrade their flightpath folders via Add/Update Flightpath App in the Myna Administrator
+version number update
+
+
+----------------------------------------------------------
+
 Release Name: 1.9.21
 ============================
 Notes: Bugfixes and minor improvements
