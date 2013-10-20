@@ -18,7 +18,8 @@
 	//--------- FlightPath config -----------------------------------------
 	config:{
 		debug:false,
-		ds:"myna_instance",
+		//ds:"myna_instance",
+		ds:"watchdog",
 		homeRoute:{
 			controller:"Main",
 			action:"index"
@@ -61,13 +62,8 @@
 	
 	//--------- workflow methods -----------------------------------------
 	onApplicationStart:function(){ // run if application cache has expired
-		$FP =Myna.include(this.config.frameworkFolder+"/FlightPath.sjs",{}).init()
-		var db = new Myna.Database("myna_instance")
-		if (!db.tables.some(function(def){
-			return def.table_name.toLowerCase() == "services"
-		}) ){
-			$FP.getController("Main")._recreateTables();
-		}
+		//$FP =Myna.include(this.config.frameworkFolder+"/FlightPath.sjs",{}).init()
+		
 		
 		
 		/*var settings = new Myna.DataManager("myna_instance").getManager("settings").get({
@@ -84,7 +80,14 @@
 			})
 			settings.save();
 		}*/
-
+		Myna.Admin.ds.save({
+			name:"watchdog",
+			url:"jdbc:h2:mem:watchdog;DB_CLOSE_DELAY=-1",
+			port:0,
+			case_sensitive:0,
+			type:"h2",
+			driver:"org.h2.Driver"
+		})
 		Myna.Admin.task.save({
 		    "description": "Monitors systems defined in Watchdog",
 		    "end_date": null,
@@ -93,7 +96,7 @@
 		    "name": "Watchdog",
 		    "remove_on_expire": 0,
 		    "scale": "minutes",
-		    "script": "https://localhost:2814/watchdog/main/run_tests?remote=true",
+		    "script": $server.serverUrl + $application.url+"main/run_tests?remote=true",
 		    "start_date": new Date(),
 		    "type": "Simple",
 		},true)
@@ -124,7 +127,16 @@
 		//Myna.printConsole("request start")
 		$FP =Myna.include(this.config.frameworkFolder+"/FlightPath.sjs",{}).init()
 		
-		
+		//var db = new Myna.Database("myna_instance")
+		var db = new Myna.Database(this.config.ds)
+		if (!db.tables.some(function(def){
+			return def.table_name.toLowerCase() == "services"
+		}) ){
+			$FP.getController("Main")._recreateTables();
+			$FP.getController("Service").importJson({
+				file:new Myna.File($FP.dir,"services.json")
+			});	
+		}
 		
 		
 		$FP.handleRequest();

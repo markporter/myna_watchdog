@@ -418,6 +418,7 @@ Ext.override(Ext.view.AbstractView, {
 									}
 								]
 							},{//right col
+
 								flex:1,
 								layout:{
 									type:"vbox",
@@ -733,16 +734,16 @@ Ext.override(Ext.view.AbstractView, {
 					xtype:"cellmodel"
 				}, 
 				tbar:[{
-						text:"Add Service",
-						iconCls:"icon_add",
-						
-						handler:function(c){
-							var view=c.up("service_grid");
-							view.fireEvent("service_add",{
-								src:view,
-								model:{}
-							});
-						}
+					text:"Add Service",
+					iconCls:"icon_add",
+					
+					handler:function(c){
+						var view=c.up("service_grid");
+						view.fireEvent("service_add",{
+							src:view,
+							model:{}
+						});
+					}
 				},{
 					text:"Check Services Now",
 					iconCls:"icon_cog_go",
@@ -751,6 +752,12 @@ Ext.override(Ext.view.AbstractView, {
 						view.fireEvent("test_services",{
 							src:view
 						});
+					}
+				},{
+					text:"Export Services",
+					iconCls:"icon_export",
+					handler:function(){
+						location.href=appUrl+"service/export_json";
 					}
 				}],
 				filterPosition:"top",

@@ -18,6 +18,10 @@
 				}
 			);
 			this.addFilter(this._auth);
+			var providers = ["server_admin"];
+			if (Myna.Permissions.getAuthTypes().contains("watchdog")){
+				providers.push("watchdog");
+			}
 			this._auth.options={
 				whitelist:[
 					/runTests/,
@@ -28,7 +32,7 @@
 
 				],
 				redirectParams:{
-					providers:["server_admin","watchdog"]
+					providers:providers
 				}
 				
 			}

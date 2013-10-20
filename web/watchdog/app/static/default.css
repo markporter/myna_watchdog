@@ -55,9 +55,11 @@ body,td{
 .icon_delete { background: url(../static/images/delete.png) 0 0px no-repeat !important;}
 .icon_documentation{ background: url(../static/images/help.png) 0 0px no-repeat !important;}
 .icon_edit_form { background: url(../static/images/application_form_edit.png) 0 0px no-repeat !important;}
+.icon_export { background: url(../static/images/arrow_down.png) 0 0px no-repeat !important;}
 .icon_form { background: url(../static/images/application_form.png) 0 0px no-repeat !important;}
 .icon_form_search { background: url(../static/images/application_form_magnify.png) 0 0px no-repeat !important;}
 .icon_help { background: url(../static/images/help.png) 0 0px no-repeat !important;}
+.icon_import { background: url(../static/images/arrow_up.png) 0 0px no-repeat !important;}
 .icon_insert_sql { background: url(../static/images/table_go.png) 0 0px no-repeat !important;}
 .icon_log { background: url(../static/images/table.png) 0 0px no-repeat !important;}
 .icon_log_detail { background: url(../static/images/page.png) 0 0px no-repeat !important;}
