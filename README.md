@@ -17,7 +17,9 @@ execute:
 
 [SourceForge]:https://sourceforge.net/projects/mynawatchdog/files/latest/download
 
------------------------------------------------------------------------------------------Release Name: 1.1.0
+-----------------------------------------------------------------------------------------
+
+Release Name: 1.1.0
 ============================
 Notes: 
 New memory based DB, bug fixes
