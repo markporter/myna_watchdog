@@ -87,7 +87,7 @@ stop)
 compile)
 	$0 stop
 	echo "" > $logfile
-	ant compile && sudo -H $0 start && tail -f $logfile
+	ant compile && sudo -H $0 start && sudo -H tail -f $logfile
 	;;
 restart)
    $0 stop

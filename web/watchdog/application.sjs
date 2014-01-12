@@ -80,14 +80,14 @@
 			})
 			settings.save();
 		}*/
-		Myna.Admin.ds.save({
+		/*Myna.Admin.ds.save({
 			name:"watchdog",
 			url:"jdbc:h2:mem:watchdog;DB_CLOSE_DELAY=-1",
 			port:0,
 			case_sensitive:0,
 			type:"h2",
 			driver:"org.h2.Driver"
-		})
+		})*/
 		Myna.Admin.task.save({
 		    "description": "Monitors systems defined in Watchdog",
 		    "end_date": null,

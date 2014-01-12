@@ -75,7 +75,7 @@
 		//Myna.printDump(params)
 		var file = params.file||new Myna.File(params.import_file.stats.diskLocation);
 		var $this =this;
-		if (file.exists){
+		if (file.exists()){
 			var config = file.readString().parseJson()
 			//Myna.printDump(config)
 			var v = new Myna.ValidationResult();
