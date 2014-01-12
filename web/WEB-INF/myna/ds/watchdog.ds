@@ -1,0 +1,15 @@
+#
+#Sun Jan 12 10:33:42 MST 2014
+name=watchdog
+url=jdbc\:h2\:mem\:watchdog;DB_CLOSE_DELAY\=-1
+port=0
+file=/WEB-INF/myna/local_databases/
+server=
+case_sensitive=0
+username=
+desc=Watchdog Memeory DB
+type=h2
+location=file
+password=
+db=
+driver=org.h2.Driver
