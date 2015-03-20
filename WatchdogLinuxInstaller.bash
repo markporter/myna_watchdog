@@ -25,11 +25,16 @@ wget -O /tmp/myna_installer.jar "https://sourceforge.net/projects/myna/files/lat
 /etc/init.d/myna_watchdog stop > /dev/null 2>&1
 java -jar /tmp/myna_installer.jar -m install -l /var/log/myna_watchdog -p 0 -sp 2814 -s myna_watchdog -u root -w /opt/myna_watchdog/
 echo "\<META HTTP-EQUIV=\"refresh\" content=\"0; url=watchdog\"\>" > /opt/myna_watchdog/index.html
-if -f /opt/myna_watchdog/watchdog; then
-  cd /opt/myna_watchdog/watchdog
+if -f /opt/myna_watchdog/.git; then
+  cd /opt/myna_watchdog/
   git pull origin master
 else
-  git clone https://github.com/markporter/myna_watchdog.git watchdog
+  cd /opt/myna_watchdog/
+  git init
+  git remote add origin https://github.com/markporter/myna_watchdog.git
+  git fetch
+  git checkout -t origin/master
+  #git clone https://github.com/markporter/myna_watchdog.git /opt/myna_watchdog/
 fi
 #rm -rf /opt/myna_watchdog/watchdog &&  mkdir /opt/myna_watchdog/watchdog && rsync -a ~mark/watchdog/watchdog/ /opt/myna_watchdog/watchdog/
 echo 
