@@ -25,7 +25,7 @@ wget -O /tmp/myna_installer.jar "https://sourceforge.net/projects/myna/files/lat
 /etc/init.d/myna_watchdog stop > /dev/null 2>&1
 java -jar /tmp/myna_installer.jar -m install -l /var/log/myna_watchdog -p 0 -sp 2814 -s myna_watchdog -u root -w /opt/myna_watchdog/
 echo "\<META HTTP-EQUIV=\"refresh\" content=\"0; url=watchdog\"\>" > /opt/myna_watchdog/index.html
-if -f /opt/myna_watchdog/.git; then
+if [ -f /opt/myna_watchdog/.git ]; then
   cd /opt/myna_watchdog/
   git pull origin master
 else

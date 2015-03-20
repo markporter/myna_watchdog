@@ -42,58 +42,16 @@ function create(data){
 	
 }
 function getSettings() {
-	var settingsFile = new Myna.File($FP.dir,"settings.json")
+	var settingsFile = new Myna.File($FP.dir,"settings.json");
 	if (!settingsFile.exists()){
 		settingsFile.writeString(JSON.stringify({
-			/*"adapter/adapter": "ldap",
-			"adapter/auth_type": "watchdog",
-			"adapter/prettyName": "LDAP Login",
-			"adapter/desc": "Login using your Active Directory domain credentials",
-			"adapter/ad_domain": "",
-			"adapter/server": "ldaps://domain.example.com/dc=domain,dc=example,dc=com",
-			"adapter/filter": "(sAMAccountType=805306368)",
-			"adapter/group_filter": "(objectCategory=group)",
-			"adapter/search_columns": "cn,givenName,sn",
-			"adapter/username": "",
-			"adapter/password": "",
-			"adapter/map/first_name": "givenName",
-			"adapter/map/last_name": "sn",
-			"adapter/map/middle_name": "initials",
-			"adapter/map/login": "sAMAccountName",
-			"adapter/map/title": "title",
-			"adapter/map/email": "mail",
-			"adapter/map/group_name": "cn",
-			"adapter/map/group_member": "member",*/
-			"notification_email": "",
-			/*"ldap_users": "",
-			"ldap_groups": "Domain Admins"*/
-		},null,"    "))
+			
+			"notification_email": ""
+			
+		},null,"    "));
 	}
-	var settings = settingsFile.readString().parseJson()
-	var adapter = settings.getKeys()
-		.filter(function (k) {
-			return k.listFirst("/") == "adapter"
-		})
-		.reduce(function (obj,k) {
-			var path = k.replace(/\//g,".").replace(/map/,"Map");
-			var value = settings[k].split(/,/).map(function (i) {
-				return i.trim()
-			}).join()
-			obj.setByPath(path,value)
-			return obj
-		},{}).adapter
-	adapter.map = adapter.Map
-	delete adapter.Map
-
-	if (!/example/.test(adapter.server)){
-		new Myna.File("/WEB-INF/myna/auth_types/watchdog").writeString(
-			JSON.stringify(adapter,null,"    ")
-		)
-	}
-
-
-	//Myna.printConsole("settings",Myna.dumpText(settings));
-	//Myna.printConsole("adapter",Myna.dumpText(adapter));
+	var settings = settingsFile.readString().parseJson();
+	
 
 	return settings
 }
@@ -101,7 +59,7 @@ function forceDelete(name){
 	return
 }
 function saveBeanField(bean,fieldName,oldval,newval){
-	//Myna.printConsole("bean", Myna.dumpText(bean));
+	
 	var v = bean.validate(fieldName);
 	/* 
 	Don't actually save. Bean instances of this model are always deferred and
