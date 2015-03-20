@@ -3,21 +3,28 @@ Myna Watchdog
 
 Myna Watchdog: a service for monitoring and restarting local processes
 
-Download the Binary installer from [SourceForge]
-
-
-
-
-To install:
+To download and install on a Linux system:
 -----------
 execute:
 
-    java -jar myna_watchdog-x.x.x.jar -m install
+    wget https://raw.githubusercontent.com/markporter/myna_watchdog/master/WatchdogLinuxInstaller.bash
+    bash WatchdogLinuxInstaller.bash
 
-
-[SourceForge]:https://sourceforge.net/projects/mynawatchdog/files/latest/download
 
 -----------------------------------------------------------------------------------------
+
+Release Name: 1.2.0
+============================
+Notes: 
+New memory based DB, bug fixes
+
+* **[ADD]**         Linux Installer
+* **[CHANGE]**      removed embedded Myna server, now downloads and installs from Myna repo
+* **[CHANGE]**      removed embedded Active Directory support, now uses Myna's AD authorization
+* **[FIX]**         better startup managment
+
+
+----------------------------------------------------------
 
 Release Name: 1.1.0
 ============================
