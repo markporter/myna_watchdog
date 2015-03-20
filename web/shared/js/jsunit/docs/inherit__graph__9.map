@@ -1,5 +1,0 @@
-<area shape="rect" href="$classTestCollector.html" title="A collector for Test classes." alt="" coords="5,31,109,57">
-<area shape="rect" href="$classAllTestsCollector.html" title="A collector for the AllTests class." alt="" coords="172,5,297,32">
-<area shape="rect" href="$classGenericTestCollector.html" title="A generic collector for all Test classes within a scope." alt="" coords="159,56,311,83">
-<area shape="rect" href="$classTestCaseCollector.html" title="A TestCase collector for all test cases within a scope." alt="" coords="361,31,497,57">
-<area shape="rect" href="$classTestSuiteCollector.html" title="A TestSuite collector for all test suites within a scope." alt="" coords="361,81,497,108">

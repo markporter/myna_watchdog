@@ -82,7 +82,7 @@
 				column:"id"
 			})
 
-			Myna.printConsole(Myna.dumpText(table));
+			//Myna.printConsole(Myna.dumpText(table));
 
 			
 

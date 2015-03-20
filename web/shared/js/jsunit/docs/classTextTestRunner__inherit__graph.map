@@ -1,5 +1,0 @@
-<area shape="rect" href="$classCtxTestRunner.html" title="Class for an application running test suites with the BroadVision ctxdriver and console..." alt="" coords="5,631,147,732">
-<area shape="rect" href="$classHTMLTestRunner.html" title="Class for an application running test suites reporting in HTML." alt="" coords="171,640,325,723">
-<area shape="rect" href="$classNSServerTestRunner.html" title="Class for an application running test suites with a Netscape Server." alt="" coords="349,613,531,749">
-<area shape="rect" href="$classBaseTestRunner.html" title="General base class for an application running test suites." alt="" coords="173,209,323,396">
-<area shape="rect" href="$classTestListener.html" title="A listener for test progress." alt="" coords="187,7,309,159">

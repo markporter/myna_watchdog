@@ -1,5 +1,0 @@
-<area shape="rect" href="$classCtxWriter.html" title="Class for an application running test suites with the BroadVision ctxdriver and console..." alt="" coords="5,260,115,361">
-<area shape="rect" href="$classHTMLWriterFilter.html" title="A filter for a PrinterWriter encoding HTML." alt="" coords="139,243,293,379">
-<area shape="rect" href="$classNSServerWriter.html" title="PrinterWriter for an application running test suites with the Netscape Server." alt="" coords="317,260,467,361">
-<area shape="rect" href="$classStringWriter.html" title="The PrinterWriter into a String." alt="" coords="491,252,613,369">
-<area shape="rect" href="$classSystemWriter.html" title="The PrinterWriter of the JavaScript engine." alt="" coords="637,252,773,369">

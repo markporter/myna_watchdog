@@ -1,8 +1,0 @@
-<area shape="rect" href="$classAssert.html" title="A set of assert methods." alt="" coords="7,56,68,83">
-<area shape="rect" href="$classTestCase.html" title="A test case defines the fixture to run multiple tests." alt="" coords="133,107,213,133">
-<area shape="rect" href="$classTestDecorator.html" title="A Decorator for Tests." alt="" coords="117,56,229,83">
-<area shape="rect" href="$classExceptionTestCase.html" title="A TestCase that expects an exception of class mClass to be thrown." alt="" coords="277,107,421,133">
-<area shape="rect" href="$classRepeatedTest.html" title="A Decorator that runs a test repeatedly." alt="" coords="295,5,404,32">
-<area shape="rect" href="$classTestSetup.html" title="A Decorator to set up and tear down additional fixture state." alt="" coords="307,56,392,83">
-<area shape="rect" href="$classTest.html" title="A test can be run and collect its results." alt="" coords="15,107,60,133">
-<area shape="rect" href="$classTestSuite.html" title="A TestSuite is a composition of Tests." alt="" coords="133,157,213,184">

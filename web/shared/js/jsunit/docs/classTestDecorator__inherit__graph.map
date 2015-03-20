@@ -1,4 +1,0 @@
-<area shape="rect" href="$classRepeatedTest.html" title="A Decorator that runs a test repeatedly." alt="" coords="5,376,139,459">
-<area shape="rect" href="$classTestSetup.html" title="A Decorator to set up and tear down additional fixture state." alt="" coords="163,359,272,476">
-<area shape="rect" href="$classAssert.html" title="A set of assert methods." alt="" coords="29,49,117,132">
-<area shape="rect" href="$classTest.html" title="A test can be run and collect its results." alt="" coords="141,5,288,176">

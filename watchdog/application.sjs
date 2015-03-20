@@ -5,14 +5,12 @@
 	idleMinutes:60,// Lifetime of Application variable cache
 	//--------- app package properties
 		displayName:"Myna Watchdog",// "pretty" name used in labels and titles
-		description:<ejs>
-		
-		</ejs>,//short description of application
+		description:"",//short description of application
 		author:"Mark Porter", //name of app author
 		authorEmail:"mark@porterpeople.com",// email of app author
 		website:"http://www.mynajs.org",//website associated with this app
-		version:"1.0.0", //app version. This should be a dot notation
-		minMynaVersion:null,// Minimum version of Myna the app might run on
+		version:"1.1.0", //app version. This should be a dot notation
+		minMynaVersion:"1.12.2",// Minimum version of Myna the app might run on
 		postInstallUrl:null,// URL that should be visited first after deployment, relative to app install dir
 	
 	//--------- FlightPath config -----------------------------------------
@@ -88,6 +86,8 @@
 			type:"h2",
 			driver:"org.h2.Driver"
 		})*/
+		this.appStart=true;
+		new Myna.File("/WEB-INF/classes/cron.properties").appendString("\n")
 		Myna.Admin.task.save({
 		    "description": "Monitors systems defined in Watchdog",
 		    "end_date": null,
@@ -128,14 +128,60 @@
 		$FP =Myna.include(this.config.frameworkFolder+"/FlightPath.sjs",{}).init()
 		
 		//var db = new Myna.Database("myna_instance")
+		if (!Myna.Admin.ds.exists(this.config.ds)){
+			Myna.Admin.ds.save({
+				name:this.config.ds,
+				url:"jdbc:h2:mem:{0};DB_CLOSE_DELAY=-1".format(this.config.ds),
+				port:0,
+				file:"/WEB-INF/myna/local_databases/",
+				server:"",
+				case_sensitive:0,
+				username:"",
+				desc:"Watchdog Memory DB",
+				type:"h2",
+				location:"file",
+				password:"",
+				db:"",
+				driver:"org.h2.Driver"
+			})
+		}
+		var admins=Myna.Permissions.getUserGroupByName($application.appname,"Administrators")
+		if (!admins){
+			admins = Myna.Permissions.addUserGroup({
+				name:"Administrators",
+				appname:$application.appname,
+				description:"Admins for Watchdog. Allows login and settings changes"
+			})
+		}
+		if (this.appStart){
+			var rightNames = []
+			$FP.getControllerNames().forEach(function(name){
+				var controller = $FP.getController(name)
+			
+				controller.getActions().forEach(function(def){
+					rightNames.push("{0}.{1}".format(name,def.action))
+				})
+				
+			})
+			var rights = rightNames.map(function (name) {
+				return Myna.Permissions.addRight({
+					name:name,
+					appname:$application.appname
+				}).id
+			})
+			admins.addRights(rights)
+		}
+
 		var db = new Myna.Database(this.config.ds)
 		if (!db.tables.some(function(def){
 			return def.table_name.toLowerCase() == "services"
 		}) ){
 			$FP.getController("Main")._recreateTables();
-			$FP.getController("Service").importJson({
-				file:new Myna.File($FP.dir,"services.json")
-			});	
+			try{
+				$FP.getController("Service").importJson({
+					file:new Myna.File($FP.dir,"services.json")
+				});	
+			} catch (e){}
 		}
 		
 		

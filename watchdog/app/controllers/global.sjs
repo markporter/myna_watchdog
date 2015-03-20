@@ -18,21 +18,15 @@
 				}
 			);
 			this.addFilter(this._auth);
-			var providers = ["server_admin"];
-			if (Myna.Permissions.getAuthTypes().contains("watchdog")){
-				providers.push("watchdog");
-			}
 			this._auth.options={
 				whitelist:[
 					/runTests/,
 					/login/,
 					/logout/,
 					/changeAdminPassword/,
-					/saveAdminPassword/,
-
+					/saveAdminPassword/
 				],
 				redirectParams:{
-					providers:providers
 				}
 				
 			}
@@ -51,7 +45,7 @@
 
 			var ldap = adapter.getLdap()
 			
-			Myna.printConsole(Myna.dumpText(adapter));
+			//Myna.printConsole(Myna.dumpText(adapter));
 			var groupName = adapter.config.map.group_name;
 			var groupMember = adapter.config.map.group_member;
 

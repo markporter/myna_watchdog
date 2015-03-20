@@ -1,6 +1,0 @@
-{
-	"auth_type":"server_admin",
-	"prettyName":"Watchdog Administrator",
-	"desc":"Login using the Watchdog master account",
-	"adapter":"server_admin"
-}

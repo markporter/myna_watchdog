@@ -306,168 +306,25 @@ Ext.override(Ext.view.AbstractView, {
 						items:[{
 							xtype:"panel",
 							border:false,
-							//title:"LDAP/Active Directory Config",
-							layout:{
-								type:"hbox",
-								align:"stretch"
-							},
+							frame:true,
+							width:275,
 							defaults:{
-								frame:true
+								frame:true,
+								flex:true,
+								labelAlign:"top"
 							},
-							items:[{//left col
-								flex:1,
-								title:"LDAP Settings",
-								layout:{
-									type:"vbox",
-									align:"stretch"
-								},
-								defaults:{
-									xtype:"textfield",
-									labelAlign:"top",
-									anchor:"95%"
-								},
-								items:[
-									{
-										xtype:"textfield",
-										name:"adapter/prettyName",
-										fieldLabel:"AuthType description",
-										value:"Watchdog Login"
-									},{
-										xtype:"textfield",
-										name:"adapter/desc",
-										fieldLabel:"Login Prompt",
-										value:"Login using your Active Directory domain credentials"
-									},{
-										xtype:"textfield",
-										name:"adapter/ad_domain",
-										labelAlign:"top",
-										fieldLabel:"AD Domain (leave blank if not using Active Directory)"
-									},{
-										xtype:"textfield",
-										name:"adapter/server",
-										fieldLabel:"LDAP URL (use ldaps for secure)",
-										value:"ldaps://domain.example.com/dc=domain,dc=example,dc=com"
-									},{
-										xtype:"textfield",
-										name:"adapter/filter",
-										fieldLabel:"User Filter (used to only match users)",
-										value:"(sAMAccountType=805306368)"
-									},{
-										xtype:"textfield",
-										name:"adapter/group_filter",
-										fieldLabel:"Group Filter (used to only match only groups)",
-										value:"(objectCategory=group)"
-									},{
-										xtype:"textfield",
-										name:"adapter/search_columns",
-										fieldLabel:"Search Attributes (used for finding users, comma separated)",
-										value:"cn,givenName,sn"
-									},{
-										xtype:"textfield",
-										name:"adapter/username",
-										fieldLabel:"Username for searches"
-									},{
-										xtype:"textfield",
-										inputType:"password",
-										name:"adapter/password",
-										fieldLabel:"Password for search user"
-									},{
-										xtype:"fieldset",
-										title:"LDAP Attribute Map",
-										width:300,
-										defaults:{
-											xtype:"textfield",
-											labelAlign:"left",
-											width:250
-										},
-										items:[
-											{
-												fieldLabel:"First Name",
-												name:"adapter/map/first_name",
-												value:"givenName"
-											},{
-												fieldLabel:"Last Name",
-												name:"adapter/map/last_name",
-												value:"sn"
-											},{
-												fieldLabel:"Middle Name",
-												name:"adapter/map/middle_name",
-												value:"initials"
-											},{
-												fieldLabel:"Username",
-												name:"adapter/map/login",
-												value:"sAMAccountName"
-											},{
-												fieldLabel:"Title",
-												name:"adapter/map/title",
-												value:"title"
-											},{
-												fieldLabel:"Email",
-												name:"adapter/map/email",
-												value:"mail"
-											},{
-												fieldLabel:"Group Name",
-												name:"adapter/map/group_name",
-												value:"cn"
-											},{
-												fieldLabel:"Group Member",
-												name:"adapter/map/group_member",
-												value:"member"
-											}
-										]
-									}
-								]
-							},{//right col
-
-								flex:1,
-								layout:{
-									type:"vbox",
-									align:"stretch"
-								},
-								defaults:{
-									frame:true,
-									flex:true,
-									labelAlign:"top"
-								},
-								items:[
-									{
-										xtype:"textarea",
-										fieldLabel:"Notification Email Addresses (comma separated)",
-										name:"notification_email"
-									},{
-										xtype:"textarea",
-										fieldLabel:[
-											"LDAP Usernames",
-											"Users allowed access. These users will also be emailed.",
-											"List usernames comma separated"
-										].join("<br/>"),
-										name:"ldap_users"
-									},{
-										xtype:"textarea",
-										fieldLabel:"LDAP Group Names (comma separated)",
-										value:"Domain Admins",
-										name:"ldap_groups"
-									}
-								]
-
-							}],
+							items:[
+								{
+									xtype:"textarea",
+									fieldLabel:"Notification Email Addresses (comma separated)",
+									name:"notification_email"
+								}
+							],
 							buttons:[{
+								text:"Edit Permissions",
 								iconCls:"icon_cog",
-								text:"Test LDAP settings",
 								handler:function(c){
-									var view=c.up("view_setting_main");
-									var form = view.form
-									var model = form.getRecord();
-									console.log(Ext.JSON.encode(form.getFieldValues()))
-									if (form.isValid()){
-										form.updateRecord(model)
-										view.fireEvent("test_ldap",{
-											src:view,
-											model:model,
-											username:prompt("enter username to test:")
-										});
-									}
-									
+									window.open(rootUrl+"myna/administrator/perms")									
 								}
 							},{
 								text:"Save",
